@@ -1,4 +1,4 @@
-# youtube-dl-android
+# Android Video Downloader app with browser, player and custom downloaders
 
 ## Major technologies
 
@@ -36,4 +36,4 @@ Inspired from [cuongpm/youtube-dl-android](https://github.com/cuongpm/youtube-dl
 
 ## License
 
-This package is licensed under the MIT license. See [LICENSE](./LICENSE) for details.
+This package is licensed under the [LICENSE](./LICENSE) for details.

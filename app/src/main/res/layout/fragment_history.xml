@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="viewModel"
+            type="com.myAllVideoBrowser.ui.main.history.HistoryViewModel" />
+
+        <variable
+            name="adapter"
+            type="com.myAllVideoBrowser.ui.component.adapter.HistoryAdapter" />
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/history_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="60dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <com.google.android.material.appbar.AppBarLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.google.android.material.search.SearchBar
+                    android:id="@+id/search_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/searchbar_hint"
+                    android:text="@{viewModel.searchQuery}" />
+            </com.google.android.material.appbar.AppBarLayout>
+
+            <!-- NestedScrollingChild goes here (NestedScrollView, RecyclerView, etc.). -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/clear_button"
+                    android:layout_width="320dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="@string/clear_history"
+                    android:textColor="@color/white"
+                    android:visibility="@{(viewModel.historyItems.isEmpty || (viewModel.isLoadingHistory() &amp;&amp; !viewModel.historyItems.isEmpty)) ? View.GONE : View.VISIBLE}"
+                    app:layout_constraintBottom_toTopOf="@+id/history_list"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <!-- Screen content goes here. -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/history_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:visibility="@{viewModel.isLoadingHistory() ? View.GONE : View.VISIBLE}"
+                    app:items="@{viewModel.historyItems}"
+                    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clear_button" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <com.google.android.material.search.SearchView
+                android:id="@+id/search_history_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:hint="@string/searchbar_hint"
+                app:layout_anchor="@id/search_bar">
+                <!-- Search suggestions/results go here (ScrollView, RecyclerView, etc.). -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/history_search_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:items="@{viewModel.searchHistoryItems}" />
+            </com.google.android.material.search.SearchView>
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+        <ProgressBar
+            android:layout_width="@dimen/browser_loading_size"
+            android:layout_height="@dimen/browser_loading_size"
+            android:visibility="@{viewModel.isLoadingHistory() ? View.VISIBLE : View.GONE}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

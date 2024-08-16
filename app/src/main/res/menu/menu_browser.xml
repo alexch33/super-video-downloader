@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/history_screen_menu_item"
+        android:icon="@drawable/history_menu_icon_24dp"
+        android:title="@string/history"
+        app:showAsAction="always|collapseActionView" />
+
+    <item
+        android:id="@+id/share_link"
+        android:icon="@drawable/share_24px"
+        android:title="@string/share_link"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
+        android:checkable="true"
+        android:id="@+id/desktop_mode"
+        android:icon="@drawable/desktop_windows_24px"
+        android:title="@string/desktop_mode"
+        android:checked="false"
+        app:showAsAction="always|collapseActionView" />
+
+    <item
+        android:id="@+id/settings"
+        android:icon="@drawable/settings_24px"
+        android:title="@string/settings"
+        app:showAsAction="ifRoom|collapseActionView"
+        />
+
+    <item
+        android:id="@+id/help"
+        android:icon="@drawable/help_24px"
+        android:title="@string/help"
+        app:showAsAction="ifRoom|collapseActionView"
+        />
+
+    <item
+        android:visible="false"
+        android:id="@+id/proxies"
+        android:icon="@drawable/wifi_proxy_icon24"
+        android:checkable="true"
+        android:checked="false"
+        android:title="@string/proxy"
+        app:showAsAction="ifRoom|collapseActionView"
+        />
+
+        <item
+            android:id="@+id/ad_blocker"
+            android:icon="@drawable/shield_24px"
+            android:checkable="true"
+            android:checked="false"
+            android:title="@string/ad_blocker"
+            app:showAsAction="ifRoom|collapseActionView"
+            />
+
+    <item
+        android:visible="true"
+        android:id="@+id/is_dark"
+        android:icon="@drawable/dark_mode_24px"
+        android:checkable="true"
+        android:checked="false"
+        android:title="@string/dark_mode"
+        app:showAsAction="ifRoom|collapseActionView"
+        />
+</menu>

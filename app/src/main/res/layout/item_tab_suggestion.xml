@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="suggestion"
+            type="com.myAllVideoBrowser.data.local.room.entity.HistoryItem" />
+
+        <variable
+            name="listener"
+            type="com.myAllVideoBrowser.ui.component.adapter.SuggestionTabListener" />
+
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tv_suggestion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/public_24px"
+            android:drawablePadding="@dimen/padding_small"
+            android:gravity="center_vertical"
+            android:maxLines="2"
+            android:onClick="@{() -> listener.onItemClicked(suggestion)}"
+            android:padding="@dimen/padding_small"
+            android:textSize="@dimen/text_small"
+            tools:text="@{suggestion.url}" />
+
+    </LinearLayout>
+
+</layout>

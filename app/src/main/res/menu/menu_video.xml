@@ -1,0 +1,35 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/item_open_with"
+        android:icon="@drawable/play_circle_24px"
+        android:title="@string/video_menu_open_with"
+        app:showAsAction="always|collapseActionView" />
+
+    <item
+        android:id="@+id/item_rename"
+        android:icon="@drawable/edit_24px"
+        android:title="@string/video_menu_rename"
+        app:showAsAction="always|collapseActionView" />
+
+    <item
+        android:id="@+id/item_delete"
+        android:icon="@drawable/delete_forever_24px"
+        android:title="@string/video_menu_delete"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
+        android:id="@+id/item_share"
+        android:icon="@drawable/share_24px"
+        android:title="@string/video_menu_share"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
+        android:visible="false"
+        android:id="@+id/item_open_in_folder"
+        android:icon="@drawable/folder_open_24px"
+        android:title="@string/video_menu_open_in_folder"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+</menu>

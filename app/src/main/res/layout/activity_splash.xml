@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <import type="android.view.View"/>
+
+        <variable
+                name="viewModel"
+                type="com.myAllVideoBrowser.ui.main.splash.SplashViewModel"/>
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/content_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <ImageView
+                android:id="@+id/img_icon"
+                android:layout_width="@dimen/splash_icon_size"
+                android:layout_height="@dimen/splash_icon_size"
+                android:src="@mipmap/ic_launcher"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintVertical_chainStyle="packed"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/tv_name"/>
+
+        <TextView
+                android:id="@+id/tv_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="@dimen/padding_normal"
+                android:text="@string/app_name"
+                android:textSize="@dimen/text_large"
+                app:layout_constraintTop_toBottomOf="@id/img_icon"
+                app:layout_constraintBottom_toTopOf="@id/progress_bar"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"/>
+
+        <ProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="@dimen/splash_progress_size"
+                android:layout_height="@dimen/splash_progress_size"
+                android:layout_marginTop="@dimen/padding_large"
+                android:padding="@dimen/padding_tiny"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_name"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

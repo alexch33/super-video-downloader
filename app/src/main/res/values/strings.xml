@@ -1,0 +1,93 @@
+<resources>
+    <string name="app_icon">app icon</string>
+    <string name="app_name">SuperX - Super Video Downloader</string>
+    <string name="browser_search_hint">Search Google or enter url</string>
+
+    <string name="title_video">Video</string>
+    <string name="title_progress">Progress</string>
+    <string name="title_settings">Settings</string>
+
+    <string name="dialog_video_title">Video found:</string>
+    <string name="dialog_preview_video">Preview Video</string>
+    <string name="dialog_download_video">Download Video</string>
+    <string name="dialog_download_cancel">Cancel</string>
+
+    <string name="video_empty_message">You have not downloaded any video yet.</string>
+    <string name="video_menu_rename">Rename</string>
+    <string name="video_menu_delete">Delete</string>
+    <string name="video_menu_share">Share</string>
+    <string name="video_rename_title">Rename video</string>
+    <string name="video_rename_invalid">Invalid name. Please try again!</string>
+    <string name="video_rename_exist">Video name already exists!</string>
+    <string name="video_share_message">You don\'t have any video player app installed on your device</string>
+
+
+    <string name="progress_empty_message">You are not downloading any video.</string>
+
+    <string name="settings_general" translatable="false">GENERAL</string>
+    <string name="settings_videos_folder">Videos folder</string>
+    <string name="settings_folder_path" translatable="false">folder path</string>
+    <string name="settings_clear_browser_cookies">Clear browser cookies</string>
+    <string name="settings_message_open_folder">You don\'t have any file explorer app installed on your device</string>
+    <string name="progress_menu_cancel">Cancel</string>
+    <string name="app_download_channel_id" translatable="false">download_channel_id</string>
+    <string name="all_text_cancel">Cancel</string>
+    <string name="progress_menu_pause">pause</string>
+    <string name="progress_menu_resume">resume</string>
+    <string name="download_link_label">Video Url</string>
+    <string name="view" translatable="false">View</string>
+    <string name="paste">paste</string>
+    <string name="history">History</string>
+    <string name="share_link">Share Link</string>
+    <string name="desktop_mode">Desktop Mode</string>
+    <string name="searchbar_hint">Search</string>
+    <string name="settings">Settings</string>
+    <string name="about_an_hour_ago">about an hour ago</string>
+    <string name="remove">remove</string>
+    <string name="insert_your_regular_video">Paste your regular video url or M3U8 link here</string>
+    <string name="title_media_link">Download by url</string>
+    <string name="clear_history">Clear History</string>
+    <string name="proxy">Proxy</string>
+    <string name="proxies">Proxies</string>
+    <string name="proxies_unavailable">Proxies unavailable</string>
+    <string name="loading_image_view">loading image view</string>
+    <string name="video_menu_open_in_folder">Open in folder</string>
+    <string name="help">Help</string>
+    <string name="ok">OK</string>
+    <string name="get_started_guide">Hi ;–)  For video detecting go to video in browser, click play and waite until detected(can take 5–50 seconds) \n 1. You can change ads detecting threshold in settings \n 2. Some video downloaded corrupted in multi thread mode, use One thread for downloading in such situations \n\n For Video Downloading: \n \n 1. Press button,in dialog select resolution, if available, and press colored button \n \n 2, 3. Press Play on video player on page with video, after that video should be detected. \n \n If not try to press reload videos on video page or try reload page and repeat. \n If not email me.\n \n \n After downloading video available in app. \n</string>
+    <string name="instruction">Hi ;–) \n For video detecting go to video in browser, click play and waite until video detected(can take 5–50 seconds) \n 1. You can change ads detecting threshold in settings \n 2. Video Detection not working for some web sites in mobile mode, try use desktop version of web site if video not detecting in mobile mode \n If not try to press reload videos on video page or try reload page and repeat. \n If not email me.\n \n\n For Video Downloading: \n \n 1. Press Download button,in appeared screen select resolution, if available \n \n 2. Press press download button. \n  \n \n After downloading video available in app. \n</string>
+    <string name="new_tab">New Tab</string>
+    <string name="cookies_cleared">Cookies cleared</string>
+    <string name="download_started">   Video Download Started Successfully!!!   </string>
+    <string name="more_tabs_in_next_updates">More tabs will be allowed in next updates</string>
+    <string name="download_open_in_app">Open in App</string>
+    <string name="download_watch_in_app">Watch Video</string>
+    <string name="ad_blocker">Ad Blocker</string>
+    <string name="desktop_mode_on">Desktop Mode On</string>
+    <string name="desktop_mode_off">Desktop Mode Off</string>
+    <string name="player_resolution">video resolution as in the player</string>
+    <string name="video_menu_open_with">Open with…</string>
+    <string name="video_found">Video Found</string>
+    <string name="show_video_found_alert">Show Video Download Dialog</string>
+    <string name="dontshow">Don\'t show again</string>
+    <string name="whatshould">What should we do?</string>
+    <string name="dialog_preview_video_force">Preview Video Force</string>
+    <string name="show_action_button">Show video download button</string>
+    <string name="browser_s_icon">browser\'s icon</string>
+    <string name="stop_and_save">Stop and Save</string>
+    <string name="open_download_dialog_or_restart">Open download dialog or restart video check</string>
+    <string name="video_title_edit">Video title edit</string>
+    <string name="menu">menu</string>
+    <string name="home">home</string>
+    <string name="powerSave">Power save mode detected!\nVideo detection not working, turn off power save mode!</string>
+    <string name="warning">Warning! Power save Mode.</string>
+    <string name="download_text">download</string>
+    <string name="check_every_request_on_video">Check every request on video</string>
+    <string name="find_videos_by_url">Find videos by URL</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="found_videos_from">Found videos from %1$s</string>
+    <string name="title">Title</string>
+    <string name="ads_detection_treshold">Ads Detection Treshold: %1$s</string>
+    <string name="thread_count_for_regular_files">Thread Count for regular files: %1$s</string>
+    <string name="thread_count_for_hls_and_mpd">Thread Count for HLS and MPD: %1$s</string>
+</resources>

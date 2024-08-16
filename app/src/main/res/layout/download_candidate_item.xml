@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="listener"
+            type="com.myAllVideoBrowser.ui.component.dialog.CandidateFormatListener" />
+
+        <variable
+            name="download_candidate"
+            type="String" />
+
+        <variable
+            name="is_candidate_selected"
+            type="Boolean" />
+
+        <variable
+            name="videoInfo"
+            type="com.myAllVideoBrowser.data.local.room.entity.VideoInfo" />
+
+    </data>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_item"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:layout_margin="4dp"
+        android:checkable="true"
+        android:checked="@{is_candidate_selected}"
+        android:onClick="@{() -> listener.onSelectFormat(videoInfo, download_candidate)}"
+        app:cardCornerRadius="20dp"
+        app:checkedIconTint="@color/colorPrimary"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeColor="@{is_candidate_selected ? @color/colorPrimary : @android:color/transparent}"
+        app:strokeWidth="3dp">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:paddingStart="@dimen/padding_small"
+            android:paddingEnd="@dimen/padding_small"
+            android:text="@string/player_resolution"
+            android:textAlignment="center"
+            android:textSize="@dimen/text_xxxlarge" />
+
+    </com.google.android.material.card.MaterialCardView>
+</layout>

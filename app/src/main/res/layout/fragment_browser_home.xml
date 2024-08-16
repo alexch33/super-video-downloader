@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ui.main.home.browser.homeTab.BrowserHomeFragment">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="browserMenuListener"
+            type="com.myAllVideoBrowser.ui.main.home.browser.BrowserListener" />
+
+        <variable
+            name="viewModel"
+            type="com.myAllVideoBrowser.ui.main.home.browser.homeTab.BrowserHomeViewModel" />
+
+        <variable
+            name="mainVModel"
+            type="com.myAllVideoBrowser.ui.main.home.MainViewModel" />
+    </data>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="3">
+
+            <com.google.android.material.appbar.AppBarLayout
+                android:id="@id/appBarLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <com.google.android.material.appbar.MaterialToolbar
+                    android:id="@+id/materialToolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/browser_home_menu_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginEnd="@dimen/padding_small"
+                        android:elevation="0dp"
+                        android:shadowColor="@android:color/transparent"
+                        app:cardBackgroundColor="@android:color/transparent"
+                        app:cardCornerRadius="8dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_bias="0.0"
+                        app:strokeColor="@android:color/transparent">
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/browser_home_menu_button"
+                            android:layout_width="49dp"
+                            android:layout_height="49dp"
+                            android:layout_gravity="end"
+                            android:contentDescription="@string/menu"
+                            android:onClick="@{() -> browserMenuListener.onBrowserMenuClicked()}"
+                            android:padding="@dimen/padding_small"
+                            app:srcCompat="@drawable/ic_more_24dp"
+                            tools:ignore="VectorDrawableCompat" />
+                    </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.appbar.MaterialToolbar>
+
+            </com.google.android.material.appbar.AppBarLayout>
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/home_et_search"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginBottom="@dimen/padding_normal"
+                android:background="@drawable/round_corner"
+                android:elevation="5dp"
+                android:focusable="@{viewModel.isSearchInputFocused}"
+                android:focusableInTouchMode="@{viewModel.isSearchInputFocused}"
+                android:hint="@string/browser_search_hint"
+                android:maxWidth="450dp"
+                android:onClick="@{() -> viewModel.changeSearchFocus(true)}"
+                android:paddingStart="@dimen/padding_normal"
+                android:paddingEnd="@dimen/padding_normal"
+                android:singleLine="true"
+                android:text="@{viewModel.searchTextInput}"
+                android:textSize="@dimen/text_small"
+                app:items="@{viewModel.listSuggestions}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <GridView
+            android:id="@+id/top_pages_grid"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_gravity="center"
+            android:layout_weight="2"
+            android:gravity="center"
+            android:horizontalSpacing="4dp"
+            android:numColumns="4"
+            android:padding="4dp"
+            android:verticalSpacing="4dp"
+            app:items="@{viewModel.listPages}" />
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:gravity="center">
+
+        </LinearLayout>
+    </LinearLayout>
+
+</layout>

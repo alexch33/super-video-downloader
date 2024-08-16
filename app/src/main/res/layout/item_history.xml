@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="historyItem"
+            type="com.myAllVideoBrowser.data.local.room.entity.HistoryItem" />
+
+        <variable
+            name="historyId"
+            type="String" />
+
+        <variable
+            name="historyListener"
+            type="com.myAllVideoBrowser.ui.component.adapter.HistoryListener" />
+
+    </data>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:onClick="@{(view) -> historyListener.onHistoryOpenClicked(view, historyId)}"
+        app:strokeWidth="0dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/favicon"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                app:bitmap="@{historyItem.faviconBitmap()}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/tv_title"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.411"
+                app:shapeAppearanceOverlay="@style/customImageViewRounded" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tv_title"
+                android:layout_width="239dp"
+                android:layout_height="28dp"
+                android:maxLines="1"
+                android:text="@{historyItem.title}"
+                android:textSize="@dimen/text_large"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/iv_more"
+                app:layout_constraintHorizontal_bias="0.364"
+                app:layout_constraintStart_toEndOf="@id/favicon"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.212"
+                app:layout_constraintVertical_chainStyle="packed"
+                tools:text="Title" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tv_link"
+                android:layout_width="221dp"
+                android:layout_height="21dp"
+                android:layout_marginStart="6dp"
+                android:maxLines="1"
+                android:text="@{historyItem.url}"
+                android:textSize="@dimen/text_medium"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.027"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/favicon"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.696"
+                tools:text="https://www.imdb.com" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tv_time"
+                android:layout_width="65dp"
+                android:layout_height="33dp"
+                android:text="@string/about_an_hour_ago"
+                android:textAlignment="textEnd"
+                android:textSize="12sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/tv_link">
+
+            </com.google.android.material.textview.MaterialTextView>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_more"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:onClick="@{(view) -> historyListener.onMenuClicked(view, historyItem.id)}"
+                android:padding="@dimen/padding_small"
+                app:layout_constraintBottom_toTopOf="@+id/tv_time"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0"
+                app:srcCompat="@drawable/ic_more_gray_24dp"
+                tools:ignore="VectorDrawableCompat" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+
+</layout>

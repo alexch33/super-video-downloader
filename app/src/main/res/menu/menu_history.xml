@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/item_remove"
+        android:icon="@drawable/delete_forever_24px"
+        android:title="@string/remove"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+</menu>

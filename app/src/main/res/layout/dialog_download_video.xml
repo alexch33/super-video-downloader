@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="dialogListener"
+            type="com.myAllVideoBrowser.ui.component.dialog.DownloadDialogListener" />
+
+        <variable
+            name="dialog"
+            type="com.google.android.material.bottomsheet.BottomSheetDialog" />
+
+
+        <variable
+            name="mainViewModel"
+            type="com.myAllVideoBrowser.ui.main.home.MainViewModel" />
+
+        <variable
+            name="videInfo"
+            type="com.myAllVideoBrowser.data.local.room.entity.VideoInfo" />
+
+        <variable
+            name="title"
+            type="String" />
+
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:orientation="vertical">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/video_title_edit"
+            android:layout_width="match_parent"
+            android:maxWidth="488dp"
+            android:hint="@string/video_title_edit"
+            android:layout_height="65dp"
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:padding="@dimen/padding_small"
+            app:layout_constraintBottom_toTopOf="@+id/candidatesList"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.132"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.94" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/video_title_rename_button"
+            android:layout_width="150dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:textColor="@color/white"
+            android:text="@string/video_menu_rename" />
+
+        <GridView
+            android:id="@+id/candidatesList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:horizontalSpacing="4dp"
+            android:numColumns="2"
+            android:padding="8dp"
+            android:verticalSpacing="4dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_preview" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tv_cancel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/ic_cancel_24dp"
+            android:drawablePadding="@dimen/padding_small"
+            android:onClick="@{() -> dialogListener.onCancel(dialog)}"
+            android:padding="@dimen/padding_normal"
+            android:text="@string/dialog_download_cancel"
+            android:textSize="@dimen/text_medium" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tv_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/ic_video_24dp"
+            android:drawablePadding="@dimen/padding_small"
+            android:onClick="@{() -> dialogListener.onPreviewVideo(videInfo, dialog, mainViewModel.selectedFormatTitle.first, false)}"
+            android:padding="@dimen/padding_normal"
+            android:text="@string/dialog_preview_video"
+            android:textSize="@dimen/text_large" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tv_preview_force"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/downloading_24px"
+            android:drawablePadding="@dimen/padding_small"
+            android:onClick="@{() -> dialogListener.onPreviewVideo(videInfo, dialog, mainViewModel.selectedFormatTitle.first, true)}"
+            android:padding="@dimen/padding_normal"
+            android:text="@string/dialog_preview_video_force"
+            android:textSize="@dimen/text_large" />
+
+        <com.google.android.material.button.MaterialButton
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/padding_normal"
+            android:text="@string/dialog_download_video"
+            app:icon="@drawable/ic_download_24dp"
+            app:iconTint="@color/white"
+            android:textColor="@color/white"
+            android:textFontWeight="8"
+            android:layout_marginBottom="@dimen/padding_large"
+            android:onClick="@{() -> dialogListener.onDownloadVideo(videInfo, dialog, mainViewModel.selectedFormatTitle.first, mainViewModel.selectedFormatTitle.second)}"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_preview">
+
+        </com.google.android.material.button.MaterialButton>
+
+    </LinearLayout>
+</layout>

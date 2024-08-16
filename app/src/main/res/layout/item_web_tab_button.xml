@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <variable
+            name="webTab"
+            type="com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTab" />
+
+        <variable
+            name="tabListener"
+            type="com.myAllVideoBrowser.ui.component.adapter.WebTabsListener" />
+
+    </data>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/item_web_tab_button"
+        android:onClick="@{(v) -> tabListener.onSelectTabClicked(webTab)}"
+        android:layout_margin="4dp"
+        android:layout_width="match_parent"
+        android:layout_height="60dp">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/faviconTab"
+                android:padding="4dp"
+                app:bitmap="@{webTab.favicon}"
+                android:layout_width="50dp"
+                android:layout_height="50dp" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tab_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:text="@{webTab.title}"
+                android:textSize="@dimen/text_medium"
+                tools:text="Title" />
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/closeTab"
+                android:onClick="@{(v) -> tabListener.onCloseTabClicked(webTab)}"
+                android:layout_marginBottom="8dp"
+                android:src="@drawable/tab_close_24px"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+</layout>

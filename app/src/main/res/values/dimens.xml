@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    // Padding size
+    <dimen name="padding_tiny">4dp</dimen>
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="padding_normal">16dp</dimen>
+    <dimen name="padding_large">32dp</dimen>
+    <dimen name="browser_title_padding">40dp</dimen>
+
+    // Text size
+    <dimen name="text_tiny">12sp</dimen>
+    <dimen name="text_small">14sp</dimen>
+    <dimen name="text_medium">16sp</dimen>
+    <dimen name="text_large">18sp</dimen>
+    <dimen name="text_xlarge">20sp</dimen>
+    <dimen name="text_xxlarge">22sp</dimen>
+    <dimen name="text_xxxlarge">24sp</dimen>
+
+    // Splash screen
+    <dimen name="splash_progress_size">50dp</dimen>
+    <dimen name="splash_icon_size">80dp</dimen>
+
+    // Home screen
+    <dimen name="home_bottom_bar_size">60dp</dimen>
+
+    // Browser screen
+    <dimen name="browser_title_size">45dp</dimen>
+    <dimen name="browser_progress_size">3dp</dimen>
+    <dimen name="browser_icon_size">60dp</dimen>
+    <dimen name="browser_toolbar_elevation">3dp</dimen>
+    <dimen name="browser_loading_size">50dp</dimen>
+
+    // Progress screen
+    <dimen name="progress_icon_size">60dp</dimen>
+    <dimen name="progress_bar_size">4dp</dimen>
+
+    // Video screen
+    <dimen name="video_icon_size">80dp</dimen>
+
+    // Player screen
+    <dimen name="player_button_size">50dp</dimen>
+
+    // Settings screen
+    <dimen name="settings_divider_size">2dp</dimen>
+    <dimen name="settings_icon_size">50dp</dimen>
+
+</resources>

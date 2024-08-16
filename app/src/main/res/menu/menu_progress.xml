@@ -1,0 +1,28 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/item_cancel"
+        android:icon="@drawable/cancel_24px"
+        android:title="@string/progress_menu_cancel"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
+        android:id="@+id/item_pause"
+        android:icon="@drawable/pause_circle_24px"
+        android:title="@string/progress_menu_pause"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
+        android:id="@+id/item_resume"
+        android:icon="@drawable/resume_24px"
+        android:title="@string/progress_menu_resume"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
+        android:id="@+id/item_stop_save"
+        android:icon="@drawable/save_24px"
+        android:title="@string/stop_and_save"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+</menu>

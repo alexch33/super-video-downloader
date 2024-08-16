@@ -1,4 +1,4 @@
-# youtube-dl-android
+# Android Video Downloader app with browser, player and custom downloaders
 
 ## Major technologies
 

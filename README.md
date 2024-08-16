@@ -12,7 +12,10 @@
 
 ## Features
 
-- Download videos from Youtube, Facebook, Twitter, Instagram, Dailymotion, Vimeo and more than [other 1000 sites](http://rg3.github.io/youtube-dl/supportedsites.html), also inrecept all streams data in browser like m3u8 or mpd links and download them, also intrecepts mp4 streaming video data
+- Download videos from Youtube, Facebook, Twitter, Instagram, Dailymotion, Vimeo and more
+  than [other 1000 sites](http://rg3.github.io/youtube-dl/supportedsites.html), also inrecept all
+  streams data in browser like m3u8 or mpd links and download them, also intrecepts mp4 streaming
+  video data
 - Browse videos with the built-in browser
 - Download videos with the built-in download manager
 - Play videos offline with the built-in player
@@ -20,6 +23,9 @@
 - Save history as a real browser
 - Live streams download support
 - Cokies supported
+
+Thanks
+to [@cuongpm](https://github.com/cuongpm), [@yausername](https://github.com/yausername), [@farimarwat](https://github.com/farimarwat)
 
 Inspired from [cuongpm/youtube-dl-android](https://github.com/cuongpm/youtube-dl-android)
 

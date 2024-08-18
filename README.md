@@ -29,7 +29,7 @@ to [@cuongpm](https://github.com/cuongpm), [@yausername](https://github.com/yaus
 
 Inspired from [cuongpm/youtube-dl-android](https://github.com/cuongpm/youtube-dl-android)
 
-BTC wallet: bc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fj[bitcoin:BC1Q97XGWURJF2P5AT9KZM96FKXYMF3RH6GFMFQ8FJ]
+BTC wallet: [bc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fj](bitcoin:BC1Q97XGWURJF2P5AT9KZM96FKXYMF3RH6GFMFQ8FJ)
 
 ## Screenshots
 

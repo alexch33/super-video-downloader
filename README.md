@@ -29,8 +29,6 @@ to [@cuongpm](https://github.com/cuongpm), [@yausername](https://github.com/yaus
 
 Inspired from [cuongpm/youtube-dl-android](https://github.com/cuongpm/youtube-dl-android)
 
-If you want to say thanks, BTC: bc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fjbc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fj
-
 ## Screenshots
 
 <img src="screenshots/screenshot_1.png" width="170"> <img src="screenshots/screenshot_2.png" width="170"> <img src="screenshots/screenshot_3.png" width="170"> <img src="screenshots/screenshot_4.png" width="170">

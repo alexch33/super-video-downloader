@@ -11,7 +11,7 @@ import javax.inject.Singleton
 @Singleton
 class SharedPrefHelper @Inject constructor(context: Context) {
     companion object {
-        private const val PREF_KEY = "settings_prefs"
+        const val PREF_KEY = "settings_prefs"
         private const val IS_DESKTOP = "IS_DESKTOP"
         private const val IS_FIND_BY_URL = "IS_FIND_BY_URL"
         private const val IS_CHECK_EVERY_REQUEST = "IS_CHECK_EVERY_REQUEST"
@@ -27,7 +27,7 @@ class SharedPrefHelper @Inject constructor(context: Context) {
         private const val IS_EXTERNAL_USE = "IS_EXTERNAL_USE"
         private const val IS_APP_DIR_USE = "IS_APP_DIR_USE"
         private const val IS_DARK_MODE = "IS_DARK_MODE"
-        private const val REGULAR_THREAD_COUNT = "REGULAR_THREAD_COUNT"
+        const val REGULAR_THREAD_COUNT = "REGULAR_THREAD_COUNT"
         private const val M3U8_THREAD_COUNT = "M3U8_THREAD_COUNT"
         private const val VIDEO_DETECTION_TRESHOLD = "VIDEO_DETECTION_TRESHOLD"
         private const val START_COUNT = "START_COUNT"
@@ -209,7 +209,7 @@ class SharedPrefHelper @Inject constructor(context: Context) {
     }
 
     fun getRegularDownloaderThreadCount(): Int {
-        return sharedPreferences.getInt(REGULAR_THREAD_COUNT, 0) // means 1(defVval+1)
+        return sharedPreferences.getInt(REGULAR_THREAD_COUNT, 1)
     }
 
     fun setRegularDownloaderThreadCount(count: Int) {

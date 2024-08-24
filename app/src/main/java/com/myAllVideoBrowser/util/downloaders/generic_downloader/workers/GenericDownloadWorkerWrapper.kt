@@ -11,6 +11,7 @@ import com.myAllVideoBrowser.data.repository.ProgressRepository
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.NotificationsHelper
+import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.NotificationReceiver
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
@@ -34,6 +35,9 @@ open class GenericDownloadWorkerWrapper(
 
     @Inject
     lateinit var proxyController: CustomProxyController
+
+    @Inject
+    lateinit var sharedPrefHelper: SharedPrefHelper
 
     private var disposable: Disposable? = null
 

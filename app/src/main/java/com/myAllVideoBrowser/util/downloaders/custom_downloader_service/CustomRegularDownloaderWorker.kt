@@ -31,9 +31,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     companion object {
         var isCanceled: Boolean = false
         private const val INTERVAL = 1000
-
-        // For tik tok always 1!!!
-        private const val THREAD_COUNT = 1
     }
 
     override fun handleAction(
@@ -253,11 +250,11 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         saveProgress(
             inf.id, Progress(0, 0), VideoTaskState.PENDING
         )
-
+        val threadCount = sharedPrefHelper.getRegularDownloaderThreadCount()
         proxyController.getClient()?.let { okHttpClient ->
             CustomFileDownloader(URL(url),
                 File(outputFileName!!),
-                THREAD_COUNT,
+                threadCount,
                 fixedHeaders,
                 okHttpClient,
                 object : DownloadListener {

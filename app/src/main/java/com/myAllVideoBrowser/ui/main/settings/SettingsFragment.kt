@@ -104,7 +104,7 @@ class SettingsFragment : BaseFragment() {
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 }
             })
-            lastSavedRegularThreadsCount = settingsViewModel.regularThreadsCount.get() + 1
+            lastSavedRegularThreadsCount = settingsViewModel.regularThreadsCount.get()
             this.seekBarRegular.progress = settingsViewModel.regularThreadsCount.get()
             this.seekBarRegular.setOnSeekBarChangeListener(object :
                 SeekBar.OnSeekBarChangeListener {
@@ -209,7 +209,7 @@ class SettingsFragment : BaseFragment() {
                             this@apply.regularThreadsCountText.text =
                                 getString(
                                     R.string.thread_count_for_regular_files,
-                                    "${settingsViewModel.regularThreadsCount.get() + 1}"
+                                    "${settingsViewModel.regularThreadsCount.get()}"
                                 )
                         }
                     }

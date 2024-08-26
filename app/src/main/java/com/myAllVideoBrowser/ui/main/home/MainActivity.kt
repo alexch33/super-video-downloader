@@ -16,7 +16,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
-import com.myAllVideoBrowser.OpenForTesting
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.repository.AdBlockHostsRepository
 import com.myAllVideoBrowser.databinding.ActivityMainBinding
@@ -31,7 +30,7 @@ import com.myAllVideoBrowser.util.fragment.FragmentFactory
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import javax.inject.Inject
 
-@OpenForTesting
+//@OpenForTesting
 class MainActivity : BaseActivity() {
 
     @Inject

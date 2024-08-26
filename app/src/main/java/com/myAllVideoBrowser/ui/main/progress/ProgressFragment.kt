@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
 import com.google.android.material.color.MaterialColors
-import com.myAllVideoBrowser.OpenForTesting
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentProgressBinding
 import com.myAllVideoBrowser.ui.component.adapter.ProgressAdapter
@@ -25,7 +24,7 @@ import com.myAllVideoBrowser.ui.main.home.MainViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import javax.inject.Inject
 
-@OpenForTesting
+//@OpenForTesting
 class ProgressFragment : BaseFragment() {
 
     companion object {

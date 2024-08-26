@@ -4,6 +4,7 @@ import androidx.work.WorkerFactory
 import com.myAllVideoBrowser.data.repository.ProgressRepository
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.NotificationsHelper
+import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import dagger.Module
@@ -18,9 +19,16 @@ class MyWorkerModule {
         progressRepository: ProgressRepository,
         fileUtil: FileUtil,
         notificationsHelper: NotificationsHelper,
-        proxyController: CustomProxyController
+        proxyController: CustomProxyController,
+        sharedPrefHelper: SharedPrefHelper
     ): WorkerFactory {
-        return DaggerWorkerFactory(progressRepository, fileUtil, notificationsHelper, proxyController)
+        return DaggerWorkerFactory(
+            progressRepository,
+            fileUtil,
+            notificationsHelper,
+            proxyController,
+            sharedPrefHelper
+        )
     }
 }
 

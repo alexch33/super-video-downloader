@@ -164,7 +164,6 @@
                 app:layout_constraintTop_toBottomOf="@+id/is_check_every_request" />
 
             <LinearLayout
-                android:visibility="gone"
                 android:id="@+id/regular_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -183,6 +182,7 @@
                     style="@style/Widget.AppCompat.SeekBar.Discrete"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:min="1"
                     android:max="15"
                     android:progress="@{viewModel.regularThreadsCount}" />
 

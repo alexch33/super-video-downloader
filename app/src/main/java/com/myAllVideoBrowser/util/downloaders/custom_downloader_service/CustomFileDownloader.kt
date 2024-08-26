@@ -225,7 +225,7 @@ class CustomFileDownloader(
             }
         }
         AppLogger.d(
-            "CHUNK $chunkIndex DOWNLOAD START AT $bytesCopied  $isResume"
+            "CHUNK $chunkIndex DOWNLOAD START, bytes copied: $bytesCopied  isResume: $isResume"
         )
 
         copiedBytesChunks[chunkIndex] = bytesCopied
@@ -238,10 +238,10 @@ class CustomFileDownloader(
             return
         }
 
-//        val req = getOkRequestRange(range.first + bytesCopied, range.last)
-        val req = getOkRequestRange(
-            range.first + bytesCopied, null
-        )
+        val req = if (threadCount == 1) {
+            getOkRequestRange(range.first + bytesCopied, null)
+        } else
+            getOkRequestRange(range.first + bytesCopied, range.last)
         val res = client.newCall(req).execute()
 
         if (res.body.contentLength() == -1L) {

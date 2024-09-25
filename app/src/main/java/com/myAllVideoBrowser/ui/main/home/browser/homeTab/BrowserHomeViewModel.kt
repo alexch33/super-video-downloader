@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser.ui.main.home.browser.homeTab
 
-import android.annotation.SuppressLint
 import androidx.databinding.ObservableBoolean
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
@@ -86,10 +85,9 @@ class BrowserHomeViewModel @Inject constructor(
         }.onErrorReturn {
             emptyList()
         }.take(1).observeOn(baseSchedulers.single)
-            .subscribeOn(baseSchedulers.computation) // MAIN_TH
+            .subscribeOn(baseSchedulers.computation)
     }
 
-    @SuppressLint("CheckResult")
     private fun updateTopPages() {
         viewModelScope.launch(executorSingle) {
             val pages = try {

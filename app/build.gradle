@@ -128,9 +128,6 @@ dependencies {
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.5'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.5'
-
     implementation('androidx.concurrent:concurrent-futures-ktx:1.2.0')
 
     // Testing
@@ -148,7 +145,9 @@ dependencies {
 
     // Life cycle
     implementation deps.lifecycle.extensions
-    implementation 'androidx.lifecycle:lifecycle-common-java8:2.8.5'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.8.6'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.6'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6'
     testImplementation 'androidx.arch.core:core-testing:2.2.0'
     androidTestImplementation 'androidx.arch.core:core-testing:2.2.0'
 
@@ -211,7 +210,7 @@ dependencies {
 
     implementation 'androidx.core:core-ktx:1.13.1'
 
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3'
 
     implementation 'org.jsoup:jsoup:1.18.1'
 

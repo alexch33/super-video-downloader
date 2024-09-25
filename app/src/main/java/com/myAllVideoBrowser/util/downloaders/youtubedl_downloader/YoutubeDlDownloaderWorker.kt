@@ -292,7 +292,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                     if (line.contains("[download] Destination:")) {
                         isDownloadJustStarted = true
                     }
-                    if (line.contains("[download]   0")) {
+                    if (line.contains(Regex("""\[download] {3}\d+"""))) {
                         isDownloadOk = true
                     }
 

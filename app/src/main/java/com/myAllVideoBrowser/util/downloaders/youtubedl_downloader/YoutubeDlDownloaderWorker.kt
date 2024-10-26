@@ -288,7 +288,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             }
 
             disposable = Observable.fromCallable<YoutubeDLResponse> {
-                YoutubeDL.getInstance().execute(request, taskId, { pr, _, line ->
+                YoutubeDL.getInstance().execute(request, taskId) { pr, _, line ->
                     if (line.contains("[download] Destination:")) {
                         isDownloadJustStarted = true
                     }
@@ -340,7 +340,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                             return@execute
                         }
                     }
-                }) { _, _ ->
                 }
             }.doOnError {
                 handleError(taskId, url, progressCached, it, tmpFile.name, name)

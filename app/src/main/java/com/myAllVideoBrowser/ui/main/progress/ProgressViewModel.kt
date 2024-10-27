@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser.ui.main.progress
 
-import android.net.Uri
 import androidx.annotation.VisibleForTesting
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
@@ -12,7 +11,7 @@ import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
-import com.myAllVideoBrowser.util.downloaders.custom_downloader_service.CustomRegularDownloader
+import com.myAllVideoBrowser.util.downloaders.custom_downloader.CustomRegularDownloader
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloader
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Observable

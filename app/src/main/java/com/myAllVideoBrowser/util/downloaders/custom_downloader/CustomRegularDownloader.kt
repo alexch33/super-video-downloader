@@ -1,4 +1,4 @@
-package com.myAllVideoBrowser.util.downloaders.custom_downloader_service
+package com.myAllVideoBrowser.util.downloaders.custom_downloader
 
 import android.content.Context
 import androidx.work.*

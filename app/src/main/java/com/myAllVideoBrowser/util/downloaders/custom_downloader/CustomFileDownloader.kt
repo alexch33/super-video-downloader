@@ -1,4 +1,4 @@
-package com.myAllVideoBrowser.util.downloaders.custom_downloader_service
+package com.myAllVideoBrowser.util.downloaders.custom_downloader
 
 import com.myAllVideoBrowser.util.AppLogger
 import okhttp3.Headers.Companion.toHeaders

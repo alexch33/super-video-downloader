@@ -32,6 +32,9 @@ open class DLApplication : DaggerApplication() {
     lateinit var workerFactory: DaggerWorkerFactory
 
     @Inject
+    lateinit var sharedPrefHelper: SharedPrefHelper
+
+    @Inject
     lateinit var fileUtil: FileUtil
 
     override fun attachBaseContext(base: Context?) {
@@ -48,7 +51,7 @@ open class DLApplication : DaggerApplication() {
 
         ContextUtils.initApplicationContext(applicationContext)
 
-        initializeFileUtils(applicationContext)
+        initializeFileUtils()
 
         val file: File = fileUtil.folderDir
         val ctx = applicationContext
@@ -73,15 +76,13 @@ open class DLApplication : DaggerApplication() {
         }
     }
 
-    private fun initializeFileUtils(applicationContext: Context?) {
-        if (applicationContext != null) {
-            val isExternal = SharedPrefHelper(applicationContext).getIsExternalUse()
-            val isAppDir = SharedPrefHelper(applicationContext).getIsAppDirUse()
+    private fun initializeFileUtils() {
+        val isExternal = sharedPrefHelper.getIsExternalUse()
+        val isAppDir = sharedPrefHelper.getIsAppDirUse()
 
-            FileUtil.IS_EXTERNAL_STORAGE_USE = isExternal
-            FileUtil.IS_APP_DATA_DIR_USE = isAppDir
-            FileUtil.INITIIALIZED = true
-        }
+        FileUtil.IS_EXTERNAL_STORAGE_USE = isExternal
+        FileUtil.IS_APP_DATA_DIR_USE = isAppDir
+        FileUtil.INITIIALIZED = true
     }
 
     private fun initializeYoutubeDl() {

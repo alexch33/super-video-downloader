@@ -25,7 +25,7 @@
 - Cokies supported
 
 Thanks
-to [@cuongpm](https://github.com/cuongpm), [@yausername](https://github.com/yausername), [@farimarwat](https://github.com/farimarwat)
+to [@cuongpm](https://github.com/cuongpm), [@yausername](https://github.com/yausername)
 
 Inspired from [cuongpm/youtube-dl-android](https://github.com/cuongpm/youtube-dl-android)
 

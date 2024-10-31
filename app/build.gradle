@@ -40,8 +40,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 3
-        versionName "0.0.3"
+        versionCode 4
+        versionName "0.0.4"
         testInstrumentationRunner "util.TestRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -198,6 +198,7 @@ dependencies {
 
     implementation("io.github.junkfood02.youtubedl-android:library:0.17.1")
     implementation("io.github.junkfood02.youtubedl-android:ffmpeg:0.17.1")
+    implementation("io.github.junkfood02.youtubedl-android:aria2c:0.17.1")
 
     implementation 'com.github.bumptech.glide:glide:4.16.0'
 

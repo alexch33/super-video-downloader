@@ -111,7 +111,6 @@ class BrowserHomeFragment : BaseWebTabFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         handleFirstStartGuide()
-        setIsDesktop(mainActivity.settingsViewModel.isDesktopMode.get())
 
         homeViewModel.start()
         val openingUrl = mainViewModel.openedUrl.get()

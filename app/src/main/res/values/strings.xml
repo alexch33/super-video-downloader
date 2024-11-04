@@ -1,6 +1,6 @@
 <resources>
     <string name="app_icon">app icon</string>
-    <string name="app_name">SuperX - Super Video Downloader</string>
+    <string name="app_name">SuperX</string>
     <string name="browser_search_hint">Search Google or enter url</string>
 
     <string name="title_video">Video</string>
@@ -90,4 +90,11 @@
     <string name="ads_detection_treshold">Ads Detection Treshold: %1$s</string>
     <string name="thread_count_for_regular_files">Thread Count for regular files: %1$s</string>
     <string name="thread_count_for_hls_and_mpd">Thread Count for HLS and MPD: %1$s</string>
+    <string name="lock_screen_orientation_portrait">Lock portrait screen orientation</string>
+    <string name="regular_threads_count">Regular Threads Count:</string>
+    <string name="m3u8_threads_count">M3U8 Threads Count:</string>
+    <string name="downloads_location">Downloads Location</string>
+    <string name="downloads_folder">Downloads folder</string>
+    <string name="hidden_folder">Hidden folder</string>
+    <string name="sd_app_folder">SD app folder</string>
 </resources>

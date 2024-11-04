@@ -23,7 +23,6 @@
             android:configChanges="orientation|screenSize"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:screenOrientation="fullSensor"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -48,7 +47,6 @@
             android:name="com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
             android:hardwareAccelerated="true"
-            android:screenOrientation="fullSensor"
             android:theme="@style/AppTheme" />
         <!--        <activity android:name="util.TestHelperActivity" />-->
 

@@ -35,6 +35,7 @@ class SettingsViewModel @Inject constructor(
     val isDesktopMode = ObservableBoolean(false)
     val isAdBlocker = ObservableBoolean(true)
     val isDarkMode = ObservableBoolean(false)
+    val isLockPortrait = ObservableBoolean(false)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
     private val isCheckEveryRequestOnVideo = ObservableBoolean(true)
@@ -53,6 +54,7 @@ class SettingsViewModel @Inject constructor(
             regularThreadsCount.set(sharedPrefHelper.getRegularDownloaderThreadCount())
             m3u8ThreadsCount.set(sharedPrefHelper.getM3u8DownloaderThreadCount())
             videoDetectionTreshold.set(sharedPrefHelper.getVideoDetectionTreshold())
+            isLockPortrait.set(sharedPrefHelper.getIsLockPortrait())
 
             if (sharedPrefHelper.getIsExternalUse() && !sharedPrefHelper.getIsAppDirUse()) {
                 storageType.set(StorageType.SD)
@@ -65,6 +67,13 @@ class SettingsViewModel @Inject constructor(
     }
 
     override fun stop() {
+    }
+
+    fun setIsLockPortrait(isLock: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            isLockPortrait.set(isLock)
+            sharedPrefHelper.setIsLockPortrait(isLock)
+        }
     }
 
     fun clearCookies() {

@@ -109,22 +109,22 @@ dependencies {
     // Android support
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
-    implementation deps.support.constraintlayout
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
     // Kotlin + coroutines
-    implementation('androidx.work:work-runtime-ktx:2.9.1')
+    implementation('androidx.work:work-runtime-ktx:2.10.0')
 
     // optional - RxJava2 support
-    implementation('androidx.work:work-rxjava3:2.9.1')
+    implementation('androidx.work:work-rxjava3:2.10.0')
 
     // optional - GCMNetworkManager support
-    implementation('androidx.work:work-gcm:2.9.1')
-    implementation 'androidx.fragment:fragment-ktx:1.8.4'
+    implementation('androidx.work:work-gcm:2.10.0')
+    implementation 'androidx.fragment:fragment-ktx:1.8.5'
     // optional - Test helpers
-    androidTestImplementation('androidx.work:work-testing:2.9.1')
+    androidTestImplementation('androidx.work:work-testing:2.10.0')
 
     // optional - Multiprocess support
-    implementation 'androidx.work:work-multiprocess:2.9.1'
+    implementation 'androidx.work:work-multiprocess:2.10.0'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
@@ -145,9 +145,9 @@ dependencies {
 
     // Life cycle
     implementation deps.lifecycle.extensions
-    implementation 'androidx.lifecycle:lifecycle-common-java8:2.8.6'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.6'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
     testImplementation 'androidx.arch.core:core-testing:2.2.0'
     androidTestImplementation 'androidx.arch.core:core-testing:2.2.0'
 
@@ -206,7 +206,7 @@ dependencies {
 
     implementation('androidx.webkit:webkit:1.11.0')
 
-    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.core:core-ktx:1.15.0'
 
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3'
 

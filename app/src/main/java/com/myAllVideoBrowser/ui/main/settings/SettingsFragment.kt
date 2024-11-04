@@ -65,6 +65,9 @@ class SettingsFragment : BaseFragment() {
         dataBinding = FragmentSettingsBinding.inflate(inflater, container, false).apply {
             this.settingsBackground.setBackgroundColor(color)
             this.viewModel = settingsViewModel
+            this.lockOrientationCheckBox.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setIsLockPortrait(checked)
+            }
             this.showVideoAlertCheckBox.setOnCheckedChangeListener { _, checked ->
                 if (checked) {
                     settingsViewModel.setShowVideoAlertOn()
@@ -93,9 +96,9 @@ class SettingsFragment : BaseFragment() {
                     progress: Int,
                     fromUser: Boolean
                 ) {
-                   if (fromUser) {
-                       settingsViewModel.setM3u8ThreadsCount(progress)
-                   }
+                    if (fromUser) {
+                        settingsViewModel.setM3u8ThreadsCount(progress)
+                    }
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -138,7 +141,7 @@ class SettingsFragment : BaseFragment() {
                     progress: Int,
                     fromUser: Boolean
                 ) {
-                    if(fromUser) {
+                    if (fromUser) {
                         settingsViewModel.setVideoDetectionTreshold(progress)
                     }
                 }

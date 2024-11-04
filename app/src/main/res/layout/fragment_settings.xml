@@ -14,10 +14,10 @@
     </data>
 
     <ScrollView
-        android:paddingBottom="60dp"
         android:id="@+id/settings_background"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:paddingBottom="60dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/settings_container"
@@ -132,12 +132,20 @@
                 app:layout_constraintTop_toBottomOf="@id/layout_clear_cookie" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/lock_orientation_check_box"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.isLockPortrait}"
+                android:text="@string/lock_screen_orientation_portrait"
+                app:layout_constraintTop_toBottomOf="@+id/layout_clear_cookie" />
+
+            <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/show_video_alert_check_box"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getVideoAlertState()}"
                 android:text="@string/show_video_found_alert"
-                app:layout_constraintTop_toBottomOf="@+id/layout_clear_cookie" />
+                app:layout_constraintTop_toBottomOf="@+id/lock_orientation_check_box" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/show_video_action_button_check_box"
@@ -174,7 +182,7 @@
                     android:id="@+id/regular_threads_count_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Regular Threads Count: "
+                    android:text="@string/regular_threads_count"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
 
                 <SeekBar
@@ -182,8 +190,8 @@
                     style="@style/Widget.AppCompat.SeekBar.Discrete"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:min="1"
                     android:max="15"
+                    android:min="1"
                     android:progress="@{viewModel.regularThreadsCount}" />
 
             </LinearLayout>
@@ -199,7 +207,7 @@
                     android:id="@+id/m3u8_threads_count_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="M3U8 Threads Count: "
+                    android:text="@string/m3u8_threads_count"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
 
                 <SeekBar
@@ -222,7 +230,7 @@
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Downloads Location"
+                    android:text="@string/downloads_location"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2" />
 
                 <RadioGroup
@@ -235,19 +243,19 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:checked="true"
-                        android:text="Downloads folder" />
+                        android:text="@string/downloads_folder" />
 
                     <RadioButton
                         android:id="@+id/option_hidden_folder"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Hidden folder" />
+                        android:text="@string/hidden_folder" />
 
                     <RadioButton
                         android:id="@+id/option_sd_app_folder"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="SD app folder" />
+                        android:text="@string/sd_app_folder" />
                 </RadioGroup>
 
                 <LinearLayout

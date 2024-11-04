@@ -113,8 +113,11 @@ class CustomWebChromeClient(
             View.VISIBLE
         dataBinding.containerBrowser.visibility =
             View.VISIBLE
-        (mainActivity).requestedOrientation =
+        mainActivity.requestedOrientation = if (settingsViewModel.isLockPortrait.get()) {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
             ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
         appUtil.showSystemUI(mainActivity.window, dataBinding.customView)
     }
 }

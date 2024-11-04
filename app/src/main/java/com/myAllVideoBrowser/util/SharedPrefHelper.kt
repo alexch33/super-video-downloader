@@ -30,7 +30,7 @@ class SharedPrefHelper @Inject constructor(context: Context) {
         const val REGULAR_THREAD_COUNT = "REGULAR_THREAD_COUNT"
         private const val M3U8_THREAD_COUNT = "M3U8_THREAD_COUNT"
         private const val VIDEO_DETECTION_TRESHOLD = "VIDEO_DETECTION_TRESHOLD"
-        private const val START_COUNT = "START_COUNT"
+        private const val IS_LOCK_PORTRAIT = "IS_LOCK_PORTRAIT"
     }
 
     private var sharedPreferences: SharedPreferences =
@@ -241,13 +241,13 @@ class SharedPrefHelper @Inject constructor(context: Context) {
         }
     }
 
-    fun getStartCount(): Int {
-        return sharedPreferences.getInt(START_COUNT, 0)
+    fun getIsLockPortrait(): Boolean {
+        return sharedPreferences.getBoolean(IS_LOCK_PORTRAIT, false)
     }
 
-    fun saveStartCount(count: Int) {
+    fun setIsLockPortrait(isLock: Boolean) {
         sharedPreferences.edit().let {
-            it.putInt(START_COUNT, count)
+            it.putBoolean(IS_LOCK_PORTRAIT, isLock)
             it.apply()
         }
     }

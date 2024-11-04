@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.ui.main.home
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -13,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.databinding.DataBindingUtil
+import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
@@ -66,7 +68,11 @@ class MainActivity : BaseActivity() {
 
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
-        AdsInitializerHelper.initializeAdBlocker(adBlockHostsRepository, sharedPrefHelper, lifecycleScope)
+        AdsInitializerHelper.initializeAdBlocker(
+            adBlockHostsRepository,
+            sharedPrefHelper,
+            lifecycleScope
+        )
 
         mainViewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
         proxiesViewModel = ViewModelProvider(this, viewModelFactory)[ProxiesViewModel::class.java]
@@ -116,6 +122,9 @@ class MainActivity : BaseActivity() {
                 mainViewModel.openedText.set(sharedText)
             }
         }
+
+        handleScreenOrientationSettingChange()
+        handleScreenOrientationSettingsInit()
 
         onNewIntent(intent)
     }
@@ -208,5 +217,30 @@ class MainActivity : BaseActivity() {
     override fun onDestroy() {
         mainViewModel.stop()
         super.onDestroy()
+    }
+
+    private fun handleScreenOrientationSettingsInit() {
+        // INIT
+        requestedOrientation = if (settingsViewModel.isLockPortrait.get()) {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+    }
+
+    private fun handleScreenOrientationSettingChange() {
+        // CHANGES HANDLING
+        settingsViewModel.isLockPortrait.addOnPropertyChangedCallback(object :
+            Observable.OnPropertyChangedCallback() {
+            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+                val isLock = settingsViewModel.isLockPortrait.get()
+
+                requestedOrientation = if (isLock) {
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                }
+            }
+        })
     }
 }

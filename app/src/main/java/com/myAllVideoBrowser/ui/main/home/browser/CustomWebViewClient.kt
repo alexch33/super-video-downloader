@@ -97,7 +97,7 @@ class CustomWebViewClient(
                 return AdBlockerHelper.createEmptyResource()
             }
 
-            url.contains(".m3u8") || url.contains(".mpd") || url.contains(".txt") -> {
+            url.contains("m3u8") || url.contains("mpd") || url.contains(".txt") -> {
                 if (request != null) {
                     val verReq = try {
                         CookieUtils.webRequestToHttpWithCookies(request)

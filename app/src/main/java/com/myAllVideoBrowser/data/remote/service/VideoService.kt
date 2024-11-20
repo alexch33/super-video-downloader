@@ -27,9 +27,9 @@ open class VideoServiceLocal(
 ) : VideoService {
     companion object {
         const val MP4_EXT = "mp4"
-        private const val M3U8_EXT = ".m3u8"
+        private const val M3U8_EXT = "m3u8"
         private const val TXT_EXT = ".txt"
-        private const val MPD_EXT = ".mpd"
+        private const val MPD_EXT = "mpd"
         private const val FACEBOOK_HOST = ".facebook."
         private const val COOKIE_HEADER = "Cookie"
     }

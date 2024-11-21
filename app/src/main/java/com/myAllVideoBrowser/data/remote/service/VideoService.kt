@@ -182,6 +182,7 @@ class YoutubedlHelper @Inject constructor(private val okHttpProxyClient: OkHttpP
                 Request.Builder().url(SUPPORTED_SITES_URL).build()
             ).execute()
             val doc = Jsoup.parse(response.body.string())
+            response.body.close()
             val sitesB = doc.select("li > b")
 
             for (b in sitesB) {

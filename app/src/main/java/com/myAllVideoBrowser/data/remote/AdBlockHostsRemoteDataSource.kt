@@ -55,9 +55,10 @@ class AdBlockHostsRemoteDataSource @Inject constructor(
                 e.printStackTrace()
                 null
             }
-            val responseBytesStream = response?.body?.byteStream()
-            responseBytesStream?.let {
-                emit(readAdServersFromStream(it))
+            response?.body?.byteStream().use { responseBytesStream ->
+                responseBytesStream?.let {
+                    emit(readAdServersFromStream(it))
+                }
             }
         }
     }

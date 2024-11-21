@@ -40,8 +40,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 7
-        versionName "0.1.0"
+        versionCode 8
+        versionName "0.1.1"
         testInstrumentationRunner "util.TestRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -204,7 +204,7 @@ dependencies {
 
     kapt 'com.github.bumptech.glide:compiler:4.16.0'
 
-    implementation('androidx.webkit:webkit:1.11.0')
+    implementation('androidx.webkit:webkit:1.12.1')
 
     implementation 'androidx.core:core-ktx:1.15.0'
 

@@ -90,6 +90,10 @@ class AdBlockHostsRemoteDataSource @Inject constructor(
         throw Exception("To remote host forbidden to getHostsCount")
     }
 
+    override fun getCachedCount(): Int {
+        return 0
+    }
+
     override suspend fun initialize(isUpdate: Boolean): Boolean {
         throw Exception("no need to Initialize AdBlockHostsRemoteDataSource")
     }

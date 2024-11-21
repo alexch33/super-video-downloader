@@ -19,7 +19,7 @@ import java.util.*
 import javax.inject.Inject
 
 interface VideoService {
-    fun getVideoInfo(url: Request): VideoInfoWrapper?
+    fun getVideoInfo(url: Request,  isM3u8OrMpd: Boolean = false): VideoInfoWrapper?
 }
 
 open class VideoServiceLocal(
@@ -27,27 +27,17 @@ open class VideoServiceLocal(
 ) : VideoService {
     companion object {
         const val MP4_EXT = "mp4"
-        private const val M3U8_EXT = "m3u8"
-        private const val TXT_EXT = ".txt"
-        private const val MPD_EXT = "mpd"
         private const val FACEBOOK_HOST = ".facebook."
         private const val COOKIE_HEADER = "Cookie"
     }
 
-    override fun getVideoInfo(url: Request): VideoInfoWrapper? {
+    override fun getVideoInfo(url: Request, isM3u8OrMpd: Boolean): VideoInfoWrapper? {
         AppLogger.d("Getting info url...:  $url  ${url.headers["Cookie"]}")
 
         var result: VideoInfoWrapper? = null
 
         try {
-            val isM3u8 = url.url.toString().contains(M3U8_EXT, true)
-            val isHentaiHavenM3u8 = url.url.toString().contains(TXT_EXT, true)
-            val isMpd = url.url.toString().contains(MPD_EXT, true)
-            result = if (isM3u8 || isHentaiHavenM3u8 || isMpd) {
-                handleYoutubeDlUrl(url, true)
-            } else {
-                handleYoutubeDlUrl(url)
-            }
+            result = handleYoutubeDlUrl(url, isM3u8OrMpd)
         } catch (e: Throwable) {
             AppLogger.d("YoutubeDL Error: $e")
         }

@@ -21,11 +21,19 @@ import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTab
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabViewModel
 import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.SingleLiveEvent
+import com.myAllVideoBrowser.util.VideoUtils
 import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
+
+enum class ContentType {
+    M3U8,
+    MPD,
+    MP4,
+    OTHER
+}
 
 class CustomWebViewClient(
     private val tabViewModel: WebTabViewModel,
@@ -92,23 +100,32 @@ class CustomWebViewClient(
 
         val isUrlAd: Boolean = isAdBlockerOn && tabViewModel.isAd(url)
 
-        when {
-            isUrlAd -> {
-                return AdBlockerHelper.createEmptyResource()
-            }
+        if (isUrlAd) {
+            return AdBlockerHelper.createEmptyResource()
+        }
 
-            url.contains("m3u8") || url.contains("mpd") || url.contains(".txt") -> {
-                if (request != null) {
-                    val verReq = try {
-                        CookieUtils.webRequestToHttpWithCookies(request)
-                    } catch (e: Throwable) {
-                        null
-                    }
-                    if (verReq != null) {
-                        videoDetectionModel.verifyLinkStatus(
-                            verReq, tabViewModel.currentTitle.get()
-                        )
-                    }
+        val requestWithCookies = request?.let { resourceRequest ->
+            try {
+                CookieUtils.webRequestToHttpWithCookies(
+                    resourceRequest
+                )
+            } catch (e: Throwable) {
+                null
+            }
+        }
+
+        val contentType =
+            VideoUtils.getContentTypeByUrl(url, requestWithCookies?.headers, okHttpProxyClient)
+
+        when {
+
+            contentType == ContentType.M3U8 || contentType == ContentType.MPD || url.contains(".m3u8") || url.contains(
+                ".mpd"
+            ) || (url.contains(".txt") && url.contains("hentaihaven")) -> {
+                if (requestWithCookies != null) {
+                    videoDetectionModel.verifyLinkStatus(
+                        requestWithCookies, tabViewModel.currentTitle.get(), true
+                    )
                 }
 
                 return super.shouldInterceptRequest(view, request)
@@ -116,11 +133,6 @@ class CustomWebViewClient(
 
             else -> {
                 if (settingsModel.getIsCheckEveryRequestOnVideo().get()) {
-                    val requestWithCookies = request?.let { resourceRequest ->
-                        CookieUtils.webRequestToHttpWithCookies(
-                            resourceRequest
-                        )
-                    }
                     val disposable = videoDetectionModel.checkRegularMp4(requestWithCookies)
 
                     val currentUrl = tabViewModel.getTabTextInput().get() ?: ""
@@ -163,7 +175,6 @@ class CustomWebViewClient(
         )
         tabViewModel.onStartPage(url, view.title)
     }
-
 
     override fun shouldOverrideUrlLoading(view: WebView, url: WebResourceRequest): Boolean {
         val isAdBlockerOn = settingsModel.isAdBlocker.get()

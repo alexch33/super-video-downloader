@@ -159,8 +159,6 @@ class YoutubedlHelper @Inject constructor(private val okHttpProxyClient: OkHttpP
             } catch (e: Throwable) {
                 e.printStackTrace()
                 isLoading = false
-
-                return true
             }
 
             return true

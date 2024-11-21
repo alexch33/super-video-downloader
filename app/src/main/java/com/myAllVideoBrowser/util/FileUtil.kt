@@ -18,7 +18,6 @@ import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.core.net.toFile
 import androidx.core.net.toUri
-import org.apache.commons.io.FileExistsException
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.Files
@@ -43,10 +42,12 @@ class FileUtil @Inject constructor() {
 
         private const val KB = 1024
         private const val MB = 1024 * 1024
+        private const val GB = 1024 * 1024 * 1024
         fun getFileSizeReadable(length: Double): String {
 
             val decimalFormat = DecimalFormat("#.##")
             return when {
+                length > GB -> decimalFormat.format(length / GB) + " GB"
                 length > MB -> decimalFormat.format(length / MB) + " MB"
                 length > KB -> decimalFormat.format(length / KB) + " KB"
                 else -> decimalFormat.format(length) + " B"
@@ -206,13 +207,13 @@ class FileUtil @Inject constructor() {
             }
 
             if (!isNewFileNotExists) {
-                throw FileExistsException("File already exists")
+                throw Exception("File already exists")
             }
             if (isFileApiSupportedByUri(context, from)) {
                 val fromFile = from.toFile()
                 val toFile = File(fromFile.parentFile, cleanedFileName)
                 if (toFile.exists()) {
-                    throw FileExistsException("File already exists: $toFile")
+                    throw Exception("File already exists: $toFile")
                 }
                 fromFile.renameTo(toFile)
 

@@ -483,6 +483,7 @@ class DetectedVideosTabViewModel @Inject constructor(
 
             val length = respons.body.contentLength()
             val type = respons.body.contentType()
+            respons.body.close()
 
             if (respons.code == 403 || respons.code == 401) {
                 val finlUrlPairEmpty = try {
@@ -504,6 +505,7 @@ class DetectedVideosTabViewModel @Inject constructor(
                             finlUrlPairEmpty.second.toMap(),
                             length
                         )
+                        emptyRes.close()
 
                         return
                     }

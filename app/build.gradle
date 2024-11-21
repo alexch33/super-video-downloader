@@ -40,8 +40,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 8
-        versionName "0.1.1"
+        versionCode 9
+        versionName "0.1.2"
         testInstrumentationRunner "util.TestRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -182,7 +182,6 @@ dependencies {
     implementation deps.okhttp.runtime
     implementation deps.okhttp.logging
     implementation deps.retrofit.runtime
-//    implementation deps.retrofit.rxjava2
     implementation 'com.squareup.retrofit2:adapter-rxjava3:2.11.0'
     implementation deps.retrofit.gson
 
@@ -191,10 +190,6 @@ dependencies {
     // explicitly depend on RxJava's latest version for bug fixes and new features.
     // (see https://github.com/ReactiveX/RxJava/releases for latest 3.x.x version)
     implementation 'io.reactivex.rxjava3:rxjava:3.1.9'
-
-//    implementation 'com.github.farimarwat.youtubedl-android:ffmpeg:1.0.22'
-//    implementation 'com.github.farimarwat.youtubedl-android:library:1.0.22'
-//    implementation 'com.github.farimarwat.youtubedl-android:common:1.0.22'
 
     implementation("io.github.junkfood02.youtubedl-android:library:0.17.1")
     implementation("io.github.junkfood02.youtubedl-android:ffmpeg:0.17.1")
@@ -213,10 +208,6 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.18.1'
 
     implementation 'com.github.marlonlom:timeago:4.0.3'
-
-    implementation("commons-io:commons-io:2.11.0")
-
-    implementation 'commons-lang:commons-lang:2.6'
 
     var media3_version = '1.4.1'
 

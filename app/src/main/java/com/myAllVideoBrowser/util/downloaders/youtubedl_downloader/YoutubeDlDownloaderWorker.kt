@@ -23,7 +23,6 @@ import com.yausername.youtubedl_android.YoutubeDLResponse
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import org.apache.commons.io.FileUtils
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -523,9 +522,9 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         }
 
         override fun toString(): String {
-            return "${FileUtils.byteCountToDisplaySize(progress.toLong())} / ${
-                FileUtils.byteCountToDisplaySize(
-                    total.toLong()
+            return "${FileUtil.getFileSizeReadable(progress)} / ${
+                FileUtil.getFileSizeReadable(
+                    total
                 )
             }  frag: $fragDownloaded / $fragTotal"
         }

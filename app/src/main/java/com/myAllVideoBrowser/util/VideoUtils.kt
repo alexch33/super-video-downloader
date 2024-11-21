@@ -28,36 +28,40 @@ class VideoUtils {
             } catch (e: Throwable) {
                 null
             }
-            val contentType = response?.header("Content-Type")
+            val contentTypeStr = response?.header("Content-Type")
+            var contentType: ContentType = ContentType.OTHER
 
             when {
-                contentType?.contains("mpegurl") == true -> {
-                    return ContentType.M3U8
+                contentTypeStr?.contains("mpegurl") == true -> {
+                    contentType = ContentType.M3U8
                 }
 
-                contentType?.contains("dash") == true -> {
-                    return ContentType.MPD
+                contentTypeStr?.contains("dash") == true -> {
+                    contentType = ContentType.MPD
                 }
 
-                contentType?.contains("mp4") == true -> {
-                    return ContentType.MP4
+                contentTypeStr?.contains("mp4") == true -> {
+                    contentType =  ContentType.MP4
                 }
 
-                contentType?.contains("application/octet-stream") == true -> {
-                    val content = response.body.string()
+                contentTypeStr?.contains("application/octet-stream") == true -> {
+                    val chars = CharArray(7)
+                    response.body.charStream().read(chars, 0, 7)
+                    response.body.charStream().close()
+                    val content = chars.toString()
                     if (content.startsWith("#EXTM3U")) {
-                        return ContentType.M3U8
+                        contentType = ContentType.M3U8
                     } else if (content.contains("<MPD")) {
-                        return ContentType.MPD
+                        contentType = ContentType.MPD
                     }
-
-                    return ContentType.OTHER
                 }
 
                 else -> {
-                    return ContentType.OTHER
+                    contentType = ContentType.OTHER
                 }
             }
+
+            return contentType
         }
     }
 }

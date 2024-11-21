@@ -40,6 +40,7 @@ class FaviconUtils {
                 val htmlBodyRaw = response.body.toString()
 
                 val htmlBody = Jsoup.parse(htmlBodyRaw)
+                response.body.close()
                 val el = htmlBody.select("link[rel~='icon']")
                 if (el.isNotEmpty()) {
                     val href = el.first()?.attr("href")
@@ -57,6 +58,7 @@ class FaviconUtils {
                 request =
                     Request.Builder().url("https://www.google.com/s2/favicons?domain=$url")
                         .build()
+                response.body.close()
                 response = okHttpClient.newCall(request).execute()
             }
 

@@ -46,7 +46,6 @@ class CustomFileDownloader(
     private val totalBytesAll = AtomicLong(0L)
     private val totalBytesChunks = AtomicLongArray(threadCount)
     private val copiedBytesChunks = AtomicLongArray(threadCount)
-    private val copiedBytesSingle = AtomicLong(0L)
     private val callBackIntervalMin = 1000
 
     companion object {
@@ -279,52 +278,6 @@ class CustomFileDownloader(
         }
     }
 
-    private fun singleThreadDownload() {
-        val chunkFile = File(file.parentFile, "chunk_s")
-
-        var bytesCopied = 0L
-        AppLogger.d(
-            "SINGLE THREAD DOWNLOAD START AT $bytesCopied"
-        )
-
-        val req = getOkRequest()
-        val res = client.newCall(req).execute()
-
-        val inputStream = res.body.byteStream()
-        val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
-
-        copiedBytesSingle.set(bytesCopied)
-        totalBytesAll.set(res.body.contentLength())
-
-        var bytesRead = 0
-
-        chunkFile.outputStream().channel.use { chunkChannel ->
-            RandomAccessFile(file, "rw").channel.use { fileChannel ->
-                inputStream.use { urlStream ->
-                    while (!isPaused.get() && !isCanceled.get() && (urlStream.read(buffer)
-                            .also { bytesRead = it }) >= 0
-                    ) {
-                        fileChannel.write(ByteBuffer.wrap(buffer), bytesCopied)
-                        bytesCopied += bytesRead
-                        chunkChannel.write(ByteBuffer.wrap("$bytesCopied".toByteArray()), 0)
-                        this.onProgressUpdate(bytesCopied, totalBytesAll.get())
-                    }
-
-                    executorService.shutdown()
-
-                    if (isStopped(file)) {
-                        AppLogger.d("SINGLE THREAD DOWNLOAD STOPPED")
-                        throw Exception(STOPPED)
-                    }
-                    if (isCanceled(file)) {
-                        AppLogger.d("SINGLE THREAD DOWNLOAD CANCELED")
-                        throw Exception(CANCELED)
-                    }
-                }
-            }
-        }
-    }
-
     private fun isUrlSupportingBytesRangeHeader(): Boolean {
         val req = getOkRequestRange(0, 0)
 
@@ -355,7 +308,10 @@ class CustomFileDownloader(
         val req = getOkRequest()
         val response = client.newCall(req).execute()
 
-        return response.body.contentLength()
+        val contentLength = response.body.contentLength()
+        response.body.close()
+
+        return contentLength
     }
 
     data class Chunk(val chunkIndex: Int, val range: LongRange, val chunkSize: Long) {

@@ -48,6 +48,7 @@ class VideoUtils {
                     val chars = CharArray(7)
                     response.body.charStream().read(chars, 0, 7)
                     response.body.charStream().close()
+                    response.body.close()
                     val content = chars.toString()
                     if (content.startsWith("#EXTM3U")) {
                         contentType = ContentType.M3U8

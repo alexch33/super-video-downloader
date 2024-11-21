@@ -154,4 +154,8 @@ class AdBlockHostsLocalDataSource @Inject constructor(
 
         return result
     }
+
+    override fun getCachedCount(): Int {
+        return hostsCache.size
+    }
 }

@@ -170,20 +170,14 @@ class DetectedVideosTabViewModel @Inject constructor(
         }
     }
 
-    override fun verifyLinkStatus(resourceRequest: Request, hlsTitle: String?) {
+    override fun verifyLinkStatus(resourceRequest: Request, hlsTitle: String?, isM3u8: Boolean) {
         // TODO list of sites, where youtube dl should be disabled
         if (resourceRequest.url.toString().contains("tiktok.")) {
             return
         }
 
         val urlToVerify = resourceRequest.url.toString()
-
-        val currentPageUrl = (webTabModel?.getTabTextInput()?.get() ?: "${resourceRequest.url}")
-
-        if (urlToVerify.contains(".m3u8") || urlToVerify.contains(".mpd") || (urlToVerify.contains(
-                ".txt"
-            ) && currentPageUrl.contains("hentaihaven"))
-        ) {
+        if (isM3u8) {
             startVerifyProcess(resourceRequest, true, hlsTitle)
         } else {
             if (urlToVerify.contains(
@@ -216,7 +210,7 @@ class DetectedVideosTabViewModel @Inject constructor(
         verifyVideoLinkJobStorage[taskUrlCleaned] =
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 val info = try {
-                    videoRepository.getVideoInfo(resourceRequest)
+                    videoRepository.getVideoInfo(resourceRequest, isM3u8)
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     null

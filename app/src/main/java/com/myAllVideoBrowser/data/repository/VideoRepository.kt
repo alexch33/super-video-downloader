@@ -9,7 +9,7 @@ import javax.inject.Singleton
 
 interface VideoRepository {
 
-    fun getVideoInfo(url: Request): VideoInfo?
+    fun getVideoInfo(url: Request, isM3u8OrMpd: Boolean = false): VideoInfo?
 
     fun saveVideoInfo(videoInfo: VideoInfo)
 }
@@ -22,18 +22,18 @@ class VideoRepositoryImpl @Inject constructor(
     @VisibleForTesting
     internal var cachedVideos: MutableMap<String, VideoInfo> = mutableMapOf()
 
-    override fun getVideoInfo(url: Request): VideoInfo? {
+    override fun getVideoInfo(url: Request, isM3u8OrMpd: Boolean): VideoInfo? {
         cachedVideos[url.url.toString()]?.let { return it }
 
-        return getAndCacheRemoteVideo(url)
+        return getAndCacheRemoteVideo(url, isM3u8OrMpd)
     }
 
     override fun saveVideoInfo(videoInfo: VideoInfo) {
         cachedVideos[videoInfo.originalUrl] = videoInfo
     }
 
-    private fun getAndCacheRemoteVideo(url: Request): VideoInfo? {
-        val videoInfo = remoteDataSource.getVideoInfo(url)
+    private fun getAndCacheRemoteVideo(url: Request, isM3u8OrMpd: Boolean): VideoInfo? {
+        val videoInfo = remoteDataSource.getVideoInfo(url, isM3u8OrMpd)
         if (videoInfo != null) {
             videoInfo.originalUrl = url.url.toString()
             cachedVideos[videoInfo.originalUrl] = videoInfo

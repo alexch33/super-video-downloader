@@ -57,10 +57,10 @@ class NetworkModule {
     @Singleton
     fun provideVideoService(
         proxyController: CustomProxyController,
-        okHttpProxyClient: OkHttpProxyClient
+        youtubedlHelper: YoutubedlHelper
     ): VideoService = VideoServiceLocal(
         proxyController,
-        provideYoutubeHelper(okHttpProxyClient)
+        youtubedlHelper
     )
 
     @Provides

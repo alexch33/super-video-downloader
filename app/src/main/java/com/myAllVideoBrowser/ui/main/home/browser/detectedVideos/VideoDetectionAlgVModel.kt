@@ -30,7 +30,11 @@ interface IVideoDetector {
 
     fun showVideoInfo()
 
-    fun verifyLinkStatus(resourceRequest: Request, hlsTitle: String? = null)
+    fun verifyLinkStatus(
+        resourceRequest: Request,
+        hlsTitle: String? = null,
+        isM3u8: Boolean = false
+    )
 
     fun getDownloadBtnIcon(): ObservableInt
 
@@ -100,7 +104,11 @@ class VideoDetectionAlgVModel @Inject constructor(
 
     }
 
-    override fun verifyLinkStatus(resourceRequest: Request, hlsTitle: String?) {
+    override fun verifyLinkStatus(
+        resourceRequest: Request,
+        hlsTitle: String?,
+        isM3u8: Boolean
+    ) {
         if (resourceRequest.url.toString().contains("tiktok.")) {
             return
         }
@@ -110,10 +118,7 @@ class VideoDetectionAlgVModel @Inject constructor(
         if (lastVerifiedLink != urlToVerify) {
             val currentPageUrl = "${resourceRequest.url}"
 
-            if (urlToVerify.contains(".m3u8") || urlToVerify.contains(".mpd") || (urlToVerify.contains(
-                    ".txt"
-                ) && currentPageUrl.contains("hentaihaven"))
-            ) {
+            if (isM3u8) {
                 if ((currentPageUrl == lastVerifiedM3u8PointUrl.first && lastVerifiedM3u8PointUrl.second != urlToVerify) || currentPageUrl != lastVerifiedM3u8PointUrl.first) {
                     lastVerifiedM3u8PointUrl = Pair(currentPageUrl, urlToVerify)
 
@@ -151,7 +156,7 @@ class VideoDetectionAlgVModel @Inject constructor(
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 downloadButtonState.set(DownloadButtonStateLoading())
                 val info = try {
-                    videoRepository.getVideoInfo(resourceRequest)
+                    videoRepository.getVideoInfo(resourceRequest, isM3u8)
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     null

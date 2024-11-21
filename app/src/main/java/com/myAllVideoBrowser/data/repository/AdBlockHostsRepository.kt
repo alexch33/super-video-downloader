@@ -27,6 +27,8 @@ interface AdBlockHostsRepository {
 
 
     suspend fun getHostsCount(): Int
+
+    fun getCachedCount(): Int
 }
 
 @Singleton
@@ -88,5 +90,9 @@ class AdBlockHostsRepositoryImpl @Inject constructor(
 
     override suspend fun getHostsCount(): Int {
         return localDataSource.getHostsCount()
+    }
+
+    override fun getCachedCount(): Int {
+        return localDataSource.getCachedCount()
     }
 }

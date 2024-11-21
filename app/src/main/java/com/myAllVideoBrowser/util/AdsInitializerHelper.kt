@@ -23,6 +23,10 @@ class AdsInitializerHelper {
             handle = lifecycleScope.launch(Dispatchers.IO) {
                 val isAdBlockerOn = sharedPrefHelper.getIsAdBlocker()
                 if (isAdBlockerOn) {
+                    val cachedCount = adBlockHostsRepository.getCachedCount()
+                    if (cachedCount > 0) {
+                        return@launch
+                    }
                     val lastUpdateTime = Date(sharedPrefHelper.getAdHostsUpdateTime())
                     val currentTime = Date()
                     val isOutdated =

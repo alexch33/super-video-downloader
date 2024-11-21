@@ -156,13 +156,35 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     private val serviceWorkerClient = object : ServiceWorkerClient() {
         override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? {
             val url = request.url.toString()
-            if (url.contains(".m3u8") || url.contains(".mpd") || url.contains(".txt")) {
+
+            val requestWithCookies = request.let { resourceRequest ->
+                try {
+                    CookieUtils.webRequestToHttpWithCookies(
+                        resourceRequest
+                    )
+                } catch (e: Throwable) {
+                    null
+                }
+            }
+
+            val contentType =
+                VideoUtils.getContentTypeByUrl(url, requestWithCookies?.headers, okHttpProxyClient)
+
+            if (contentType == ContentType.MPD || contentType == ContentType.M3U8 || url.contains(".m3u8") || url.contains(
+                    ".mpd"
+                ) || url.contains(".txt")
+            ) {
                 lifecycleScope.launch(Dispatchers.Main) {
-                    val okRequest = CookieUtils.webRequestToHttpWithCookies(request)
-                    if (okRequest != null) {
-                        videoDetectionModel.verifyLinkStatus(okRequest)
+                    if (requestWithCookies != null) {
+                        videoDetectionModel.verifyLinkStatus(requestWithCookies, "", true)
                     }
                 }
+            } else if (contentType == ContentType.MP4) {
+                Toast.makeText(
+                    requireContext(),
+                    "MP4 in background not implemented yet, open gihub issue please",
+                    Toast.LENGTH_LONG
+                ).show()
             }
 
             return super.shouldInterceptRequest(request)

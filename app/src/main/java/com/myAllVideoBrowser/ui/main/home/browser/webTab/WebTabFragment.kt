@@ -367,11 +367,9 @@ class WebTabFragment : BaseWebTabFragment() {
 
         val webViewClient = CustomWebViewClient(
             tabViewModel,
-            mainActivity,
             mainActivity.settingsViewModel,
             videoDetectionTabViewModel,
             historyProvider.getHistoryVModel(),
-            proxyController,
             okHttpProxyClient,
             tabManagerProvider.getUpdateTabEvent(),
             pageTabProvider,

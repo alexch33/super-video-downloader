@@ -37,17 +37,14 @@ enum class ContentType {
 
 class CustomWebViewClient(
     private val tabViewModel: WebTabViewModel,
-    private val mainActivity: MainActivity,
     private val settingsModel: SettingsViewModel,
     private val videoDetectionModel: IVideoDetector,
     private val historyModel: HistoryViewModel,
-    private val proxyController: CustomProxyController,
     private val okHttpProxyClient: OkHttpProxyClient,
     private val updateTabEvent: SingleLiveEvent<WebTab>,
     private val pageTabProvider: PageTabProvider,
 ) : WebViewClient() {
     var videoAlert: MaterialAlertDialogBuilder? = null
-    private var searchEventCounter = 0
     private var lastSavedHistoryUrl: String = ""
     private var lastSavedTitleHistory: String = ""
     private var lastRegularCheckUrl = ""
@@ -228,13 +225,6 @@ class CustomWebViewClient(
                     url = url, favicon = outputFavicon, title = title
                 )
             )
-
-            ++searchEventCounter
-            if (searchEventCounter % 3 == 0) {
-                withContext(Dispatchers.Main) {
-                    mainActivity.mainViewModel.showInterstitialAdEvent.call()
-                }
-            }
         }
     }
 }

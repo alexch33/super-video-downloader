@@ -13,8 +13,6 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor() :
     BaseViewModel() {
 
-    val showInterstitialAdEvent = SingleLiveEvent<Void?>()
-
     var browserServicesProvider: BrowserServicesProvider? = null
 
     val openedUrl = ObservableField<String?>()

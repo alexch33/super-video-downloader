@@ -502,6 +502,15 @@ class WebTabFragment : BaseWebTabFragment() {
                 videoDetectionTabViewModel.setButtonState(DownloadButtonStateCanNotDownload())
             }
         }
+
+        workerEventProvider.getWorkerMP4Event().observe(viewLifecycleOwner) { state ->
+            if (state is DownloadButtonStateCanDownload  && state.info?.id?.isNotEmpty() == true) {
+                AppLogger.d("Worker MP4 event CanDownload: ${state.info}")
+                videoDetectionTabViewModel.pushNewVideoInfoToAll(state.info)
+            } else {
+                AppLogger.d("Worker MP4 event state: $state")
+            }
+        }
     }
 
     private fun handleIndexChangeEvent() {

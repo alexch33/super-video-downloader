@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser.ui.main.home.browser
 
-//import com.allVideoDownloaderXmaster.OpenForTesting
 import androidx.databinding.*
 import androidx.lifecycle.MutableLiveData
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
@@ -30,6 +29,8 @@ class BrowserViewModel @Inject constructor() : BaseViewModel() {
     val updateWebTabEvent = SingleLiveEvent<WebTab>()
 
     val workerM3u8MpdEvent = MutableLiveData<DownloadButtonState>()
+
+    val workerMP4Event = MutableLiveData<DownloadButtonState>()
 
     val progress = ObservableInt(0)
 

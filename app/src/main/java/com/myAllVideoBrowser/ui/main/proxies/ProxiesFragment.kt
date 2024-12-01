@@ -11,7 +11,6 @@ import com.myAllVideoBrowser.databinding.FragmentProxiesBinding
 import com.myAllVideoBrowser.ui.component.adapter.ProxiesListener
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
-import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import javax.inject.Inject
 

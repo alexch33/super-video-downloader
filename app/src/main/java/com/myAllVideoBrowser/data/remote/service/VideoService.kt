@@ -106,7 +106,7 @@ open class VideoServiceLocal(
         val password = proxyController.getProxyCredentials().second
         if (user.isNotEmpty() && password.isNotEmpty()) {
             request.addOption(
-                "--proxy", "https://${user}:${password}@${currentProxy.host}:${currentProxy.port}"
+                "--proxy", "http://${user}:${password}@${currentProxy.host}:${currentProxy.port}"
             )
         } else {
             request.addOption(

@@ -50,6 +50,7 @@ class SettingsViewModel @Inject constructor(
             isCheckEveryRequestOnVideo.set(sharedPrefHelper.isCheckEveryRequestOnVideo())
             isFindVideoByUrl.set(sharedPrefHelper.isFindVideoByUrl())
             val isDark = sharedPrefHelper.isDarkMode()
+            setDarkMode(isDark)
             isDarkMode.set(isDark)
             regularThreadsCount.set(sharedPrefHelper.getRegularDownloaderThreadCount())
             m3u8ThreadsCount.set(sharedPrefHelper.getM3u8DownloaderThreadCount())

@@ -5,11 +5,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.addCallback
 import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.databinding.FragmentProxiesBinding
 import com.myAllVideoBrowser.ui.component.adapter.ProxiesListener
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
+import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import javax.inject.Inject
 
@@ -59,6 +61,10 @@ class ProxiesFragment : BaseFragment() {
             }
             this.listener = proxiesListener
             this.viewModel = proxiesViewModel
+        }
+
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
+            parentFragmentManager.popBackStack()
         }
 
         return dataBinding.root

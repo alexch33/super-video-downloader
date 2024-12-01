@@ -97,4 +97,9 @@
     <string name="downloads_folder">Downloads folder</string>
     <string name="hidden_folder">Hidden folder</string>
     <string name="sd_app_folder">SD app folder</string>
+    <string name="host_hint">Host</string>
+    <string name="port_hint">Port</string>
+    <string name="login_hint">User</string>
+    <string name="password_hint">Password</string>
+    <string name="save_proxy">Save</string>
 </resources>

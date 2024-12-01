@@ -23,103 +23,127 @@
     </data>
 
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <FrameLayout xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingBottom="85dp"
-        android:background="@color/color_gray_1">
-
+        android:layout_marginBottom="50dp"
+        android:background="@color/color_gray_1"
+        tools:context=".ui.main.proxies.ProxiesFragment">
 
         <LinearLayout
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="65dp"
-            android:background="?colorPrimary"
-            android:gravity="center"
-            android:orientation="horizontal"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_weight="1.2"
-                android:text="@string/proxies"
-                android:textColor="@color/white"
-                android:textSize="24sp" />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="8dp"
-                android:layout_weight="2"
-                android:text="@{viewModel.currentProxy.host.toString()}"
-                android:textColor="@color/white" />
-
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/turn_proxy"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:layout_weight="1"
-                android:checked="@{viewModel.isProxyOn}"
-                android:onCheckedChanged="@{(view, isChecked) -> listener.onProxyToggle(isChecked)}"
-                app:thumbTint="@color/colorAccent"
-                app:trackDecorationTint="@color/colorAccentDark"
-                app:trackTint="@color/color_gray" />
-        </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/proxies_list"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            app:items="@{viewModel.proxiesList}"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/toolbar" />
-
-
-        <FrameLayout
-            android:id="@+id/anchor"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/layout_empty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="@dimen/padding_large"
-            android:visibility="@{viewModel.proxiesList.size() == 0 ? View.VISIBLE : View.GONE}"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/iv_empty_icon"
-                android:layout_width="@dimen/progress_icon_size"
-                android:layout_height="@dimen/progress_icon_size"
-                android:layout_marginBottom="@dimen/padding_normal"
-                android:adjustViewBounds="true"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_empty"
-                android:tint="@color/color_gray_2"
-                app:layout_constraintBottom_toTopOf="@id/tv_empty_text"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:shapeAppearanceOverlay="@style/customImageViewRounded" />
+            <LinearLayout
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="65dp"
+                android:background="?colorPrimary"
+                android:gravity="center"
+                android:orientation="horizontal"
+                app:layout_constraintTop_toTopOf="parent">
 
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/tv_empty_text"
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1.2"
+                    android:text="@string/proxies"
+                    android:textColor="@color/white"
+                    android:textSize="24sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="8dp"
+                    android:layout_weight="2"
+                    android:text="@{viewModel.currentProxy.host.toString()}"
+                    android:textColor="@color/white" />
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/turn_proxy"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:layout_weight="1"
+                    android:checked="@{viewModel.isProxyOn}"
+                    android:onCheckedChanged="@{(view, isChecked) -> listener.onProxyToggle(isChecked)}"
+                    app:thumbTint="@color/colorAccent"
+                    app:trackDecorationTint="@color/colorAccentDark"
+                    app:trackTint="@color/color_gray" />
+            </LinearLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/host_hint"
+                app:errorEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/hostEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:text="@{viewModel.userProxy.host}" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/port_hint"
+                app:errorEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/portEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:text="@{viewModel.userProxy.port}" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/login_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/loginEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:text="@{viewModel.userProxy.user}" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/password_hint"
+                app:passwordToggleEnabled="true">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/passwordEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:text="@{viewModel.userProxy.password}" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/saveProxyButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/proxies_unavailable"
-                android:textColor="@color/black_55"
-                android:textSize="@dimen/text_medium"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/iv_empty_icon" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                android:layout_gravity="center_horizontal"
+                android:text="@string/save_proxy" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        </LinearLayout>
+
+    </FrameLayout>
+
 
 </layout>

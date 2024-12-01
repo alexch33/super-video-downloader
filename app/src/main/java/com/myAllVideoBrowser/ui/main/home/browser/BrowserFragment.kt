@@ -74,6 +74,8 @@ interface HistoryProvider {
 
 interface WorkerEventProvider {
     fun getWorkerM3u8MpdEvent(): MutableLiveData<DownloadButtonState>
+
+    fun getWorkerMP4Event(): MutableLiveData<DownloadButtonState>
 }
 
 interface CurrentTabIndexProvider {
@@ -180,11 +182,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
                     }
                 }
             } else if (contentType == ContentType.MP4) {
-                Toast.makeText(
-                    requireContext(),
-                    "MP4 in background not implemented yet, open gihub issue please",
-                    Toast.LENGTH_LONG
-                ).show()
+                videoDetectionModel.checkRegularMp4(requestWithCookies)
             }
 
             return super.shouldInterceptRequest(request)
@@ -299,7 +297,6 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
             this.viewModel = browserViewModel
         }
-//        mainActivity.setNativeMainContainer(dataBinding.mainNativeAdContainer)
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             onBackPressed()
@@ -342,6 +339,10 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
     override fun getWorkerM3u8MpdEvent(): MutableLiveData<DownloadButtonState> {
         return browserViewModel.workerM3u8MpdEvent
+    }
+
+    override fun getWorkerMP4Event(): MutableLiveData<DownloadButtonState> {
+        return browserViewModel.workerMP4Event
     }
 
     override fun getCurrentTabIndex(): ObservableInt {

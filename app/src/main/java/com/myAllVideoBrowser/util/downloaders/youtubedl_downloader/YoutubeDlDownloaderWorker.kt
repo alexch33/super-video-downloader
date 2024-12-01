@@ -239,7 +239,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             if (user.isNotEmpty() && password.isNotEmpty()) {
                 request.addOption(
                     "--proxy",
-                    "https://${user}:${password}@${currentProxy.host}:${currentProxy.port}"
+                    "http://${user}:${password}@${currentProxy.host}:${currentProxy.port}"
                 )
             } else {
                 request.addOption("--proxy", "${currentProxy.host}:${currentProxy.port}")

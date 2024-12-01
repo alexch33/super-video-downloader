@@ -1,11 +1,14 @@
 package com.myAllVideoBrowser.ui.main.proxies
 
 import androidx.databinding.ObservableField
+import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ProxiesViewModel @Inject constructor(
@@ -18,12 +21,19 @@ class ProxiesViewModel @Inject constructor(
 
     val isProxyOn = ObservableField(false)
 
-    private val compositeDisposable = CompositeDisposable()
+    private var compositeDisposable = CompositeDisposable()
 
     override fun start() {
+        if (compositeDisposable.size() >= 1) {
+            compositeDisposable.dispose()
+            compositeDisposable = CompositeDisposable()
+        }
+
         fetchProxies()
-        currentProxy.set(proxyController.getCurrentSavedProxy())
-        isProxyOn.set(proxyController.isProxyOn())
+        viewModelScope.launch(Dispatchers.IO) {
+            currentProxy.set(proxyController.getCurrentSavedProxy())
+            isProxyOn.set(proxyController.isProxyOn())
+        }
     }
 
     private fun fetchProxies() {

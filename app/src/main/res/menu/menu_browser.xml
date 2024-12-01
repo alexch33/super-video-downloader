@@ -38,7 +38,6 @@
         />
 
     <item
-        android:visible="false"
         android:id="@+id/proxies"
         android:icon="@drawable/wifi_proxy_icon24"
         android:checkable="true"

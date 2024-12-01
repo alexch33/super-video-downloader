@@ -18,9 +18,6 @@ class CustomProxyController @Inject constructor(
     private var okHttpClient: OkHttpClient
 ) {
 
-    // TODO store api key securely
-    private val apiKey = "qwerty"
-
     init {
         if (isProxyOn()) {
             setCurrentProxy(getCurrentRunningProxy())
@@ -36,13 +33,11 @@ class CustomProxyController @Inject constructor(
     }
 
     fun getCurrentRunningProxy(): Proxy {
-        return Proxy.noProxy()
-
-//        return if (isProxyOn()) {
-//            sharedPrefHelper.getCurrentProxy()
-//        } else {
-//            Proxy.noProxy()
-//        }
+        return if (isProxyOn()) {
+            sharedPrefHelper.getCurrentProxy()
+        } else {
+            Proxy.noProxy()
+        }
     }
 
     fun getCurrentSavedProxy(): Proxy {
@@ -97,38 +92,15 @@ class CustomProxyController @Inject constructor(
         sharedPrefHelper.setCurrentProxy(proxy)
     }
 
-    fun fetchProxyList(): Observable<List<Proxy>> {
-        val proxiesText =
-            "127.0.0.1 \t3000 \tProxies!!! \tloginhere \tpasswordhere \tCity \tCountry \t0.0.0.0 \t0.0.0.0 \t0.0.0.0 \texample.domen.com \t96767\n" +
-                    "127.0.0.1 \t3000 \tProxies!!! \tloginhere \tpasswordhere \tCity \tCountry \t0.0.0.0 \t0.0.0.0 \t0.0.0.0 \texample.domen.com \t96767"
-
-        return Observable.create<List<Proxy>> { emitter ->
-            val result = arrayListOf<Proxy>()
-            val proxyLines = proxiesText.split("\n")
-            for (proxyLine in proxyLines) {
-                val proxDataArr = proxyLine.split(Regex(" \t"))
-                val host = proxDataArr[0].trim()
-                val port = proxDataArr[1].trim()
-                val user = proxDataArr[3].trim()
-                val password = proxDataArr[4].trim()
-                val city = proxDataArr[5].trim()
-                val country = proxDataArr[6].trim()
-
-                result.add(
-                    Proxy(
-                        host = host,
-                        port = port,
-                        countryCode = country,
-                        cityName = city,
-                        user = user,
-                        password = password
-                    )
-                )
+    fun fetchUserProxy(): Observable<Proxy> {
+        return Observable.create { emitter ->
+            val userProxy = sharedPrefHelper.getUserProxy()
+            if (userProxy != null) {
+                emitter.onNext(userProxy)
+                emitter.onComplete()
+            } else {
+                emitter.onComplete()
             }
-
-
-            emitter.onNext(result)
-            emitter.onComplete()
         }.doOnError {}.subscribeOn(schedulers.io)
     }
 

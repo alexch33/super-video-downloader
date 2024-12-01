@@ -1,6 +1,7 @@
 package com.myAllVideoBrowser.ui.main.home.browser
 
 import android.graphics.Bitmap
+import android.webkit.HttpAuthHandler
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -15,7 +16,6 @@ import com.myAllVideoBrowser.util.FaviconUtils
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.IVideoDetector
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTab
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabViewModel
@@ -23,9 +23,7 @@ import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.SingleLiveEvent
 import com.myAllVideoBrowser.util.VideoUtils
 import io.reactivex.rxjava3.disposables.Disposable
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 
 enum class ContentType {
@@ -43,6 +41,7 @@ class CustomWebViewClient(
     private val okHttpProxyClient: OkHttpProxyClient,
     private val updateTabEvent: SingleLiveEvent<WebTab>,
     private val pageTabProvider: PageTabProvider,
+    private val proxyController: CustomProxyController
 ) : WebViewClient() {
     var videoAlert: MaterialAlertDialogBuilder? = null
     private var lastSavedHistoryUrl: String = ""
@@ -82,12 +81,12 @@ class CustomWebViewClient(
     }
 
     // TODO handle for proxy and others
-//    override fun onReceivedHttpAuthRequest(
-//        view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?
-//    ) {
-//        val creds = proxyController.getProxyCredentials()
-//        handler?.proceed(creds.first, creds.second)
-//    }
+    override fun onReceivedHttpAuthRequest(
+        view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?
+    ) {
+        val creds = proxyController.getProxyCredentials()
+        handler?.proceed(creds.first, creds.second)
+    }
 
     override fun shouldInterceptRequest(
         view: WebView?, request: WebResourceRequest?

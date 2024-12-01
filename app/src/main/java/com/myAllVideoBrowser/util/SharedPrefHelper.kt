@@ -31,6 +31,7 @@ class SharedPrefHelper @Inject constructor(context: Context) {
         private const val M3U8_THREAD_COUNT = "M3U8_THREAD_COUNT"
         private const val VIDEO_DETECTION_TRESHOLD = "VIDEO_DETECTION_TRESHOLD"
         private const val IS_LOCK_PORTRAIT = "IS_LOCK_PORTRAIT"
+        private const val USER_PROXY = "USER_PROXY"
     }
 
     private var sharedPreferences: SharedPreferences =
@@ -248,6 +249,23 @@ class SharedPrefHelper @Inject constructor(context: Context) {
     fun setIsLockPortrait(isLock: Boolean) {
         sharedPreferences.edit().let {
             it.putBoolean(IS_LOCK_PORTRAIT, isLock)
+            it.apply()
+        }
+    }
+
+    fun getUserProxy(): Proxy? {
+        val proxyString = sharedPreferences.getString(USER_PROXY, "")
+        if (proxyString?.isNotEmpty() == true) {
+            return Gson().fromJson(proxyString, Proxy::class.java)
+        }
+
+        return Proxy.noProxy()
+    }
+
+    fun saveUserProxy(proxy: Proxy) {
+        val proxyString = Gson().toJson(proxy)
+        sharedPreferences.edit().let {
+            it.putString(USER_PROXY, proxyString)
             it.apply()
         }
     }

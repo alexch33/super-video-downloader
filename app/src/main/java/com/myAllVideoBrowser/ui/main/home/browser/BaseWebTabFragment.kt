@@ -19,6 +19,7 @@ import com.myAllVideoBrowser.ui.main.proxies.ProxiesFragment
 import com.myAllVideoBrowser.ui.main.settings.SettingsFragment
 import com.myAllVideoBrowser.util.AdsInitializerHelper
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.SharedPrefHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,6 +28,9 @@ import javax.inject.Inject
 abstract class BaseWebTabFragment : BaseFragment() {
     @Inject
     lateinit var mainActivity: MainActivity
+
+    @Inject
+    lateinit var sharedPrefHelper: SharedPrefHelper
 
     private var popupMenu: PopupMenu? = null
 
@@ -38,8 +42,8 @@ abstract class BaseWebTabFragment : BaseFragment() {
                 buildPopupMenu(browserMenu)
             val shareMenuItem = popupMenu!!.menu.getItem(1)
             val desktopMenuItem = popupMenu!!.menu.getItem(2)
-//                val proxyItem = popupMenu!!.menu.getItem(5)
-//            val isProxyOn = mainActivity.proxiesViewModel.isProxyOn
+            val proxyItem = popupMenu!!.menu.getItem(5)
+            val isProxyOn = mainActivity.proxiesViewModel.isProxyOn
 
             val isAdblockMenuItem = popupMenu!!.menu.getItem(6)
 
@@ -50,7 +54,7 @@ abstract class BaseWebTabFragment : BaseFragment() {
             val isAdBlocker = mainActivity.settingsViewModel.isAdBlocker
 
             desktopMenuItem.isChecked = mainActivity.settingsViewModel.isDesktopMode.get() == true
-//                proxyItem.isChecked = isProxyOn.get() == true
+            proxyItem.isChecked = isProxyOn.get() == true
 
             isAdblockMenuItem.isChecked = isAdBlocker.get() == true
 
@@ -75,12 +79,12 @@ abstract class BaseWebTabFragment : BaseFragment() {
                 }
             })
 
-//            isProxyOn.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
-//                override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-//                        proxyItem.isChecked = isProxyOn.get() == true
-//                        sharedPrefHelper.setIsProxyOn(isProxyOn.get() == true)
-//                }
-//            })
+            isProxyOn.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
+                override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+                    proxyItem.isChecked = isProxyOn.get() == true
+                    sharedPrefHelper.setIsProxyOn(isProxyOn.get() == true)
+                }
+            })
 
             isAdBlocker.addOnPropertyChangedCallback(object :
                 Observable.OnPropertyChangedCallback() {
@@ -148,7 +152,7 @@ abstract class BaseWebTabFragment : BaseFragment() {
                 }
 
                 R.id.proxies -> {
-//                    navigateToProxies()
+                    navigateToProxies()
                     true
                 }
 

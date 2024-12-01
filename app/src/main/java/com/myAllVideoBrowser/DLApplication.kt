@@ -9,7 +9,6 @@ import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
-import com.yausername.aria2c.Aria2c
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLException
@@ -90,7 +89,6 @@ open class DLApplication : DaggerApplication() {
         try {
             YoutubeDL.getInstance().init(applicationContext)
             FFmpeg.getInstance().init(applicationContext)
-            Aria2c.getInstance().init(applicationContext)
         } catch (e: YoutubeDLException) {
             AppLogger.e("failed to initialize youtubedl-android $e")
         }

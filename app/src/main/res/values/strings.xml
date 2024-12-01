@@ -102,4 +102,5 @@
     <string name="login_hint">User</string>
     <string name="password_hint">Password</string>
     <string name="save_proxy">Save</string>
+    <string name="http_proxy">HTTP Proxy</string>
 </resources>

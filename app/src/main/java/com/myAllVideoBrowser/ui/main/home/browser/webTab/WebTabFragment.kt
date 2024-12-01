@@ -62,8 +62,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 import javax.inject.Inject
 
 class WebTabFragment : BaseWebTabFragment() {
@@ -373,6 +371,7 @@ class WebTabFragment : BaseWebTabFragment() {
             okHttpProxyClient,
             tabManagerProvider.getUpdateTabEvent(),
             pageTabProvider,
+            proxyController,
         )
 
         val chromeClient = CustomWebChromeClient(

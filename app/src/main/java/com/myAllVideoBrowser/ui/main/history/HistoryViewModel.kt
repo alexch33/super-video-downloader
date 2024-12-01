@@ -14,7 +14,6 @@ import javax.inject.Inject
 
 class HistoryViewModel @Inject constructor(
     private val historyRepository: HistoryRepository,
-    private val baseSchedulers: BaseSchedulers
 ) :
     BaseViewModel() {
 
@@ -28,28 +27,25 @@ class HistoryViewModel @Inject constructor(
 
     val executorSingleHistory = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
-    private val disposableContainer = CompositeDisposable()
-
     private val historyExecutor = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+
+    private val additionalExecutor = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 
     override fun start() {
         fetchAllHistory()
     }
 
     override fun stop() {
-        disposableContainer.clear()
     }
 
     private fun fetchAllHistory() {
         isLoadingHistory.set(true)
 
-        disposableContainer.clear()
-        disposableContainer.add(
-            historyRepository.getAllHistory().subscribeOn(baseSchedulers.computation)
-                .observeOn(baseSchedulers.computation).subscribe {
-                    historyItems.set(it)
-                    isLoadingHistory.set(false)
-                })
+        viewModelScope.launch(additionalExecutor) {
+            val history = historyRepository.getAllHistory().blockingFirst()
+            historyItems.set(history)
+            isLoadingHistory.set(false)
+        }
     }
 
     fun saveHistory(historyItem: HistoryItem) {

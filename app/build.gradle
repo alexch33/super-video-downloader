@@ -40,8 +40,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 13
-        versionName "0.2.2"
+        versionCode 14
+        versionName "0.2.2+1"
         testInstrumentationRunner "util.TestRunner"
         javaCompileOptions {
             annotationProcessorOptions {

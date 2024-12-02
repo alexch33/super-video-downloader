@@ -60,6 +60,9 @@ class ProxiesFragment : BaseFragment() {
             }
             this.listener = proxiesListener
             this.viewModel = proxiesViewModel
+
+            val color = getThemeBackgroundColor()
+            this.proxiesContainer.setBackgroundColor(color)
         }
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {

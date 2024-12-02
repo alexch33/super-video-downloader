@@ -23,16 +23,17 @@
     </data>
 
 
-    <FrameLayout xmlns:tools="http://schemas.android.com/tools"
+    <LinearLayout xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/proxies_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="75dp"
-        android:background="@color/color_gray_1"
         tools:context=".ui.main.proxies.ProxiesFragment">
 
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:clickable="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -43,7 +44,6 @@
                     android:id="@+id/toolbar"
                     android:layout_width="match_parent"
                     android:layout_height="65dp"
-                    android:background="?colorPrimary"
                     android:gravity="center"
                     android:orientation="horizontal"
                     app:layout_constraintTop_toTopOf="parent">
@@ -53,7 +53,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_weight="1.2"
-                        android:text="@string/proxies"
+                        android:text="@string/proxy"
                         android:textColor="@color/white"
                         android:textSize="24sp" />
 
@@ -162,7 +162,7 @@
             </LinearLayout>
         </ScrollView>
 
-    </FrameLayout>
+    </LinearLayout>
 
 
 </layout>

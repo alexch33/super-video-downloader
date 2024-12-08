@@ -159,30 +159,41 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? {
             val url = request.url.toString()
 
-            val requestWithCookies = request.let { resourceRequest ->
-                try {
-                    CookieUtils.webRequestToHttpWithCookies(
-                        resourceRequest
-                    )
-                } catch (e: Throwable) {
-                    null
-                }
-            }
+            val isM3u8Check = settingsModel.isCheckIfEveryRequestOnM3u8.get()
+            val isMp4Check = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
 
-            val contentType =
-                VideoUtils.getContentTypeByUrl(url, requestWithCookies?.headers, okHttpProxyClient)
-
-            if (contentType == ContentType.MPD || contentType == ContentType.M3U8 || url.contains(".m3u8") || url.contains(
-                    ".mpd"
-                ) || url.contains(".txt")
-            ) {
-                lifecycleScope.launch(Dispatchers.Main) {
-                    if (requestWithCookies != null) {
-                        videoDetectionModel.verifyLinkStatus(requestWithCookies, "", true)
+            if (isM3u8Check || isMp4Check) {
+                val requestWithCookies = request.let { resourceRequest ->
+                    try {
+                        CookieUtils.webRequestToHttpWithCookies(
+                            resourceRequest
+                        )
+                    } catch (e: Throwable) {
+                        null
                     }
                 }
-            } else if (contentType == ContentType.MP4) {
-                videoDetectionModel.checkRegularMp4(requestWithCookies)
+
+                val contentType =
+                    VideoUtils.getContentTypeByUrl(
+                        url,
+                        requestWithCookies?.headers,
+                        okHttpProxyClient
+                    )
+
+                if (contentType == ContentType.MPD || contentType == ContentType.M3U8 || url.contains(
+                        ".m3u8"
+                    ) || url.contains(
+                        ".mpd"
+                    ) || url.contains(".txt")
+                ) {
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        if (requestWithCookies != null && isM3u8Check) {
+                            videoDetectionModel.verifyLinkStatus(requestWithCookies, "", true)
+                        }
+                    }
+                } else if (contentType == ContentType.MP4 && isMp4Check) {
+                    videoDetectionModel.checkRegularMp4(requestWithCookies)
+                }
             }
 
             return super.shouldInterceptRequest(request)

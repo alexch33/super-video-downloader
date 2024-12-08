@@ -100,57 +100,61 @@ class CustomWebViewClient(
             return AdBlockerHelper.createEmptyResource()
         }
 
-        val requestWithCookies = request?.let { resourceRequest ->
-            try {
-                CookieUtils.webRequestToHttpWithCookies(
-                    resourceRequest
-                )
-            } catch (e: Throwable) {
-                null
-            }
-        }
+        val isCheckM3u8 = settingsModel.isCheckIfEveryRequestOnM3u8.get()
+        val isCheckOnMp4 = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
 
-        val contentType =
-            VideoUtils.getContentTypeByUrl(url, requestWithCookies?.headers, okHttpProxyClient)
-
-        when {
-
-            contentType == ContentType.M3U8 || contentType == ContentType.MPD || url.contains(".m3u8") || url.contains(
-                ".mpd"
-            ) || (url.contains(".txt") && url.contains("hentaihaven")) -> {
-                if (requestWithCookies != null) {
-                    videoDetectionModel.verifyLinkStatus(
-                        requestWithCookies, tabViewModel.currentTitle.get(), true
+        if (isCheckOnMp4 || isCheckM3u8) {
+            val requestWithCookies = request?.let { resourceRequest ->
+                try {
+                    CookieUtils.webRequestToHttpWithCookies(
+                        resourceRequest
                     )
+                } catch (e: Throwable) {
+                    null
                 }
-
-                return super.shouldInterceptRequest(view, request)
             }
 
-            else -> {
-                if (settingsModel.getIsCheckEveryRequestOnVideo().get()) {
-                    val disposable = videoDetectionModel.checkRegularMp4(requestWithCookies)
+            val contentType =
+                VideoUtils.getContentTypeByUrl(url, requestWithCookies?.headers, okHttpProxyClient)
 
-                    val currentUrl = tabViewModel.getTabTextInput().get() ?: ""
-                    if (currentUrl != lastRegularCheckUrl) {
-                        regularJobsStorage[lastRegularCheckUrl]?.forEach {
-                            it.dispose()
-                        }
-                        regularJobsStorage.remove(lastRegularCheckUrl)
-                        lastRegularCheckUrl = currentUrl
-                    }
-                    if (disposable != null) {
-                        val overall = mutableListOf<Disposable>()
-                        overall.addAll(regularJobsStorage[currentUrl]?.toList() ?: emptyList())
-                        overall.add(disposable)
-                        regularJobsStorage[currentUrl] = overall
+            when {
+
+                contentType == ContentType.M3U8 || contentType == ContentType.MPD || url.contains(".m3u8") || url.contains(
+                    ".mpd"
+                ) || (url.contains(".txt") && url.contains("hentaihaven")) -> {
+                    if (requestWithCookies != null && isCheckM3u8) {
+                        videoDetectionModel.verifyLinkStatus(
+                            requestWithCookies, tabViewModel.currentTitle.get(), true
+                        )
                     }
                 }
-                return super.shouldInterceptRequest(
-                    view, request
-                )
+
+                else -> {
+                    if (isCheckOnMp4) {
+                        val disposable = videoDetectionModel.checkRegularMp4(requestWithCookies)
+
+                        val currentUrl = tabViewModel.getTabTextInput().get() ?: ""
+                        if (currentUrl != lastRegularCheckUrl) {
+                            regularJobsStorage[lastRegularCheckUrl]?.forEach {
+                                it.dispose()
+                            }
+                            regularJobsStorage.remove(lastRegularCheckUrl)
+                            lastRegularCheckUrl = currentUrl
+                        }
+                        if (disposable != null) {
+                            val overall = mutableListOf<Disposable>()
+                            overall.addAll(regularJobsStorage[currentUrl]?.toList() ?: emptyList())
+                            overall.add(disposable)
+                            regularJobsStorage[currentUrl] = overall
+                        }
+                    }
+                }
             }
         }
+
+        return super.shouldInterceptRequest(
+            view, request
+        )
     }
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {

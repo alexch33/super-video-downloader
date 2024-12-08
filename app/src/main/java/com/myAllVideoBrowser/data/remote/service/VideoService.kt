@@ -10,6 +10,7 @@ import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import com.yausername.youtubedl_android.mapper.VideoFormat
@@ -19,7 +20,7 @@ import java.util.*
 import javax.inject.Inject
 
 interface VideoService {
-    fun getVideoInfo(url: Request,  isM3u8OrMpd: Boolean = false): VideoInfoWrapper?
+    fun getVideoInfo(url: Request, isM3u8OrMpd: Boolean = false): VideoInfoWrapper?
 }
 
 open class VideoServiceLocal(
@@ -50,9 +51,9 @@ open class VideoServiceLocal(
             throw Throwable("host not in supported list")
         }
         val request = YoutubeDLRequest(url.url.toString())
-        url.headers.names().forEach {
-            if (it != COOKIE_HEADER) {
-                request.addOption("--add-header", "$it:${url.headers[it]}")
+        url.headers.forEach {(name, value) ->
+            if (name != COOKIE_HEADER) {
+                request.addOption("--add-header", "$name:${value}")
             }
         }
 
@@ -143,7 +144,10 @@ open class VideoServiceLocal(
     }
 }
 
-class YoutubedlHelper @Inject constructor(private val okHttpProxyClient: OkHttpProxyClient) {
+class YoutubedlHelper @Inject constructor(
+    private val okHttpProxyClient: OkHttpProxyClient,
+    private val sharedPrefHelper: SharedPrefHelper
+) {
     companion object {
         private const val SUPPORTED_SITES_URL =
             "https://ytb-dl.github.io/ytb-dl/supportedsites.html"
@@ -153,7 +157,9 @@ class YoutubedlHelper @Inject constructor(private val okHttpProxyClient: OkHttpP
     private var isLoading = false
 
     fun isHostSupported(host: String): Boolean {
-        if (sites.isEmpty() || isLoading) {
+        val isCheck = sharedPrefHelper.getIsCheckByList()
+
+        if (sites.isEmpty() || isLoading || !isCheck) {
             try {
                 loadFromAssets()
             } catch (e: Throwable) {

@@ -82,8 +82,9 @@
     <string name="powerSave">Power save mode detected!\nVideo detection not working, turn off power save mode!</string>
     <string name="warning">Warning! Power save Mode.</string>
     <string name="download_text">download</string>
-    <string name="check_every_request_on_video">Check every request on video</string>
-    <string name="find_videos_by_url">Find videos by URL</string>
+    <string name="check_every_request_on_video_mp4">Check every request on MP4 video</string>
+    <string name="check_every_request_on_video_m3u8">Check every request on M3U8 or MPD video</string>
+    <string name="find_videos_by_url">Check web-sites urls</string>
     <string name="dark_mode">Dark Mode</string>
     <string name="found_videos_from">Found videos from %1$s</string>
     <string name="title">Title</string>
@@ -103,4 +104,5 @@
     <string name="password_hint">Password</string>
     <string name="save_proxy">Save</string>
     <string name="http_proxy">HTTP Proxy</string>
+    <string name="check_if_in_list">Only check web-sites urls if in supported list</string>
 </resources>

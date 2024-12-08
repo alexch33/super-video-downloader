@@ -40,8 +40,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 14
-        versionName "0.2.2+1"
+        versionCode 15
+        versionName "0.2.3"
         testInstrumentationRunner "util.TestRunner"
         javaCompileOptions {
             annotationProcessorOptions {
@@ -204,7 +204,7 @@ dependencies {
 
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3'
 
-    implementation 'org.jsoup:jsoup:1.18.2'
+    implementation 'org.jsoup:jsoup:1.18.3'
 
     implementation 'com.github.marlonlom:timeago:4.0.3'
 

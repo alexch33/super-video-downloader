@@ -6,6 +6,7 @@ import com.myAllVideoBrowser.data.remote.service.VideoService
 import com.myAllVideoBrowser.data.remote.service.VideoServiceLocal
 import com.myAllVideoBrowser.data.remote.service.YoutubedlHelper
 import com.myAllVideoBrowser.util.Memory
+import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import dagger.Module
@@ -65,6 +66,9 @@ class NetworkModule {
 
     @Provides
     @Singleton
-    fun provideYoutubeHelper(okHttpProxyClient: OkHttpProxyClient): YoutubedlHelper =
-        YoutubedlHelper(okHttpProxyClient)
+    fun provideYoutubeHelper(
+        okHttpProxyClient: OkHttpProxyClient,
+        sharedPrefHelper: SharedPrefHelper
+    ): YoutubedlHelper =
+        YoutubedlHelper(okHttpProxyClient, sharedPrefHelper)
 }

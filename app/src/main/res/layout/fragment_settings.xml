@@ -156,12 +156,20 @@
                 app:layout_constraintTop_toBottomOf="@+id/show_video_alert_check_box" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/is_check_every_request"
+                android:id="@+id/is_check_every_request_on_mp4"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:checked="@{viewModel.getIsCheckEveryRequestOnVideo()}"
-                android:text="@string/check_every_request_on_video"
+                android:checked="@{viewModel.getIsCheckEveryRequestOnMp4Video()}"
+                android:text="@string/check_every_request_on_video_mp4"
                 app:layout_constraintTop_toBottomOf="@+id/show_video_action_button_check_box" />
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/is_check_every_request_on_m3u8"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.isCheckIfEveryRequestOnM3u8}"
+                android:text="@string/check_every_request_on_video_m3u8"
+                app:layout_constraintTop_toBottomOf="@+id/is_check_every_request_on_mp4" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/find_videos_by_url"
@@ -169,14 +177,22 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getIsFindVideoByUrl()}"
                 android:text="@string/find_videos_by_url"
-                app:layout_constraintTop_toBottomOf="@+id/is_check_every_request" />
+                app:layout_constraintTop_toBottomOf="@+id/is_check_every_request_on_m3u8" />
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/check_web_sites_if_in_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.isCheckIfContainsInList}"
+                android:text="@string/check_if_in_list"
+                app:layout_constraintTop_toBottomOf="@+id/find_videos_by_url" />
 
             <LinearLayout
                 android:id="@+id/regular_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                app:layout_constraintTop_toBottomOf="@+id/find_videos_by_url">
+                app:layout_constraintTop_toBottomOf="@+id/check_web_sites_if_in_list">
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/regular_threads_count_text"

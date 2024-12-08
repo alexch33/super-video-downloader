@@ -82,11 +82,18 @@ class SettingsFragment : BaseFragment() {
                     settingsViewModel.setShowVideoActionButtonOff()
                 }
             }
-            this.isCheckEveryRequest.setOnCheckedChangeListener { _, checked ->
+            this.isCheckEveryRequestOnMp4.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsCheckEveryRequestOnVideo(checked)
             }
             this.findVideosByUrl.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsFindVideoByUrl(checked)
+            }
+
+            this.isCheckEveryRequestOnM3u8.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setIsCheckIfEveryUrlOnM3u8(checked)
+            }
+            this.checkWebSitesIfInList.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setIsCheckIfContainsInList(checked)
             }
 
             this.seekBarM3u8.progress = settingsViewModel.m3u8ThreadsCount.get()

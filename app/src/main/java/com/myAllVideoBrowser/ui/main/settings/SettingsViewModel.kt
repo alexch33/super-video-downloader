@@ -36,6 +36,8 @@ class SettingsViewModel @Inject constructor(
     val isAdBlocker = ObservableBoolean(true)
     val isDarkMode = ObservableBoolean(false)
     val isLockPortrait = ObservableBoolean(false)
+    val isCheckIfContainsInList = ObservableBoolean(true)
+    val isCheckIfEveryRequestOnM3u8 = ObservableBoolean(true)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
     private val isCheckEveryRequestOnVideo = ObservableBoolean(true)
@@ -43,6 +45,8 @@ class SettingsViewModel @Inject constructor(
 
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
+            isCheckIfContainsInList.set(sharedPrefHelper.getIsCheckByList())
+            isCheckIfEveryRequestOnM3u8.set(sharedPrefHelper.getIsCheckEveryOnM3u8())
             isDesktopMode.set(sharedPrefHelper.getIsDesktop())
             isAdBlocker.set(sharedPrefHelper.getIsAdBlocker())
             isShowVideoAlert.set(sharedPrefHelper.isShowVideoAlert())
@@ -96,6 +100,20 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setIsCheckIfContainsInList(isCheck: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            isCheckIfContainsInList.set(isCheck)
+            sharedPrefHelper.saveIsCheckByList(isCheck)
+        }
+    }
+
+    fun setIsCheckIfEveryUrlOnM3u8(isCheck: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            isCheckIfEveryRequestOnM3u8.set(isCheck)
+            sharedPrefHelper.saveIsCheckEveryOnM3u8(isCheck)
+        }
+    }
+
     fun setIsDarkMode(isDark: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             isDarkMode.set(isDark)
@@ -105,7 +123,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun getIsCheckEveryRequestOnVideo(): ObservableBoolean {
+    fun getIsCheckEveryRequestOnMp4Video(): ObservableBoolean {
         return isCheckEveryRequestOnVideo
     }
 

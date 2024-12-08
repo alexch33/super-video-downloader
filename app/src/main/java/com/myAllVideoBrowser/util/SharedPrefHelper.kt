@@ -32,6 +32,8 @@ class SharedPrefHelper @Inject constructor(context: Context) {
         private const val VIDEO_DETECTION_TRESHOLD = "VIDEO_DETECTION_TRESHOLD"
         private const val IS_LOCK_PORTRAIT = "IS_LOCK_PORTRAIT"
         private const val USER_PROXY = "USER_PROXY"
+        private const val IS_CHECK_IF_IN_LIST = "IS_CHECK_IF_IN_LIST"
+        private const val IS_CHECK_EVERY_ON_M3U8 = "IS_CHECK_EVERY_ON_M3U8"
     }
 
     private var sharedPreferences: SharedPreferences =
@@ -266,6 +268,28 @@ class SharedPrefHelper @Inject constructor(context: Context) {
         val proxyString = Gson().toJson(proxy)
         sharedPreferences.edit().let {
             it.putString(USER_PROXY, proxyString)
+            it.apply()
+        }
+    }
+
+    fun getIsCheckByList(): Boolean {
+        return sharedPreferences.getBoolean(IS_CHECK_IF_IN_LIST, false)
+    }
+
+    fun getIsCheckEveryOnM3u8(): Boolean {
+        return sharedPreferences.getBoolean(IS_CHECK_EVERY_ON_M3U8, true)
+    }
+
+    fun saveIsCheckByList(isCheck: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_CHECK_IF_IN_LIST, isCheck)
+            it.apply()
+        }
+    }
+
+    fun saveIsCheckEveryOnM3u8(isCheck: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_CHECK_EVERY_ON_M3U8, isCheck)
             it.apply()
         }
     }

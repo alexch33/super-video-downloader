@@ -51,7 +51,7 @@ open class VideoServiceLocal(
             throw Throwable("host not in supported list")
         }
         val request = YoutubeDLRequest(url.url.toString())
-        url.headers.forEach {(name, value) ->
+        url.headers.forEach { (name, value) ->
             if (name != COOKIE_HEADER) {
                 request.addOption("--add-header", "$name:${value}")
             }
@@ -159,7 +159,11 @@ class YoutubedlHelper @Inject constructor(
     fun isHostSupported(host: String): Boolean {
         val isCheck = sharedPrefHelper.getIsCheckByList()
 
-        if (sites.isEmpty() || isLoading || !isCheck) {
+        if (!isCheck) {
+            return true
+        }
+
+        if (sites.isEmpty() || isLoading) {
             try {
                 loadFromAssets()
             } catch (e: Throwable) {

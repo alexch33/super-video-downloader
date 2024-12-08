@@ -1,16 +1,10 @@
 package com.myAllVideoBrowser.util.proxy_utils
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import okhttp3.Authenticator
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import java.net.InetSocketAddress
 import java.net.Proxy
-import java.util.concurrent.Executors
 import javax.inject.Inject
 
 class OkHttpProxyClient @Inject constructor(
@@ -19,15 +13,9 @@ class OkHttpProxyClient @Inject constructor(
 ) {
     private var currentProxy: com.myAllVideoBrowser.data.local.model.Proxy
     private var httpClientCached: OkHttpClient? = null
-    private val executor = Executors.newFixedThreadPool(3).asCoroutineDispatcher()
-    private val standaloneScope = CoroutineScope(SupervisorJob() + executor)
 
     init {
         currentProxy = getProxy()
-
-        standaloneScope.launch {
-            proxyController.setClient(getProxyOkHttpClient())
-        }
     }
 
     fun getProxyOkHttpClient(): OkHttpClient {

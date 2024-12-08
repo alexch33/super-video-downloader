@@ -11,6 +11,7 @@ import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorker
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
+import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import javax.inject.Inject
 
 
@@ -19,6 +20,7 @@ class DaggerWorkerFactory @Inject constructor(
     private val fileUtil: FileUtil,
     private val notificationsHelper: NotificationsHelper,
     private val proxyController: CustomProxyController,
+    private val okHttpProxyClient: OkHttpProxyClient,
     private val sharedPrefHelper: SharedPrefHelper
 ) : WorkerFactory() {
 
@@ -39,6 +41,7 @@ class DaggerWorkerFactory @Inject constructor(
                 instance.fileUtil = fileUtil
                 instance.notificationsHelper = notificationsHelper
                 instance.proxyController = proxyController
+                instance.proxyOkHttpClient = okHttpProxyClient
             }
         }
 

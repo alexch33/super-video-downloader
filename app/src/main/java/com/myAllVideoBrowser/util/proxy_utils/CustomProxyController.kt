@@ -7,7 +7,6 @@ import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.core.Observable
-import okhttp3.OkHttpClient
 import java.net.Authenticator
 import java.net.PasswordAuthentication
 import javax.inject.Inject
@@ -15,21 +14,12 @@ import javax.inject.Inject
 class CustomProxyController @Inject constructor(
     private val sharedPrefHelper: SharedPrefHelper,
     private val schedulers: BaseSchedulers,
-    private var okHttpClient: OkHttpClient
 ) {
 
     init {
         if (isProxyOn()) {
             setCurrentProxy(getCurrentRunningProxy())
         }
-    }
-
-    fun setClient(client: OkHttpClient) {
-        this.okHttpClient = client
-    }
-
-    fun getClient(): OkHttpClient? {
-        return okHttpClient
     }
 
     fun getCurrentRunningProxy(): Proxy {

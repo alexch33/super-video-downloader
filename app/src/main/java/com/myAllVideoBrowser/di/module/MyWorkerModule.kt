@@ -7,6 +7,7 @@ import com.myAllVideoBrowser.util.NotificationsHelper
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
+import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -20,6 +21,7 @@ class MyWorkerModule {
         fileUtil: FileUtil,
         notificationsHelper: NotificationsHelper,
         proxyController: CustomProxyController,
+        okHttpProxyClient: OkHttpProxyClient,
         sharedPrefHelper: SharedPrefHelper
     ): WorkerFactory {
         return DaggerWorkerFactory(
@@ -27,6 +29,7 @@ class MyWorkerModule {
             fileUtil,
             notificationsHelper,
             proxyController,
+            okHttpProxyClient,
             sharedPrefHelper
         )
     }

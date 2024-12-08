@@ -17,6 +17,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.NotificationRec
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
+import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import io.reactivex.rxjava3.disposables.Disposable
 import javax.inject.Inject
 import kotlin.coroutines.resume
@@ -35,6 +36,9 @@ open class GenericDownloadWorkerWrapper(
 
     @Inject
     lateinit var proxyController: CustomProxyController
+
+    @Inject
+    lateinit var proxyOkHttpClient: OkHttpProxyClient
 
     @Inject
     lateinit var sharedPrefHelper: SharedPrefHelper

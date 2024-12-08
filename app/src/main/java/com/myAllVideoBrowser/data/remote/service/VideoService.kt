@@ -51,9 +51,9 @@ open class VideoServiceLocal(
             throw Throwable("host not in supported list")
         }
         val request = YoutubeDLRequest(url.url.toString())
-        url.headers.names().forEach {
-            if (it != COOKIE_HEADER) {
-                request.addOption("--add-header", "$it:${url.headers[it]}")
+        url.headers.forEach {(name, value) ->
+            if (name != COOKIE_HEADER) {
+                request.addOption("--add-header", "$name:${value}")
             }
         }
 

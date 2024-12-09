@@ -1,7 +1,7 @@
 ext.deps = [:]
 def versions = [:]
 versions.gradle_plugin = '8.4.0'
-versions.kotlin = '2.0.21'
+versions.kotlin = '2.1.0'
 versions.arch_core = "1.1.1"
 versions.room = "2.4.3"
 versions.lifecycle = "1.1.1"

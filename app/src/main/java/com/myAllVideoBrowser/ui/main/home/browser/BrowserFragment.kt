@@ -2,7 +2,10 @@ package com.myAllVideoBrowser.ui.main.home.browser
 
 //import com.allVideoDownloaderXmaster.OpenForTesting
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -14,7 +17,9 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
+import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.view.GravityCompat
 import androidx.databinding.Observable
@@ -154,6 +159,13 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     private val compositeDisposable = CompositeDisposable()
 
     private var backPressedOnce = false
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            AppLogger.d("Permissions for writing isGranted: $isGranted")
+        }
 
     private val serviceWorkerClient = object : ServiceWorkerClient() {
         override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? {
@@ -322,6 +334,18 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
                 }
             }
         })
+
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(
+                    mainActivity,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                )
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        }
 
         return dataBinding.root
     }

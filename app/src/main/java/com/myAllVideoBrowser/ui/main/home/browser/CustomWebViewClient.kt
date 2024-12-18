@@ -1,6 +1,7 @@
 package com.myAllVideoBrowser.ui.main.home.browser
 
 import android.graphics.Bitmap
+import android.os.Build
 import android.webkit.HttpAuthHandler
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceRequest
@@ -201,7 +202,11 @@ class CustomWebViewClient(
         val pageTab = pageTabProvider.getPageTab(tabViewModel.thisTabIndex.get())
 
         val webView = pageTab.getWebView()
-        if (view == webView && detail?.didCrash() == true) {
+        if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                view == webView && detail?.didCrash() == true
+            } else {
+                view == webView
+            }) {
             webView?.destroy()
             return true
         }

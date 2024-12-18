@@ -16,11 +16,11 @@ import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.net.toFile
 import androidx.core.net.toUri
 import java.io.File
 import java.io.FileNotFoundException
-import java.nio.file.Files
 import java.text.DecimalFormat
 import java.util.Arrays
 import javax.inject.Inject
@@ -175,22 +175,30 @@ class FileUtil @Inject constructor() {
         return if (isFileApiSupportedByUri(context, uri)) {
             !File(uri.toFile().parentFile, newName).exists()
         } else {
-            !isDownloadedVideoContentExistsByName(context.contentResolver, uri, newName)
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+                !isDownloadedVideoContentExistsByName(context.contentResolver, uri, newName)
+            } else {
+                throw Exception("File api support ERROR")
+            }
         }
     }
 
     fun moveMedia(context: Context, from: Uri, to: Uri): Boolean {
         if (isFileApiSupportedByUri(context, to)) {
             AppLogger.d("IS_FILE_API: TRUE -- from $from to $to")
-            Files.move(from.toFile().toPath(), to.toFile().toPath())
+            val newFile = to.toFile()
+
+            return from.toFile().renameTo(newFile)
         } else {
             AppLogger.d("IS_FILE_API: FALSE -- from $from to $to")
-            return moveFileToDownloadsFolder(
-                context.contentResolver, from.toFile(), to.toFile().name
-            )
+            return if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+                moveFileToDownloadsFolder(
+                    context.contentResolver, from.toFile(), to.toFile().name
+                )
+            } else {
+                throw Exception("File API support ERROR!!!")
+            }
         }
-
-        return true
     }
 
     fun renameMedia(context: Context, from: Uri, newName: String): Pair<String, Uri>? {
@@ -247,7 +255,7 @@ class FileUtil @Inject constructor() {
                 throw FileNotFoundException("File not found: $uri")
             }
             if (isFileApiSupportedByUri(context, uri)) {
-                Files.delete(uri.toFile().toPath())
+                uri.toFile().delete()
             } else {
                 deleteDownloadedVideoContent(context, uri)
             }
@@ -321,6 +329,7 @@ class FileUtil @Inject constructor() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun isDownloadedVideoContentExistsByName(
         contentResolver: ContentResolver, contentOrig: Uri, fileName: String
     ): Boolean {
@@ -412,6 +421,7 @@ class FileUtil @Inject constructor() {
         return filesMap
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun getPublicDownloadsDirFilesObjOld(
         context: Context, isExternalStorage: Boolean
     ): Map<String, Pair<Long, Uri>> {
@@ -426,7 +436,7 @@ class FileUtil @Inject constructor() {
             targetUri,
             arrayOf(MediaStore.Downloads._ID, MediaStore.Downloads.DISPLAY_NAME),
             null,
-            null
+            null, null
         )?.use { cursor ->
             val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID)
             val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Downloads.DISPLAY_NAME)
@@ -460,7 +470,11 @@ class FileUtil @Inject constructor() {
     private fun isExternalUri(uri: Uri): Boolean {
         val context = ContextUtils.getApplicationContext()
 
-        val ext1 = MediaStore.Downloads.EXTERNAL_CONTENT_URI
+        val ext1 = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            MediaStore.Downloads.EXTERNAL_CONTENT_URI
+        } else {
+            null
+        }
         val ext2 = Uri.fromFile(context.getExternalFilesDir(null))
         val ext3 =
             Uri.fromFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
@@ -471,6 +485,7 @@ class FileUtil @Inject constructor() {
         return result
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun moveFileToDownloadsFolder(
         contentResolver: ContentResolver, sourceFile: File, fileName: String
     ): Boolean {
@@ -534,6 +549,7 @@ class FileUtil @Inject constructor() {
         return isMoved ?: false
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun isDownloadExists(contentResolver: ContentResolver, displayName: String): Boolean {
         val projection = arrayOf(MediaStore.MediaColumns.DISPLAY_NAME)
         val selection = "${MediaStore.Downloads.DISPLAY_NAME} = ?"
@@ -620,6 +636,8 @@ object FileNameCleaner {
             .replace("*", "")
             .replace("?", "")
             .replace("\"", "")
+            .replace("`", "")
+            .replace("\'", "")
             .replace("<", "")
             .replace(">", "")
             .replace(".", "_")

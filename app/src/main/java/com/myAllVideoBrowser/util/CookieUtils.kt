@@ -18,9 +18,7 @@ import okhttp3.Request
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
-import java.nio.file.Files
 import java.sql.SQLException
-import java.time.Instant
 import java.util.Arrays
 import java.util.Date
 import javax.crypto.Cipher
@@ -445,8 +443,10 @@ class ChromeBrowser : Browser() {
 
             try {
                 cookieStoreCopy.delete()
-                Files.copy(cookieStore.toPath(), cookieStoreCopy.toPath())
-                // create a database connection
+                cookieStore.copyTo(
+                    cookieStoreCopy,
+                    overwrite = true
+                )                // create a database connection
 
                 db = SQLiteDatabase.openDatabase(cookieStoreCopy.absolutePath, null, 0)
 
@@ -482,9 +482,11 @@ class ChromeBrowser : Browser() {
                     val value = (cursorStorage.getNameValue("value") as String)
                     val path = cursorStorage.getNameValue("path") as String
                     val domain = cursorStorage.getNameValue("host_key") as String
-                    val secure = cursorStorage.getNameValue("is_secure") as Long
-                    val httpOnly = cursorStorage.getNameValue("is_httponly") as Long
-                    val exp = (cursorStorage.getNameValue("expires_utc") as Long)
+                    val secure = (cursorStorage.getNameValue("is_secure") as Long?)
+                        ?: (cursorStorage.getNameValue("secure") as Long?) ?: 0L
+                    val httpOnly = (cursorStorage.getNameValue("is_httponly") as Long?)
+                        ?: (cursorStorage.getNameValue("httponly") as Long?) ?: 0L
+                    val exp = (cursorStorage.getNameValue("expires_utc") as Long?) ?: 0L
                     val expires = if (exp != 0L) chromeTime(exp) else 0L
                     val httpOnlyString = if (httpOnly == 1L) "#HttpOnly_" else ""
                     val isSubomainString = if (domain.startsWith(".")) "TRUE" else "FALSE"
@@ -563,7 +565,7 @@ class ChromeBrowser : Browser() {
                 encryptedCookie?.name.toString(),
                 encryptedCookie?.encryptedValue ?: byteArrayOf(),
                 "$decryptedBytes",
-                encryptedCookie?.getExpires() ?: Date.from(Instant.MIN),
+                encryptedCookie?.getExpires() ?: Date(),
                 encryptedCookie!!.path,
                 encryptedCookie.domain,
                 encryptedCookie.isSecure,

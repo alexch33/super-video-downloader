@@ -109,7 +109,7 @@ class ProgressFragment : BaseFragment() {
 
         val popupMenu = PopupMenu(myView.context, myView)
         popupMenu.menuInflater.inflate(R.menu.menu_progress, popupMenu.menu)
-        // TODO stream downloading not work(can't stop process)
+
 //        popupMenu.menu.getItem(3).isVisible = !isRegular
 
         popupMenu.menu.getItem(3).isVisible = menuCandidate?.isLive == true

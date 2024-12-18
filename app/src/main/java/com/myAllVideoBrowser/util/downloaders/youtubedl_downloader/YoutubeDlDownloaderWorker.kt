@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.util.downloaders.youtubedl_downloader
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
+import android.util.Base64
 import androidx.core.net.toUri
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -24,7 +25,7 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.io.File
-import java.util.*
+import java.util.Date
 import java.util.concurrent.TimeUnit
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -137,7 +138,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
         val decompressedRaw = rawHeaders?.let { GenericDownloader.decompressString(it) }
 
-        val decodedHeadersString = String(Base64.getDecoder().decode(decompressedRaw))
+        val decodedHeadersString = String(Base64.decode(decompressedRaw, Base64.DEFAULT))
         val vFormat = Gson().fromJson(decodedHeadersString, VideoFormatEntity::class.java)
 
         val url = inputData.getString(

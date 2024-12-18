@@ -99,6 +99,6 @@ deps.coveralls = coveralls
 ext.deps = deps
 
 def build_versions = [:]
-build_versions.min_sdk = 29
+build_versions.min_sdk = 24
 build_versions.target_sdk = 35
 ext.build_versions = build_versions

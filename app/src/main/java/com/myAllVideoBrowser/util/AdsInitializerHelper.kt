@@ -7,9 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.Duration
-import java.time.Instant
 import java.util.Date
+import java.util.concurrent.TimeUnit
 
 class AdsInitializerHelper {
     companion object {
@@ -30,11 +29,9 @@ class AdsInitializerHelper {
                     }
                     val lastUpdateTime = sharedPrefHelper.getAdHostsUpdateTime()
                     val currentTime = System.currentTimeMillis()
-                    val duration = Duration.between(
-                        Instant.ofEpochMilli(lastUpdateTime),
-                        Instant.ofEpochMilli(currentTime)
-                    )
-                    val isOutdated = duration.toDays() > ADS_LIST_UPDATE_TIME_DAYS
+                    val differenceInMillis = currentTime - lastUpdateTime
+                    val daysDifference = TimeUnit.MILLISECONDS.toDays(differenceInMillis)
+                    val isOutdated = daysDifference > ADS_LIST_UPDATE_TIME_DAYS
 
                     var isUpdated = false
                     val isInitialized: Boolean

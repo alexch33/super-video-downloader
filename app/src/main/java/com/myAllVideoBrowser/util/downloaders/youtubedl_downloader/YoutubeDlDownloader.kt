@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.util.downloaders.youtubedl_downloader
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Base64
 import androidx.work.*
 import com.google.gson.Gson
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
@@ -13,7 +14,6 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownload
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker.Companion.STOP_SAVE_ACTION
 import io.reactivex.rxjava3.disposables.Disposable
 import org.reactivestreams.Subscription
-import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 
@@ -126,8 +126,10 @@ class YoutubeDlDownloader : GenericDownloader() {
 
             val data = Data.Builder()
             val headersVal = try {
-                Base64.getEncoder()
-                    .encodeToString(Gson().toJson(headersMap).toString().toByteArray())
+                Base64.encodeToString(
+                    Gson().toJson(headersMap).toString().toByteArray(),
+                    Base64.DEFAULT
+                )
             } catch (e: Exception) {
                 "{}"
             }
@@ -145,7 +147,7 @@ class YoutubeDlDownloader : GenericDownloader() {
             if (videoInfo.formats.formats.firstOrNull() != null && videoInfo.formats.formats.isNotEmpty()) {
                 val stringHeaders =
                     Gson().toJson(videoInfo.formats.formats.firstOrNull()).toString()
-                val zipHeaders = Base64.getEncoder().encodeToString(stringHeaders.toByteArray())
+                val zipHeaders = Base64.encodeToString(stringHeaders.toByteArray(), Base64.DEFAULT)
 
                 val superZip = compressString(zipHeaders)
                 AppLogger.d("superZip ${superZip.toByteArray().size}  ---- ${zipHeaders.toByteArray().size}")

@@ -2,6 +2,7 @@ package com.myAllVideoBrowser.util.downloaders.custom_downloader
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Base64
 import androidx.core.net.toUri
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
@@ -14,7 +15,6 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progres
 import io.reactivex.rxjava3.core.Flowable
 import java.io.File
 import java.net.URL
-import java.util.Base64
 import java.util.Date
 import kotlin.coroutines.resume
 
@@ -239,7 +239,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val fixedHeaders = headers.toMutableMap()
         for (header in headers) {
             if (header.key == "Cookie") {
-                val cookieVal = String(Base64.getDecoder().decode(header.value))
+                val cookieVal = String(Base64.decode(header.value, Base64.DEFAULT))
                 fixedHeaders[header.key] = cookieVal
             } else {
                 continue

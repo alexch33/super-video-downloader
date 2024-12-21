@@ -1,6 +1,8 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
+apply plugin: 'com.google.devtools.ksp'
+
 apply plugin: 'kotlin-kapt'
 
 apply plugin: 'kotlin-allopen'
@@ -40,17 +42,9 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 16
-        versionName "0.2.4"
+        versionCode 17
+        versionName "0.3.0"
         testInstrumentationRunner "util.TestRunner"
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments = [
-                        "room.schemaLocation"  : "$projectDir/schemas".toString(),
-                        "room.incremental"     : "true",
-                        "room.expandProjection": "true"]
-            }
-        }
 
         ndk {
             abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
@@ -71,6 +65,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
     testOptions {
         unitTests {
@@ -156,8 +151,7 @@ dependencies {
     implementation('androidx.room:room-runtime:2.6.1')
     annotationProcessor('androidx.room:room-compiler:2.6.1')
 
-    // To use Kotlin annotation processing tool (kapt)
-    kapt('androidx.room:room-compiler:2.6.1')
+    ksp "androidx.room:room-compiler:2.6.1"
 
     // optional - Kotlin Extensions and Coroutines support for Room
     implementation('androidx.room:room-ktx:2.6.1')
@@ -175,8 +169,8 @@ dependencies {
     implementation deps.dagger.runtime
     implementation deps.dagger.android
     implementation deps.dagger.android_support
-    kapt deps.dagger.compiler
-    kapt deps.dagger.android_processor
+    ksp deps.dagger.compiler
+    ksp deps.dagger.android_processor
 
     // OkHttp and Retrofit
     implementation deps.okhttp.runtime
@@ -196,7 +190,7 @@ dependencies {
 
     implementation 'com.github.bumptech.glide:glide:4.16.0'
 
-    kapt 'com.github.bumptech.glide:compiler:4.16.0'
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
 
     implementation('androidx.webkit:webkit:1.12.1')
 
@@ -208,7 +202,7 @@ dependencies {
 
     implementation 'com.github.marlonlom:timeago:4.0.3'
 
-    var media3_version = '1.5.0'
+    var media3_version = '1.5.1'
 
     // For media playback using ExoPlayer
     implementation "androidx.media3:media3-exoplayer:$media3_version"
@@ -243,6 +237,12 @@ dependencies {
     implementation 'androidx.core:core-splashscreen:1.0.1'
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas".toString())
+    arg("room.incremental", "true")
+    arg("room.expandProjection", "true")
+}
+
 tasks.coveralls {
     dependsOn 'check'
     onlyIf { System.getenv("COVERALLS_REPO_TOKEN") }
@@ -271,16 +271,12 @@ tasks.register('jacocoTestReport', JacocoReport) {
                       '**/util/scheduler/*.*', '**/util/fragment/*.*', '**/DLApplication.*',
                       '**/ViewModelFactory.*', '**/RoomConverter.*', '**/AppDatabase.*']
 
-    def javaClasses = fileTree(dir: "$project.buildDir/intermediates/javac/debug", excludes: fileFilter)
-    def kotlinClasses = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def javaClasses = fileTree(dir: "$getLayout().getBuildDirectory()/intermediates/javac/debug", excludes: fileFilter)
+    def kotlinClasses = fileTree(dir: "$getLayout().getBuildDirectory()/tmp/kotlin-classes/debug", excludes: fileFilter)
 
     sourceDirectories.from files(android.sourceSets.main.java.srcDirs)
     classDirectories.from files([javaClasses, kotlinClasses])
-    executionData.from fileTree(dir: project.buildDir, includes: [
+    executionData.from fileTree(dir: getLayout().getBuildDirectory(), includes: [
             'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
     ])
-}
-
-kapt {
-    correctErrorTypes true
 }

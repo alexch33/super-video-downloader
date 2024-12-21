@@ -12,7 +12,7 @@ class VideoUtils {
             headers: Headers?,
             okHttpProxyClient: OkHttpProxyClient
         ): ContentType {
-            if (url.contains(".js") || url.contains(".css")) {
+            if (url.contains(".js") || url.contains(".css") || url.startsWith("blob")) {
                 return ContentType.OTHER
             }
 
@@ -26,6 +26,7 @@ class VideoUtils {
             val response = try {
                 client.newCall(request).execute()
             } catch (e: Throwable) {
+                e.printStackTrace()
                 null
             }
             val contentTypeStr = response?.header("Content-Type")
@@ -41,7 +42,7 @@ class VideoUtils {
                 }
 
                 contentTypeStr?.contains("mp4") == true -> {
-                    contentType =  ContentType.MP4
+                    contentType = ContentType.MP4
                 }
 
                 contentTypeStr?.contains("application/octet-stream") == true -> {

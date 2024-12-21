@@ -611,10 +611,21 @@ class WebTabFragment : BaseWebTabFragment() {
         }
     }
 
+    private fun getWebViewClientCompat(webView: WebView?): CustomWebViewClient? {
+        return try {
+            val getWebViewClientMethod = WebView::class.java.getMethod("getWebViewClient")
+            val client = getWebViewClientMethod.invoke(webView) as? CustomWebViewClient
+            client
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     private fun showAlertVideoFound() {
         if (!tabViewModel.isDownloadDialogShown.get()) {
             tabViewModel.isDownloadDialogShown.set(true)
-            val client = webTab.getWebView()?.webViewClient as CustomWebViewClient?
+            val client = getWebViewClientCompat(webTab.getWebView())
 
             client?.videoAlert =
                 MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.video_found)

@@ -1,6 +1,7 @@
 package com.myAllVideoBrowser.util.downloaders.generic_downloader.workers
 
 import android.content.Context
+import android.util.Base64
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
@@ -13,7 +14,6 @@ import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
 import java.io.File
 import java.io.Serializable
-import java.util.Base64
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -109,8 +109,10 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
                 val rawHeaders = if (inpHeaders != null) {
                     try {
                         String(
-                            Base64.getDecoder()
-                                .decode(GenericDownloader.decompressString(inpHeaders))
+                            Base64.decode(
+                                GenericDownloader.decompressString(inpHeaders),
+                                Base64.DEFAULT
+                            )
                         )
                     } catch (e: Exception) {
                         "{}"

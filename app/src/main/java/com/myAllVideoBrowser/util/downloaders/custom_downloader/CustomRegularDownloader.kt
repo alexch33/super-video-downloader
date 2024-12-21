@@ -1,13 +1,13 @@
 package com.myAllVideoBrowser.util.downloaders.custom_downloader
 
 import android.content.Context
+import android.util.Base64
 import androidx.work.*
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import org.json.JSONObject
-import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 // TODO REFACTORING !!!!!
@@ -116,13 +116,12 @@ class CustomRegularDownloader : GenericDownloader() {
             }
             if (cookie != null) {
                 headersMap["Cookie"] =
-                    Base64.getEncoder().encodeToString(cookie.toString().toByteArray())
+                    Base64.encodeToString(cookie.toString().toByteArray(), Base64.DEFAULT)
             }
 
             val headersForClean = (headersMap as Map<*, *>?)?.let { JSONObject(it).toString() }
             val headersVal = try {
-                Base64.getEncoder()
-                    .encodeToString(headersForClean?.toByteArray())
+                Base64.encodeToString(headersForClean?.toByteArray(), Base64.DEFAULT)
             } catch (e: Exception) {
                 "{}"
             }

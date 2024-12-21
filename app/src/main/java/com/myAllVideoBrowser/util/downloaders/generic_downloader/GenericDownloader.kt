@@ -2,6 +2,7 @@ package com.myAllVideoBrowser.util.downloaders.generic_downloader
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Base64
 import androidx.work.*
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
@@ -9,7 +10,6 @@ import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
-import java.util.Base64
 import java.util.concurrent.TimeUnit
 import java.util.zip.Deflater
 import java.util.zip.Inflater
@@ -88,11 +88,11 @@ open class GenericDownloader {
             }
             byteArrayOutputStream.close()
 
-            return Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())
+            return Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
         }
 
         fun decompressString(compressedText: String): String {
-            val compressedData = Base64.getDecoder().decode(compressedText)
+            val compressedData = Base64.decode(compressedText, Base64.DEFAULT)
             val inflater = Inflater()
             inflater.setInput(compressedData)
             val buffer = ByteArray(1024)

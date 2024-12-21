@@ -343,33 +343,36 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             }.doOnError {
                 handleError(taskId, url, progressCached, it, tmpFile.name, name)
             }.onErrorComplete().subscribe { dlResponse ->
-
+                // Seems like youtubedlp has a bug and sometimes skip removing of merged fragments
                 val list = tmpFile.listFiles()
+                val finalFile = if (!list.isNullOrEmpty()) {
+                    tmpFile.walkTopDown()
+                        .filter { it.isFile && it.extension.equals("mp4", ignoreCase = true) }
+                        .firstOrNull()
+                } else {
+                    null
+                }
+                if (dlResponse.exitCode == 0 && finalFile != null) {
+                    val moved = fileUtil.moveMedia(
+                        this@YoutubeDlDownloaderWorker.applicationContext,
+                        Uri.fromFile(finalFile),
+                        Uri.fromFile(File(fixFileName("${downloadDir.absolutePath}/${finalFile.name}")))
+                    )
 
-                if (dlResponse.exitCode == 0 && (list?.size ?: 0) < 2) {
-                    tmpFile.listFiles()?.firstOrNull {
-                        val moved = fileUtil.moveMedia(
-                            this@YoutubeDlDownloaderWorker.applicationContext,
-                            Uri.fromFile(it),
-                            Uri.fromFile(File(fixFileName("${downloadDir.absolutePath}/${it.name}")))
-                        )
-
-                        if (this@YoutubeDlDownloaderWorker.cookieFile != null) {
-                            this@YoutubeDlDownloaderWorker.cookieFile!!.delete()
-                        }
-
-                        if (moved) {
-                            tmpFile.delete()
-                        }
-                        finishWork(VideoTaskItem(url).also { f ->
-                            f.fileName = it.name
-                            f.errorCode = if (moved) 0 else 1
-                            f.percent = 100F
-                            f.taskState =
-                                if (moved) VideoTaskState.SUCCESS else VideoTaskState.ERROR
-                        })
-                        true
+                    if (this@YoutubeDlDownloaderWorker.cookieFile != null) {
+                        this@YoutubeDlDownloaderWorker.cookieFile!!.delete()
                     }
+
+                    if (moved) {
+                        tmpFile.deleteRecursively()
+                    }
+                    finishWork(VideoTaskItem(url).also { f ->
+                        f.fileName = finalFile.name
+                        f.errorCode = if (moved) 0 else 1
+                        f.percent = 100F
+                        f.taskState =
+                            if (moved) VideoTaskState.SUCCESS else VideoTaskState.ERROR
+                    })
                 } else {
                     val fixedList = tmpFile.listFiles()?.filter { !it.name.contains("part") }
                     if (this@YoutubeDlDownloaderWorker.cookieFile != null) {

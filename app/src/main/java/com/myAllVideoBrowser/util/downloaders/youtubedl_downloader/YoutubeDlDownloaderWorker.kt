@@ -93,9 +93,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         if (taskId != null) {
             YoutubeDL.getInstance().destroyProcessById(taskId)
 
-            val partsFolder = File(
-                "${fileUtil.tmpDir}/$taskId"
-            )
+            val partsFolder = fileUtil.tmpDir.resolve(taskId)
             val firstPart = partsFolder.listFiles()?.firstOrNull()
 
             val dist = File(fileUtil.folderDir.absolutePath, "${task.title}.mp4")
@@ -290,10 +288,15 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                 null
             }
             if (dlResponse.exitCode == 0 && finalFile != null) {
+                val destinationFile = fileUtil.folderDir.resolve(finalFile.name).let {
+                    fixFileName(it.absolutePath) // Apply fixFileName to the path
+                }.let {
+                    File(it) // Create a File object from the fixed path
+                }
                 val moved = fileUtil.moveMedia(
                     this@YoutubeDlDownloaderWorker.applicationContext,
                     Uri.fromFile(finalFile),
-                    Uri.fromFile(File(fixFileName("${fileUtil.folderDir.absolutePath}${okio.Path.DIRECTORY_SEPARATOR}${finalFile.name}")))
+                    Uri.fromFile(destinationFile)
                 )
 
                 if (this@YoutubeDlDownloaderWorker.cookieFile != null) {

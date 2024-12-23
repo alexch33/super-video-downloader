@@ -43,6 +43,10 @@ class FileUtil @Inject constructor() {
         private const val KB = 1024
         private const val MB = 1024 * 1024
         private const val GB = 1024 * 1024 * 1024
+
+        // 10MB
+        private const val FREE_SPACE_TRESHOLD = 10 * 1024 * 1024
+
         fun getFileSizeReadable(length: Double): String {
 
             val decimalFormat = DecimalFormat("#.##")
@@ -61,6 +65,18 @@ class FileUtil @Inject constructor() {
 
             val stats = StatFs(path.absolutePath)
             return stats.availableBlocksLong * stats.blockSizeLong
+        }
+
+        fun calculateFolderSize(directory: File): Long {
+            var length = 0L
+            if (directory.isDirectory) {
+                for (file in directory.listFiles() ?: emptyArray()) {
+                    length += calculateFolderSize(file)
+                }
+            } else {
+                length += directory.length()
+            }
+            return length
         }
 
         fun isExternalStorageWritable(): Boolean {
@@ -129,31 +145,8 @@ class FileUtil @Inject constructor() {
 
         }
 
-    fun getVideoPreviewFromContent(context: Context, uri: Uri): Bitmap? {
-        return try {
-            if (isFileApiSupportedByUri(context, uri)) {
-                return getVideoPreviewFromFile(uri.toFile())
-            }
-
-            return loadThumbnailFromMediaStore(context, uri)
-        } catch (e: Throwable) {
-            null
-        }
-    }
-
-    private fun loadThumbnailFromMediaStore(context: Context, uri: Uri): Bitmap? {
-        val videoId = getIdFromContentUri(context, uri) ?: return null
-        return MediaStore.Video.Thumbnails.getThumbnail(
-            context.contentResolver, videoId, MediaStore.Video.Thumbnails.MINI_KIND, null
-        )
-    }
-
-    private fun getVideoPreviewFromFile(file: File): Bitmap? {
-        val retriever = MediaMetadataRetriever()
-        retriever.setDataSource(file.absolutePath)
-        val bitmap = retriever.frameAtTime
-        retriever.release()
-        return bitmap
+    fun isFreeSpaceAvailable(): Boolean {
+        return getFreeDiskSpace(folderDir) > FREE_SPACE_TRESHOLD
     }
 
     private fun getIdFromContentUri(context: Context, uri: Uri): Long? {
@@ -236,17 +229,6 @@ class FileUtil @Inject constructor() {
         }
 
         return null
-    }
-
-    @Deprecated("This old")
-    fun scanMedia(context: Context, uri: Uri) {
-        try {
-            val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-            intent.data = uri
-            context.sendBroadcast(intent)
-        } catch (e: Throwable) {
-            Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
-        }
     }
 
     fun deleteMedia(context: Context, uri: Uri) {

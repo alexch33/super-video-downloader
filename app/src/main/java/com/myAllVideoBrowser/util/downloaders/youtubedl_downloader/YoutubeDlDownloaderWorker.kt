@@ -88,7 +88,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     }
 
     private fun stopAndSave(task: VideoTaskItem) {
-        val taskId = inputData.getString(GenericDownloader.DOWNLOAD_ID_KEY)
+        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)
 
         if (taskId != null) {
             YoutubeDL.getInstance().destroyProcessById(taskId)
@@ -120,7 +120,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun startDownload(
         task: VideoTaskItem, isContinue: Boolean = false
     ) {
-        val taskId = inputData.getString(GenericDownloader.DOWNLOAD_ID_KEY)!!
+        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)!!
 
         val vFormat = deserializeVideoFormat(taskId)
 
@@ -178,7 +178,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun pauseDownload(task: VideoTaskItem) {
         if (getDone()) return
 
-        val id = inputData.getString(GenericDownloader.DOWNLOAD_ID_KEY)
+        val id = inputData.getString(GenericDownloader.TASK_ID_KEY)
         if (id != null) {
             YoutubeDL.getInstance().destroyProcessById(id)
 
@@ -194,7 +194,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     }
 
     private fun cancelDownload(task: VideoTaskItem) {
-        val taskId = inputData.getString(GenericDownloader.DOWNLOAD_ID_KEY)
+        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)
         val isFileRemove = inputData.getBoolean(GenericDownloader.IS_FILE_REMOVE_KEY, false)
 
         if (taskId != null) {
@@ -289,9 +289,9 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             }
             if (dlResponse.exitCode == 0 && finalFile != null) {
                 val destinationFile = fileUtil.folderDir.resolve(finalFile.name).let {
-                    fixFileName(it.absolutePath) // Apply fixFileName to the path
+                    fixFileName(it.absolutePath)
                 }.let {
-                    File(it) // Create a File object from the fixed path
+                    File(it)
                 }
                 val moved = fileUtil.moveMedia(
                     this@YoutubeDlDownloaderWorker.applicationContext,
@@ -543,7 +543,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         val data = notificationsHelper.createNotificationBuilder(taskItem)
 
         showNotification(data.first, data.second)
-        showNotificationAsync(data.first, data.second)
     }
 
 
@@ -558,7 +557,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             return
         }
 
-        val taskId = inputData.getString(GenericDownloader.DOWNLOAD_ID_KEY)
+        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)
 
         if (taskId != null) {
             GenericDownloader.deleteHeadersStringFromSharedPreferences(applicationContext, taskId)

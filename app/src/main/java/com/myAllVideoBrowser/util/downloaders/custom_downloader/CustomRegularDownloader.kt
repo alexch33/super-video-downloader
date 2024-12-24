@@ -43,7 +43,6 @@ class CustomRegularDownloader : GenericDownloader() {
             downloaderData.putString(ACTION_KEY, DownloaderActions.CANCEL)
             downloaderData.putString(IS_FILE_REMOVE_KEY, removeFile.toString())
             downloaderData.putString(TASK_ID_KEY, progressInfo.id)
-            downloaderData.putInt(DOWNLOAD_ID_KEY, progressInfo.downloadId.toInt())
             downloadWork.setInputData(downloaderData.build())
 
             runWorkerTask(
@@ -56,7 +55,6 @@ class CustomRegularDownloader : GenericDownloader() {
 
             val downloaderData = getDownloadDataFromVideoInfo(context, progressInfo.videoInfo)
             downloaderData.putString(ACTION_KEY, DownloaderActions.PAUSE)
-            downloaderData.putInt(DOWNLOAD_ID_KEY, progressInfo.downloadId.toInt())
             downloadWork.setInputData(downloaderData.build())
 
             runWorkerTask(

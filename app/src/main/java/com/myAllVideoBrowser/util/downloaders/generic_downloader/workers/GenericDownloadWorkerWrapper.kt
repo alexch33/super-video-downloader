@@ -45,76 +45,11 @@ open class GenericDownloadWorkerWrapper(
 
     private var disposable: Disposable? = null
 
-    override fun onDownloadPrepare(item: VideoTaskItem?) {
-        super.onDownloadPrepare(item)
-
-        GenericDownloader.downloadListener?.onDownloadPrepare(item)
-    }
-
-    override fun onDownloadProgress(item: VideoTaskItem?) {
-        if (item != null) {
-            if (item.taskState == VideoTaskState.SUCCESS) {
-                return
-            }
-        }
-        super.onDownloadProgress(item)
-
-        GenericDownloader.downloadListener?.onDownloadProgress(item)
-    }
-
-    override fun onDownloadPause(item: VideoTaskItem?) {
-        AppLogger.d("Download Task PAUSE!!! $item")
-
-        if (item?.taskState == VideoTaskState.SUCCESS) {
-            return
-        }
-
-        super.onDownloadPause(item)
-
-        GenericDownloader.downloadListener?.onDownloadPause(item)
-    }
-
-    override fun onDownloadError(item: VideoTaskItem?) {
-        AppLogger.d("Download Task ERROR!!! $item")
-        super.onDownloadError(item)
-
-        GenericDownloader.downloadListener?.onDownloadError(item)
-    }
-
-    override fun onDownloadSuccess(item: VideoTaskItem?) {
-        super.onDownloadSuccess(item)
-
-        disposable?.dispose()
-        disposable = progressRepository.getProgressInfos().subscribe { infos ->
-            if (item != null) {
-                infos.find { it.id == item.url }
-                    ?.let { it1 -> progressRepository.deleteProgressInfo(it1) }
-            }
-        }
-
-        val builderPair = item?.let { notificationsHelper.createNotificationBuilder(it) }
-
-        if (builderPair != null) {
-            applicationContext.sendBroadcast(
-                Intent(applicationContext, NotificationReceiver::class.java).setAction(
-                    NotificationReceiver.ACTION_SEND_NOTIFICATION
-                ).putExtra(NotificationReceiver.EXTRA_ID, item.url.hashCode() + 1)
-                    .putExtra(NotificationReceiver.EXTRA_NOTIFICATION, builderPair.second.build())
-            )
-        }
-
-        GenericDownloader.downloadListener?.onDownloadSuccess(item)
-
-        finishWork(item)
-    }
-
     override fun createForegroundInfo(task: VideoTaskItem): ForegroundInfo {
         val pairData = notificationsHelper.createNotificationBuilder(task)
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ForegroundInfo(
-                pairData.first,
-                pairData.second.build(),
-                FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                pairData.first, pairData.second.build(), FOREGROUND_SERVICE_TYPE_DATA_SYNC
             )
         } else {
             ForegroundInfo(pairData.first, pairData.second.build())
@@ -122,16 +57,16 @@ open class GenericDownloadWorkerWrapper(
     }
 
     fun showNotification(id: Int, notification: NotificationCompat.Builder) {
+        showNotificationAsync(id, notification)
         notificationsHelper.showNotification(Pair(id, notification))
     }
 
-    fun showNotificationAsync(id: Int, notification: NotificationCompat.Builder) {
+    private fun showNotificationAsync(id: Int, notification: NotificationCompat.Builder) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             setForegroundAsync(
                 ForegroundInfo(
                     id, // taskId.hashcode()
-                    notification.build(),
-                    FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                    notification.build(), FOREGROUND_SERVICE_TYPE_DATA_SYNC
                 )
             )
         } else {
@@ -145,34 +80,29 @@ open class GenericDownloadWorkerWrapper(
     }
 
     override fun handleAction(
-        action: String,
-        task: VideoTaskItem,
-        headers: Map<String, String>,
-        isFileRemove: Boolean
+        action: String, task: VideoTaskItem, headers: Map<String, String>, isFileRemove: Boolean
     ) {
         when (action) {
             GenericDownloader.DownloaderActions.DOWNLOAD -> {
-                throw Error("Unimplemented")
+                throw UnsupportedOperationException("Download action is not implemented")
             }
 
             GenericDownloader.DownloaderActions.CANCEL -> {
-                notificationsHelper.hideNotification(task.url.hashCode())
-                getContinuation().resume(Result.success())
+                throw UnsupportedOperationException("Download action is not implemented")
             }
 
             GenericDownloader.DownloaderActions.PAUSE -> {
-                getContinuation().resume(Result.success())
+                throw UnsupportedOperationException("Download action is not implemented")
             }
 
             GenericDownloader.DownloaderActions.RESUME -> {
-                throw Error("Unimplemented")
+                throw UnsupportedOperationException("Resume action is not implemented")
             }
         }
     }
 
     override fun finishWork(item: VideoTaskItem?) {
         setDone()
-
         disposable?.dispose()
     }
 }

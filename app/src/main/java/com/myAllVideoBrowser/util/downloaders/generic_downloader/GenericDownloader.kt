@@ -20,18 +20,13 @@ open class GenericDownloader {
         const val IS_TRY_WITHOUT_HEADERS: String = "IS_TRY_WITHOUT_HEADERS"
         const val ACTION_KEY = "ACTION_KEY"
         const val URL_KEY = "URL_KEY"
-        const val HEADERS_KEY = "HEADERS_KEY"
         const val FILENAME_KEY = "FILENAME_KEY"
         const val IS_FILE_REMOVE_KEY = "IS_FILE_REMOVE"
-        const val EXT_KEY = "EXT_KEY"
         const val TITLE_KEY = "TITLE_KEY"
         const val VIDEO_FORMAT_KEY = "VIDEO_FORMAT_KEY"
         const val ORIGIN_KEY = "ORIGIN_KEY"
-        const val DOWNLOAD_ID_KEY = "DOWNLOAD_ID_KEY"
         const val TASK_ID_KEY = "TASK_ID"
         const val NOTIFICATION_ID_KEY = "NOTIFICATION_ID"
-
-        var downloadListener: IDownloadListener? = null
 
         fun getDownloaderPreferences(context: Context): SharedPreferences {
             return context
@@ -106,10 +101,6 @@ open class GenericDownloader {
             return String(byteArrayOutputStream.toByteArray())
         }
 
-        fun setAppDownloadListener(listener: IDownloadListener) {
-            downloadListener = listener
-        }
-
         fun addDownload(context: Context, videoInfo: VideoInfo) {
             val downloadWork = getWorkRequest()
 
@@ -179,40 +170,7 @@ open class GenericDownloader {
         }
 
         private fun getDownloadDataFromVideoInfo(videoInfo: VideoInfo): Data.Builder {
-            val videoUrl = videoInfo.firstUrlToString
-            val headers = videoInfo.downloadUrls.first().headers
-            val headersMap = mutableMapOf<String, String>()
-
-            for (name in headers.names()) {
-                headersMap[name] = headers[name] ?: ""
-            }
-
-            val data = Data.Builder()
-            data.putString(URL_KEY, videoUrl)
-            data.putString(
-                HEADERS_KEY,
-                (headersMap as Map<*, *>?)?.let { JSONObject(it).toString() })
-            if (videoUrl.contains("m3u8")) {
-                data.putString(EXT_KEY, "m3u8")
-            } else if (videoUrl.contains("mp4")) {
-                data.putString(EXT_KEY, "mp4")
-            } else if (videoUrl.contains("mkv")) {
-                data.putString(EXT_KEY, "mkv")
-            } else if (videoUrl.contains("3gp")) {
-                data.putString(EXT_KEY, "3gp")
-            } else if (videoUrl.contains("webm")) {
-                data.putString(EXT_KEY, "webm")
-            } else if (videoUrl.contains(".mov")) {
-                data.putString(EXT_KEY, "mov")
-            } else if (videoUrl.contains("qt")) {
-                data.putString(EXT_KEY, "qt")
-            } else {
-                data.putString(EXT_KEY, videoInfo.ext)
-            }
-            data.putString(TITLE_KEY, videoInfo.title)
-            data.putString(FILENAME_KEY, videoInfo.name)
-
-            return data
+           throw UnsupportedOperationException("getDownloadDataFromVideoInfo not implemented")
         }
 
 

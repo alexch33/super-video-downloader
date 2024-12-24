@@ -159,7 +159,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 AppLogger.d("START MOOVING...  $sourcePath  $target")
                 fileMovedSuccess =
                     fileUtil.moveMedia(applicationContext, sourcePath.toUri(), File(target).toUri())
-                AppLogger.d("END MOOVING...  $sourcePath  $target")
+                AppLogger.d("END MOOVING...  $sourcePath  $target  fileMovedSuccess: $fileMovedSuccess")
 
                 if (!fileMovedSuccess) {
                     throw Error("File Move error")
@@ -339,7 +339,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
         val notificationData = notificationsHelper.createNotificationBuilder(taskItem)
         showNotification(notificationData.first, notificationData.second)
-        showNotificationAsync(notificationData.first, notificationData.second)
     }
 
     private fun changeProgressInfoDownloadId(oldId: String, newId: Int): Flowable<ProgressInfo> {

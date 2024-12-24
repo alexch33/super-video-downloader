@@ -114,35 +114,14 @@ class YoutubeDlDownloader : GenericDownloader() {
                 videoInfo.formats.formats.firstOrNull()?.url.toString()
             }
 
-            val headersMap =
-                if (videoInfo.formats.formats.isNotEmpty()) {
-                    videoInfo.formats.formats.firstOrNull()?.httpHeaders?.toMutableMap()
-                        ?: mutableMapOf()
-                } else {
-                    mutableMapOf()
-                }
-
-            headersMap.remove("Cookie")
-
             val data = Data.Builder()
-            val headersVal = try {
-                Base64.encodeToString(
-                    Gson().toJson(headersMap).toString().toByteArray(),
-                    Base64.DEFAULT
-                )
-            } catch (e: Exception) {
-                "{}"
-            }
+
             data.putString(URL_KEY, videoUrl)
-            data.putString(
-                HEADERS_KEY,
-                headersVal
-            )
             data.putString(TITLE_KEY, videoInfo.title)
             data.putString(FILENAME_KEY, videoInfo.name)
 
             data.putString(ORIGIN_KEY, videoInfo.originalUrl)
-            data.putString(DOWNLOAD_ID_KEY, videoInfo.id)
+            data.putString(TASK_ID_KEY, videoInfo.id)
 
             if (videoInfo.formats.formats.firstOrNull() != null && videoInfo.formats.formats.isNotEmpty()) {
                 val stringHeaders =

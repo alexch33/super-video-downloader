@@ -28,7 +28,7 @@ class NetworkModule {
     }
 
     private fun buildOkHttpClient(application: Application): OkHttpClient =
-        OkHttpClient.Builder()
+        OkHttpClient.Builder().retryOnConnectionFailure(true)
             .connectTimeout(10L, TimeUnit.SECONDS)
             .writeTimeout(10L, TimeUnit.SECONDS)
             .readTimeout(30L, TimeUnit.SECONDS)

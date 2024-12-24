@@ -77,7 +77,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             return
         }
 
-        GenericDownloader.deleteHeadersStringFromSharedPreferences(applicationContext, taskId)
+        CustomRegularDownloader.deleteHeadersStringFromSharedPreferences(applicationContext, taskId)
 
         try {
             handleTaskCompletion(item)
@@ -99,27 +99,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 e.printStackTrace()
             }
         }
-    }
-
-    override fun fixFileName(fileName: String): String {
-        val originalFile = File(fileName)
-        val hasChunks =
-            originalFile.parentFile?.listFiles()?.any { it.name.contains("chunk") } == true
-
-        var fixedFile = if (hasChunks) {
-            originalFile.parentFile?.resolve("${originalFile.nameWithoutExtension}.mp4")
-        } else {
-            originalFile.parentFile?.resolve("${originalFile.nameWithoutExtension}_copy.mp4")
-        }
-
-        var counter = 1
-        while (fixedFile?.exists() == true && !hasChunks) {
-            val newFileName = "${originalFile.nameWithoutExtension}_copy($counter).mp4"
-            fixedFile = originalFile.parentFile?.resolve(newFileName)
-            counter++
-        }
-
-        return fixedFile?.absolutePath ?: fileName
     }
 
     private fun handleTaskCompletion(item: VideoTaskItem) {
@@ -184,9 +163,9 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     }
 
     private fun startDownload(taskItem: VideoTaskItem, headers: Map<String, String>) {
-        AppLogger.d("Start download regular: $taskItem")
+        AppLogger.d("Start download regular: $taskItem   headers: $headers")
 
-        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)!!
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)!!
         val url = taskItem.url
 
         showProgress(taskItem.also { it.mId = taskId }, progressCached)
@@ -203,8 +182,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     private fun updateProgressInfoAndStartDownload(
         taskItem: VideoTaskItem, taskId: String, url: String, headers: Map<String, String>
     ) {
-        val progressInfo = changeProgressInfoDownloadId(taskId, taskId.hashCode()).blockingFirst()
-        saveProgress(progressInfo.id, Progress(0, 0), VideoTaskState.PENDING)
+        saveProgress(taskId, Progress(0, 0), VideoTaskState.PENDING)
 
         val threadCount = sharedPrefHelper.getRegularDownloaderThreadCount()
         val okHttpClient = proxyOkHttpClient.getProxyOkHttpClient()
@@ -289,7 +267,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     }
 
     private fun cancelTask(task: VideoTaskItem) {
-        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
         if (taskId == null) {
             finishWorkWithFailureTaskId(task)
 
@@ -306,7 +284,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     }
 
     private fun pauseTask(task: VideoTaskItem) {
-        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
 
         if (taskId == null) {
             finishWorkWithFailureTaskId(task)
@@ -320,7 +298,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         finishWork(task.also {
             it.mId = taskId
             it.taskState = VideoTaskState.PAUSE
-//            it.filePath = task.filePath
         })
     }
 
@@ -339,22 +316,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
         val notificationData = notificationsHelper.createNotificationBuilder(taskItem)
         showNotification(notificationData.first, notificationData.second)
-    }
-
-    private fun changeProgressInfoDownloadId(oldId: String, newId: Int): Flowable<ProgressInfo> {
-        return progressRepository.getProgressInfos().flatMap { list ->
-            val result = list.find { it.id == oldId }
-
-            if (result != null) {
-                Flowable.just(result)
-            } else {
-                Flowable.empty()
-            }
-        }.map {
-            it.downloadId = newId.toLong()
-            progressRepository.saveProgressInfo(it)
-            it
-        }
     }
 
     private fun saveProgress(

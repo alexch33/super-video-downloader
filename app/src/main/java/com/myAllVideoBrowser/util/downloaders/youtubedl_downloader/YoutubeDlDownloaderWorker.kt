@@ -88,7 +88,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     }
 
     private fun stopAndSave(task: VideoTaskItem) {
-        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
 
         if (taskId != null) {
             YoutubeDL.getInstance().destroyProcessById(taskId)
@@ -120,12 +120,12 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun startDownload(
         task: VideoTaskItem, isContinue: Boolean = false
     ) {
-        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)!!
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)!!
 
         val vFormat = deserializeVideoFormat(taskId)
 
         val url = inputData.getString(
-            GenericDownloader.ORIGIN_KEY
+            GenericDownloader.Constants.ORIGIN_KEY
         ) ?: throw Throwable("URL is NULL")
 
         AppLogger.d("Start download dl:  ${vFormat.formatId} $url $task")
@@ -137,7 +137,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         val request = YoutubeDLRequest(url)
 
         cookieFile = CookieUtils.addCookiesToRequest(
-            url, request, inputData.getString(GenericDownloader.ORIGIN_KEY)
+            url, request, inputData.getString(GenericDownloader.Constants.ORIGIN_KEY)
         )
 
         tmpFile = File(
@@ -178,7 +178,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun pauseDownload(task: VideoTaskItem) {
         if (getDone()) return
 
-        val id = inputData.getString(GenericDownloader.TASK_ID_KEY)
+        val id = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
         if (id != null) {
             YoutubeDL.getInstance().destroyProcessById(id)
 
@@ -194,8 +194,9 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     }
 
     private fun cancelDownload(task: VideoTaskItem) {
-        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)
-        val isFileRemove = inputData.getBoolean(GenericDownloader.IS_FILE_REMOVE_KEY, false)
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
+        val isFileRemove =
+            inputData.getBoolean(GenericDownloader.Constants.IS_FILE_REMOVE_KEY, false)
 
         if (taskId != null) {
             YoutubeDL.getInstance().destroyProcessById(taskId)
@@ -557,10 +558,10 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             return
         }
 
-        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
 
         if (taskId != null) {
-            GenericDownloader.deleteHeadersStringFromSharedPreferences(applicationContext, taskId)
+            YoutubeDlDownloader.deleteHeadersStringFromSharedPreferences(applicationContext, taskId)
         }
 
         notificationsHelper.hideNotification(taskId.hashCode())
@@ -614,50 +615,49 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         val isBytesNoTouch = line?.total == null || line.total == 0.0
         val iProgressUpdate = task.downloadSize.toInt() > 0
 
-        return progressRepository.getProgressInfos().doOnSubscribe {
-            YoutubeDlDownloaderDisposableContainer.links[taskId] = it
-        }.take(1).toObservable().flatMap { progressList ->
-            val dbTask = progressList.find { it.id == taskId }
+        return progressRepository.getProgressInfos().take(1).toObservable()
+            .flatMap { progressList ->
+                val dbTask = progressList.find { it.id == taskId }
 
-            if (!isBytesNoTouch) {
-                dbTask?.progressTotal = (line?.total ?: task.totalSize).toLong()
-            }
-
-            if (task.taskState != VideoTaskState.SUCCESS) {
-                if (!isBytesNoTouch && iProgressUpdate) {
-                    dbTask?.progressDownloaded = task.downloadSize
+                if (!isBytesNoTouch) {
+                    dbTask?.progressTotal = (line?.total ?: task.totalSize).toLong()
                 }
-            } else {
-                dbTask?.progressDownloaded = dbTask?.progressTotal ?: -1
-            }
 
-            dbTask?.fragmentsTotal = line?.fragTotal ?: 1
-            dbTask?.fragmentsDownloaded = line?.fragDownloaded ?: 0
-            dbTask?.downloadStatus = task.taskState
-
-            dbTask?.infoLine = line?.sourceLine ?: ""
-
-            if (line?.id == "LIVE" && dbTask?.isLive != true) {
-                dbTask?.isLive = true
-            }
-
-            if (dbTask != null) {
-                if (getDone() && task.taskState == VideoTaskState.DOWNLOADING) {
-                    AppLogger.d(
-                        "saveProgress task returned cause DONE!!!"
-                    )
+                if (task.taskState != VideoTaskState.SUCCESS) {
+                    if (!isBytesNoTouch && iProgressUpdate) {
+                        dbTask?.progressDownloaded = task.downloadSize
+                    }
                 } else {
-                    progressRepository.saveProgressInfo(dbTask)
+                    dbTask?.progressDownloaded = dbTask?.progressTotal ?: -1
                 }
+
+                dbTask?.fragmentsTotal = line?.fragTotal ?: 1
+                dbTask?.fragmentsDownloaded = line?.fragDownloaded ?: 0
+                dbTask?.downloadStatus = task.taskState
+
+                dbTask?.infoLine = line?.sourceLine ?: ""
+
+                if (line?.id == "LIVE" && dbTask?.isLive != true) {
+                    dbTask?.isLive = true
+                }
+
+                if (dbTask != null) {
+                    if (getDone() && task.taskState == VideoTaskState.DOWNLOADING) {
+                        AppLogger.d(
+                            "saveProgress task returned cause DONE!!!"
+                        )
+                    } else {
+                        progressRepository.saveProgressInfo(dbTask)
+                    }
+                }
+                Observable.empty()
             }
-            Observable.empty()
-        }
     }
 
     private fun deserializeVideoFormat(taskId: String): VideoFormatEntity {
-        val rawHeaders =
-            GenericDownloader.loadHeadersStringFromSharedPreferences(applicationContext, taskId)
-        val decompressedRaw = rawHeaders?.let { GenericDownloader.decompressString(it) }
+        val rawHeaders = GenericDownloader.getInstance()
+            .loadHeadersStringFromSharedPreferences(applicationContext, taskId)
+        val decompressedRaw = rawHeaders?.let { YoutubeDlDownloader.decompressString(it) }
         val decodedHeadersString = String(Base64.decode(decompressedRaw, Base64.DEFAULT))
 
         return Gson().fromJson(decodedHeadersString, VideoFormatEntity::class.java)

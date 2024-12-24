@@ -132,7 +132,7 @@ class ProgressViewModel @Inject constructor(
 
             saveProgressInfo(progressInfo) { info ->
                 if (info.videoInfo.isRegularDownload) {
-                    CustomRegularDownloader.addDownload(context, info.videoInfo)
+                    CustomRegularDownloader.startDownload(context, info.videoInfo)
                 } else {
                     YoutubeDlDownloader.startDownload(context, info.videoInfo)
                 }

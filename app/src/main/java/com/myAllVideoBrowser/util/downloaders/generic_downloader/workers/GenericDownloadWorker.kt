@@ -6,10 +6,11 @@ import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.util.FileUtil
-import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
+import kotlinx.coroutines.delay
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
@@ -54,11 +55,12 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     }
 
     open fun getTaskFromInput(): VideoTaskItem {
-        val url = inputData.getString(GenericDownloader.URL_KEY)
+        val url = inputData.getString(GenericDownloader.Constants.URL_KEY)
         val fileName =
-            inputData.getString(GenericDownloader.FILENAME_KEY) ?: url.hashCode().toString()
-        val title = inputData.getString(GenericDownloader.TITLE_KEY)
-        val taskId = inputData.getString(GenericDownloader.TASK_ID_KEY)
+            inputData.getString(GenericDownloader.Constants.FILENAME_KEY) ?: url.hashCode()
+                .toString()
+        val title = inputData.getString(GenericDownloader.Constants.TITLE_KEY)
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
 
         return VideoTaskItem(url).apply {
             mId = taskId
@@ -74,9 +76,10 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
             setWorkContinuation(continuation)
             try {
                 val task = getTaskFromInput()
-                val action = inputData.getString(GenericDownloader.ACTION_KEY)
+                val action = inputData.getString(GenericDownloader.Constants.ACTION_KEY)
                 val isFileRemove =
-                    inputData.getString(GenericDownloader.IS_FILE_REMOVE_KEY).toString() == "true"
+                    inputData.getString(GenericDownloader.Constants.IS_FILE_REMOVE_KEY)
+                        .toString() == "true"
                 val headers = loadHeaders(task.mId)
 
                 if (action.isNullOrBlank() || task.url == null) {
@@ -102,11 +105,12 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
 
     private fun loadHeaders(taskId: String): Map<String, String> {
         val inpHeaders =
-            GenericDownloader.loadHeadersStringFromSharedPreferences(applicationContext, taskId)
+            GenericDownloader.getInstance().loadHeadersStringFromSharedPreferences(applicationContext, taskId)
         return inpHeaders?.let {
             try {
                 val decodedHeaders =
-                    String(Base64.decode(GenericDownloader.decompressString(it), Base64.DEFAULT))
+                    String(Base64.decode(GenericDownloader.getInstance().decompressString(it), Base64.DEFAULT))
+
                 Gson().fromJson(decodedHeaders, Map::class.java) as Map<String, String>
             } catch (e: Exception) {
                 emptyMap()
@@ -131,10 +135,6 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     @Synchronized
     fun getContinuation(): Continuation<Result> {
         return this.continuation
-    }
-
-    private fun updateForegroundInfo(item: VideoTaskItem?) {
-        item?.let { createForegroundInfo(it) }?.let { setForegroundAsync(it) }
     }
 
     @Synchronized

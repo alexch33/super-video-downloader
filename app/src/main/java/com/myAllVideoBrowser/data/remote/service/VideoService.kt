@@ -86,15 +86,18 @@ open class VideoServiceLocal(
                     ?: emptyList())
             if (listFormats.formats.isEmpty()) throw Exception("Audio Only Detected")
 
-            return VideoInfoWrapper(VideoInfo(title = info.title ?: "no title").also { videoInfo ->
-                videoInfo.ext = info.ext ?: MP4_EXT
-                videoInfo.thumbnail = info.thumbnail ?: ""
-                videoInfo.duration = info.duration.toLong()
-                videoInfo.originalUrl = url.url.toString()
-                videoInfo.downloadUrls = if (isM3u8OrMpd) emptyList() else listOf(url)
-                videoInfo.formats = listFormats
-                videoInfo.isRegularDownload = false
-            })
+            return VideoInfoWrapper(
+                VideoInfo(
+                    title = info.title ?: "no title",
+                    formats = listFormats
+                ).apply {
+                    ext = info.ext ?: MP4_EXT
+                    thumbnail = info.thumbnail ?: ""
+                    duration = info.duration.toLong()
+                    originalUrl = url.url.toString()
+                    downloadUrls = if (isM3u8OrMpd) emptyList() else listOf(url)
+                    isRegularDownload = false
+                })
         } catch (e: Throwable) {
             throw e
         } finally {

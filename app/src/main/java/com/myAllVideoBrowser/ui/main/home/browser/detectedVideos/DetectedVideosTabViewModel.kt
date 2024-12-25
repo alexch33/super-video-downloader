@@ -35,7 +35,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Request
-import okhttp3.Response
 import java.net.HttpCookie
 import java.net.URL
 import java.util.concurrent.Executors
@@ -84,8 +83,7 @@ class DetectedVideosTabViewModel @Inject constructor(
 
     override fun start() {
         AppLogger.d("START")
-        regularLoadingList.addOnPropertyChangedCallback(object :
-            OnPropertyChangedCallback() {
+        regularLoadingList.addOnPropertyChangedCallback(object : OnPropertyChangedCallback() {
             override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
                 val notEmpty = regularLoadingList.get()?.isNotEmpty() == true
                 hasCheckLoadingsRegular.set(notEmpty)
@@ -94,8 +92,7 @@ class DetectedVideosTabViewModel @Inject constructor(
                 }
             }
         })
-        m3u8LoadingList.addOnPropertyChangedCallback(object :
-            OnPropertyChangedCallback() {
+        m3u8LoadingList.addOnPropertyChangedCallback(object : OnPropertyChangedCallback() {
             override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
                 val notEmpty = m3u8LoadingList.get()?.isNotEmpty() == true
                 hasCheckLoadingsM3u8.set(notEmpty)
@@ -104,8 +101,7 @@ class DetectedVideosTabViewModel @Inject constructor(
                 }
             }
         })
-        downloadButtonState.addOnPropertyChangedCallback(object :
-            OnPropertyChangedCallback() {
+        downloadButtonState.addOnPropertyChangedCallback(object : OnPropertyChangedCallback() {
             override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
                 when (downloadButtonState.get()) {
                     is DownloadButtonStateCanNotDownload -> downloadButtonIcon.set(R.drawable.refresh_24px)
@@ -130,9 +126,7 @@ class DetectedVideosTabViewModel @Inject constructor(
         cancelAllCheckJobs()
 
         val req = getRequestWithHeadersForUrl(
-            url,
-            url,
-            userAgentString
+            url, url, userAgentString
         )?.build()
 
         if (req != null) {
@@ -456,77 +450,71 @@ class DetectedVideosTabViewModel @Inject constructor(
     }
 
     private fun propagateCheckJob(url: String, headersMap: Map<String, String>) {
-        val treshold = settingsModel.videoDetectionTreshold.get()
-        var headers = headersMap.toMutableMap()
-        val finlUrlPair = try {
-            CookieUtils.getFinalRedirectURL(URL(Uri.parse(url).toString()), headers)
-        } catch (e: Throwable) {
-            null
-        } ?: return
+        val threshold = settingsModel.videoDetectionTreshold.get()
 
-        try {
-            val cookies = CookieManager.getInstance().getCookie(finlUrlPair.first.toString())
+        val finalUrlPair = runCatching {
+            CookieUtils.getFinalRedirectURL(URL(Uri.parse(url).toString()), headersMap)
+        }.getOrNull() ?: return
+
+        val cookies = runCatching {
+            CookieManager.getInstance().getCookie(finalUrlPair.first.toString())
                 ?: CookieManager.getInstance().getCookie(url) ?: ""
-            if (cookies.isNotEmpty()) {
-                headers["Cookie"] = cookies
-            }
-        } catch (_: Throwable) {
+        }.getOrNull() ?: ""
 
+        val headers = headersMap.toMutableMap().apply {
+            if (cookies.isNotEmpty()) {
+                put("Cookie", cookies)
+            }
         }
 
-        var respons: Response? = null
-        try {
-            headers = finlUrlPair.second.toMap().toMutableMap()
-            val requestOk: Request =
-                Request.Builder().url(finlUrlPair.first).headers(headers.toHeaders()).build()
-            respons = okHttpProxyClient.getProxyOkHttpClient().newCall(requestOk).execute()
+        runCatching {
+            val request =
+                Request.Builder().url(finalUrlPair.first).headers(headers.toHeaders()).build()
 
-            val length = respons.body.contentLength()
-            val type = respons.body.contentType()
-            respons.body.close()
+            okHttpProxyClient.getProxyOkHttpClient().newCall(request).execute().use { response ->
+                val contentType = response.body.contentType().toString()
+                val contentLength = response.body.contentLength()
 
-            if (respons.code == 403 || respons.code == 401) {
-                val finlUrlPairEmpty = try {
-                    CookieUtils.getFinalRedirectURL(URL(Uri.parse(url).toString()), emptyMap())
-                } catch (e: Throwable) {
-                    null
+                if (response.code == 403 || response.code == 401) {
+                    handleUnauthorizedResponse(url, threshold)
+                    return
                 }
 
-                if (finlUrlPairEmpty != null) {
-                    val emptyHeadersReq = Request.Builder().url(finlUrlPairEmpty.first).build()
-                    val emptyRes =
-                        okHttpProxyClient.getProxyOkHttpClient().newCall(emptyHeadersReq).execute()
-                    if (emptyRes.body.contentType().toString()
-                            .contains("video") && length > treshold
-                    ) {
-                        setVideoInfoWrapperFromUrl(
-                            finlUrlPairEmpty.first,
-                            webTabModel?.getTabTextInput()?.get(),
-                            finlUrlPairEmpty.second.toMap(),
-                            length
-                        )
-                        emptyRes.close()
-
-                        return
-                    }
+                val isTikTok = url.contains(".tiktok.com/")
+                if (contentType.contains("video") && (contentLength > threshold || (isTikTok && contentLength > 1024 * 1024 / 3))) {
+                    setVideoInfoWrapperFromUrl(
+                        finalUrlPair.first,
+                        webTabModel?.getTabTextInput()?.get(),
+                        finalUrlPair.second.toMap(),
+                        contentLength
+                    )
                 }
             }
-
-            val isTikTok = url.contains(".tiktok.com/")
-            if (type.toString()
-                    .contains("video") && (length > treshold || (isTikTok && length > 1024 * 1024 / 3))
-            ) {
-                setVideoInfoWrapperFromUrl(
-                    finlUrlPair.first,
-                    webTabModel?.getTabTextInput()?.get(),
-                    finlUrlPair.second.toMap(),
-                    length
-                )
-            }
-        } catch (e: Throwable) {
+        }.onFailure { e ->
             e.printStackTrace()
-        } finally {
-            respons?.close()
+        }
+    }
+
+    private fun handleUnauthorizedResponse(url: String, threshold: Int) {
+        val finalUrlPairEmpty = runCatching {
+            CookieUtils.getFinalRedirectURL(URL(Uri.parse(url).toString()), emptyMap())
+        }.getOrNull() ?: return
+
+        runCatching {
+            val request = Request.Builder().url(finalUrlPairEmpty.first).build()
+            okHttpProxyClient.getProxyOkHttpClient().newCall(request).execute().use { response ->
+                val contentType = response.body.contentType().toString()
+                val contentLength = response.body.contentLength()
+
+                if (contentType.contains("video") && contentLength > threshold.toLong()) {
+                    setVideoInfoWrapperFromUrl(
+                        finalUrlPairEmpty.first,
+                        webTabModel?.getTabTextInput()?.get(),
+                        finalUrlPairEmpty.second.toMap(),
+                        contentLength
+                    )
+                }
+            }
         }
     }
 

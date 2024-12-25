@@ -3,10 +3,10 @@ package com.myAllVideoBrowser.util
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import kotlinx.coroutines.delay
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.use
-import org.jsoup.Jsoup
 import java.io.ByteArrayOutputStream
 
 
@@ -19,65 +19,33 @@ class FaviconUtils {
             return stream.toByteArray()
         }
 
-        suspend fun getEncodedFaviconFromUrl(
-            okHttpClient: OkHttpClient,
-            url: String
-        ): Bitmap? {
-            val reqUrl = "https://${Uri.parse(url).host}/favicon.ico"
+        suspend fun getEncodedFaviconFromUrl(okHttpClient: OkHttpClient, url: String): Bitmap? {
+            delay(0)
+            return fetchFavicon(okHttpClient, url)
+        }
 
-            var request = Request.Builder().url(reqUrl).build()
-            var response = okHttpClient.newCall(request).execute()
+        private fun fetchFavicon(okHttpClient: OkHttpClient, url: String): Bitmap? {
+            val potentialUrls = listOf(
+                "https://${Uri.parse(url).host}/favicon.ico",
+                "https://${
+                    Uri.parse(url).host?.replaceFirst(
+                        "www.",
+                        ""
+                    )
+                }/favicon.ico", // Without "www."
+                "https://www.google.com/s2/favicons?domain=$url"                       // Google favicon service
+            )
 
-            if (response.code == 404) {
-                request = Request.Builder().url(reqUrl.replaceFirst("www.", "").trim()).build()
-                response = okHttpClient.newCall(request).execute()
-            }
+            for (reqUrl in potentialUrls) {
+                val request = Request.Builder().url(reqUrl).build()
+                val response = okHttpClient.newCall(request).execute()
 
-            if (response.code == 404) {
-                request = Request.Builder().url(reqUrl.replaceFirst("/favicon.ico", "")).build()
-                response = okHttpClient.newCall(request).execute()
-
-                val htmlBodyRaw = response.body.toString()
-
-                val htmlBody = Jsoup.parse(htmlBodyRaw)
-                response.body.close()
-                val el = htmlBody.select("link[rel~='icon']")
-                if (el.isNotEmpty()) {
-                    val href = el.first()?.attr("href")
-                    if (href != null) {
-                        request = Request.Builder().url(href.trim()).build()
-                        response = okHttpClient.newCall(request).execute()
-                    } else {
-                        request = Request.Builder().url(reqUrl).build()
-                        response = okHttpClient.newCall(request).execute()
+                if (response.isSuccessful) {
+                    response.body.byteStream().use { stream ->
+                        return BitmapFactory.decodeStream(stream)
                     }
                 }
-            }
-
-            if (response.code == 404) {
-                request =
-                    Request.Builder().url("https://www.google.com/s2/favicons?domain=$url")
-                        .build()
-                response.body.close()
-                response = okHttpClient.newCall(request).execute()
-            }
-
-            if (response.code == 200) {
-
-                val source = response.body.use {
-                    it.source().readByteString()
-                }
-
-                var bodyBytes: Bitmap? = null
-                try {
-                    bodyBytes = BitmapFactory.decodeStream(source.toByteArray().inputStream())
-                } catch (e: Throwable) {
-                    AppLogger.d(
-                        "BitmapFactory.decodeStream(source?.toByteArray()?.inputStream()) ERROR: ${e.message}"
-                    )
-                }
-
-                return bodyBytes
+                response.close()
             }
 
             return null

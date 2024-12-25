@@ -124,6 +124,9 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
         val vFormat = deserializeVideoFormat(taskId)
 
+        /** URL FROM INPUT NOT FROM FORMAT BECAUSE FORMAT URL MAY NOT BE APPROPRIATE IN SOME CASES,
+        FOR EXAMPLE SOUND SEPARATE FROM FORMAT IN MASTER LIST
+         **/
         val url = inputData.getString(
             GenericDownloader.Constants.ORIGIN_KEY
         ) ?: throw Throwable("URL is NULL")

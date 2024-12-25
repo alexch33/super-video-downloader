@@ -70,7 +70,7 @@ class DetectedVideosTabViewModel @Inject constructor(
     val executorReload = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     var webTabModel: WebTabViewModel? = null
     lateinit var settingsModel: SettingsViewModel
-    val detectedVideosList = ObservableField(mutableSetOf<VideoInfo>())
+    val detectedVideosList = ObservableField(setOf<VideoInfo>())
 
     private val downloadButtonIcon = ObservableInt(R.drawable.invisible_24px)
     private val executorRegular = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
@@ -242,52 +242,37 @@ class DetectedVideosTabViewModel @Inject constructor(
         val currentTabUrl = webTabModel?.getTabTextInput()?.get()
         val isTwitch = currentTabUrl?.contains(".twitch.") == true
 
-        if ((isTwitch) && !newInfo.isMaster) {
+        if (isTwitch && !newInfo.isMaster) {
+            AppLogger.d("SKIP TWICH DUPLICATED VIDEO INFO: $newInfo")
             return
         }
 
-        val detected = detectedVideosList.get()?.toList() ?: emptyList()
-        var contains = false
-        if (newInfo.isRegularDownload) {
-            for (vid in detected) {
-                val one = vid.firstUrlToString
-                val searching = newInfo.firstUrlToString
-                contains = one == searching
-                if (contains) {
-                    break
-                }
-            }
-        } else {
-            for (vid in detected) {
-                for (vF in vid.formats.formats) {
-                    for (k in newInfo.formats.formats) {
-                        if (vF.url == k.url) {
-                            contains = true
-                            break
-                        }
-                    }
-                    if (contains) {
-                        break
-                    }
-                }
-                if (vid.originalUrl == newInfo.originalUrl) {
-                    contains = true
-                    break
-                }
-            }
-        }
-        if (contains) {
+        val detectedVideos = detectedVideosList.get() ?: emptySet()
+
+        if (detectedVideos.any { isVideoInfoDuplicate(it, newInfo) }) {
+            AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
             return
         }
 
-        AppLogger.d("PUSHING $newInfo  to list: \n  ${detectedVideosList.get()}")
-        val list = detectedVideosList.get()?.toMutableSet() ?: mutableSetOf()
-        list.add(newInfo)
-        detectedVideosList.set(list)
+        AppLogger.d("PUSHING $newInfo to list: \n  $detectedVideos")
+        detectedVideosList.set(detectedVideos + newInfo)
+
         viewModelScope.launch(Dispatchers.Main) {
             videoPushedEvent.call()
         }
         setButtonState(DownloadButtonStateCanDownload(newInfo))
+    }
+
+    private fun isVideoInfoDuplicate(existing: VideoInfo, newInfo: VideoInfo): Boolean {
+        return if (newInfo.isRegularDownload) {
+            existing.firstUrlToString == newInfo.firstUrlToString
+        } else {
+            existing.formats.formats.any { existingFormat ->
+                newInfo.formats.formats.any { newFormat ->
+                    existingFormat.url == newFormat.url
+                }
+            } || existing.originalUrl == newInfo.originalUrl
+        }
     }
 
     override fun getDownloadBtnIcon(): ObservableInt {

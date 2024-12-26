@@ -18,7 +18,7 @@ import com.myAllVideoBrowser.util.AppUtil
 import javax.inject.Inject
 
 class DetectedVideosTabFragment : BaseFragment() {
-    var detectedVideosTabViewModel: DetectedVideosTabViewModel? = null
+    var detectedVideosTabViewModel: VideoDetectionTabViewModel? = null
     var candidateFormatListener: DownloadTabListener? = null
 
     @Inject

@@ -15,13 +15,13 @@ import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.databinding.ItemVideoInfoBinding
 import com.myAllVideoBrowser.ui.component.dialog.DownloadTabListener
-import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabViewModel
+import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.FileUtil
 
 class VideoInfoAdapter(
     private var videoInfoList: List<VideoInfo>,
-    private val model: DetectedVideosTabViewModel,
+    private val model: VideoDetectionTabViewModel,
     private val downloadVideoListener: DownloadTabListener,
     private val appUtil: AppUtil
 ) :
@@ -29,7 +29,7 @@ class VideoInfoAdapter(
 
     class VideoInfoViewHolder(
         val binding: ItemVideoInfoBinding,
-        val model: DetectedVideosTabViewModel,
+        val model: VideoDetectionTabViewModel,
         private val candidateFormatListener: DownloadTabListener,
         private val appUtil: AppUtil
     ) :

@@ -7,9 +7,9 @@ import com.myAllVideoBrowser.ui.main.history.HistoryViewModel
 import com.myAllVideoBrowser.ui.main.home.browser.BrowserViewModel
 import com.myAllVideoBrowser.ui.main.home.MainViewModel
 import com.myAllVideoBrowser.ui.main.home.browser.homeTab.BrowserHomeViewModel
-import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionAlgVModel
+import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.GlobalVideoDetectionModel
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabViewModel
-import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabViewModel
+import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.ui.main.link.DownloadLinkViewModel
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerViewModel
 import com.myAllVideoBrowser.ui.main.progress.ProgressViewModel
@@ -92,11 +92,11 @@ abstract class ViewModelModule {
 
     @Binds
     @IntoMap
-    @ViewModelKey(VideoDetectionAlgVModel::class)
-    abstract fun bindVideoDetectionAlgViewModel(viewModel: VideoDetectionAlgVModel): ViewModel
+    @ViewModelKey(GlobalVideoDetectionModel::class)
+    abstract fun bindVideoDetectionAlgViewModel(viewModel: GlobalVideoDetectionModel): ViewModel
 
     @Binds
     @IntoMap
-    @ViewModelKey(DetectedVideosTabViewModel::class)
-    abstract fun bindVideoDetectionDetectedViewModel(viewModel: DetectedVideosTabViewModel): ViewModel
+    @ViewModelKey(VideoDetectionTabViewModel::class)
+    abstract fun bindVideoDetectionDetectedViewModel(viewModel: VideoDetectionTabViewModel): ViewModel
 }

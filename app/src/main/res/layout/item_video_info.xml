@@ -14,7 +14,7 @@
 
         <variable
             name="viewModel"
-            type="com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabViewModel" />
+            type="com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel" />
 
     </data>
 

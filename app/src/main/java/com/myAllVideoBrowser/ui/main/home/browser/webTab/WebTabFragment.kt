@@ -50,7 +50,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.TAB_INDEX_KEY
 import com.myAllVideoBrowser.ui.main.home.browser.TabManagerProvider
 import com.myAllVideoBrowser.ui.main.home.browser.WorkerEventProvider
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
-import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabViewModel
+import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
 import com.myAllVideoBrowser.util.AppLogger
@@ -98,7 +98,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
     private lateinit var tabViewModel: WebTabViewModel
 
-    private lateinit var videoDetectionTabViewModel: DetectedVideosTabViewModel
+    private lateinit var videoDetectionTabViewModel: VideoDetectionTabViewModel
 
     private lateinit var webTab: WebTab
 
@@ -126,7 +126,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
         tabViewModel = ViewModelProvider(this, viewModelFactory)[WebTabViewModel::class]
         videoDetectionTabViewModel =
-            ViewModelProvider(this, viewModelFactory)[DetectedVideosTabViewModel::class]
+            ViewModelProvider(this, viewModelFactory)[VideoDetectionTabViewModel::class]
         videoDetectionTabViewModel.settingsModel = mainActivity.settingsViewModel
         videoDetectionTabViewModel.webTabModel = tabViewModel
 

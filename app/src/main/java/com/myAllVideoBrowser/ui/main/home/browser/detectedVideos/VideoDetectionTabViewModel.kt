@@ -40,7 +40,7 @@ import java.net.URL
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
-class DetectedVideosTabViewModel @Inject constructor(
+open class VideoDetectionTabViewModel @Inject constructor(
     private val videoRepository: VideoRepository,
     private val baseSchedulers: BaseSchedulers,
     private val okHttpProxyClient: OkHttpProxyClient,
@@ -72,14 +72,17 @@ class DetectedVideosTabViewModel @Inject constructor(
     lateinit var settingsModel: SettingsViewModel
     val detectedVideosList = ObservableField(setOf<VideoInfo>())
 
-    private val downloadButtonIcon = ObservableInt(R.drawable.invisible_24px)
-    private val executorRegular = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    val filterRegex =
+        Regex("^(.*\\.(apk|html|xml|ico|css|js|png|gif|json|jpg|jpeg|svg|woff|woff2|m3u8|mpd|ts|php|ttf|otf|eot|cur|webp|bmp|tif|tiff|psd|ai|eps|pdf|doc|docx|xls|xlsx|ppt|pptx|csv|md|rtf|vtt|srt|swf|jar|log|txt))?$")
+    val downloadButtonIcon = ObservableInt(R.drawable.invisible_24px)
 
     @Volatile
-    private var verifyVideoLinkJobStorage = mutableMapOf<String, Disposable>()
+    var verifyVideoLinkJobStorage = mutableMapOf<String, Disposable>()
 
     private val hasCheckLoadingsM3u8 = ObservableBoolean(false)
     private val hasCheckLoadingsRegular = ObservableBoolean(false)
+
+    private val executorRegular = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     override fun start() {
         AppLogger.d("START")
@@ -165,7 +168,6 @@ class DetectedVideosTabViewModel @Inject constructor(
     }
 
     override fun verifyLinkStatus(resourceRequest: Request, hlsTitle: String?, isM3u8: Boolean) {
-        // TODO list of sites, where youtube dl should be disabled
         if (resourceRequest.url.toString().contains("tiktok.")) {
             return
         }
@@ -186,7 +188,7 @@ class DetectedVideosTabViewModel @Inject constructor(
         }
     }
 
-    private fun startVerifyProcess(
+    open fun startVerifyProcess(
         resourceRequest: Request, isM3u8: Boolean, hlsTitle: String? = null
     ) {
         val taskUrlCleaned = resourceRequest.url.toString().split("?").firstOrNull()?.trim() ?: ""
@@ -234,7 +236,7 @@ class DetectedVideosTabViewModel @Inject constructor(
                 }
     }
 
-    fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
+    open fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
         if (newInfo.id.isEmpty()) {
             return
         }
@@ -293,7 +295,7 @@ class DetectedVideosTabViewModel @Inject constructor(
 
         val clearedUrl = uriString.split("?").first().trim()
 
-        if (clearedUrl.contains(Regex("^(.*\\.(apk|html|xml|ico|css|js|png|gif|json|jpg|jpeg|svg|woff|woff2|m3u8|mpd|ts|php|ttf|otf|eot|cur|webp|bmp|tif|tiff|psd|ai|eps|pdf|doc|docx|xls|xlsx|ppt|pptx|csv|md|rtf|vtt|srt|swf|jar|log|txt))?$"))) {
+        if (clearedUrl.contains(filterRegex)) {
             return null
         }
 
@@ -326,7 +328,6 @@ class DetectedVideosTabViewModel @Inject constructor(
     override fun cancelAllCheckJobs() {
         regularLoadingList.set(mutableSetOf())
         m3u8LoadingList.set(mutableSetOf())
-        executorReload.cancel()
         executorRegular.cancel()
         verifyVideoLinkJobStorage.forEach { (_, process) ->
             process.dispose()
@@ -434,7 +435,7 @@ class DetectedVideosTabViewModel @Inject constructor(
         return null
     }
 
-    private fun propagateCheckJob(url: String, headersMap: Map<String, String>) {
+    fun propagateCheckJob(url: String, headersMap: Map<String, String>) {
         val threshold = settingsModel.videoDetectionTreshold.get()
 
         val finalUrlPair = runCatching {

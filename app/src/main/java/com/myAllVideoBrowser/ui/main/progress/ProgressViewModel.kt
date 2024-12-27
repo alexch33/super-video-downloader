@@ -175,14 +175,6 @@ class ProgressViewModel @Inject constructor(
         val youtubeDlDownloads = Observable.interval(1000, TimeUnit.MILLISECONDS).flatMap {
             progressRepository.getProgressInfos().take(1).flatMap {
                 val filtered = it.filter { info -> info.downloadStatus != VideoTaskState.SUCCESS }
-
-                // Don't TOUCH(если убрать это возникнет конфликт ID-ков и не будет показываться прогресс для обычных загрузок)
-                //////////////////////////////
-                val successed = it.filter { info -> info.downloadStatus == VideoTaskState.SUCCESS }
-                for (task in successed) {
-                    progressRepository.deleteProgressInfo(task)
-                }
-                /////////////////////////////
                 Observable.just(filtered).toFlowable(BackpressureStrategy.LATEST).take(1)
             }.toObservable().doOnError { error ->
                 error.printStackTrace()

@@ -33,7 +33,7 @@ class FaviconUtils {
                         ""
                     )
                 }/favicon.ico", // Without "www."
-                "https://www.google.com/s2/favicons?domain=$url"                       // Google favicon service
+                "https://www.google.com/s2/favicons?domain=$url" // Google favicon service
             )
 
             for (reqUrl in potentialUrls) {

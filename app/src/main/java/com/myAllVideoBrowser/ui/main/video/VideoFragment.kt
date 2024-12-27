@@ -72,9 +72,7 @@ class VideoFragment : BaseFragment() {
     private var counter = 0
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         videoViewModel = ViewModelProvider(this, viewModelFactory)[VideoViewModel::class.java]
         videoAdapter = VideoAdapter(emptyList(), videoListener, fileUtil)
@@ -115,14 +113,14 @@ class VideoFragment : BaseFragment() {
 
     private fun handleUIEvents() {
         videoViewModel.apply {
-            renameErrorEvent.observe(viewLifecycleOwner, Observer { errorCode ->
+            renameErrorEvent.observe(viewLifecycleOwner) { errorCode ->
                 val errorMessage =
                     if (errorCode == FILE_EXIST_ERROR_CODE) R.string.video_rename_exist else R.string.video_rename_invalid
                 activity?.runOnUiThread {
                     Toast.makeText(context, context?.getString(errorMessage), Toast.LENGTH_SHORT)
                         .show()
                 }
-            })
+            }
         }
     }
 
@@ -131,8 +129,7 @@ class VideoFragment : BaseFragment() {
             disposable?.dispose()
             disposable = null
             disposable =
-                videoViewModel.findVideoByName(downloadFilename)
-                    .subscribeOn(Schedulers.io())
+                videoViewModel.findVideoByName(downloadFilename).subscribeOn(Schedulers.io())
                     .observeOn(Schedulers.single()).subscribe { video ->
                         startVideo(video)
                     }
@@ -160,13 +157,16 @@ class VideoFragment : BaseFragment() {
         popupMenu.setOnMenuItemClickListener { arg0 ->
             when (arg0.itemId) {
                 R.id.item_rename -> {
-                    showRenameVideoDialog(view.context, appUtil, video.name,
-                        View.OnClickListener { v ->
-                            with(v as EditText) {
-                                val newName = v.text.toString().trim()
-                                videoViewModel.renameVideo(v.context, video.uri, File(newName).nameWithoutExtension + ".mp4")
-                            }
-                        })
+                    showRenameVideoDialog(
+                        view.context, appUtil, video.name
+                    ) { v ->
+                        with(v as EditText) {
+                            val newName = v.text.toString().trim()
+                            videoViewModel.renameVideo(
+                                v.context, video.uri, File(newName).nameWithoutExtension + ".mp4"
+                            )
+                        }
+                    }
                     true
                 }
 
@@ -197,17 +197,14 @@ class VideoFragment : BaseFragment() {
 
     @OptIn(UnstableApi::class)
     private fun startVideo(localVideo: LocalVideo) {
-        startActivity(
-            Intent(
-                requireContext(),
-                VideoPlayerActivity::class.java
-            ).apply {
-                putExtra(VideoPlayerFragment.VIDEO_NAME, localVideo.name)
-                putExtra(
-                    VideoPlayerFragment.VIDEO_URL,
-                    localVideo.uri.toString()
-                )
-            })
+        startActivity(Intent(
+            requireContext(), VideoPlayerActivity::class.java
+        ).apply {
+            putExtra(VideoPlayerFragment.VIDEO_NAME, localVideo.name)
+            putExtra(
+                VideoPlayerFragment.VIDEO_URL, localVideo.uri.toString()
+            )
+        })
     }
 
     private fun startVideoWith(localVideo: LocalVideo) {

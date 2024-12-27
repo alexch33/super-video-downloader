@@ -1,8 +1,6 @@
 package com.myAllVideoBrowser.util.downloaders.youtubedl_downloader
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
 import android.util.Base64
 import androidx.work.*
 import com.google.gson.Gson
@@ -69,26 +67,3 @@ object YoutubeDlDownloader : GenericDownloader() {
     }
 }
 
-class CancelReceiver : BroadcastReceiver() {
-    companion object {
-        const val TASK_ID = "taskId"
-        const val NOTIFICATION_ID = "notificationId"
-    }
-
-    override fun onReceive(context: Context?, intent: Intent?) {
-        if (intent == null) return
-
-        val taskId = intent.getStringExtra(TASK_ID)
-        val notificationId = intent.getIntExtra(NOTIFICATION_ID, 0)
-
-        if (taskId.isNullOrEmpty()) return
-
-        YoutubeDlDownloader.cancelDownload(
-            context!!, ProgressInfo(
-                id = taskId,
-                downloadId = taskId.hashCode().toLong(),
-                videoInfo = VideoInfo(id = taskId)
-            ), false
-        )
-    }
-}

@@ -1,26 +1,21 @@
 package com.myAllVideoBrowser.util.downloaders.generic_downloader.workers
 
 import android.content.Context
-import android.content.Intent
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.data.repository.ProgressRepository
-import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.NotificationsHelper
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
-import com.myAllVideoBrowser.util.downloaders.generic_downloader.NotificationReceiver
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
-import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import io.reactivex.rxjava3.disposables.Disposable
 import javax.inject.Inject
-import kotlin.coroutines.resume
 
 open class GenericDownloadWorkerWrapper(
     appContext: Context, workerParams: WorkerParameters

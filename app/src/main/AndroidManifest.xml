@@ -78,9 +78,8 @@
             tools:node="remove" />
 
         <receiver
-            android:name="com.myAllVideoBrowser.util.downloaders.generic_downloader.NotificationReceiver"
+            android:name="com.myAllVideoBrowser.util.downloaders.NotificationReceiver"
             android:enabled="true" />
-        <receiver android:name="com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.CancelReceiver" />
     </application>
 
     <queries>

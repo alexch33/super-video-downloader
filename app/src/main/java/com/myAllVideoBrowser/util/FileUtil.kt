@@ -21,6 +21,10 @@ import androidx.core.net.toFile
 import androidx.core.net.toUri
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.RandomAccessFile
+import java.nio.channels.FileChannel
+import java.nio.channels.FileLock
+import java.nio.file.Files
 import java.text.DecimalFormat
 import java.util.Arrays
 import javax.inject.Inject
@@ -43,6 +47,10 @@ class FileUtil @Inject constructor() {
         private const val KB = 1024
         private const val MB = 1024 * 1024
         private const val GB = 1024 * 1024 * 1024
+
+        // 10MB
+        private const val FREE_SPACE_TRESHOLD = 10 * 1024 * 1024
+
         fun getFileSizeReadable(length: Double): String {
 
             val decimalFormat = DecimalFormat("#.##")
@@ -61,6 +69,18 @@ class FileUtil @Inject constructor() {
 
             val stats = StatFs(path.absolutePath)
             return stats.availableBlocksLong * stats.blockSizeLong
+        }
+
+        fun calculateFolderSize(directory: File): Long {
+            var length = 0L
+            if (directory.isDirectory) {
+                for (file in directory.listFiles() ?: emptyArray()) {
+                    length += calculateFolderSize(file)
+                }
+            } else {
+                length += directory.length()
+            }
+            return length
         }
 
         fun isExternalStorageWritable(): Boolean {
@@ -129,46 +149,8 @@ class FileUtil @Inject constructor() {
 
         }
 
-    fun getVideoPreviewFromContent(context: Context, uri: Uri): Bitmap? {
-        return try {
-            if (isFileApiSupportedByUri(context, uri)) {
-                return getVideoPreviewFromFile(uri.toFile())
-            }
-
-            return loadThumbnailFromMediaStore(context, uri)
-        } catch (e: Throwable) {
-            null
-        }
-    }
-
-    private fun loadThumbnailFromMediaStore(context: Context, uri: Uri): Bitmap? {
-        val videoId = getIdFromContentUri(context, uri) ?: return null
-        return MediaStore.Video.Thumbnails.getThumbnail(
-            context.contentResolver, videoId, MediaStore.Video.Thumbnails.MINI_KIND, null
-        )
-    }
-
-    private fun getVideoPreviewFromFile(file: File): Bitmap? {
-        val retriever = MediaMetadataRetriever()
-        retriever.setDataSource(file.absolutePath)
-        val bitmap = retriever.frameAtTime
-        retriever.release()
-        return bitmap
-    }
-
-    private fun getIdFromContentUri(context: Context, uri: Uri): Long? {
-        // Check if the URI is a document URI
-        if (DocumentsContract.isDocumentUri(context, uri)) {
-            // Get the document ID
-            val docId = DocumentsContract.getDocumentId(uri)
-            // Split the document ID to get the last segment, which is the ID
-            return docId.split(":").last().toLongOrNull()
-        } else {
-            // Get the ID from the last segment of the URI
-            val pathSegments = uri.pathSegments
-
-            return pathSegments.last().toLongOrNull()
-        }
+    fun isFreeSpaceAvailable(): Boolean {
+        return getFreeDiskSpace(folderDir) > FREE_SPACE_TRESHOLD
     }
 
     fun isFileWithNameNotExists(context: Context, uri: Uri, newName: String): Boolean {
@@ -188,7 +170,11 @@ class FileUtil @Inject constructor() {
             AppLogger.d("IS_FILE_API: TRUE -- from $from to $to")
             val newFile = to.toFile()
 
-            return from.toFile().renameTo(newFile)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Files.move(from.toFile().toPath(), newFile.toPath())
+                return true
+            }
+            return renameWithLock(from.toFile(), newFile)
         } else {
             AppLogger.d("IS_FILE_API: FALSE -- from $from to $to")
             return if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
@@ -236,17 +222,6 @@ class FileUtil @Inject constructor() {
         }
 
         return null
-    }
-
-    @Deprecated("This old")
-    fun scanMedia(context: Context, uri: Uri) {
-        try {
-            val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-            intent.data = uri
-            context.sendBroadcast(intent)
-        } catch (e: Throwable) {
-            Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
-        }
     }
 
     fun deleteMedia(context: Context, uri: Uri) {
@@ -298,6 +273,31 @@ class FileUtil @Inject constructor() {
         val isAppDir = uri.toString().startsWith(Uri.fromFile(privateDir).toString())
 
         return !(Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && !isAppDir)
+    }
+
+    // WITHOUT LOCK EXISTS PROBABILITY OF CORRUPTED FILE AFTER renameTo()
+    private fun renameWithLock(sourceFile: File, targetFile: File): Boolean {
+        try {
+            // 1. Acquire a lock on the source file
+            val randomAccessFile = RandomAccessFile(sourceFile, "rw")
+            val fileChannel: FileChannel = randomAccessFile.channel
+            val fileLock: FileLock = fileChannel.lock()
+
+            try {
+                // 2. Perform the renameTo() operation while holding the lock
+                val success = sourceFile.renameTo(targetFile)
+                return success
+
+            } finally {
+                // 3. Release the lock in the finally block
+                fileLock.release()
+                randomAccessFile.close()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            AppLogger.d(e.message.toString())
+            return false
+        }
     }
 
     private fun getContentSize(context: Context, uri: Uri): Long {
@@ -530,20 +530,37 @@ class FileUtil @Inject constructor() {
         }
 
         // Copy the file to the Downloads folder
-        val isMoved = fileUri?.let {
-            contentResolver.openOutputStream(it)?.use { outputStream ->
-                val copied = sourceFile.inputStream().use { inputStream ->
-                    inputStream.copyTo(outputStream)
+        val isMoved = fileUri?.let { uri ->
+            try {
+                // 1. Acquire a lock on the source file
+                val randomAccessFile = RandomAccessFile(sourceFile, "rw")
+                val fileChannel: FileChannel = randomAccessFile.channel
+                val fileLock: FileLock = fileChannel.lock()
+
+                try {
+                    contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        val copied = sourceFile.inputStream().use { inputStream ->
+                            inputStream.copyTo(outputStream)
+                        }
+                        if (copied > 0) {
+                            AppLogger.d("Source removing... $sourceFile")
+                            // Delete the source file
+                            sourceFile.delete()
+                            true
+                        } else {
+                            AppLogger.d("Source move error $sourceFile")
+                            false
+                        }
+                    }
+                } finally {
+                    // 3. Release the lock in the finally block
+                    fileLock.release()
+                    randomAccessFile.close()
                 }
-                if (copied > 0) {
-                    AppLogger.d("Source removing... $sourceFile")
-                    // Delete the source file
-                    sourceFile.delete()
-                    true
-                } else {
-                    AppLogger.d("Source move error $sourceFile")
-                    false
-                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                AppLogger.d("Source move error $sourceFile $e")
+                false
             }
         }
         return isMoved ?: false

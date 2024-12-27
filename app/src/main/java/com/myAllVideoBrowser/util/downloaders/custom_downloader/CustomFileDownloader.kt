@@ -35,7 +35,7 @@ class CustomFileDownloader(
     // File is always must be placed in folder with file name without extension
     private val file: File,
     private val threadCount: Int,
-    private val headers: MutableMap<String, String>,
+    private val headers: Map<String, String>,
     private val client: OkHttpClient,
     private val listener: DownloadListener?,
 ) : DownloadListener {

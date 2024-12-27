@@ -4,6 +4,7 @@ import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
 import androidx.webkit.WebViewFeature
 import com.myAllVideoBrowser.data.local.model.Proxy
+import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.core.Observable
@@ -75,7 +76,11 @@ class CustomProxyController @Inject constructor(
             val proxyConfig =
                 ProxyConfig.Builder().addProxyRule("${proxy.host}:${proxy.port}").build()
             if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
-                ProxyController.getInstance().setProxyOverride(proxyConfig, { }) {}
+                try {
+                    ProxyController.getInstance().setProxyOverride(proxyConfig, { }) {}
+                } catch (e: Exception) {
+                    AppLogger.d("ERROR SETTING PROXY: $e")
+                }
             }
         }
 

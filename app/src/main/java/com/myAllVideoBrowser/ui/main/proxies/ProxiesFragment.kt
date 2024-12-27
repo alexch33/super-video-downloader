@@ -50,8 +50,7 @@ class ProxiesFragment : BaseFragment() {
                         user = user,
                         password = password
                     )
-                    proxiesViewModel.setUserProxy(newProxy)
-                    proxiesViewModel.setProxy(newProxy)
+                    setProxy(newProxy)
                 } else {
                     Toast.makeText(
                         this@ProxiesFragment.context, "Invalid host or port", Toast.LENGTH_SHORT
@@ -87,6 +86,7 @@ class ProxiesFragment : BaseFragment() {
     }
 
     private fun setProxy(proxy: Proxy) {
+        proxiesViewModel.setUserProxy(proxy)
         proxiesViewModel.setProxy(proxy)
     }
 

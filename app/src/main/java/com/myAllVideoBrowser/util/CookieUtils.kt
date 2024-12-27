@@ -428,94 +428,76 @@ class ChromeBrowser : Browser() {
         return emptySet()
     }
 
-    private fun processCookiesToNetscape(
-        cookieStore: File?,
-        domainFilter: String?
-    ): String {
-        val stringBuffer = StringBuffer()
-        stringBuffer.append("# Netscape HTTP Cookie File\n")
-        stringBuffer.append("# https://curl.haxx.se/rfc/cookie_spec.html\n")
-        stringBuffer.append("# This is a generated file! Do not edit.\n\n")
+    private fun processCookiesToNetscape(cookieStore: File?, domainFilter: String?): String {
+        val netscapeCookieFile = StringBuilder()
+        netscapeCookieFile.appendLine("# Netscape HTTP Cookie File")
+        netscapeCookieFile.appendLine("# https://curl.haxx.se/rfc/cookie_spec.html")
+        netscapeCookieFile.appendLine("# This is a generated file! Do not edit.\n")
 
-        if (cookieStore?.exists() == true) {
-            var db: SQLiteDatabase? = null
-            var cursor: Cursor? = null
+        cookieStore?.takeIf { it.exists() }?.let { file ->
+            val cookieStoreCopy = File.createTempFile("cookieStoreCopy", ".db")
+            file.copyTo(cookieStoreCopy, overwrite = true)
 
             try {
-                cookieStoreCopy.delete()
-                cookieStore.copyTo(
-                    cookieStoreCopy,
-                    overwrite = true
-                )                // create a database connection
-
-                db = SQLiteDatabase.openDatabase(cookieStoreCopy.absolutePath, null, 0)
-
-                cursor = if (domainFilter.isNullOrEmpty()) {
-                    db.rawQuery("select * from cookies", null)
-                } else {
-                    db.rawQuery(
-                        "select * from cookies where host_key like \"%$domainFilter%\"",
+                SQLiteDatabase.openDatabase(cookieStoreCopy.absolutePath, null, 0).use { db ->
+                    val cursor = db.rawQuery(
+                        "SELECT * FROM cookies ${if (domainFilter.isNullOrEmpty()) "" else "WHERE host_key LIKE '%$domainFilter%'"}",
                         null
                     )
-                }
-
-                while (cursor.moveToNext()) {
-                    val cursorStorage = CursorStorage()
-
-                    for (i in cursor.columnNames.indices) {
-                        val columnName = cursor.columnNames[i]
-
-                        val columnValue =
-                            when (cursor.getType(i)) {
-                                Cursor.FIELD_TYPE_NULL -> ""
-                                Cursor.FIELD_TYPE_BLOB -> cursor.getBlobOrNull(i)
-                                Cursor.FIELD_TYPE_FLOAT -> cursor.getFloatOrNull(i)
-                                Cursor.FIELD_TYPE_STRING -> cursor.getStringOrNull(i)
-                                Cursor.FIELD_TYPE_INTEGER -> cursor.getLongOrNull(i)
-                                else -> cursor.getStringOrNull(i)
-                            }
-                        cursorStorage.addParams(columnName, cursor.getType(i), columnValue)
+                    cursor.use {
+                        while (it.moveToNext()) {
+                            val cookieData = extractCookieData(it)
+                            netscapeCookieFile.appendLine(formatCookieLine(cookieData))
+                        }
                     }
-
-                    val name = cursorStorage.getNameValue("name") as String
-                    val encryptedBytes = cursorStorage.getNameValue("encrypted_value") as ByteArray
-                    val value = (cursorStorage.getNameValue("value") as String)
-                    val path = cursorStorage.getNameValue("path") as String
-                    val domain = cursorStorage.getNameValue("host_key") as String
-                    val secure = (cursorStorage.getNameValue("is_secure") as Long?)
-                        ?: (cursorStorage.getNameValue("secure") as Long?) ?: 0L
-                    val httpOnly = (cursorStorage.getNameValue("is_httponly") as Long?)
-                        ?: (cursorStorage.getNameValue("httponly") as Long?) ?: 0L
-                    val exp = (cursorStorage.getNameValue("expires_utc") as Long?) ?: 0L
-                    val expires = if (exp != 0L) chromeTime(exp) else 0L
-                    val httpOnlyString = if (httpOnly == 1L) "#HttpOnly_" else ""
-                    val isSubomainString = if (domain.startsWith(".")) "TRUE" else "FALSE"
-                    val isSecureString = if (secure == 1L) "TRUE" else "FALSE"
-                    val expiresFormatted = if (expires == 0L) "0" else expires
-                    val valueFormatted =
-                        if (encryptedBytes.isNotEmpty() && value.isEmpty()) String(encryptedBytes) else value
-
-                    val ending = if (cursor.isLast) "" else "\n"
-
-                    stringBuffer.append("$httpOnlyString${domain}\t${isSubomainString}\t${path}\t${isSecureString}\t${expiresFormatted}\t${name}\t${valueFormatted}$ending")
-
-                    cookieStoreCopy.delete()
                 }
             } catch (e: Exception) {
+                AppLogger.d(e.toString())
                 e.printStackTrace()
-                // if the error message is "out of memory",
-                // it probably means no database file is found
             } finally {
-                try {
-                    cursor?.close()
-                    db?.close()
-                } catch (e: SQLException) {
-                    // connection close failed
-                }
+                cookieStoreCopy.delete()
             }
         }
 
-        return stringBuffer.toString()
+        return netscapeCookieFile.toString()
+    }
+
+    private fun extractCookieData(cursor: Cursor): Map<String, Any?> {
+        val cookieData = mutableMapOf<String, Any?>()
+        for (i in 0 until cursor.columnCount) {
+            val columnName = cursor.getColumnName(i)
+            val columnValue = when (cursor.getType(i)) {
+                Cursor.FIELD_TYPE_NULL -> null
+                Cursor.FIELD_TYPE_BLOB -> cursor.getBlob(i)
+                Cursor.FIELD_TYPE_FLOAT -> cursor.getFloat(i)
+                Cursor.FIELD_TYPE_STRING -> cursor.getString(i)
+                Cursor.FIELD_TYPE_INTEGER -> cursor.getLong(i)
+                else -> cursor.getString(i)
+            }
+            cookieData[columnName] = columnValue
+        }
+        return cookieData
+    }
+
+    private fun formatCookieLine(cookieData: Map<String, Any?>): String {
+        val name = cookieData["name"] as String
+        val encryptedBytes = cookieData["encrypted_value"] as? ByteArray ?: byteArrayOf()
+        val value = (cookieData["value"] as? String).orEmpty()
+        val path = cookieData["path"] as String
+        val domain = cookieData["host_key"] as String
+        val secure = (cookieData["is_secure"] as? Long ?: cookieData["secure"] as? Long ?: 0L) == 1L
+        val httpOnly =
+            (cookieData["is_httponly"] as? Long ?: cookieData["httponly"] as? Long ?: 0L) == 1L
+        val expires = (cookieData["expires_utc"] as? Long)?.let { chromeTime(it) } ?: 0L
+
+        val httpOnlyString = if (httpOnly) "#HttpOnly_" else ""
+        val isSubdomainString = if (domain.startsWith(".")) "TRUE" else "FALSE"
+        val isSecureString = if (secure) "TRUE" else "FALSE"
+        val expiresFormatted = if (expires == 0L) "0" else expires
+        val valueFormatted =
+            if (encryptedBytes.isNotEmpty() && value.isEmpty()) String(encryptedBytes) else value
+
+        return "$httpOnlyString${domain}\t${isSubdomainString}\t${path}\t${isSecureString}\t${expiresFormatted}\t${name}\t${valueFormatted}"
     }
 
     /**

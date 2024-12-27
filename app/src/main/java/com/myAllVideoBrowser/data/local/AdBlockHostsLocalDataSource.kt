@@ -121,38 +121,15 @@ class AdBlockHostsLocalDataSource @Inject constructor(
     }
 
     private suspend fun readAdServersFromStream(inputStream: InputStream): Set<AdHost> {
-        val br2 = BufferedReader(InputStreamReader(inputStream))
-        val result = mutableSetOf<AdHost>()
-
-        try {
-            var line2: String?
-
-            yield()
-
-            while (withContext(Dispatchers.IO) {
-                    br2.readLine()
-                }.also { line2 = it } != null) {
-                if (!line2.toString().startsWith("#")) {
-                    val parsedLine = parseAdsLine(line2)
-                    if (parsedLine.contains(Regex(".+\\..+"))) {
-                        result.add(AdHost(parsedLine))
-                    }
-                }
-            }
-            yield()
-        } catch (e: IOException) {
-            yield()
-
-            e.printStackTrace()
-        } finally {
-            yield()
-
-            withContext(Dispatchers.IO) {
-                br2.close()
+        return withContext(Dispatchers.IO) {
+            inputStream.bufferedReader().useLines { lines ->
+                lines.filterNot { it.startsWith("#") }
+                    .map { parseAdsLine(it) }
+                    .filter { it.contains(Regex(".+\\..+")) }
+                    .map { AdHost(it) }
+                    .toSet()
             }
         }
-
-        return result
     }
 
     override fun getCachedCount(): Int {

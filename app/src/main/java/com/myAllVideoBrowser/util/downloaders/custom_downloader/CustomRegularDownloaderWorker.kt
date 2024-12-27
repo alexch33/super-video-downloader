@@ -171,7 +171,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         showProgress(taskItem.also { it.mId = taskId }, progressCached)
 
         val tmpDir = fileUtil.tmpDir.resolve(taskId).apply { mkdirs() }
-        outputFileName = fixFileName(tmpDir.resolve(taskItem.fileName).toString())
+        outputFileName = tmpDir.resolve(taskItem.fileName).toString()
         val fixedHeaders = decodeCookieHeader(headers)
 
         updateProgressInfoAndStartDownload(

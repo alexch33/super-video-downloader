@@ -42,8 +42,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 18
-        versionName "0.4.0"
+        versionCode 19
+        versionName "0.4.1"
         testInstrumentationRunner "util.TestRunner"
 
         ndk {

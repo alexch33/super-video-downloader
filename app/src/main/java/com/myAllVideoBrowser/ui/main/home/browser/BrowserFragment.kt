@@ -41,7 +41,7 @@ import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.history.HistoryViewModel
 import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.home.MainViewModel
-import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionAlgVModel
+import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.GlobalVideoDetectionModel
 import com.myAllVideoBrowser.ui.main.home.browser.homeTab.BrowserHomeFragment
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTab
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabFragment
@@ -154,18 +154,17 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
     private lateinit var settingsModel: SettingsViewModel
 
-    private lateinit var videoDetectionModel: VideoDetectionAlgVModel
+    private lateinit var videoDetectionModel: GlobalVideoDetectionModel
 
     private val compositeDisposable = CompositeDisposable()
 
     private var backPressedOnce = false
 
-    private val requestPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            AppLogger.d("Permissions for writing isGranted: $isGranted")
-        }
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        AppLogger.d("Permissions for writing isGranted: $isGranted")
+    }
 
     private val serviceWorkerClient = object : ServiceWorkerClient() {
         override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? {
@@ -185,12 +184,9 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
                     }
                 }
 
-                val contentType =
-                    VideoUtils.getContentTypeByUrl(
-                        url,
-                        requestWithCookies?.headers,
-                        okHttpProxyClient
-                    )
+                val contentType = VideoUtils.getContentTypeByUrl(
+                    url, requestWithCookies?.headers, okHttpProxyClient
+                )
 
                 if (contentType == ContentType.MPD || contentType == ContentType.M3U8 || url.contains(
                         ".m3u8"
@@ -291,7 +287,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         browserViewModel = ViewModelProvider(this, viewModelFactory)[BrowserViewModel::class.java]
         historyModel = ViewModelProvider(this, viewModelFactory)[HistoryViewModel::class.java]
         videoDetectionModel =
-            ViewModelProvider(this, viewModelFactory)[VideoDetectionAlgVModel::class.java]
+            ViewModelProvider(this, viewModelFactory)[GlobalVideoDetectionModel::class.java]
 
         videoDetectionModel.settingsModel = mainActivity.settingsViewModel
         browserViewModel.settingsModel = mainActivity.settingsViewModel
@@ -338,10 +334,8 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             if (ContextCompat.checkSelfPermission(
-                    mainActivity,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-                )
-                != PackageManager.PERMISSION_GRANTED
+                    mainActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) != PackageManager.PERMISSION_GRANTED
             ) {
                 requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }

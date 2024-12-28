@@ -17,6 +17,7 @@ import com.yausername.youtubedl_android.mapper.VideoFormat
 import okhttp3.Request
 import org.jsoup.Jsoup
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 interface VideoService {
@@ -66,34 +67,28 @@ open class VideoServiceLocal(
 
         try {
             val info = YoutubeDL.getInstance().getInfo(request)
-            val formats = info.formats?.map {
-                videoEntityFromFormat(
-                    it
-                )
-            }
-            val filtered = arrayListOf<VideoFormatEntity>()
-
-            if (url.url.toString().contains(FACEBOOK_HOST)) {
-                if (formats != null) {
-                    filtered.addAll(formats.filter {
-                        it.formatId?.lowercase(Locale.ROOT)?.contains(Regex("hd|sd")) == true
-                    })
+            val formats = info.formats?.map { videoEntityFromFormat(it) } ?: emptyList()
+            val filtered = if (url.url.toString().contains(FACEBOOK_HOST)) {
+                formats.filter {
+                    it.formatId?.lowercase(Locale.ROOT)?.contains(Regex("hd|sd")) == true
                 }
+            } else {
+                emptyList()
             }
 
-            val listFormats =
-                VideFormatEntityList(filtered.ifEmpty { formats?.filter { !(it.acodec != "none" && it.vcodec == "none") } }
-                    ?: emptyList())
-            if (listFormats.formats.isEmpty()) throw Exception("Audio Only Detected")
+            val listFormats = VideFormatEntityList(filtered.ifEmpty {
+                formats.filter { it.vcodec != "none" || it.acodec == "none" }
+            })
 
-            return VideoInfoWrapper(VideoInfo(title = info.title ?: "no title").also { videoInfo ->
-                videoInfo.ext = info.ext ?: MP4_EXT
-                videoInfo.thumbnail = info.thumbnail ?: ""
-                videoInfo.duration = info.duration.toLong()
-                videoInfo.originalUrl = url.url.toString()
-                videoInfo.downloadUrls = if (isM3u8OrMpd) emptyList() else listOf(url)
-                videoInfo.formats = listFormats
-                videoInfo.isRegularDownload = false
+            return VideoInfoWrapper(VideoInfo(
+                title = info.title ?: "no title", formats = listFormats
+            ).apply {
+                ext = info.ext ?: MP4_EXT
+                thumbnail = info.thumbnail ?: ""
+                duration = info.duration.toLong()
+                originalUrl = url.url.toString()
+                downloadUrls = if (isM3u8OrMpd) emptyList() else listOf(url)
+                isRegularDownload = false
             })
         } catch (e: Throwable) {
             throw e
@@ -145,15 +140,14 @@ open class VideoServiceLocal(
 }
 
 class YoutubedlHelper @Inject constructor(
-    private val okHttpProxyClient: OkHttpProxyClient,
-    private val sharedPrefHelper: SharedPrefHelper
+    private val okHttpProxyClient: OkHttpProxyClient, private val sharedPrefHelper: SharedPrefHelper
 ) {
     companion object {
         private const val SUPPORTED_SITES_URL =
             "https://ytb-dl.github.io/ytb-dl/supportedsites.html"
     }
 
-    private val sites: HashSet<String> = HashSet()
+    private val sites: MutableSet<String> = ConcurrentHashMap.newKeySet()
     private var isLoading = false
 
     fun isHostSupported(host: String): Boolean {
@@ -165,7 +159,7 @@ class YoutubedlHelper @Inject constructor(
 
         if (sites.isEmpty() || isLoading) {
             try {
-                loadFromAssets()
+                loadSupportedHostsList()
             } catch (e: Throwable) {
                 e.printStackTrace()
                 isLoading = false
@@ -184,7 +178,7 @@ class YoutubedlHelper @Inject constructor(
         }
     }
 
-    private fun loadFromAssets() {
+    private fun loadSupportedHostsList() {
         if (!isLoading) {
             isLoading = true
 
@@ -195,12 +189,11 @@ class YoutubedlHelper @Inject constructor(
             response.body.close()
             val sitesB = doc.select("li > b")
 
-            for (b in sitesB) {
-                val value =
-                    b.text().trim().split(":").first().trim().lowercase().replace("- **", "")
-                        .replace("**", "").trim()
-                sites.add(value)
-            }
+            sites.addAll(sitesB.map {
+                it.text().trim().substringBefore(":").trim().lowercase().replace("- **", "")
+                    .replace("**", "")
+            })
+
             isLoading = false
         }
     }

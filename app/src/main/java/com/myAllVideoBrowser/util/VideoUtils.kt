@@ -16,54 +16,38 @@ class VideoUtils {
                 return ContentType.OTHER
             }
 
-            val client = okHttpProxyClient.getProxyOkHttpClient()
             val request = Request.Builder()
                 .url(url)
                 .headers(headers ?: Headers.headersOf())
                 .get()
                 .build()
 
-            val response = try {
-                client.newCall(request).execute()
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                null
-            }
-            val contentTypeStr = response?.header("Content-Type")
-            var contentType: ContentType = ContentType.OTHER
+            return runCatching {
+                okHttpProxyClient.getProxyOkHttpClient().newCall(request).execute()
+                    .use { response ->
+                        val contentTypeStr = response.header("Content-Type")
 
-            when {
-                contentTypeStr?.contains("mpegurl") == true -> {
-                    contentType = ContentType.M3U8
-                }
+                        when {
+                            contentTypeStr?.contains("mpegurl") == true -> ContentType.M3U8
+                            contentTypeStr?.contains("dash") == true -> ContentType.MPD
+                            contentTypeStr?.contains("mp4") == true -> ContentType.MP4
+                            contentTypeStr?.contains("application/octet-stream") == true -> {
+                                response.body.charStream().use { reader ->
+                                    val content = reader.read(CharArray(7), 0, 7)
+                                        .takeIf { it > 0 } // check if any chars are read
+                                        ?.let { String(CharArray(7)) } ?: ""
+                                    when {
+                                        content.startsWith("#EXTM3U") -> ContentType.M3U8
+                                        content.contains("<MPD") -> ContentType.MPD
+                                        else -> ContentType.OTHER
+                                    }
+                                }
+                            }
 
-                contentTypeStr?.contains("dash") == true -> {
-                    contentType = ContentType.MPD
-                }
-
-                contentTypeStr?.contains("mp4") == true -> {
-                    contentType = ContentType.MP4
-                }
-
-                contentTypeStr?.contains("application/octet-stream") == true -> {
-                    val chars = CharArray(7)
-                    response.body.charStream().read(chars, 0, 7)
-                    response.body.charStream().close()
-                    response.body.close()
-                    val content = chars.toString()
-                    if (content.startsWith("#EXTM3U")) {
-                        contentType = ContentType.M3U8
-                    } else if (content.contains("<MPD")) {
-                        contentType = ContentType.MPD
+                            else -> ContentType.OTHER
+                        }
                     }
-                }
-
-                else -> {
-                    contentType = ContentType.OTHER
-                }
-            }
-
-            return contentType
+            }.getOrDefault(ContentType.OTHER)
         }
     }
 }

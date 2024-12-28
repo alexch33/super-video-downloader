@@ -9,6 +9,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.ui.main.home.MainActivity
+import com.myAllVideoBrowser.util.downloaders.NotificationReceiver
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker
@@ -43,22 +44,30 @@ class NotificationsHelper(private val context: Context) {
             VideoTaskState.PREPARE -> {
                 builder.setSubText("prepare").setProgress(0, 0, true)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
+                builder.addAction(createPauseBroadcastMessage(task.mId))
+                builder.addAction(createCancelBroadcastMessage(task.mId))
             }
 
             VideoTaskState.PENDING -> {
                 builder.setSubText("pending").setProgress(0, 0, true)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
+                builder.addAction(createPauseBroadcastMessage(task.mId))
+                builder.addAction(createCancelBroadcastMessage(task.mId))
             }
 
             VideoTaskState.DOWNLOADING -> {
                 builder.setSubText("downloading...").setProgress(100, taskPercent.toInt(), false)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download)
+                builder.addAction(createPauseBroadcastMessage(task.mId))
+                builder.addAction(createCancelBroadcastMessage(task.mId))
             }
 
             VideoTaskState.PAUSE -> {
                 builder.setSubText("pause")
                 builder.setProgress(100, taskPercent.toInt(), false)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download)
+                builder.addAction(createResumeBroadcastMessage(task.mId))
+                builder.addAction(createCancelBroadcastMessage(task.mId))
             }
 
             VideoTaskState.SUCCESS -> {
@@ -82,6 +91,7 @@ class NotificationsHelper(private val context: Context) {
                     .setProgress(100, taskPercent.toInt(), false)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
                 builder.addAction(action)
+                builder.addAction(createResumeBroadcastMessage(task.mId))
             }
 
             VideoTaskState.CANCELED -> {
@@ -91,13 +101,6 @@ class NotificationsHelper(private val context: Context) {
             }
 
             else -> {}
-        }
-        hideNotification(task.mId.hashCode() + 1)
-
-        if (task.taskState == VideoTaskState.SUCCESS || task.taskState == VideoTaskState.ERROR || task.taskState == VideoTaskState.CANCELED) {
-            hideNotification(task.mId.hashCode())
-
-            return Pair(task.mId.hashCode() + 1, builder)
         }
 
         return Pair(task.mId.hashCode(), builder)
@@ -164,8 +167,54 @@ class NotificationsHelper(private val context: Context) {
                 context, 777, intent, PendingIntent.FLAG_UPDATE_CURRENT
             )
         }
+    }
 
+    private fun createCancelBroadcastMessage(taskId: String): NotificationCompat.Action {
+        val intent = Intent(context, NotificationReceiver::class.java)
+        intent.putExtra(NotificationReceiver.TASK_ID, taskId)
+        intent.action = NotificationReceiver.ACTION_CANCEL
 
+        return NotificationCompat.Action(
+            android.R.drawable.stat_sys_download_done,
+            context.resources.getString(R.string.progress_menu_cancel),
+            createActionIntent(intent, taskId.hashCode())
+        )
+    }
+
+    private fun createPauseBroadcastMessage(taskId: String): NotificationCompat.Action {
+        val intent = Intent(context, NotificationReceiver::class.java)
+        intent.putExtra(NotificationReceiver.TASK_ID, taskId)
+        intent.action = NotificationReceiver.ACTION_PAUSE
+
+        return NotificationCompat.Action(
+            android.R.drawable.stat_sys_download_done,
+            context.resources.getString(R.string.progress_menu_pause),
+            createActionIntent(intent, taskId.hashCode())!!
+        )
+    }
+
+    private fun createResumeBroadcastMessage(taskId: String): NotificationCompat.Action {
+        val intent = Intent(context, NotificationReceiver::class.java)
+        intent.putExtra(NotificationReceiver.TASK_ID, taskId)
+        intent.action = NotificationReceiver.ACTION_RESUME
+
+        return NotificationCompat.Action(
+            android.R.drawable.stat_sys_download_done,
+            context.resources.getString(R.string.progress_menu_resume),
+            createActionIntent(intent, taskId.hashCode())!!
+        )
+    }
+
+    private fun createActionIntent(actionIntent: Intent, requestCode: Int): PendingIntent? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.getBroadcast(
+                context, requestCode, actionIntent, PendingIntent.FLAG_MUTABLE
+            )
+        } else {
+            PendingIntent.getBroadcast(
+                context, requestCode, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
     }
 
     private fun createChannel(appContext: Context) {

@@ -46,13 +46,10 @@ class ProgressFragment : BaseFragment() {
     private lateinit var progressAdapter: ProgressAdapter
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
         mainViewModel = mainActivity.mainViewModel
-        progressViewModel =
-            ViewModelProvider(this, viewModelFactory)[ProgressViewModel::class.java]
+        progressViewModel = ViewModelProvider(this, viewModelFactory)[ProgressViewModel::class.java]
         progressAdapter = ProgressAdapter(emptyList(), progressListener)
 
         val isDark = mainActivity.settingsViewModel.isDarkMode.get()
@@ -89,28 +86,27 @@ class ProgressFragment : BaseFragment() {
     }
 
     private fun handleDownloadVideoEvent() {
-        mainViewModel.downloadVideoEvent.observe(viewLifecycleOwner, Observer { videoInfo ->
+        mainViewModel.downloadVideoEvent.observe(viewLifecycleOwner) { videoInfo ->
             val currentOriginal = videoInfo.originalUrl
             mainViewModel.currentOriginal.set(currentOriginal)
             progressViewModel.downloadVideo(videoInfo)
-        })
+        }
     }
 
     private val progressListener = object : ProgressListener {
         override fun onMenuClicked(view: View, downloadId: Long, isRegular: Boolean) {
-            showPopupMenu(view, downloadId, isRegular)
+            showPopupMenu(view, downloadId)
         }
     }
 
-    private fun showPopupMenu(view: View, downloadId: Long, isRegular: Boolean) {
+    private fun showPopupMenu(view: View, downloadId: Long) {
         val myView = fixPopup(dataBinding.anchor, view)
 
-        val menuCandidate = progressViewModel.progressInfos.get()?.find { it.downloadId == downloadId }
+        val menuCandidate =
+            progressViewModel.progressInfos.get()?.find { it.downloadId == downloadId }
 
         val popupMenu = PopupMenu(myView.context, myView)
         popupMenu.menuInflater.inflate(R.menu.menu_progress, popupMenu.menu)
-
-//        popupMenu.menu.getItem(3).isVisible = !isRegular
 
         popupMenu.menu.getItem(3).isVisible = menuCandidate?.isLive == true
 
@@ -148,17 +144,12 @@ class ProgressFragment : BaseFragment() {
 class WrapContentLinearLayoutManager : LinearLayoutManager {
     constructor(context: Context?) : super(context) {}
     constructor(context: Context?, orientation: Int, reverseLayout: Boolean) : super(
-        context,
-        orientation,
-        reverseLayout
+        context, orientation, reverseLayout
     ) {
     }
 
     constructor(
-        context: Context?,
-        attrs: AttributeSet?,
-        defStyleAttr: Int,
-        defStyleRes: Int
+        context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int
     ) : super(context, attrs, defStyleAttr, defStyleRes) {
     }
 

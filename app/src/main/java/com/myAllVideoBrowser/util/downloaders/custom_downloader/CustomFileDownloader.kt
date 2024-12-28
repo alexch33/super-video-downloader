@@ -38,7 +38,7 @@ class CustomFileDownloader(
     private val headers: Map<String, String>,
     private val client: OkHttpClient,
     private val listener: DownloadListener?,
-) : DownloadListener {
+) {
     private val executorService: ExecutorService = Executors.newFixedThreadPool(threadCount)
     private val isPaused = AtomicBoolean(false)
     private val isCanceled = AtomicBoolean(false)
@@ -170,7 +170,7 @@ class CustomFileDownloader(
         }
     }
 
-    override fun onSuccess() {
+    private fun onSuccess() {
         executorService.shutdown()
 
         AppLogger.d("DOWNLOAD SUCCESS: $file")
@@ -178,7 +178,7 @@ class CustomFileDownloader(
         listener?.onSuccess()
     }
 
-    override fun onFailure(e: Throwable) {
+    private fun onFailure(e: Throwable) {
         executorService.shutdown()
 
         AppLogger.e("Task Download Failed $e")
@@ -186,7 +186,7 @@ class CustomFileDownloader(
         listener?.onFailure(e)
     }
 
-    override fun onProgressUpdate(downloadedBytes: Long, totalBytes: Long) {
+    private fun onProgressUpdate(downloadedBytes: Long, totalBytes: Long) {
         val time = Date().time
         if (time - lastProgressUpdate.get() >= callBackIntervalMin) {
             isPaused.set(isStopped(file))
@@ -196,7 +196,7 @@ class CustomFileDownloader(
         }
     }
 
-    override fun onChunkProgressUpdate(downloadedBytes: Long, allBytes: Long, chunkIndex: Int) {
+    private fun onChunkProgressUpdate(downloadedBytes: Long, allBytes: Long, chunkIndex: Int) {
         copiedBytesChunks[chunkIndex] = downloadedBytes
 
         onProgressUpdate(totalCopiedBytes, totalBytesAll.get())
@@ -204,7 +204,7 @@ class CustomFileDownloader(
         listener?.onChunkProgressUpdate(downloadedBytes, allBytes, chunkIndex)
     }
 
-    override fun onChunkFailure(e: Throwable, index: Chunk) {
+    private fun onChunkFailure(e: Throwable, index: Chunk) {
         AppLogger.e("Chunk $index Download Failed ${e.printStackTrace()}")
         listener?.onChunkFailure(e, index)
     }

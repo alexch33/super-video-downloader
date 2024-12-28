@@ -3,6 +3,8 @@ package com.myAllVideoBrowser.util.downloaders.generic_downloader.workers
 import android.content.Context
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
@@ -40,23 +42,17 @@ open class GenericDownloadWorkerWrapper(
 
     private var disposable: Disposable? = null
 
-    override fun createForegroundInfo(task: VideoTaskItem): ForegroundInfo {
-        val pairData = notificationsHelper.createNotificationBuilder(task)
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ForegroundInfo(
-                pairData.first, pairData.second.build(), FOREGROUND_SERVICE_TYPE_DATA_SYNC
-            )
-        } else {
-            ForegroundInfo(pairData.first, pairData.second.build())
-        }
+    // Delay of showing final notification after setForegroundAsync(),
+    // without it final notification not shown
+    private val finalNotificationDelay = 2000L
+
+    fun showNotificationFinal(id: Int, notification: NotificationCompat.Builder) {
+        Handler(Looper.getMainLooper()).postDelayed({
+            notificationsHelper.showNotification(Pair(id, notification))
+        }, finalNotificationDelay)
     }
 
-    fun showNotification(id: Int, notification: NotificationCompat.Builder) {
-        showNotificationAsync(id, notification)
-        notificationsHelper.showNotification(Pair(id, notification))
-    }
-
-    private fun showNotificationAsync(id: Int, notification: NotificationCompat.Builder) {
+    fun showLongRunningNotificationAsync(id: Int, notification: NotificationCompat.Builder) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             setForegroundAsync(
                 ForegroundInfo(

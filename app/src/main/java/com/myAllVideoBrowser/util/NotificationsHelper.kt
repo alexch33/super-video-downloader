@@ -102,13 +102,6 @@ class NotificationsHelper(private val context: Context) {
 
             else -> {}
         }
-        hideNotification(task.mId.hashCode() + 1)
-
-        if (task.taskState == VideoTaskState.SUCCESS || task.taskState == VideoTaskState.ERROR || task.taskState == VideoTaskState.CANCELED) {
-            hideNotification(task.mId.hashCode())
-
-            return Pair(task.mId.hashCode() + 1, builder)
-        }
 
         return Pair(task.mId.hashCode(), builder)
     }

@@ -4,14 +4,12 @@ import android.content.Context
 import android.util.Base64
 import androidx.core.net.toUri
 import androidx.work.WorkerParameters
-import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
-import io.reactivex.rxjava3.core.Flowable
 import java.io.File
 import java.net.URL
 import java.util.Date
@@ -83,7 +81,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             handleTaskCompletion(item)
 
             val notificationData = notificationsHelper.createNotificationBuilder(item)
-            showNotification(notificationData.first, notificationData.second)
+            showNotificationFinal(notificationData.first, notificationData.second)
 
             val result = if (item.taskState == VideoTaskState.ERROR) {
                 Result.failure()
@@ -315,7 +313,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         }
 
         val notificationData = notificationsHelper.createNotificationBuilder(taskItem)
-        showNotification(notificationData.first, notificationData.second)
+        showLongRunningNotificationAsync(notificationData.first, notificationData.second)
     }
 
     private fun saveProgress(

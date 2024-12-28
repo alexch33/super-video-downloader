@@ -3,14 +3,12 @@ package com.myAllVideoBrowser.util.downloaders.generic_downloader.workers
 import android.content.Context
 import android.util.Base64
 import androidx.work.CoroutineWorker
-import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
-import kotlinx.coroutines.delay
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
@@ -30,10 +28,6 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     private var isDone: Boolean = false
 
     abstract fun finishWork(item: VideoTaskItem?)
-
-    // Creates an instance of ForegroundInfo which can be used to update the
-    // ongoing notification.
-    abstract fun createForegroundInfo(task: VideoTaskItem): ForegroundInfo
 
     abstract fun handleAction(
         action: String, task: VideoTaskItem, headers: Map<String, String>, isFileRemove: Boolean

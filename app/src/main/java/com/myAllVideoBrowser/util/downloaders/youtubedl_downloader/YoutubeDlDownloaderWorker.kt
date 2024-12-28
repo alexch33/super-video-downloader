@@ -546,7 +546,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         }
         val data = notificationsHelper.createNotificationBuilder(taskItem)
 
-        showNotification(data.first, data.second)
+        showLongRunningNotificationAsync(data.first, data.second)
     }
 
 
@@ -569,8 +569,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
         notificationsHelper.hideNotification(taskId.hashCode())
         if (item != null) {
-            showNotification(
-                taskId.hashCode() + 1, notificationsHelper.createNotificationBuilder(item.also {
+            showNotificationFinal(
+                taskId.hashCode(), notificationsHelper.createNotificationBuilder(item.also {
                     it.mId = taskId
                 }).second
             )

@@ -38,7 +38,7 @@ class CustomFileDownloader(
     private val headers: Map<String, String>,
     private val client: OkHttpClient,
     private val listener: DownloadListener?,
-) : DownloadListener {
+) {
     private val executorService: ExecutorService = Executors.newFixedThreadPool(threadCount)
     private val isPaused = AtomicBoolean(false)
     private val isCanceled = AtomicBoolean(false)
@@ -51,29 +51,13 @@ class CustomFileDownloader(
     companion object {
         const val STOPPED = "STOPPED"
         const val CANCELED = "CANCELED"
-        private const val STOP_FILE_NAME = "stop"
-        private const val DOWNLOAD_BUFFER_SIZE = 1024
 
         fun stop(fileToStop: File) {
-            File(fileToStop.parentFile, STOP_FILE_NAME).createNewFile()
+            File(fileToStop.parentFile, Helper.STOP_FILE_NAME).createNewFile()
         }
 
         fun cancel(fileToStop: File) {
             fileToStop.parentFile?.deleteRecursively()
-        }
-
-        fun unStop(fileToUnStop: File) {
-            File(fileToUnStop.parentFile, STOP_FILE_NAME).delete()
-        }
-
-        fun isStopped(fileToCheck: File): Boolean {
-            return File(
-                fileToCheck.parentFile, STOP_FILE_NAME
-            ).exists()
-        }
-
-        fun isCanceled(fileToCheck: File): Boolean {
-            return !(fileToCheck.parentFile?.exists() ?: false)
         }
     }
 
@@ -108,7 +92,7 @@ class CustomFileDownloader(
 
         totalBytesAll.set(contentSize)
 
-        unStop(file)
+        Helper.unStop(file)
 
         val isUrlSupportBytesRangeHeader = isUrlSupportingBytesRangeHeader()
 
@@ -170,7 +154,7 @@ class CustomFileDownloader(
         }
     }
 
-    override fun onSuccess() {
+    private fun onSuccess() {
         executorService.shutdown()
 
         AppLogger.d("DOWNLOAD SUCCESS: $file")
@@ -178,7 +162,7 @@ class CustomFileDownloader(
         listener?.onSuccess()
     }
 
-    override fun onFailure(e: Throwable) {
+    private fun onFailure(e: Throwable) {
         executorService.shutdown()
 
         AppLogger.e("Task Download Failed $e")
@@ -186,17 +170,17 @@ class CustomFileDownloader(
         listener?.onFailure(e)
     }
 
-    override fun onProgressUpdate(downloadedBytes: Long, totalBytes: Long) {
+    private fun onProgressUpdate(downloadedBytes: Long, totalBytes: Long) {
         val time = Date().time
         if (time - lastProgressUpdate.get() >= callBackIntervalMin) {
-            isPaused.set(isStopped(file))
-            isCanceled.set(isCanceled(file))
+            isPaused.set(Helper.isStopped(file))
+            isCanceled.set(Helper.isCanceled(file))
             lastProgressUpdate.set(time)
             listener?.onProgressUpdate(downloadedBytes, totalBytes)
         }
     }
 
-    override fun onChunkProgressUpdate(downloadedBytes: Long, allBytes: Long, chunkIndex: Int) {
+    private fun onChunkProgressUpdate(downloadedBytes: Long, allBytes: Long, chunkIndex: Int) {
         copiedBytesChunks[chunkIndex] = downloadedBytes
 
         onProgressUpdate(totalCopiedBytes, totalBytesAll.get())
@@ -204,7 +188,7 @@ class CustomFileDownloader(
         listener?.onChunkProgressUpdate(downloadedBytes, allBytes, chunkIndex)
     }
 
-    override fun onChunkFailure(e: Throwable, index: Chunk) {
+    private fun onChunkFailure(e: Throwable, index: Chunk) {
         AppLogger.e("Chunk $index Download Failed ${e.printStackTrace()}")
         listener?.onChunkFailure(e, index)
     }
@@ -239,8 +223,7 @@ class CustomFileDownloader(
 
         val req = if (threadCount == 1) {
             getOkRequestRange(range.first + bytesCopied, null)
-        } else
-            getOkRequestRange(range.first + bytesCopied, range.last)
+        } else getOkRequestRange(range.first + bytesCopied, range.last)
         val res = client.newCall(req).execute()
 
         if (res.body.contentLength() == -1L) {
@@ -248,7 +231,7 @@ class CustomFileDownloader(
         }
 
         val inputStream = res.body.byteStream()
-        val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
+        val buffer = ByteArray(Helper.DOWNLOAD_BUFFER_SIZE)
 
         copiedBytesChunks[chunkIndex] = bytesCopied
         totalBytesChunks[chunkIndex] = res.body.contentLength()
@@ -268,10 +251,10 @@ class CustomFileDownloader(
                         bytesCopied, totalBytesChunks[chunkIndex], chunkIndex
                     )
                 }
-                if (isStopped(file)) {
+                if (Helper.isStopped(file)) {
                     throw Exception(STOPPED)
                 }
-                if (isCanceled(file)) {
+                if (Helper.isCanceled(file)) {
                     throw Exception(CANCELED)
                 }
             }
@@ -300,8 +283,8 @@ class CustomFileDownloader(
         val end = endByte ?: ""
         val range = "bytes=$startByte-$end"
 
-        return Request.Builder().url(url).headers(headers.toHeaders())
-            .header("Range", range).build()
+        return Request.Builder().url(url).headers(headers.toHeaders()).header("Range", range)
+            .build()
     }
 
     private fun getContentLength(): Long {
@@ -333,6 +316,25 @@ class CustomFileDownloader(
             result = 31 * result + range.hashCode()
             result = 31 * result + chunkSize.hashCode()
             return result
+        }
+    }
+
+    private object Helper {
+        const val STOP_FILE_NAME = "stop"
+        const val DOWNLOAD_BUFFER_SIZE = 1024
+
+        fun unStop(fileToUnStop: File) {
+            File(fileToUnStop.parentFile, STOP_FILE_NAME).delete()
+        }
+
+        fun isStopped(fileToCheck: File): Boolean {
+            return File(
+                fileToCheck.parentFile, STOP_FILE_NAME
+            ).exists()
+        }
+
+        fun isCanceled(fileToCheck: File): Boolean {
+            return !(fileToCheck.parentFile?.exists() ?: false)
         }
     }
 }

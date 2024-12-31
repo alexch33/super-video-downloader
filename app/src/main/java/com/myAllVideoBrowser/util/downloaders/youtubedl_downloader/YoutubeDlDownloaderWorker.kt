@@ -369,7 +369,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
         val videoOnly = vFormat.vcodec != "none" && vFormat.acodec == "none"
         if (videoOnly) {
-            request.addOption("-f", "${vFormat.formatId}+bestaudio*")
+            request.addOption("-f", "${vFormat.formatId}+bestaudio")
         } else {
             request.addOption("-f", "${vFormat.formatId}")
         }

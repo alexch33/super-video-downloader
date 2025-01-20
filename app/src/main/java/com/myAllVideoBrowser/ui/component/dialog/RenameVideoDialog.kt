@@ -25,7 +25,6 @@ fun showRenameVideoDialog(
             ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         setText(currentName)
         text?.let { setSelection(it.length) }
-        setTextColor(Color.BLACK)
         imeOptions = EditorInfo.IME_ACTION_DONE
         inputType = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         setSingleLine()

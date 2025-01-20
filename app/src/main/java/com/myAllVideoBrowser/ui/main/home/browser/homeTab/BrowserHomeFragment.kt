@@ -95,9 +95,9 @@ class BrowserHomeFragment : BaseWebTabFragment() {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     this.homeEtSearch.clearFocus()
                     viewModel?.viewModelScope?.launch {
-                        delay(400)
-                        openNewTab((this@apply.homeEtSearch as EditText).text.toString())
+                        val inputText = (this@apply.homeEtSearch as EditText).text.toString()
                         this@apply.homeEtSearch.text.clear()
+                        openNewTab(inputText)
                     }
                     false
                 } else false

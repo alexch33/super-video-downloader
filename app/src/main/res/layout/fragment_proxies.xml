@@ -54,7 +54,6 @@
                         android:layout_marginStart="16dp"
                         android:layout_weight="1.2"
                         android:text="@string/proxy"
-                        android:textColor="@color/white"
                         android:textSize="24sp" />
 
                     <com.google.android.material.textview.MaterialTextView
@@ -62,8 +61,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="8dp"
                         android:layout_weight="2"
-                        android:text="@{viewModel.currentProxy.host.toString()}"
-                        android:textColor="@color/white" />
+                        android:text="@{viewModel.currentProxy.host.toString()}" />
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/turn_proxy"

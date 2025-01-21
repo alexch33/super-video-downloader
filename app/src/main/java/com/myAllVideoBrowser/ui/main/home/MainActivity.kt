@@ -32,7 +32,6 @@ import com.myAllVideoBrowser.util.fragment.FragmentFactory
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import javax.inject.Inject
 
-//@OpenForTesting
 class MainActivity : BaseActivity() {
 
     @Inject

@@ -14,18 +14,15 @@ import androidx.databinding.Observable
 import androidx.databinding.Observable.OnPropertyChangedCallback
 import androidx.lifecycle.lifecycleScope
 import com.myAllVideoBrowser.R
-//import com.allVideoDownloaderXmaster.OpenForTesting
 import com.myAllVideoBrowser.databinding.FragmentSettingsBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
-import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.IntentUtil
 import com.myAllVideoBrowser.util.SystemUtil
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-//@OpenForTesting
 class SettingsFragment : BaseFragment() {
 
     companion object {

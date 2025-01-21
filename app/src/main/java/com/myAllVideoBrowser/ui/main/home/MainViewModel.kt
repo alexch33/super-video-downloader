@@ -2,14 +2,12 @@ package com.myAllVideoBrowser.ui.main.home
 
 import androidx.databinding.ObservableBoolean
 import androidx.databinding.ObservableField
-//import com.allVideoDownloaderXmaster.OpenForTesting
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.ui.main.home.browser.BrowserServicesProvider
 import com.myAllVideoBrowser.util.SingleLiveEvent
 import javax.inject.Inject
 
-//@OpenForTesting
 class MainViewModel @Inject constructor() :
     BaseViewModel() {
 

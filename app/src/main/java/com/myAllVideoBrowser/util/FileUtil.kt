@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser.util
 
-//import com.allVideoDownloaderXmaster.OpenForTesting
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
@@ -26,7 +25,6 @@ import java.text.DecimalFormat
 import java.util.Arrays
 import javax.inject.Inject
 
-//@OpenForTesting
 class FileUtil @Inject constructor() {
 
     companion object {

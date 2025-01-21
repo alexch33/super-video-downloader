@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser.ui.main.player
 
-//import com.allVideoDownloaderXmaster.OpenForTesting
 
 import android.app.Activity
 import android.content.Context
@@ -42,7 +41,7 @@ import java.net.URI
 import javax.inject.Inject
 
 
-@UnstableApi //@OpenForTesting
+@UnstableApi
 class VideoPlayerFragment : BaseFragment() {
 
     companion object {

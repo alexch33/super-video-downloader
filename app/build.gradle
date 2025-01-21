@@ -7,18 +7,6 @@ apply plugin: 'kotlin-kapt'
 
 apply plugin: 'kotlin-allopen'
 
-apply plugin: 'jacoco'
-
-apply plugin: 'com.github.kt3k.coveralls'
-
-jacoco {
-    version = '0.8.1'
-}
-
-allOpen {
-    annotation 'com.allVideoBrowserXmaster.OpenForTesting'
-}
-
 android {
     packagingOptions {
         resources {
@@ -44,7 +32,6 @@ android {
         targetSdkVersion build_versions.target_sdk
         versionCode 23
         versionName "0.4.41"
-        testInstrumentationRunner "util.TestRunner"
 
         ndk {
             abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
@@ -54,7 +41,7 @@ android {
         debug {
             minifyEnabled false
             shrinkResources false
-            testCoverageEnabled true
+            testCoverageEnabled false
         }
         release {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -66,12 +53,6 @@ android {
     buildFeatures {
         viewBinding true
         buildConfig true
-    }
-    testOptions {
-        unitTests {
-            includeAndroidResources = true
-            returnDefaultValues = true
-        }
     }
     splits {
         abi {
@@ -115,25 +96,12 @@ dependencies {
     // optional - GCMNetworkManager support
     implementation('androidx.work:work-gcm:2.10.0')
     implementation 'androidx.fragment:fragment-ktx:1.8.5'
-    // optional - Test helpers
-    androidTestImplementation('androidx.work:work-testing:2.10.0')
-
     // optional - Multiprocess support
     implementation 'androidx.work:work-multiprocess:2.10.0'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
     implementation('androidx.concurrent:concurrent-futures-ktx:1.2.0')
-
-    // Testing
-    testImplementation deps.testing.junit
-    testImplementation deps.testing.mockito_core
-    testImplementation deps.testing.mockito_kotlin
-    androidTestImplementation deps.testing.mockito_android
-    androidTestImplementation deps.testing.mockito_kotlin
-    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-intents:3.6.1'
 
     // Kotlin
     implementation deps.kotlin.stdlib
@@ -143,9 +111,6 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.8.7'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.7'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
-    testImplementation 'androidx.arch.core:core-testing:2.2.0'
-    androidTestImplementation 'androidx.arch.core:core-testing:2.2.0'
-
     // Room
 
     implementation('androidx.room:room-runtime:2.6.1')
@@ -161,9 +126,6 @@ dependencies {
 
     // optional - Guava support for Room, including Optional and ListenableFuture
     implementation('androidx.room:room-guava:2.6.1')
-
-    // optional - Test helpers
-    testImplementation('androidx.room:room-testing:2.6.1')
 
     // Dagger2
     implementation deps.dagger.runtime
@@ -243,40 +205,3 @@ ksp {
     arg("room.expandProjection", "true")
 }
 
-tasks.coveralls {
-    dependsOn 'check'
-    onlyIf { System.getenv("COVERALLS_REPO_TOKEN") }
-}
-
-tasks.register('jacocoTestReport', JacocoReport) {
-    dependsOn 'testDebugUnitTest'
-    group = 'Reporting'
-    description = 'Generate Jacoco coverage reports after running tests.'
-
-    reports {
-        xml.enabled = true
-        html.enabled = true
-    }
-
-    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*',
-                      '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*',
-
-                      '**/Lambda$*.class', '**/Lambda.class', '**/*Lambda.class',
-                      '**/*Lambda*.class', '**/*Builder.*',
-
-                      '**/*_Injector.class', '**/*_Injector*.*', '**/*_*Factory*.*',
-                      '**/*Component*.*', '**/*Module*.*',
-
-                      '**/component/widget/*.*', '**/component/binding/*.*', '**/util/ext/*.*',
-                      '**/util/scheduler/*.*', '**/util/fragment/*.*', '**/DLApplication.*',
-                      '**/ViewModelFactory.*', '**/RoomConverter.*', '**/AppDatabase.*']
-
-    def javaClasses = fileTree(dir: "$getLayout().getBuildDirectory()/intermediates/javac/debug", excludes: fileFilter)
-    def kotlinClasses = fileTree(dir: "$getLayout().getBuildDirectory()/tmp/kotlin-classes/debug", excludes: fileFilter)
-
-    sourceDirectories.from files(android.sourceSets.main.java.srcDirs)
-    classDirectories.from files([javaClasses, kotlinClasses])
-    executionData.from fileTree(dir: getLayout().getBuildDirectory(), includes: [
-            'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
-    ])
-}

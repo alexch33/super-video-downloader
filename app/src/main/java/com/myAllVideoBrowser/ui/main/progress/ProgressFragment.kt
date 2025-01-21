@@ -24,7 +24,6 @@ import com.myAllVideoBrowser.ui.main.home.MainViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import javax.inject.Inject
 
-//@OpenForTesting
 class ProgressFragment : BaseFragment() {
 
     companion object {

@@ -2,13 +2,10 @@ package com.myAllVideoBrowser.ui.main.video
 
 import android.content.Context
 import android.net.Uri
-import androidx.core.net.toFile
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
-//import com.allVideoDownloaderXmaster.OpenForTesting
 import com.myAllVideoBrowser.data.local.model.LocalVideo
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
-import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SingleLiveEvent
@@ -19,7 +16,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
-//@OpenForTesting
 class VideoViewModel @Inject constructor(
     private val fileUtil: FileUtil,
 ) : BaseViewModel() {

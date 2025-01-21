@@ -12,7 +12,6 @@ import androidx.annotation.OptIn
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.FileProvider
 import androidx.core.net.toFile
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -34,12 +33,9 @@ import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.IntentUtil
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
-//@OpenForTesting
 class VideoFragment : BaseFragment() {
 
     companion object {

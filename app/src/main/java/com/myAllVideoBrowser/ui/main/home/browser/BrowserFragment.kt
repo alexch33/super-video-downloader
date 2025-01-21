@@ -1,7 +1,5 @@
 package com.myAllVideoBrowser.ui.main.home.browser
 
-//import com.allVideoDownloaderXmaster.OpenForTesting
-
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
@@ -105,7 +103,6 @@ const val HOME_TAB_INDEX = 0
 
 const val TAB_INDEX_KEY = "TAB_INDEX_KEY"
 
-//@OpenForTesting
 class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
     companion object {

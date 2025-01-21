@@ -9,7 +9,6 @@ import com.myAllVideoBrowser.util.SingleLiveEvent
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import javax.inject.Inject
 
-//@OpenForTesting
 class BrowserViewModel @Inject constructor() : BaseViewModel() {
 
     companion object {

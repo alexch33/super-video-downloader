@@ -5,7 +5,6 @@ import androidx.databinding.ObservableBoolean
 import androidx.databinding.ObservableField
 import androidx.databinding.ObservableInt
 import androidx.lifecycle.viewModelScope
-//import com.allVideoDownloaderXmaster.OpenForTesting
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
@@ -19,7 +18,6 @@ enum class StorageType {
     SD, HIDDEN, HIDDEN_SD
 }
 
-//@OpenForTesting
 class SettingsViewModel @Inject constructor(
     private val sharedPrefHelper: SharedPrefHelper,
 ) :

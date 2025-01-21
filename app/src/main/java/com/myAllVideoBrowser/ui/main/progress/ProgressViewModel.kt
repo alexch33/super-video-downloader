@@ -3,7 +3,6 @@ package com.myAllVideoBrowser.ui.main.progress
 import androidx.annotation.VisibleForTesting
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
-//import com.allVideoDownloaderXmaster.OpenForTesting
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.ProgressRepository
@@ -22,7 +21,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-//@OpenForTesting
 class ProgressViewModel @Inject constructor(
     private val fileUtil: FileUtil,
     private val progressRepository: ProgressRepository,

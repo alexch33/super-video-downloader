@@ -47,6 +47,7 @@
                 android:paddingEnd="8dp"
                 android:text="@{webTab.title}"
                 android:textSize="@dimen/text_medium"
+                android:textStyle="bold"
                 tools:text="Title" />
 
             <com.google.android.material.imageview.ShapeableImageView

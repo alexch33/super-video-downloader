@@ -138,6 +138,13 @@ class LinkFragment : BaseFragment(), IDownloadInfoLinkListener {
                             mainActivity.mainViewModel.selectedFormatTitle.set(currentFormat.get()
                                 ?.let { Pair(format, it.second) })
                         }
+
+                        override fun onFormatUrlShare(
+                            videoInfo: VideoInfo,
+                            format: String
+                        ): Boolean {
+                            return false
+                        }
                     }, mainActivity, videoInfo, appUtil
                 )
             }

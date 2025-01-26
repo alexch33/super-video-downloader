@@ -42,7 +42,11 @@ class CandidatesListRecyclerViewAdapter(
             listener = object : CandidateFormatListener {
                 override fun onSelectFormat(videoInfo: VideoInfo, format: String) {
                     downloadDialogListener.onSelectFormat(videoInfo, format)
-                    notifyDataSetChanged() // Consider using more efficient update methods
+                    notifyDataSetChanged()
+                }
+
+                override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
+                    return downloadDialogListener.onFormatUrlShare(videoInfo, format)
                 }
             }
             val selected = selectedFormat.get()?.get(downloadCandidates.id)

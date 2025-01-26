@@ -18,6 +18,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.core.app.ShareCompat
 import androidx.databinding.Observable
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentTransaction
@@ -784,6 +785,20 @@ class WebTabFragment : BaseWebTabFragment() {
                 videoDetectionTabViewModel.selectedFormats.get()?.toMutableMap() ?: mutableMapOf()
             formats[videoInfo.id] = format
             videoDetectionTabViewModel.selectedFormats.set(formats)
+        }
+
+        override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
+            val foundFormat = videoInfo.formats.formats.find { thisFormat ->
+                thisFormat.format?.contains(format) == true
+            }
+            if (foundFormat == null) {
+                return false
+            }
+
+            ShareCompat.IntentBuilder(mainActivity).setType("text/plain")
+                .setChooserTitle("Share Link")
+                .setText(foundFormat.url).startChooser()
+            return true
         }
     }
 }

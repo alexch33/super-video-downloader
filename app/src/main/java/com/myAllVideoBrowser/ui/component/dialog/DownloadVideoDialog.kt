@@ -142,6 +142,11 @@ class CandidatesListAdapter(
                     downloadDialogListener.onSelectFormat(videoInfo, format)
                     notifyDataSetChanged()
                 }
+
+                override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
+                    downloadDialogListener.onFormatUrlShare(videoInfo, format)
+                    return true
+                }
             }
             this.videoInfo = downloadCandidates
             this.downloadCandidate = candidate
@@ -255,6 +260,8 @@ interface DownloadTabListener : DownloadTabVideoListener, CandidateFormatListene
 
 interface CandidateFormatListener {
     fun onSelectFormat(videoInfo: VideoInfo, format: String)
+
+    fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean
 }
 
 class TitleStore(var title: String)

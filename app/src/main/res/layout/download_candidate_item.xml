@@ -32,6 +32,7 @@
         android:checkable="true"
         android:checked="@{is_candidate_selected}"
         android:onClick="@{() -> listener.onSelectFormat(videoInfo, download_candidate)}"
+        android:onLongClick="@{() -> listener.onFormatUrlShare(videoInfo, download_candidate)}"
         app:cardCornerRadius="20dp"
         app:checkedIconTint="@color/colorPrimary"
         app:layout_constraintLeft_toLeftOf="parent"

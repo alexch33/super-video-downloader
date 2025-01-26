@@ -10,58 +10,65 @@
         app:showAsAction="always|collapseActionView" />
 
     <item
+        android:id="@+id/bookmarks_list"
+        android:icon="@drawable/bookmarks_24px"
+        android:title="@string/bookmarks_list"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
+        android:id="@+id/bookmark"
+        android:icon="@drawable/bookmark_add_24px"
+        android:title="@string/bookmark"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
         android:id="@+id/share_link"
         android:icon="@drawable/share_24px"
         android:title="@string/share_link"
         app:showAsAction="ifRoom|collapseActionView" />
 
     <item
-        android:checkable="true"
         android:id="@+id/desktop_mode"
+        android:checkable="true"
+        android:checked="false"
         android:icon="@drawable/desktop_windows_24px"
         android:title="@string/desktop_mode"
-        android:checked="false"
         app:showAsAction="always|collapseActionView" />
 
     <item
         android:id="@+id/settings"
         android:icon="@drawable/settings_24px"
         android:title="@string/settings"
-        app:showAsAction="ifRoom|collapseActionView"
-        />
+        app:showAsAction="ifRoom|collapseActionView" />
 
     <item
         android:id="@+id/help"
         android:icon="@drawable/help_24px"
         android:title="@string/help"
-        app:showAsAction="ifRoom|collapseActionView"
-        />
+        app:showAsAction="ifRoom|collapseActionView" />
 
     <item
         android:id="@+id/proxies"
-        android:icon="@drawable/wifi_proxy_icon24"
         android:checkable="true"
         android:checked="false"
+        android:icon="@drawable/wifi_proxy_icon24"
         android:title="@string/proxy"
-        app:showAsAction="ifRoom|collapseActionView"
-        />
-
-        <item
-            android:id="@+id/ad_blocker"
-            android:icon="@drawable/shield_24px"
-            android:checkable="true"
-            android:checked="false"
-            android:title="@string/ad_blocker"
-            app:showAsAction="ifRoom|collapseActionView"
-            />
+        app:showAsAction="ifRoom|collapseActionView" />
 
     <item
-        android:visible="true"
-        android:id="@+id/is_dark"
-        android:icon="@drawable/dark_mode_24px"
+        android:id="@+id/ad_blocker"
         android:checkable="true"
         android:checked="false"
+        android:icon="@drawable/shield_24px"
+        android:title="@string/ad_blocker"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
+        android:id="@+id/is_dark"
+        android:checkable="true"
+        android:checked="false"
+        android:icon="@drawable/dark_mode_24px"
         android:title="@string/dark_mode"
-        app:showAsAction="ifRoom|collapseActionView"
-        />
+        android:visible="true"
+        app:showAsAction="ifRoom|collapseActionView" />
 </menu>

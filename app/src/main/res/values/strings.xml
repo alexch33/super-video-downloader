@@ -105,4 +105,6 @@
     <string name="save_proxy">Save</string>
     <string name="http_proxy">HTTP Proxy</string>
     <string name="check_if_in_list">Only check web-sites urls if in supported list</string>
+    <string name="bookmark">Bookmark</string>
+    <string name="bookmarks_list">Bookmarks</string>
 </resources>

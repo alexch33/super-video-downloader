@@ -2,6 +2,7 @@ package com.myAllVideoBrowser.ui.main.home.browser.webTab
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -143,7 +144,7 @@ class WebTabFragment : BaseWebTabFragment() {
         recreateWebView(savedInstanceState)
 
         dataBinding = FragmentWebTabBinding.inflate(inflater, container, false).apply {
-            buildWebTabMenu(this.browserMenuButton, true)
+            buildWebTabMenu(this.browserMenuButton, false)
 
             viewModel = tabViewModel
             browserMenuListener = tabListener
@@ -203,6 +204,23 @@ class WebTabFragment : BaseWebTabFragment() {
         if (link != null) {
             shareLink(link)
         }
+    }
+
+    override fun bookmarkCurrentUrl() {
+        val webview = webTab.getWebView()
+        val url = webview?.url
+        val favicon = webview?.favicon
+        val name = webview?.title
+
+        if (url == null) {
+            return
+        }
+
+        mainActivity.mainViewModel.bookmark(
+            url,
+            name ?: Uri.parse(url).host.toString(),
+            favicon
+        )
     }
 
     override fun setIsDesktop(isDesktop: Boolean) {
@@ -503,7 +521,7 @@ class WebTabFragment : BaseWebTabFragment() {
         }
 
         workerEventProvider.getWorkerMP4Event().observe(viewLifecycleOwner) { state ->
-            if (state is DownloadButtonStateCanDownload  && state.info?.id?.isNotEmpty() == true) {
+            if (state is DownloadButtonStateCanDownload && state.info?.id?.isNotEmpty() == true) {
                 AppLogger.d("Worker MP4 event CanDownload: ${state.info}")
                 videoDetectionTabViewModel.pushNewVideoInfoToAll(state.info)
             } else {

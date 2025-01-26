@@ -31,7 +31,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="3">
+            android:layout_weight="1">
 
             <com.google.android.material.appbar.AppBarLayout
                 android:id="@id/appBarLayout"
@@ -108,18 +108,18 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_gravity="center"
-            android:layout_weight="2"
+            android:layout_weight="1"
             android:gravity="center"
             android:horizontalSpacing="4dp"
             android:numColumns="4"
             android:padding="4dp"
             android:verticalSpacing="4dp"
-            app:items="@{viewModel.listPages}" />
+            app:items="@{mainVModel.bookmarksList}" />
 
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="16dp"
             android:layout_gravity="bottom|center"
             android:gravity="center">
 

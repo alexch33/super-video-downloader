@@ -92,4 +92,12 @@ object RecyclerViewBinding {
             this?.let { setData(items.toList()) }
         }
     }
+
+    @BindingAdapter("app:items")
+    @JvmStatic
+    fun RecyclerView.setBookmarks(items: MutableList<PageInfo>) {
+        with(adapter as BookmarksAdapter?) {
+            this?.let { setData(items) }
+        }
+    }
 }

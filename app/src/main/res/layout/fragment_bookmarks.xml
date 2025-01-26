@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ui.main.bookmarks.BookmarksFragment">
+
+    <data>
+
+        <variable
+            name="mainVModel"
+            type="com.myAllVideoBrowser.ui.main.home.MainViewModel" />
+    </data>
+
+    <LinearLayout
+        android:id="@+id/bookmarks_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="65dp">
+            <com.google.android.material.textview.MaterialTextView
+                android:textSize="24sp"
+                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/bookmarks_list" />
+        </LinearLayout>
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/bookmarks_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            app:items="@{mainVModel.bookmarksList}" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="85dp"
+            tools:ignore="UselessLeaf" />
+    </LinearLayout>
+</layout>

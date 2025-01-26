@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<layout xmlns:tools="http://schemas.android.com/tools"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:tools="http://schemas.android.com/tools">
+
     <data>
+
         <variable
             name="webTab"
             type="com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTab" />
@@ -16,22 +18,24 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/item_web_tab_button"
-        android:onClick="@{(v) -> tabListener.onSelectTabClicked(webTab)}"
-        android:layout_margin="4dp"
         android:layout_width="match_parent"
-        android:layout_height="60dp">
+        android:layout_height="60dp"
+        android:layout_margin="4dp"
+        android:onClick="@{(v) -> tabListener.onSelectTabClicked(webTab)}">
+
         <LinearLayout
-            android:orientation="horizontal"
-            android:padding="8dp"
-            android:gravity="center"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/faviconTab"
-                android:padding="4dp"
-                app:bitmap="@{webTab.favicon}"
                 android:layout_width="50dp"
-                android:layout_height="50dp" />
+                android:layout_height="50dp"
+                android:padding="4dp"
+                app:bitmap="@{webTab.favicon}" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tab_title"
@@ -43,15 +47,16 @@
                 android:paddingEnd="8dp"
                 android:text="@{webTab.title}"
                 android:textSize="@dimen/text_medium"
+                android:textStyle="bold"
                 tools:text="Title" />
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/closeTab"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:onClick="@{(v) -> tabListener.onCloseTabClicked(webTab)}"
-                android:layout_marginBottom="8dp"
-                android:src="@drawable/tab_close_24px"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:padding="4dp"
+                android:src="@drawable/tab_close_24px" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 </layout>

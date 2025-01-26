@@ -2,6 +2,7 @@ package com.myAllVideoBrowser.ui.main.home.browser.webTab
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -17,6 +18,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.core.app.ShareCompat
 import androidx.databinding.Observable
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentTransaction
@@ -143,7 +145,7 @@ class WebTabFragment : BaseWebTabFragment() {
         recreateWebView(savedInstanceState)
 
         dataBinding = FragmentWebTabBinding.inflate(inflater, container, false).apply {
-            buildWebTabMenu(this.browserMenuButton, true)
+            buildWebTabMenu(this.browserMenuButton, false)
 
             viewModel = tabViewModel
             browserMenuListener = tabListener
@@ -203,6 +205,23 @@ class WebTabFragment : BaseWebTabFragment() {
         if (link != null) {
             shareLink(link)
         }
+    }
+
+    override fun bookmarkCurrentUrl() {
+        val webview = webTab.getWebView()
+        val url = webview?.url
+        val favicon = webview?.favicon
+        val name = webview?.title
+
+        if (url == null) {
+            return
+        }
+
+        mainActivity.mainViewModel.bookmark(
+            url,
+            name ?: Uri.parse(url).host.toString(),
+            favicon
+        )
     }
 
     override fun setIsDesktop(isDesktop: Boolean) {
@@ -503,7 +522,7 @@ class WebTabFragment : BaseWebTabFragment() {
         }
 
         workerEventProvider.getWorkerMP4Event().observe(viewLifecycleOwner) { state ->
-            if (state is DownloadButtonStateCanDownload  && state.info?.id?.isNotEmpty() == true) {
+            if (state is DownloadButtonStateCanDownload && state.info?.id?.isNotEmpty() == true) {
                 AppLogger.d("Worker MP4 event CanDownload: ${state.info}")
                 videoDetectionTabViewModel.pushNewVideoInfoToAll(state.info)
             } else {
@@ -766,6 +785,20 @@ class WebTabFragment : BaseWebTabFragment() {
                 videoDetectionTabViewModel.selectedFormats.get()?.toMutableMap() ?: mutableMapOf()
             formats[videoInfo.id] = format
             videoDetectionTabViewModel.selectedFormats.set(formats)
+        }
+
+        override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
+            val foundFormat = videoInfo.formats.formats.find { thisFormat ->
+                thisFormat.format?.contains(format) == true
+            }
+            if (foundFormat == null) {
+                return false
+            }
+
+            ShareCompat.IntentBuilder(mainActivity).setType("text/plain")
+                .setChooserTitle("Share Link")
+                .setText(foundFormat.url).startChooser()
+            return true
         }
     }
 }

@@ -1,13 +1,10 @@
 package com.myAllVideoBrowser.ui.main.help
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.addCallback
-import com.google.android.material.color.MaterialColors
-import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentHelpBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity

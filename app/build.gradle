@@ -42,8 +42,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 22
-        versionName "0.4.4"
+        versionCode 24
+        versionName "0.5.0"
         testInstrumentationRunner "util.TestRunner"
 
         ndk {
@@ -105,7 +105,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
-    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
     // Kotlin + coroutines
     implementation('androidx.work:work-runtime-ktx:2.10.0')
 
@@ -196,11 +196,11 @@ dependencies {
 
     implementation 'androidx.core:core-ktx:1.15.0'
 
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0'
 
     implementation 'org.jsoup:jsoup:1.18.3'
 
-    implementation 'com.github.marlonlom:timeago:4.0.3'
+    implementation 'com.github.marlonlom:timeago:4.1.0'
 
     var media3_version = '1.5.1'
 

@@ -22,7 +22,6 @@ import com.myAllVideoBrowser.ui.main.home.browser.BrowserListener
 import com.myAllVideoBrowser.ui.main.home.browser.TabManagerProvider
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabFactory
 import com.myAllVideoBrowser.util.AppUtil
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -42,7 +41,6 @@ interface BrowserHomeListener : BrowserListener {
 
     override fun onBrowserForwardClicked() {
     }
-
 }
 
 class BrowserHomeFragment : BaseWebTabFragment() {
@@ -81,7 +79,7 @@ class BrowserHomeFragment : BaseWebTabFragment() {
         suggestionAdapter = SuggestionAdapter(requireContext(), emptyList(), suggestionListener)
 
         binding = FragmentBrowserHomeBinding.inflate(inflater, container, false).apply {
-            buildWebTabMenu(this.browserHomeMenuButton, false)
+            buildWebTabMenu(this.browserHomeMenuButton, true)
 
             this.viewModel = homeViewModel
             this.mainVModel = mainViewModel
@@ -95,9 +93,9 @@ class BrowserHomeFragment : BaseWebTabFragment() {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     this.homeEtSearch.clearFocus()
                     viewModel?.viewModelScope?.launch {
-                        delay(400)
-                        openNewTab((this@apply.homeEtSearch as EditText).text.toString())
+                        val inputText = (this@apply.homeEtSearch as EditText).text.toString()
                         this@apply.homeEtSearch.text.clear()
+                        openNewTab(inputText)
                     }
                     false
                 } else false
@@ -125,6 +123,13 @@ class BrowserHomeFragment : BaseWebTabFragment() {
             openNewTab(openingText)
             mainViewModel.openedText.set(null)
         }
+    }
+
+    // Bug fix for not updating home page grid after adding new bookmark
+    override fun onResume() {
+        super.onResume()
+        val bookmarksList = mainViewModel.bookmarksList.get()?.toMutableList()
+        mainViewModel.bookmarksList.set(bookmarksList)
     }
 
     private val suggestionListener = object : SuggestionListener {
@@ -176,4 +181,6 @@ class BrowserHomeFragment : BaseWebTabFragment() {
     }
 
     override fun shareWebLink() {}
+
+    override fun bookmarkCurrentUrl() {}
 }

@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.ItemWebTabButtonBinding
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTab
-import com.myAllVideoBrowser.util.ContextUtils
 
 interface WebTabsListener {
     fun onCloseTabClicked(webTab: WebTab)
@@ -27,6 +26,8 @@ class WebTabsAdapter(
         fun bind(webTab: WebTab, webTabsListener: WebTabsListener) {
             with(binding)
             {
+                val context = this.root.context
+
                 this.webTab = webTab
                 this.tabListener = webTabsListener
 
@@ -38,7 +39,7 @@ class WebTabsAdapter(
                 if (webTab.getFavicon() == null && !webTab.isHome()) {
                     val bm =
                         AppCompatResources.getDrawable(
-                            ContextUtils.getApplicationContext(),
+                            context,
                             R.drawable.public_24px
                         )
 
@@ -48,7 +49,7 @@ class WebTabsAdapter(
                 if (webTab.isHome()) {
                     val bm =
                         AppCompatResources.getDrawable(
-                            ContextUtils.getApplicationContext(),
+                            context,
                             R.drawable.home_48px
                         )
 

@@ -17,8 +17,8 @@
     </data>
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="90dp"
-        android:layout_height="80dp"
+        android:layout_width="100dp"
+        android:layout_height="90dp"
         android:clickable="true"
         android:focusable="true"
         android:onClick="@{() -> listener.onItemClicked(pageInfo)}"
@@ -33,11 +33,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:maxLength="11"
-                android:maxLines="1"
+                android:maxLines="3"
                 android:text="@{pageInfo.getTitleFiltered()}"
                 android:textAlignment="center"
-                android:textSize="@dimen/text_large"
+                android:textSize="@dimen/text_small"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

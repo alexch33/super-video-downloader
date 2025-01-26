@@ -4,8 +4,6 @@ import androidx.databinding.ObservableBoolean
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.model.Suggestion
-import com.myAllVideoBrowser.data.local.room.entity.PageInfo
-import com.myAllVideoBrowser.data.repository.TopPagesRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.SuggestionsUtils
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
@@ -15,33 +13,26 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.subjects.PublishSubject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class BrowserHomeViewModel @Inject constructor(
     private val okHttpClient: OkHttpProxyClient,
     private val baseSchedulers: BaseSchedulers,
-    private val topPagesRepository: TopPagesRepository,
 ) :
     BaseViewModel() {
     val isSearchInputFocused = ObservableBoolean(false)
     val searchTextInput = ObservableField("")
     val listSuggestions: ObservableField<MutableList<Suggestion>> = ObservableField(mutableListOf())
-    var listPages: ObservableField<MutableList<PageInfo>> = ObservableField(mutableListOf())
 
     lateinit var homePublishSubject: PublishSubject<String>
 
     private var suggestionJob: Job? = null
-    private val executorSingle = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     override fun start() {
         homePublishSubject = PublishSubject.create()
-
-        updateTopPages()
     }
 
     override fun stop() {
@@ -86,47 +77,5 @@ class BrowserHomeViewModel @Inject constructor(
             emptyList()
         }.take(1).observeOn(baseSchedulers.single)
             .subscribeOn(baseSchedulers.computation)
-    }
-
-    private fun updateTopPages() {
-        viewModelScope.launch(executorSingle) {
-            val pages = try {
-                topPagesRepository.getTopPages()
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                null
-            }
-
-            if (!pages.isNullOrEmpty()) {
-                listPages.set(pages.toMutableList())
-            }
-
-            try {
-                topPagesRepository.updateLocalStorage()
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            }
-
-            val updatedPages = try {
-                topPagesRepository.getTopPages()
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                null
-            }
-
-            if (updatedPages != null) {
-                for (info in updatedPages) {
-                    val list = mutableListOf<PageInfo>()
-                    list.addAll(listPages.get() ?: emptyList())
-                    val index = list.indexOf(info)
-                    if (index > -1) {
-                        list[index] = info
-                    } else {
-                        list.add(info)
-                    }
-                    listPages.set(list)
-                }
-            }
-        }
     }
 }

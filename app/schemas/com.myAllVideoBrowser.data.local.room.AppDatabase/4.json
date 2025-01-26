@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "c280710f27f325be3d92e90ee8e49e0d",
+    "identityHash": "4581fbe39c79237b1f8fdd6697a0eae6",
     "entities": [
       {
         "tableName": "PageInfo",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `isSystem` INTEGER NOT NULL, `name` TEXT NOT NULL, `link` TEXT NOT NULL, `icon` TEXT NOT NULL, `favicon` BLOB, PRIMARY KEY(`link`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `isSystem` INTEGER NOT NULL, `name` TEXT NOT NULL, `link` TEXT NOT NULL, `icon` TEXT NOT NULL, `favicon` BLOB, `order` INTEGER NOT NULL, PRIMARY KEY(`link`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -43,6 +43,12 @@
             "columnName": "favicon",
             "affinity": "BLOB",
             "notNull": false
+          },
+          {
+            "fieldPath": "order",
+            "columnName": "order",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -334,7 +340,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c280710f27f325be3d92e90ee8e49e0d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4581fbe39c79237b1f8fdd6697a0eae6')"
     ]
   }
 }

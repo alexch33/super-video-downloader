@@ -36,7 +36,12 @@ data class PageInfo(
     var icon: String = "",
 
     @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
-    var favicon: ByteArray? = null
+    var favicon: ByteArray? = null,
+
+    @ColumnInfo(name = "order")
+    @SerializedName("order")
+    @Expose
+    var order: Int = 0
 ) {
     // TODO use regex
     fun getTitleFiltered(): String {
@@ -59,10 +64,12 @@ data class PageInfo(
 
         other as PageInfo
 
+        if (!favicon.contentEquals(other.favicon)) return false
+
         return link == other.link
     }
 
     override fun hashCode(): Int {
-        return 31 * link.hashCode()
+        return 31 * link.hashCode() * favicon.contentHashCode()
     }
 }

@@ -12,6 +12,7 @@ import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
+import com.myAllVideoBrowser.ui.main.bookmarks.BookmarksFragment
 import com.myAllVideoBrowser.ui.main.help.HelpFragment
 import com.myAllVideoBrowser.ui.main.history.HistoryFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
@@ -36,18 +37,21 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
     abstract fun shareWebLink()
 
-    fun buildWebTabMenu(browserMenu: View, isShareItemVisible: Boolean) {
+    abstract fun bookmarkCurrentUrl()
+
+    fun buildWebTabMenu(browserMenu: View, isHomeTab: Boolean) {
         if (popupMenu == null) {
             popupMenu =
                 buildPopupMenu(browserMenu)
-            val shareMenuItem = popupMenu!!.menu.getItem(1)
-            val desktopMenuItem = popupMenu!!.menu.getItem(2)
-            val proxyItem = popupMenu!!.menu.getItem(5)
+            val bookmarkMenuItem = popupMenu!!.menu.getItem(2)
+            val shareMenuItem = popupMenu!!.menu.getItem(3)
+            val desktopMenuItem = popupMenu!!.menu.getItem(4)
+            val proxyItem = popupMenu!!.menu.getItem(7)
             val isProxyOn = mainActivity.proxiesViewModel.isProxyOn
 
-            val isAdblockMenuItem = popupMenu!!.menu.getItem(6)
+            val isAdblockMenuItem = popupMenu!!.menu.getItem(8)
 
-            val isDarkModeItem = popupMenu!!.menu.getItem(7)
+            val isDarkModeItem = popupMenu!!.menu.getItem(9)
             val isDark = mainActivity.settingsViewModel.isDarkMode.get()
             isDarkModeItem.isChecked = isDark
 
@@ -95,7 +99,8 @@ abstract class BaseWebTabFragment : BaseFragment() {
                 }
             })
 
-            shareMenuItem.isVisible = isShareItemVisible
+            shareMenuItem.isVisible = !isHomeTab
+            bookmarkMenuItem.isVisible = !isHomeTab
         }
     }
 
@@ -132,6 +137,16 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
                 R.id.history_screen_menu_item -> {
                     navigateToHistory()
+                    true
+                }
+
+                R.id.bookmarks_list -> {
+                    navigateToBookMarks()
+                    true
+                }
+
+                R.id.bookmark -> {
+                    bookmarkCurrentUrl()
                     true
                 }
 
@@ -257,6 +272,24 @@ abstract class BaseWebTabFragment : BaseFragment() {
                     currentFragment.requireActivity().supportFragmentManager.beginTransaction()
                 transaction.add(it.id, HelpFragment.newInstance())
                 transaction.addToBackStack("help")
+                transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                transaction.commit()
+            }
+        } catch (e: ClassCastException) {
+            AppLogger.d("Can't get the fragment manager with this")
+        }
+    }
+
+    private fun navigateToBookMarks() {
+        try {
+            val currentFragment = this
+            val activityFragmentContainer =
+                currentFragment.activity?.findViewById<FragmentContainerView>(R.id.fragment_container_view)
+            activityFragmentContainer?.let {
+                val transaction =
+                    currentFragment.requireActivity().supportFragmentManager.beginTransaction()
+                transaction.add(it.id, BookmarksFragment.newInstance())
+                transaction.addToBackStack("bookmarks")
                 transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                 transaction.commit()
             }

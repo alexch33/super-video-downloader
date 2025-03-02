@@ -1,6 +1,7 @@
 package com.myAllVideoBrowser.ui.main.settings
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.nhaarman.mockito_kotlin.mock
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
@@ -15,7 +16,7 @@ class SettingsViewModelTest {
 
     @Before
     fun setup() {
-        viewModel = SettingsViewModel()
+        viewModel = SettingsViewModel(mock())
     }
 
     @Test

@@ -38,6 +38,14 @@ android {
         }
     }
     compileSdkVersion build_versions.target_sdk
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("KEYSTORE_PATH") ?: "keystore.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+        }
+    }
     defaultConfig {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
@@ -57,6 +65,7 @@ android {
             testCoverageEnabled true
         }
         release {
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -77,7 +86,9 @@ android {
         abi {
             enable true
             reset()
-            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            if (System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: false) {
+                include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+            }
             universalApk true
         }
     }
@@ -113,7 +124,6 @@ dependencies {
     implementation('androidx.work:work-rxjava3:2.10.0')
 
     // optional - GCMNetworkManager support
-    implementation('androidx.work:work-gcm:2.10.0')
     implementation 'androidx.fragment:fragment-ktx:1.8.5'
     // optional - Test helpers
     androidTestImplementation('androidx.work:work-testing:2.10.0')

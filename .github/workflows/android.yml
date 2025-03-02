@@ -44,4 +44,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         path: app/build/outputs/apk/release/app-release.apk
-        name: ${{ github.ref }}
+        name: app-release.apk

@@ -3,6 +3,8 @@ name: Android CI
 on:
   push:
     branches: [ "master", "dev" ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ "master", "dev" ]
 
@@ -10,6 +12,12 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+
+    env:
+      KEYSTORE_PATH: ${{ github.workspace }}/keystore.jks
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
     steps:
     - uses: actions/checkout@v4
@@ -20,7 +28,36 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Decode and Save Keystore
+      run: |
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/keystore.jks
+        chmod 600 $GITHUB_WORKSPACE/keystore.jks
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+
+    - name: Build Signed APK
+      run: ./gradlew assembleRelease
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')  # Runs only for tag pushes
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Upload APK as GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

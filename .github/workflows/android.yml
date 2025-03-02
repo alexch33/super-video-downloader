@@ -50,14 +50,11 @@ jobs:
       - uses: actions/checkout@v4
 
       # Upload APK as GitHub Release
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
+      - name: Upload APK to GitHub Releases
+        uses: actions/create-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-          files: app/build/outputs/apk/release/app-release.apk
+            upload_url: ${{ github.event.release.upload_url }}
+            asset_path: app/build/outputs/apk/release/app-release.apk
+            asset_name: app-release.apk
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

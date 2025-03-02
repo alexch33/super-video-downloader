@@ -17,34 +17,34 @@ jobs:
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: gradle
+      - uses: actions/checkout@v4
+      - name: set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
 
-    - name: Decode and Save Keystore
-      run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/keystore.jks
-        chmod 600 $GITHUB_WORKSPACE/keystore.jks
+      - name: Decode and Save Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/keystore.jks
+          chmod 600 $GITHUB_WORKSPACE/keystore.jks
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build with Gradle
+        run: ./gradlew build
 
-    - name: Build Signed APK
-      run: ./gradlew assembleRelease
+      - name: Build Signed APK
+        run: ./gradlew assembleRelease
 
-    - name: Upload APK to GitHub Releases
-      uses: actions/upload-artifact@v4
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        path: app/build/outputs/apk/release/app-release.apk
-        name: app-release.apk
+      - name: Upload APK to GitHub Releases
+        uses: actions/upload-artifact@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          path: app/build/outputs/apk/release/app-release.apk
+          name: app-release.apk
 
   release:
     name: Release APK
@@ -56,18 +56,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: app-release.apk
-      - name: Create Release
-        id: create_release
-        uses: elgohr/Github-Release-Action@v5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          title: ${{ github.ref }}
       - name: Upload Release APK
-        id: upload_release_asset
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           file: app-release.apk
+        prerelease: true
+        draft: true
+        tag_name: ${{ github.ref }}
+        files: |
+          app-release.apk

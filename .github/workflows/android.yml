@@ -61,8 +61,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: true
+          prerelease: false
+          body: nothing new, for fdroid tag autobuild
           draft: true
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
           files: |
             app-release.apk

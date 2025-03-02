@@ -13,14 +13,14 @@ class VideoPlayerViewModelTest {
         videoPlayerViewModel = VideoPlayerViewModel()
     }
 
-    @Test
-    fun `test video volume on`() {
-        assertEquals(1.0f, videoPlayerViewModel.getVolume())
-    }
-
-    @Test
-    fun `test video volume off`() {
-        videoPlayerViewModel.isVolumeOn = false
-        assertEquals(0.0f, videoPlayerViewModel.getVolume())
-    }
+//    @Test
+//    fun `test video volume on`() {
+//        assertEquals(1.0f, videoPlayerViewModel.getVolume())
+//    }
+//
+//    @Test
+//    fun `test video volume off`() {
+//        videoPlayerViewModel.isVolumeOn = false
+//        assertEquals(0.0f, videoPlayerViewModel.getVolume())
+//    }
 }

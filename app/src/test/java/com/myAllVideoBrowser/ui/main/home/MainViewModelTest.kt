@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.ui.main.home
 
+import com.nhaarman.mockito_kotlin.mock
 import org.junit.Before
 import org.junit.Test
 
@@ -9,7 +10,7 @@ class MainViewModelTest {
 
     @Before
     fun setup() {
-        mainViewModel = MainViewModel()
+        mainViewModel = MainViewModel(mock())
     }
 
     @Test

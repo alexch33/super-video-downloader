@@ -2,11 +2,8 @@ name: Android CI
 
 on:
   push:
-    branches: [ "master", "dev" ]
     tags:
       - 'v*'
-  pull_request:
-    branches: [ "master", "dev" ]
 
 jobs:
   build:
@@ -41,8 +38,10 @@ jobs:
     - name: Build Signed APK
       run: ./gradlew assembleRelease
 
-    - name: Releasing using Hub
-      uses: kyze8439690/action-release-releaseapk@master
+    - name: Upload APK to GitHub Releases
+      uses: actions/upload-artifact@v4
       env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-          APP_FOLDER: app
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        path: app/build/outputs/apk/release/app-release.apk
+        name: ${{ github.ref }}

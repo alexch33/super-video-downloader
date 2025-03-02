@@ -62,9 +62,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: app-release.apk
-        prerelease: true
-        draft: true
-        tag_name: ${{ github.ref }}
-        files: |
-          app-release.apk
+          prerelease: true
+          draft: true
+          tag_name: ${{ github.ref }}
+          files: |
+            app-release.apk

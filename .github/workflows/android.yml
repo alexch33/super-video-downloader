@@ -52,9 +52,11 @@ jobs:
       # Upload APK as GitHub Release
       - name: Upload APK to GitHub Releases
         uses: actions/create-release@v1
-        with:
-            upload_url: ${{ github.event.release.upload_url }}
-            asset_path: app/build/outputs/apk/release/app-release.apk
-            asset_name: app-release.apk
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+            tag_name: ${{ github.ref }}
+            release_name: Release ${{ github.ref }} (draft)
+            body: |
+              Test upload-to-github-release works with `actions/create-release`.
+            draft: true

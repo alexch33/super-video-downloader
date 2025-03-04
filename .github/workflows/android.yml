@@ -2,6 +2,9 @@ name: Android CI
 
 on:
   push:
+    branches:
+      - dev
+      - master
     tags:
       - 'v*'
 
@@ -63,7 +66,8 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           prerelease: false
           body: nothing new, for fdroid tag autobuild
-          draft: true
+          draft: false
+          make_latest: true
           tag_name: ${{ github.ref_name }}
           files: |
             app-release.apk

@@ -115,7 +115,7 @@ dependencies {
     // Android support
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     // Kotlin + coroutines
     implementation('androidx.work:work-runtime-ktx:2.10.0')
@@ -124,7 +124,7 @@ dependencies {
     implementation('androidx.work:work-rxjava3:2.10.0')
 
     // optional - GCMNetworkManager support
-    implementation 'androidx.fragment:fragment-ktx:1.8.5'
+    implementation 'androidx.fragment:fragment-ktx:1.8.6'
     // optional - Test helpers
     androidTestImplementation('androidx.work:work-testing:2.10.0')
 
@@ -208,7 +208,7 @@ dependencies {
 
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0'
 
-    implementation 'org.jsoup:jsoup:1.18.3'
+    implementation 'org.jsoup:jsoup:1.19.1'
 
     implementation 'com.github.marlonlom:timeago:4.1.0'
 

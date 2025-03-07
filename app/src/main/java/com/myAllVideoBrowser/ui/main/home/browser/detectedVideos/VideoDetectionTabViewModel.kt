@@ -217,7 +217,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     emitter.onNext(VideoInfo(id = ""))
                 }
                 emitter.onComplete()
-            }.doOnComplete {
+            }.doOnTerminate {
                 val url = resourceRequest.url.toString().split("?").firstOrNull()?.trim() ?: ""
                 val loadings2 = m3u8LoadingList.get()?.toMutableSet()
                 loadings2?.remove(url)

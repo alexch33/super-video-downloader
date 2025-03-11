@@ -13,7 +13,6 @@ import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.databinding.DownloadCandidateItemBinding
 
 
-
 interface DownloadVideoListener {
     fun onPreviewVideo(
         videoInfo: VideoInfo,
@@ -140,7 +139,7 @@ class CandidatesListRecyclerViewAdapter(
         val formattedFormat = makeVideoFormatHumanReadable(format ?: "error")
         if (formattedFormat != "error") {
             return if (formattedFormat.contains("x")) {
-                "${formattedFormat.split("x").last().replace(Regex("\\D"), "")}P"
+                "${parseHeight(formattedFormat)}P"
             } else if (!formattedFormat.contains("x") && !formattedFormat.contains("audio only")
                 && formattedFormat.contains("-")
             ) {
@@ -158,5 +157,16 @@ class CandidatesListRecyclerViewAdapter(
         }
 
         return "Error"
+    }
+
+    private fun parseHeight(input: String): Int? {
+        val regex = Regex("""\d+x(\d+)""")
+        val matchResult = regex.find(input)
+
+        return if (matchResult != null) {
+            matchResult.groupValues[1].toIntOrNull()
+        } else {
+            null
+        }
     }
 }

@@ -8,7 +8,7 @@
 
         <variable
             name="listener"
-            type="com.myAllVideoBrowser.ui.component.dialog.CandidateFormatListener" />
+            type="com.myAllVideoBrowser.ui.component.adapter.CandidateFormatListener" />
 
         <variable
             name="download_candidate"

@@ -35,7 +35,7 @@ import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.databinding.FragmentWebTabBinding
 import com.myAllVideoBrowser.ui.component.adapter.SuggestionTabListener
 import com.myAllVideoBrowser.ui.component.adapter.TabSuggestionAdapter
-import com.myAllVideoBrowser.ui.component.dialog.DownloadTabListener
+import com.myAllVideoBrowser.ui.component.adapter.DownloadTabListener
 import com.myAllVideoBrowser.ui.main.home.browser.BaseWebTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.BrowserFragment
 import com.myAllVideoBrowser.ui.main.home.browser.BrowserListener

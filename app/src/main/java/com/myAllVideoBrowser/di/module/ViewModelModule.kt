@@ -10,7 +10,6 @@ import com.myAllVideoBrowser.ui.main.home.browser.homeTab.BrowserHomeViewModel
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.GlobalVideoDetectionModel
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabViewModel
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
-import com.myAllVideoBrowser.ui.main.link.DownloadLinkViewModel
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerViewModel
 import com.myAllVideoBrowser.ui.main.progress.ProgressViewModel
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel
@@ -64,11 +63,6 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(SettingsViewModel::class)
     abstract fun bindSettingsViewModel(viewModel: SettingsViewModel): ViewModel
-
-    @Binds
-    @IntoMap
-    @ViewModelKey(DownloadLinkViewModel::class)
-    abstract fun bindLinkViewModel(viewModel: DownloadLinkViewModel): ViewModel
 
     @Binds
     @IntoMap

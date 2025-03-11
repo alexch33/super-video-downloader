@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentDetectedVideosTabBinding
 import com.myAllVideoBrowser.ui.component.adapter.VideoInfoAdapter
-import com.myAllVideoBrowser.ui.component.dialog.DownloadTabListener
+import com.myAllVideoBrowser.ui.component.adapter.DownloadTabListener
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.progress.WrapContentLinearLayoutManager

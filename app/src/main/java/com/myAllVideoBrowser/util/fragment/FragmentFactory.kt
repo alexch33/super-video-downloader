@@ -6,7 +6,6 @@ import com.myAllVideoBrowser.ui.main.home.browser.BrowserFragment
 import com.myAllVideoBrowser.ui.main.home.browser.homeTab.BrowserHomeFragment
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
-import com.myAllVideoBrowser.ui.main.link.LinkFragment
 import com.myAllVideoBrowser.ui.main.progress.ProgressFragment
 import com.myAllVideoBrowser.ui.main.settings.SettingsFragment
 import com.myAllVideoBrowser.ui.main.video.VideoFragment
@@ -17,7 +16,6 @@ interface FragmentFactory {
     fun createProgressFragment(): Fragment
     fun createVideoFragment(): Fragment
     fun createSettingsFragment(): Fragment
-    fun createLinkFragment(): Fragment
     fun createHistoryFragment(): Fragment
 
     fun createBrowserHomeFragment(): Fragment
@@ -35,8 +33,6 @@ class FragmentFactoryImpl @Inject constructor() : FragmentFactory {
     override fun createVideoFragment() = VideoFragment.newInstance()
 
     override fun createSettingsFragment() = SettingsFragment.newInstance()
-
-    override fun createLinkFragment() = LinkFragment.newInstance()
 
     override fun createHistoryFragment() = HistoryFragment.newInstance()
 

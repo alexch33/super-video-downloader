@@ -5,13 +5,58 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.databinding.ObservableField
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.color.MaterialColors
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.VideoFormatEntity
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.databinding.DownloadCandidateItemBinding
-import com.myAllVideoBrowser.ui.component.dialog.CandidateFormatListener
 
+
+
+interface DownloadVideoListener {
+    fun onPreviewVideo(
+        videoInfo: VideoInfo,
+        dialog: BottomSheetDialog?,
+        format: String,
+        isForce: Boolean
+    )
+
+    fun onDownloadVideo(
+        videoInfo: VideoInfo,
+        dialog: BottomSheetDialog?,
+        format: String,
+        videoTitle: String
+    )
+}
+
+interface DownloadTabVideoListener {
+    fun onPreviewVideo(
+        videoInfo: VideoInfo,
+        format: String,
+        isForce: Boolean
+    )
+
+    fun onDownloadVideo(
+        videoInfo: VideoInfo,
+        format: String,
+        videoTitle: String
+    )
+}
+
+interface DownloadDialogListener : DownloadVideoListener, CandidateFormatListener {
+    fun onCancel(dialog: BottomSheetDialog?)
+}
+
+interface DownloadTabListener : DownloadTabVideoListener, CandidateFormatListener {
+    fun onCancel()
+}
+
+interface CandidateFormatListener {
+    fun onSelectFormat(videoInfo: VideoInfo, format: String)
+
+    fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean
+}
 
 class CandidatesListRecyclerViewAdapter(
     private val downloadCandidates: VideoInfo,

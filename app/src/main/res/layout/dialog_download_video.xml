@@ -8,7 +8,7 @@
 
         <variable
             name="dialogListener"
-            type="com.myAllVideoBrowser.ui.component.dialog.DownloadDialogListener" />
+            type="com.myAllVideoBrowser.ui.component.adapter.DownloadDialogListener" />
 
         <variable
             name="dialog"

@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.databinding.ItemVideoInfoBinding
-import com.myAllVideoBrowser.ui.component.dialog.DownloadTabListener
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.FileUtil

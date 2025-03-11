@@ -13,7 +13,6 @@ import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.home.browser.homeTab.BrowserHomeFragment
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
-import com.myAllVideoBrowser.ui.main.link.LinkFragment
 import com.myAllVideoBrowser.ui.main.progress.ProgressFragment
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesFragment
 import com.myAllVideoBrowser.ui.main.settings.SettingsFragment
@@ -67,10 +66,6 @@ abstract class MainModule {
     @FragmentScoped
     @ContributesAndroidInjector
     abstract fun bindBrowserHomeFragment(): BrowserHomeFragment
-
-    @FragmentScoped
-    @ContributesAndroidInjector
-    abstract fun bindLinkFragment(): LinkFragment
 
     @FragmentScoped
     @ContributesAndroidInjector

@@ -10,7 +10,7 @@
 
         <variable
             name="dialogListener"
-            type="com.myAllVideoBrowser.ui.component.dialog.DownloadTabListener" />
+            type="com.myAllVideoBrowser.ui.component.adapter.DownloadTabListener" />
 
         <variable
             name="viewModel"

@@ -217,12 +217,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     emitter.onNext(VideoInfo(id = ""))
                 }
                 emitter.onComplete()
-            }.doOnComplete {
-                val url = resourceRequest.url.toString().split("?").firstOrNull()?.trim() ?: ""
+            }.doOnTerminate {
                 val loadings2 = m3u8LoadingList.get()?.toMutableSet()
-                loadings2?.remove(url)
+                loadings2?.remove(resourceRequest.url.toString())
                 m3u8LoadingList.set(loadings2?.toMutableSet())
-                verifyVideoLinkJobStorage.remove(url)
+                verifyVideoLinkJobStorage.remove(taskUrlCleaned)
             }.observeOn(baseSchedulers.computation).subscribeOn(baseSchedulers.videoService)
                 .subscribe { info ->
                     if (info.id.isNotEmpty()) {

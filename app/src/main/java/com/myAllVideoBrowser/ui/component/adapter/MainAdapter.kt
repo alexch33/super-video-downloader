@@ -17,7 +17,7 @@ class MainAdapter(
             0 -> fragmentFactory.createBrowserFragment()
             1 -> fragmentFactory.createProgressFragment()
             2 -> fragmentFactory.createVideoFragment()
-            else -> fragmentFactory.createLinkFragment()
+            else -> fragmentFactory.createVideoFragment()
         }
     }
 

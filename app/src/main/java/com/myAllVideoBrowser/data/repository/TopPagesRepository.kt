@@ -51,7 +51,7 @@ class TopPagesRepositoryImpl @Inject constructor(
     override suspend fun updateLocalStorageFavicons(): Flow<PageInfo> = callbackFlow {
         val pages = localDataSource.getTopPages()
         for (page in pages) {
-            if (page.favicon == null) {
+            if (page.faviconBitmap() == null) {
                 val bitmap = try {
                     FaviconUtils.getEncodedFaviconFromUrl(
                         okHttpClient.getProxyOkHttpClient(), page.link

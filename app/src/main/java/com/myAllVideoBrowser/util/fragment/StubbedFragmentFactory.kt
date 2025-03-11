@@ -11,8 +11,6 @@ class StubbedFragmentFactory : FragmentFactory {
 
     override fun createSettingsFragment() = Fragment()
 
-    override fun createLinkFragment() = Fragment()
-
     override fun createHistoryFragment() = Fragment()
 
     override fun createBrowserHomeFragment() = Fragment()

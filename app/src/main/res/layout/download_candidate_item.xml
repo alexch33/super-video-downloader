@@ -26,8 +26,8 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_item"
-        android:layout_width="130dp"
-        android:layout_height="130dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_margin="4dp"
         android:checkable="true"
         android:checked="@{is_candidate_selected}"
@@ -40,17 +40,36 @@
         app:strokeColor="@{is_candidate_selected ? @color/colorPrimary : @android:color/transparent}"
         app:strokeWidth="3dp">
 
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/tv_title"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:paddingStart="@dimen/padding_small"
-            android:paddingEnd="@dimen/padding_small"
-            android:text="@string/player_resolution"
-            android:textAlignment="center"
-            android:textSize="@dimen/text_xxxlarge" />
+            android:orientation="vertical"
+            android:padding="@dimen/padding_normal">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:paddingStart="@dimen/padding_small"
+                android:paddingEnd="@dimen/padding_small"
+                android:text="@string/player_resolution"
+                android:textAlignment="center"
+                android:textSize="@dimen/text_xxxlarge" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tv_data"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:paddingStart="@dimen/padding_small"
+                android:paddingEnd="@dimen/padding_small"
+                android:text="@string/player_resolution"
+                android:textAlignment="center"
+                android:textSize="@dimen/text_small" />
+        </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
 </layout>

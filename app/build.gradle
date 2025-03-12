@@ -18,6 +18,9 @@ jacoco {
 allOpen {
     annotation 'com.allVideoBrowserXmaster.OpenForTesting'
 }
+def splitApks = System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: false
+def abiFilterList = (properties["ABI_FILTERS"] as String).split(';')
+def abiCodes = ["armeabi-v7a" : 1, "arm64-v8a" : 2, "x86" : 3, "x86_64" : 4]
 
 android {
     packagingOptions {
@@ -54,8 +57,17 @@ android {
         versionName "0.5.0"
         testInstrumentationRunner "util.TestRunner"
 
-        ndk {
-            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+        if (splitApks) {
+            splits {
+                abi {
+                    enable true
+                    reset()
+                    include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+                    universalApk true
+                }
+            }
+        } else {
+            ndk { abiFilters.addAll(abiFilterList) }
         }
     }
     buildTypes {
@@ -82,37 +94,20 @@ android {
             returnDefaultValues = true
         }
     }
-    splits {
-        abi {
-            enable true
-            reset()
-            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
-            universalApk true
-        }
-    }
     // Assign a unique version code for each architecture
     applicationVariants.configureEach { variant ->
         variant.outputs.each { output ->
-            def abi = output.getFilter(com.android.build.OutputFile.ABI)
-            if (abi != null) {
-                int abiVersionCode
-                switch (abi) {
-                    case "armeabi-v7a":
-                        abiVersionCode = 1
-                        break
-                    case "arm64-v8a":
-                        abiVersionCode = 2
-                        break
-                    case "x86":
-                        abiVersionCode = 3
-                        break
-                    case "x86_64":
-                        abiVersionCode = 4
-                        break
-                    default:
-                        abiVersionCode = 0
-                }
-                output.versionCodeOverride = defaultConfig.versionCode * 10 + abiVersionCode
+            def name
+            if (splitApks) {
+                name = output.getFilter(com.android.build.OutputFile.ABI)
+            } else {
+                name = abiFilterList[0]
+            }
+
+            def baseAbiCode = abiCodes[name]
+
+            if (baseAbiCode != null) {
+                output.versionCodeOverride = defaultConfig.versionCode * 10 + baseAbiCode
             }
         }
     }

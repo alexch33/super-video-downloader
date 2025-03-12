@@ -18,6 +18,7 @@ jobs:
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      SPLITS_INCLUDE: "TRUE"
 
     steps:
       - uses: actions/checkout@v4

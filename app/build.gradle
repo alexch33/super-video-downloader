@@ -86,10 +86,34 @@ android {
         abi {
             enable true
             reset()
-            if (System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: false) {
-                include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
-            }
+            include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
             universalApk true
+        }
+    }
+    // Assign a unique version code for each architecture
+    applicationVariants.configureEach { variant ->
+        variant.outputs.each { output ->
+            def abi = output.getFilter(com.android.build.OutputFile.ABI)
+            if (abi != null) {
+                int abiVersionCode
+                switch (abi) {
+                    case "armeabi-v7a":
+                        abiVersionCode = 1
+                        break
+                    case "arm64-v8a":
+                        abiVersionCode = 2
+                        break
+                    case "x86":
+                        abiVersionCode = 3
+                        break
+                    case "x86_64":
+                        abiVersionCode = 4
+                        break
+                    default:
+                        abiVersionCode = 0
+                }
+                output.versionCodeOverride = defaultConfig.versionCode * 10 + abiVersionCode
+            }
         }
     }
     compileOptions {

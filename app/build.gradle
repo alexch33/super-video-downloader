@@ -107,7 +107,7 @@ android {
             def baseAbiCode = abiCodes[name]
 
             if (baseAbiCode != null) {
-                output.versionCodeOverride = defaultConfig.versionCode * 10 + baseAbiCode
+                output.versionCodeOverride = output.versionCode + baseAbiCode
             }
         }
     }

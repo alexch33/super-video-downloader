@@ -60,6 +60,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: apk-files
+          path: apk-release
 
       - name: Upload Release APKs
         uses: softprops/action-gh-release@v2

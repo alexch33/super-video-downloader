@@ -23,6 +23,13 @@ def abiFilterList = (properties["ABI_FILTERS"] as String).split(';')
 def abiCodes = ["armeabi-v7a": 1, "arm64-v8a": 2, "x86": 3, "x86_64": 4]
 
 android {
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles.
+        includeInBundle = false
+    }
+
     packagingOptions {
         resources {
             excludes += ['mozilla/public-suffix-list.txt',

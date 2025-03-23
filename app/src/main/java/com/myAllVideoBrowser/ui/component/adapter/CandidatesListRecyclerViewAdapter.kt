@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.ui.component.adapter
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.VideoFormatEntity
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.databinding.DownloadCandidateItemBinding
+import com.myAllVideoBrowser.util.FileUtil
 
 
 interface DownloadVideoListener {
@@ -79,6 +81,7 @@ class CandidatesListRecyclerViewAdapter(
         return CandidatesViewHolder(binding)
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: CandidatesViewHolder, position: Int) {
         with(holder.binding) {
             val candidate = formats[position].format ?: "error"
@@ -106,6 +109,17 @@ class CandidatesListRecyclerViewAdapter(
             this.downloadCandidate = candidate
             this.isCandidateSelected = candidate == selected
             this.tvTitle.text = getShortOfFormat(candidate)
+            val frmt = formats[position]
+            val formatSize = if (frmt.fileSizeApproximate > 0) {
+                FileUtil.getFileSizeReadable(frmt.fileSizeApproximate.toDouble())
+            } else if (frmt.fileSize > 0) {
+                FileUtil.getFileSizeReadable(frmt.fileSize.toDouble())
+            } else {
+                "Unknown"
+            }
+            val fileSizeLine = "File size: $formatSize"
+            this.tvData.text =
+                "vcodec: ${frmt.vcodec ?: "unknown"} \nacodec: ${frmt.acodec ?: "unknown"} \n $fileSizeLine \n${frmt.formatNote ?: ""}"
 
             this.executePendingBindings()
         }
@@ -125,14 +139,14 @@ class CandidatesListRecyclerViewAdapter(
     private fun getShortenFormats(allFormats: List<VideoFormatEntity>): List<VideoFormatEntity> {
         val formatsMap = mutableMapOf<String, VideoFormatEntity>()
         for (format in allFormats) {
-            formatsMap[getShortOfFormat(format.format)] = format
+            formatsMap[format.format.toString()] = format
         }
 
         formatsMap.remove("")
 
         formatsMap.toSortedMap()
 
-        return formatsMap.toSortedMap().values.toList()
+        return formatsMap.toSortedMap().values.toList().sortedBy { it.formatNote }
     }
 
     private fun getShortOfFormat(format: String?): String {

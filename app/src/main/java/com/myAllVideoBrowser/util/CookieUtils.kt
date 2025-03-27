@@ -6,10 +6,6 @@ import android.net.Uri
 import android.os.Build
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
-import androidx.core.database.getBlobOrNull
-import androidx.core.database.getFloatOrNull
-import androidx.core.database.getLongOrNull
-import androidx.core.database.getStringOrNull
 import com.google.common.net.InternetDomainName
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import okhttp3.Headers
@@ -18,14 +14,7 @@ import okhttp3.Request
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
-import java.sql.SQLException
-import java.util.Arrays
 import java.util.Date
-import javax.crypto.Cipher
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.PBEKeySpec
-import javax.crypto.spec.SecretKeySpec
 
 
 object CookieUtils {
@@ -322,7 +311,7 @@ class ChromeBrowser : Browser() {
      */
 
     fun getCookiesNetscapeForDomain(domain: String?, cookiesStore: File): String {
-        val dm: String = InternetDomainName.from(domain).topPrivateDomain().toString()
+        val dm: String = domain?.let { InternetDomainName.from(it).topPrivateDomain().toString() }.toString()
 
         return processCookiesToNetscape(cookiesStore, dm)
     }
@@ -331,100 +320,6 @@ class ChromeBrowser : Browser() {
         cookieStore: File?,
         domainFilter: String?
     ): Set<Cookie> {
-//        val cookies = HashSet<Cookie>()
-//        var db: SQLiteDatabase? = null
-//
-//        if (cookieStore?.exists() == true) {
-//            try {
-//                cookieStoreCopy.delete()
-//                Files.copy(cookieStore.toPath(), cookieStoreCopy.toPath())
-//                // create a database connection
-//                db = SQLiteDatabase.openDatabase(cookieStoreCopy.absolutePath, null, 0)
-//
-//                var cursor: Cursor? = null
-//                cursor = if (domainFilter.isNullOrEmpty()) {
-//                    db.rawQuery("select * from cookies", null)
-//                } else {
-//                    db.rawQuery(
-//                        "select * from cookies where host_key like \"%$domainFilter%\"",
-//                        null
-//                    )
-//                }
-//                while (cursor.moveToNext()) {
-//                    val cursorStorage = CursorStorage()
-//
-//                    for (i in cursor.columnNames.indices) {
-//                        val columnName = cursor.columnNames[i]
-//
-//                        val columnValue =
-//                            when (cursor.getType(i)) {
-//                                Cursor.FIELD_TYPE_NULL -> ""
-//                                Cursor.FIELD_TYPE_BLOB -> cursor.getBlobOrNull(i)
-//                                Cursor.FIELD_TYPE_FLOAT -> cursor.getFloatOrNull(i)
-//                                Cursor.FIELD_TYPE_STRING -> cursor.getStringOrNull(i)
-//                                Cursor.FIELD_TYPE_INTEGER -> cursor.getLongOrNull(i)
-//                                else -> cursor.getStringOrNull(i)
-//                            }
-//                        Log.d(
-//                            DLApplication.DEBUG_TAG,
-//                            "COLUMN NAME::::::  ${cursor.getType(i)} $columnName value: $columnValue"
-//                        )
-//                        cursorStorage.addParams(columnName, cursor.getType(i), columnValue)
-//                    }
-//
-//                    val name = cursorStorage.getNameValue("name") as String
-//                    val encryptedBytes = cursorStorage.getNameValue("encrypted_value") as ByteArray
-//                    val value = (cursorStorage.getNameValue("value") as String)
-//                    val path = cursorStorage.getNameValue("path") as String
-//                    val domain = cursorStorage.getNameValue("host_key") as String
-//                    val secure = cursorStorage.getNameValue("is_secure") as Long
-//                    val httpOnly = cursorStorage.getNameValue("is_httponly") as Long
-//                    val exp = (cursorStorage.getNameValue("expires_utc") as Long)
-//                    val expires = if (exp != 0L) chromeTime(exp) else 0L
-//
-//                    val encryptedCookie = EncryptedCookie(
-//                        name,
-//                        encryptedBytes,
-//                        Date(expires),
-//                        path,
-//                        domain,
-//                        secure == 1L,
-//                        httpOnly == 1L,
-//                        cookieStore
-//                    )
-//                    val decryptedCookie = if (encryptedBytes.isEmpty()) DecryptedCookie(
-//                        encryptedCookie.name,
-//                        encryptedCookie.encryptedValue,
-//                        value,
-//                        encryptedCookie.getExpires(),
-//                        encryptedCookie.path,
-//                        encryptedCookie.domain,
-//                        encryptedCookie.isSecure,
-//                        encryptedCookie.isHttpOnly,
-//                        encryptedCookie.cookieStore
-//                    ) else {
-//                        decrypt(encryptedCookie)
-//                    }
-//                    if (decryptedCookie != null) {
-//                        cookies.add(decryptedCookie)
-//                    } else {
-//                        cookies.add(encryptedCookie)
-//                    }
-//                    cookieStoreCopy.delete()
-//                }
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//                // if the error message is "out of memory",
-//                // it probably means no database file is found
-//            } finally {
-//                try {
-//                    db?.close()
-//                } catch (e: SQLException) {
-//                    // connection close failed
-//                }
-//            }
-//        }
-
         return emptySet()
     }
 
@@ -506,55 +401,7 @@ class ChromeBrowser : Browser() {
      * @return
      */
     protected override fun decrypt(encryptedCookie: EncryptedCookie?): DecryptedCookie? {
-        var decryptedBytes: ByteArray? = null
-        try {
-            val salt = "saltysalt".toByteArray()
-            val password = "peanuts".toCharArray()
-            val iv = CharArray(16)
-            Arrays.fill(iv, ' ')
-            val keyLength = 16
-
-            val iterations = 1
-
-            val spec = PBEKeySpec(password, salt, iterations, keyLength * 8)
-            val pbkdf2 = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1")
-
-            val aesKey = pbkdf2.generateSecret(spec).encoded
-
-            val keySpec = SecretKeySpec(aesKey, "AES")
-
-            val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-            cipher.init(
-                Cipher.DECRYPT_MODE,
-                keySpec,
-                IvParameterSpec(String(iv).toByteArray())
-            )
-
-            var encryptedBytes: ByteArray? = encryptedCookie?.encryptedValue
-
-            if (encryptedBytes != null && String(encryptedCookie!!.encryptedValue).startsWith("v10")) {
-                encryptedBytes = Arrays.copyOfRange(encryptedBytes, 3, encryptedBytes.size)
-            }
-            decryptedBytes = cipher.doFinal(encryptedBytes)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            decryptedBytes = null
-        }
-        return if (decryptedBytes == null) {
-            null
-        } else {
-            DecryptedCookie(
-                encryptedCookie?.name.toString(),
-                encryptedCookie?.encryptedValue ?: byteArrayOf(),
-                "$decryptedBytes",
-                encryptedCookie?.getExpires() ?: Date(),
-                encryptedCookie!!.path,
-                encryptedCookie.domain,
-                encryptedCookie.isSecure,
-                encryptedCookie.isHttpOnly,
-                encryptedCookie.cookieStore
-            )
-        }
+       return null
     }
 
     companion object {

@@ -13,7 +13,7 @@ import javax.inject.Inject
 class BrowserViewModel @Inject constructor() : BaseViewModel() {
 
     companion object {
-        const val SEARCH_URL = "https://www.google.com/search?q=%s"
+        const val SEARCH_URL = "https://duckduckgo.com/?t=ffab&q=%s"
 
         var instance: BrowserViewModel? = null
     }

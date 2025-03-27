@@ -53,7 +53,6 @@ class TopPagesLocalDataSource @Inject constructor(
         defaultList.add(PageInfo(link = "https://www.imdb.com"))
         defaultList.add(PageInfo(link = "https://www.tiktok.com"))
         defaultList.add(PageInfo(link = "https://www.dailymotion.com"))
-        defaultList.add(PageInfo(link = "https://www.facebook.com/watch"))
         defaultList.add(PageInfo(link = "https://www.instagram.com"))
         defaultList.add(PageInfo(link = "https://www.twitter.com"))
         defaultList.add(PageInfo(link = "https://www.pinterest.com/videos"))

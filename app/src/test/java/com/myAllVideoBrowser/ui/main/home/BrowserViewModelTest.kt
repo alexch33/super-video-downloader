@@ -58,7 +58,7 @@ class BrowserViewModelTest {
         browserViewModel = spy(BrowserViewModel())
 
 //        doReturn(Flowable.just(listOf(PageInfo()))).`when`(topPagesRepository).getTopPages()
-        url = "http://google.com"
+        url = "http://duckduckgo.com"
     }
 
     @Test

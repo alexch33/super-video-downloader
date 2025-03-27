@@ -6,35 +6,26 @@ import io.reactivex.rxjava3.core.Flowable
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
+import org.json.JSONObject
 
 class SuggestionsUtils {
     companion object {
         fun getSuggestions(okHttpClient: OkHttpClient, input: String): Flowable<List<Suggestion>> {
             return Flowable.create({ emitter ->
                 val request = Request.Builder()
-                    .url("https://www.google.com/complete/search?q=$input&cp=0&client=gws-wiz")
+                    .url("https://duckduckgo.com/ac/?q=$input&kl=wt-wt")
                     .build()
                 val response = okHttpClient.newCall(request).execute()
-                    .use { response -> response.body?.string() }
-
-                var s = response.toString()
-
-                s = s.substring(s.indexOf("(") + 1, s.indexOf(")"))
+                    .use { response -> response.body.string() }
 
                 val result: ArrayList<Suggestion> = ArrayList()
 
-                val jsn = JSONArray(s)
+                val jsn = JSONArray(response.toString())
                 for (i in 0 until jsn.length()) {
                     try {
-                        val ar = JSONArray(jsn.get(i).toString())
-                        for (j in 0 until ar.length()) {
-                            val ar2 = JSONArray(ar.get(j).toString())
-
-                            var tmp = ar2.get(0).toString()
-                            tmp = tmp.replace(Regex("<.{1,2}>"), "")
-
-                            result.add(Suggestion(content = tmp))
-                        }
+                        val phraseObj = JSONObject(jsn.get(i).toString())
+                        val phrase = phraseObj.get("phrase").toString()
+                        result.add(Suggestion(content = phrase))
                     } catch (_: Throwable) {
 
                     }

@@ -238,7 +238,7 @@ dependencies {
 
     implementation 'com.github.marlonlom:timeago:4.1.0'
 
-    var media3_version = '1.5.1'
+    var media3_version = '1.6.0'
 
     // For media playback using ExoPlayer
     implementation "androidx.media3:media3-exoplayer:$media3_version"

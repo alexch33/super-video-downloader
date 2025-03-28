@@ -34,8 +34,6 @@ class BrowserViewModel @Inject constructor() : BaseViewModel() {
 
     val progress = ObservableInt(0)
 
-    val changeSearchFocusEvent = SingleLiveEvent<Boolean>()
-
     val tabs = ObservableField(listOf(WebTab.HOME_TAB))
 
     val currentTab = ObservableInt(HOME_TAB_INDEX)

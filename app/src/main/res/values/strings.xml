@@ -1,7 +1,7 @@
 <resources>
     <string name="app_icon">app icon</string>
     <string name="app_name">SuperX</string>
-    <string name="browser_search_hint">Search Google or enter url</string>
+    <string name="browser_search_hint">Search in DuckDuckGo or enter url</string>
 
     <string name="title_video">Video</string>
     <string name="title_progress">Progress</string>

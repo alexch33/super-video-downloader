@@ -430,7 +430,6 @@ class WebTabFragment : BaseWebTabFragment() {
             useWideViewPort = true
             domStorageEnabled = true
             javaScriptEnabled = true
-            databaseEnabled = true
             cacheMode = WebSettings.LOAD_NO_CACHE
             javaScriptCanOpenWindowsAutomatically = true
             mediaPlaybackRequiresUserGesture = false

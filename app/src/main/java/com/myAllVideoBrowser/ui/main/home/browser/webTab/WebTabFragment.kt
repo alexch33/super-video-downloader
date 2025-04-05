@@ -64,6 +64,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.util.UUID
 import javax.inject.Inject
 
 class WebTabFragment : BaseWebTabFragment() {
@@ -351,6 +352,7 @@ class WebTabFragment : BaseWebTabFragment() {
         videoInfo: VideoInfo, videoTitle: String, format: String
     ) {
         val info = videoInfo.copy(
+            id = UUID.randomUUID().toString(),
             title = FileNameCleaner.cleanFileName(videoTitle),
             formats = VideFormatEntityList(videoInfo.formats.formats.filter {
                 it.format?.contains(

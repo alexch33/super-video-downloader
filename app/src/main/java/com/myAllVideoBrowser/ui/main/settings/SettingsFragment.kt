@@ -92,9 +92,6 @@ class SettingsFragment : BaseFragment() {
             this.isCheckEveryRequestOnM3u8.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsCheckIfEveryUrlOnM3u8(checked)
             }
-            this.checkWebSitesIfInList.setOnCheckedChangeListener { _, checked ->
-                settingsViewModel.setIsCheckIfContainsInList(checked)
-            }
 
             this.seekBarM3u8.progress = settingsViewModel.m3u8ThreadsCount.get()
             this.seekBarM3u8.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {

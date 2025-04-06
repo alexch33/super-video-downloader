@@ -33,7 +33,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.myAllVideoBrowser.R
-import com.myAllVideoBrowser.data.remote.service.YoutubedlHelper
 import com.myAllVideoBrowser.databinding.FragmentBrowserBinding
 import com.myAllVideoBrowser.ui.component.adapter.WebTabsAdapter
 import com.myAllVideoBrowser.ui.component.adapter.WebTabsListener
@@ -139,9 +138,6 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
     @Inject
     lateinit var okHttpProxyClient: OkHttpProxyClient
-
-    @Inject
-    lateinit var youtubedlHelper: YoutubedlHelper
 
     @VisibleForTesting
     internal lateinit var dataBinding: FragmentBrowserBinding

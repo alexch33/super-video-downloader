@@ -179,20 +179,12 @@
                 android:text="@string/find_videos_by_url"
                 app:layout_constraintTop_toBottomOf="@+id/is_check_every_request_on_m3u8" />
 
-            <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/check_web_sites_if_in_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:checked="@{viewModel.isCheckIfContainsInList}"
-                android:text="@string/check_if_in_list"
-                app:layout_constraintTop_toBottomOf="@+id/find_videos_by_url" />
-
             <LinearLayout
                 android:id="@+id/regular_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                app:layout_constraintTop_toBottomOf="@+id/check_web_sites_if_in_list">
+                app:layout_constraintTop_toBottomOf="@+id/find_videos_by_url">
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/regular_threads_count_text"

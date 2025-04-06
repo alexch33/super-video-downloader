@@ -4,11 +4,8 @@ import android.app.Application
 import com.myAllVideoBrowser.data.remote.service.ConfigService
 import com.myAllVideoBrowser.data.remote.service.VideoService
 import com.myAllVideoBrowser.data.remote.service.VideoServiceLocal
-import com.myAllVideoBrowser.data.remote.service.YoutubedlHelper
 import com.myAllVideoBrowser.util.Memory
-import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
-import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import dagger.Module
 import dagger.Provides
 import okhttp3.Cache
@@ -58,17 +55,7 @@ class NetworkModule {
     @Singleton
     fun provideVideoService(
         proxyController: CustomProxyController,
-        youtubedlHelper: YoutubedlHelper
     ): VideoService = VideoServiceLocal(
-        proxyController,
-        youtubedlHelper
+        proxyController
     )
-
-    @Provides
-    @Singleton
-    fun provideYoutubeHelper(
-        okHttpProxyClient: OkHttpProxyClient,
-        sharedPrefHelper: SharedPrefHelper
-    ): YoutubedlHelper =
-        YoutubedlHelper(okHttpProxyClient, sharedPrefHelper)
 }

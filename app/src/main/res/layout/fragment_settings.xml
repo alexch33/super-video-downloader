@@ -132,12 +132,20 @@
                 app:layout_constraintTop_toBottomOf="@id/layout_clear_cookie" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/is_auto_theme_check_box"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.isAutoDarkMode}"
+                android:text="@string/is_auto_dark"
+                app:layout_constraintTop_toBottomOf="@+id/layout_clear_cookie" />
+
+            <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/lock_orientation_check_box"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isLockPortrait}"
                 android:text="@string/lock_screen_orientation_portrait"
-                app:layout_constraintTop_toBottomOf="@+id/layout_clear_cookie" />
+                app:layout_constraintTop_toBottomOf="@+id/is_auto_theme_check_box" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/show_video_alert_check_box"

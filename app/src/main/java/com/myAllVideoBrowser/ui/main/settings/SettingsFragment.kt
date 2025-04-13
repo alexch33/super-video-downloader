@@ -65,6 +65,9 @@ class SettingsFragment : BaseFragment() {
         dataBinding = FragmentSettingsBinding.inflate(inflater, container, false).apply {
             this.settingsBackground.setBackgroundColor(color)
             this.viewModel = settingsViewModel
+            this.isAutoThemeCheckBox.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setIsAutoTheme(checked)
+            }
             this.lockOrientationCheckBox.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsLockPortrait(checked)
             }

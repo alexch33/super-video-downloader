@@ -35,13 +35,13 @@ class UtilModule {
 
     @Singleton
     @Provides
-    fun provideNotificationsHelper(dlApplication: DLApplication) : NotificationsHelper {
+    fun provideNotificationsHelper(dlApplication: DLApplication): NotificationsHelper {
         return NotificationsHelper(dlApplication.applicationContext)
     }
 
     @Singleton
     @Provides
-    fun provideSharedPrefHelper(dlApplication: DLApplication) : SharedPrefHelper {
-        return SharedPrefHelper(dlApplication.applicationContext)
+    fun provideSharedPrefHelper(dlApplication: DLApplication, appUtil: AppUtil): SharedPrefHelper {
+        return SharedPrefHelper(dlApplication.applicationContext, appUtil)
     }
 }

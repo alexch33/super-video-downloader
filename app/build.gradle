@@ -81,7 +81,8 @@ android {
         debug {
             minifyEnabled false
             shrinkResources false
-            testCoverageEnabled true
+            enableUnitTestCoverage false
+            enableAndroidTestCoverage false
         }
         release {
             signingConfig signingConfigs.release
@@ -184,22 +185,17 @@ dependencies {
 
     // Room
 
-    implementation('androidx.room:room-runtime:2.6.1')
-    annotationProcessor('androidx.room:room-compiler:2.6.1')
+    implementation('androidx.room:room-runtime:2.7.0')
+    annotationProcessor('androidx.room:room-compiler:2.7.0')
 
-    ksp "androidx.room:room-compiler:2.6.1"
+    ksp "androidx.room:room-compiler:2.7.0"
 
     // optional - Kotlin Extensions and Coroutines support for Room
-    implementation('androidx.room:room-ktx:2.6.1')
+    implementation('androidx.room:room-ktx:2.7.0')
 
     // optional - RxJava3 support for Room
-    implementation('androidx.room:room-rxjava3:2.6.1')
+    implementation('androidx.room:room-rxjava3:2.7.0')
 
-    // optional - Guava support for Room, including Optional and ListenableFuture
-    implementation('androidx.room:room-guava:2.6.1')
-
-    // optional - Test helpers
-    testImplementation('androidx.room:room-testing:2.6.1')
 
     // Dagger2
     implementation deps.dagger.runtime
@@ -230,7 +226,7 @@ dependencies {
 
     implementation('androidx.webkit:webkit:1.12.1')
 
-    implementation 'androidx.core:core-ktx:1.15.0'
+    implementation 'androidx.core:core-ktx:1.16.0'
 
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1'
 

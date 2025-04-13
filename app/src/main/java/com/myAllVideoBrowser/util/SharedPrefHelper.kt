@@ -2,14 +2,17 @@ package com.myAllVideoBrowser.util
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.appcompat.app.AppCompatDelegate
+import android.os.Build
 import com.google.gson.Gson
 import com.myAllVideoBrowser.data.local.model.Proxy
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SharedPrefHelper @Inject constructor(context: Context) {
+class SharedPrefHelper @Inject constructor(
+    private val context: Context,
+    private val appUtil: AppUtil
+) {
     companion object {
         const val PREF_KEY = "settings_prefs"
         private const val IS_DESKTOP = "IS_DESKTOP"
@@ -32,8 +35,8 @@ class SharedPrefHelper @Inject constructor(context: Context) {
         private const val VIDEO_DETECTION_TRESHOLD = "VIDEO_DETECTION_TRESHOLD"
         private const val IS_LOCK_PORTRAIT = "IS_LOCK_PORTRAIT"
         private const val USER_PROXY = "USER_PROXY"
-        private const val IS_CHECK_IF_IN_LIST = "IS_CHECK_IF_IN_LIST"
         private const val IS_CHECK_EVERY_ON_M3U8 = "IS_CHECK_EVERY_ON_M3U8"
+        private const val IS_AUTO_THEME = "IS_AUTO_THEME"
     }
 
     private var sharedPreferences: SharedPreferences =
@@ -198,10 +201,28 @@ class SharedPrefHelper @Inject constructor(context: Context) {
     }
 
     fun isDarkMode(): Boolean {
+        val isNightMode = appUtil.getSystemDefaultThemeIsDark(context)
+
+        if (isAutoTheme()) {
+            return isNightMode
+        }
+
         return sharedPreferences.getBoolean(
             IS_DARK_MODE,
-            AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
+            isNightMode
         )
+    }
+
+    fun isAutoTheme(): Boolean {
+        val isAuto = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        return sharedPreferences.getBoolean(IS_AUTO_THEME, isAuto)
+    }
+
+    fun setIsAutoTheme(isAuto: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_AUTO_THEME, isAuto)
+            it.apply()
+        }
     }
 
     fun setIsDarkMode(isDarkMode: Boolean) {
@@ -272,19 +293,8 @@ class SharedPrefHelper @Inject constructor(context: Context) {
         }
     }
 
-    fun getIsCheckByList(): Boolean {
-        return sharedPreferences.getBoolean(IS_CHECK_IF_IN_LIST, false)
-    }
-
     fun getIsCheckEveryOnM3u8(): Boolean {
         return sharedPreferences.getBoolean(IS_CHECK_EVERY_ON_M3U8, true)
-    }
-
-    fun saveIsCheckByList(isCheck: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_CHECK_IF_IN_LIST, isCheck)
-            it.apply()
-        }
     }
 
     fun saveIsCheckEveryOnM3u8(isCheck: Boolean) {

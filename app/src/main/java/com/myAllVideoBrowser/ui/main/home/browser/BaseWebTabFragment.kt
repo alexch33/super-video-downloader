@@ -54,6 +54,7 @@ abstract class BaseWebTabFragment : BaseFragment() {
             val isDarkModeItem = popupMenu!!.menu.getItem(9)
             val isDark = mainActivity.settingsViewModel.isDarkMode.get()
             isDarkModeItem.isChecked = isDark
+            isDarkModeItem.isEnabled = !mainActivity.settingsViewModel.isAutoDarkMode.get()
 
             val isAdBlocker = mainActivity.settingsViewModel.isAdBlocker
 
@@ -69,6 +70,16 @@ abstract class BaseWebTabFragment : BaseFragment() {
                 override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
                     lifecycleScope.launch(Dispatchers.Main) {
                         isDarkModeItem.isChecked = mainActivity.settingsViewModel.isDarkMode.get()
+                    }
+                }
+            })
+
+            mainActivity.settingsViewModel.isAutoDarkMode.addOnPropertyChangedCallback(object :
+                Observable.OnPropertyChangedCallback() {
+                override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        isDarkModeItem.isEnabled =
+                            !mainActivity.settingsViewModel.isAutoDarkMode.get()
                     }
                 }
             })

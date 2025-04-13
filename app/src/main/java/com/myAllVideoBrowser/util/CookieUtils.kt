@@ -28,8 +28,7 @@ object CookieUtils {
 
         val tmpHeaders = request.requestHeaders
         tmpHeaders["Cookie"] = try {
-            CookieManager.getInstance().getCookie(url) ?: CookieManager.getInstance()
-                .getCookie(url) ?: ""
+            CookieManager.getInstance().getCookie(url) ?: ""
         } catch (e: Throwable) {
             ""
         }

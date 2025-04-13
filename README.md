@@ -15,8 +15,10 @@
 - Play videos offline with the built-in player
 - Save your favorite videos online and watch them later without downloading them
 - Save history as a real browser
+- Bookmarks support
 - Live streams download support
-- Cokies supported
+- Cokies support
+- HTTP proxy support
 
 Thanks
 to [@cuongpm](https://github.com/cuongpm), [@yausername](https://github.com/yausername) and [@JunkFood02](https://github.com/JunkFood02)

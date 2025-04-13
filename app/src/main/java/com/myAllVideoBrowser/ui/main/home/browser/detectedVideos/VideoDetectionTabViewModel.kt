@@ -236,6 +236,10 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     open fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
+        if (newInfo.formats.formats.isEmpty()) {
+            return
+        }
+
         if (newInfo.id.isEmpty()) {
             return
         }

@@ -107,4 +107,5 @@
     <string name="check_if_in_list">Only check web-sites urls if in supported list</string>
     <string name="bookmark">Bookmark</string>
     <string name="bookmarks_list">Bookmarks</string>
+    <string name="is_auto_dark">Auto Theme Mode</string>
 </resources>

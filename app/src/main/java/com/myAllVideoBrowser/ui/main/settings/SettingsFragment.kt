@@ -65,6 +65,9 @@ class SettingsFragment : BaseFragment() {
         dataBinding = FragmentSettingsBinding.inflate(inflater, container, false).apply {
             this.settingsBackground.setBackgroundColor(color)
             this.viewModel = settingsViewModel
+            this.isAutoThemeCheckBox.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setIsAutoTheme(checked)
+            }
             this.lockOrientationCheckBox.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsLockPortrait(checked)
             }
@@ -91,9 +94,6 @@ class SettingsFragment : BaseFragment() {
 
             this.isCheckEveryRequestOnM3u8.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsCheckIfEveryUrlOnM3u8(checked)
-            }
-            this.checkWebSitesIfInList.setOnCheckedChangeListener { _, checked ->
-                settingsViewModel.setIsCheckIfContainsInList(checked)
             }
 
             this.seekBarM3u8.progress = settingsViewModel.m3u8ThreadsCount.get()

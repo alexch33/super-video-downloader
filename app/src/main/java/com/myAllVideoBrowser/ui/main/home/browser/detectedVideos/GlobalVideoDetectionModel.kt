@@ -177,6 +177,10 @@ class GlobalVideoDetectionModel @Inject constructor(
     }
 
     override fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
+        if (newInfo.formats.formats.isEmpty()) {
+            return
+        }
+
         downloadButtonState.set(DownloadButtonStateLoading())
         Handler(Looper.getMainLooper()).postDelayed({
             downloadButtonState.set(DownloadButtonStateCanDownload(newInfo))

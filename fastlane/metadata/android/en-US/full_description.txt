@@ -1,5 +1,8 @@
 <b>Features</b>
 Free video downloader app lets you download videos from any website or social media platform like Facebook, Instagram, Twitch and more.
+All work on the client
 Supports M3U8 and MPD lists, mp4 streams and live streams
 All video save as mp4 video
 Cookies supported
+HTTP proxy support
+This app using network service for fetching adblock lists and list of supported sites(detection by url) for optimization

@@ -1,0 +1,4 @@
+### Fixed
+- Fixed adding detected video without available formats
+- Dependencies upgraded
+- Minor fixes

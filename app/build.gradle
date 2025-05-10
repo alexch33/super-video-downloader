@@ -177,9 +177,9 @@ dependencies {
 
     // Life cycle
     implementation deps.lifecycle.extensions
-    implementation 'androidx.lifecycle:lifecycle-common-java8:2.8.7'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.7'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.9.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.9.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.0'
     testImplementation 'androidx.arch.core:core-testing:2.2.0'
     androidTestImplementation 'androidx.arch.core:core-testing:2.2.0'
 

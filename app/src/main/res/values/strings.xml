@@ -108,4 +108,5 @@
     <string name="bookmark">Bookmark</string>
     <string name="bookmarks_list">Bookmarks</string>
     <string name="is_auto_dark">Auto Theme Mode</string>
+    <string name="check_every_request_on_audio">Check every request on audio</string>
 </resources>

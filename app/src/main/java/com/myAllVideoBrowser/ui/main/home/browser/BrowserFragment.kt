@@ -168,7 +168,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
             val isM3u8Check = settingsModel.isCheckIfEveryRequestOnM3u8.get()
             val isMp4Check = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
-            val isCheckOnAudio = true
+            val isCheckOnAudio = settingsModel.isCheckOnAudio.get()
 
             if (isM3u8Check || isMp4Check) {
                 val requestWithCookies = request.let { resourceRequest ->
@@ -197,7 +197,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
                         }
                     }
                 } else if (contentType == ContentType.VIDEO && isMp4Check || contentType == ContentType.AUDIO && isCheckOnAudio) {
-                    videoDetectionModel.checkRegularVideoOrAudio(requestWithCookies, isCheckOnAudio)
+                    videoDetectionModel.checkRegularVideoOrAudio(requestWithCookies, isCheckOnAudio, isMp4Check)
                 }
             }
 

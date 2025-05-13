@@ -37,7 +37,10 @@ class SharedPrefHelper @Inject constructor(
         private const val USER_PROXY = "USER_PROXY"
         private const val IS_CHECK_EVERY_ON_M3U8 = "IS_CHECK_EVERY_ON_M3U8"
         private const val IS_AUTO_THEME = "IS_AUTO_THEME"
+        private const val IS_CHECK_ON_AUDIO = "IS_CHECK_ON_AUDIO"
     }
+
+    private val gson = Gson()
 
     private var sharedPreferences: SharedPreferences =
         context.getSharedPreferences(PREF_KEY, Context.MODE_PRIVATE)
@@ -88,14 +91,14 @@ class SharedPrefHelper @Inject constructor(
 
     fun setCurrentProxy(proxy: Proxy) {
         sharedPreferences.edit().let {
-            it.putString(PROXY_IP_PORT, Gson().toJson(proxy.toMap()))
+            it.putString(PROXY_IP_PORT, gson.toJson(proxy.toMap()))
             it.apply()
         }
     }
 
     fun getCurrentProxy(): Proxy {
         val value = sharedPreferences.getString(PROXY_IP_PORT, "{}") ?: "{}"
-        val tmp = Gson().fromJson(value, Map::class.java)
+        val tmp = gson.fromJson(value, Map::class.java)
         return Proxy.fromMap(tmp)
     }
 
@@ -279,14 +282,14 @@ class SharedPrefHelper @Inject constructor(
     fun getUserProxy(): Proxy? {
         val proxyString = sharedPreferences.getString(USER_PROXY, "")
         if (proxyString?.isNotEmpty() == true) {
-            return Gson().fromJson(proxyString, Proxy::class.java)
+            return gson.fromJson(proxyString, Proxy::class.java)
         }
 
         return Proxy.noProxy()
     }
 
     fun saveUserProxy(proxy: Proxy) {
-        val proxyString = Gson().toJson(proxy)
+        val proxyString = gson.toJson(proxy)
         sharedPreferences.edit().let {
             it.putString(USER_PROXY, proxyString)
             it.apply()
@@ -300,6 +303,17 @@ class SharedPrefHelper @Inject constructor(
     fun saveIsCheckEveryOnM3u8(isCheck: Boolean) {
         sharedPreferences.edit().let {
             it.putBoolean(IS_CHECK_EVERY_ON_M3U8, isCheck)
+            it.apply()
+        }
+    }
+
+    fun getIsCheckOnAudio(): Boolean {
+        return sharedPreferences.getBoolean(IS_CHECK_ON_AUDIO, true)
+    }
+
+    fun saveIsCheckOnAudio(isCheck: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_CHECK_ON_AUDIO, isCheck)
             it.apply()
         }
     }

@@ -104,7 +104,7 @@ class CustomWebViewClient(
 
         val isCheckM3u8 = settingsModel.isCheckIfEveryRequestOnM3u8.get()
         val isCheckOnMp4 = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
-        val isCheckOnAudio = true
+        val isCheckOnAudio = settingsModel.isCheckOnAudio.get()
 
         if (isCheckOnMp4 || isCheckM3u8 || isCheckOnAudio) {
             val requestWithCookies = request?.let { resourceRequest ->
@@ -134,7 +134,7 @@ class CustomWebViewClient(
 
                 else -> {
                     if (isCheckOnMp4 || isCheckOnAudio) {
-                        val disposable = videoDetectionModel.checkRegularVideoOrAudio(requestWithCookies, isCheckOnAudio)
+                        val disposable = videoDetectionModel.checkRegularVideoOrAudio(requestWithCookies, isCheckOnAudio, isCheckOnMp4)
 
                         val currentUrl = tabViewModel.getTabTextInput().get() ?: ""
                         if (currentUrl != lastRegularCheckUrl) {

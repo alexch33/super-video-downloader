@@ -284,7 +284,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
         return downloadButtonIcon
     }
 
-    override fun checkRegularVideoOrAudio(request: Request?, isCheckOnAudio: Boolean): Disposable? {
+    override fun checkRegularVideoOrAudio(
+        request: Request?,
+        isCheckOnAudio: Boolean,
+        isCheckOnVideo: Boolean
+    ): Disposable? {
         if (request == null) {
             return null
         }
@@ -315,7 +319,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             val loadings = regularLoadingList.get()
             loadings?.add(request.url.toString())
             regularLoadingList.set(loadings?.toMutableSet())
-            propagateCheckJob(uriString, headers, isCheckOnAudio)
+            propagateCheckJob(uriString, headers, isCheckOnAudio, isCheckOnVideo)
             it.onComplete()
         }.subscribeOn(baseSchedulers.io).doOnComplete {
             val loadings = regularLoadingList.get()
@@ -438,7 +442,12 @@ open class VideoDetectionTabViewModel @Inject constructor(
         return null
     }
 
-    fun propagateCheckJob(url: String, headersMap: Map<String, String>, isCheckOnAudio: Boolean) {
+    fun propagateCheckJob(
+        url: String,
+        headersMap: Map<String, String>,
+        isCheckOnAudio: Boolean,
+        isCheckOnVideo: Boolean
+    ) {
         val threshold = settingsModel.videoDetectionTreshold.get()
 
         val finalUrlPair = runCatching {
@@ -465,7 +474,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val contentLength = response.body.contentLength()
 
                 if (response.code == 403 || response.code == 401) {
-                    handleUnauthorizedResponse(url, threshold, isCheckOnAudio)
+                    handleUnauthorizedResponse(url, threshold, isCheckOnAudio, isCheckOnVideo)
                     return
                 }
 
@@ -474,7 +483,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     contentType.contains(
                         "video",
                         true
-                    ) && (contentLength > threshold || (isTikTok && contentLength > 1024 * 1024 / 3)) -> {
+                    ) && isCheckOnVideo && (contentLength > threshold || (isTikTok && contentLength > 1024 * 1024 / 3)) -> {
                         setMediaInfoWrapperFromUrl(
                             finalUrlPair.first,
                             webTabModel?.getTabTextInput()?.get(),
@@ -499,7 +508,13 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
-    private fun handleUnauthorizedResponse(url: String, threshold: Int, isCheckOnAudio: Boolean) {
+    // THIS BULLSHIT NEEDED FOR SOME INDIAN WEB-SITES
+    private fun handleUnauthorizedResponse(
+        url: String,
+        threshold: Int,
+        isCheckOnAudio: Boolean,
+        isCheckOnVideo: Boolean
+    ) {
         val finalUrlPairEmpty = runCatching {
             CookieUtils.getFinalRedirectURL(URL(url.toUri().toString()), emptyMap())
         }.getOrNull() ?: return
@@ -511,7 +526,10 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val contentLength = response.body.contentLength()
 
                 when {
-                    contentType.contains("video", true) && contentLength > threshold.toLong() -> {
+                    contentType.contains(
+                        "video",
+                        true
+                    ) && isCheckOnVideo && contentLength > threshold.toLong() -> {
                         setMediaInfoWrapperFromUrl(
                             finalUrlPairEmpty.first,
                             webTabModel?.getTabTextInput()?.get(),

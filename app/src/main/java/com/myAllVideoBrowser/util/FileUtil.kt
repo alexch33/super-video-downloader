@@ -407,7 +407,9 @@ class FileUtil @Inject constructor() {
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toURI()
         )
         val filesList =
-            downloadsDir.listFiles()?.filter { it.isFile && it.extension == "mp4" }?.toTypedArray()
+            downloadsDir.listFiles()
+                ?.filter { it.isFile && it.extension == "mp4" || it.isFile && it.extension == "mp3" }
+                ?.toTypedArray()
                 ?: emptyArray<File>()
         val filesMap = mutableMapOf<String, Pair<Long, Uri>>()
 

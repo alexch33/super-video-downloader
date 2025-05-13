@@ -21,9 +21,6 @@ object CustomRegularDownloader : GenericDownloader() {
         }
 
         var fileName = videoInfo.name
-        if (!videoInfo.name.endsWith(".mp4")) {
-            fileName = "${videoInfo.name}.mp4"
-        }
 
         val cookie = headersMap["Cookie"]
         if (cookie != null) {
@@ -34,7 +31,7 @@ object CustomRegularDownloader : GenericDownloader() {
         val headersForClean = (headersMap as Map<*, *>?)?.let { JSONObject(it).toString() }
         val headersVal = try {
             Base64.encodeToString(headersForClean?.toByteArray(), Base64.DEFAULT)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             "{}"
         }
 

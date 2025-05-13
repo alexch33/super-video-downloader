@@ -68,7 +68,7 @@ open class VideoServiceLocal(
             }
 
             val listFormats = VideFormatEntityList(filtered.ifEmpty {
-                formats.filter { it.vcodec != "none" || it.acodec == "none" }
+                formats
             })
 
             return VideoInfoWrapper(VideoInfo(

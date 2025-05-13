@@ -141,7 +141,7 @@ class GlobalVideoDetectionModel @Inject constructor(
             }
     }
 
-    override fun checkRegularMp4(request: Request?): Disposable? {
+    override fun checkRegularVideoOrAudio(request: Request?, isCheckOnAudio: Boolean): Disposable? {
         if (request == null) {
             return null
         }
@@ -160,12 +160,12 @@ class GlobalVideoDetectionModel @Inject constructor(
 
         val headers = try {
             request.headers.toMap().toMutableMap()
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             mutableMapOf()
         }
 
         val disposable = io.reactivex.rxjava3.core.Observable.create<Unit> {
-            propagateCheckJob(uriString, headers)
+            propagateCheckJob(uriString, headers, isCheckOnAudio)
             it.onComplete()
         }.subscribeOn(baseSchedulers.io).doOnComplete {
             AppLogger.d("CHECK REGULAR MP4 IN BACKGROUND DONE")

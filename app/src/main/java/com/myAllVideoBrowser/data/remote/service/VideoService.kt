@@ -15,7 +15,11 @@ import okhttp3.Request
 import java.util.*
 
 interface VideoService {
-    fun getVideoInfo(url: Request, isM3u8OrMpd: Boolean = false): VideoInfoWrapper?
+    fun getVideoInfo(
+        url: Request,
+        isM3u8OrMpd: Boolean = false,
+        isAudioCheck: Boolean
+    ): VideoInfoWrapper?
 }
 
 open class VideoServiceLocal(
@@ -27,13 +31,17 @@ open class VideoServiceLocal(
         private const val COOKIE_HEADER = "Cookie"
     }
 
-    override fun getVideoInfo(url: Request, isM3u8OrMpd: Boolean): VideoInfoWrapper? {
+    override fun getVideoInfo(
+        url: Request,
+        isM3u8OrMpd: Boolean,
+        isAudioCheck: Boolean
+    ): VideoInfoWrapper? {
         AppLogger.d("Getting info url...:  $url  ${url.headers["Cookie"]}")
 
         var result: VideoInfoWrapper? = null
 
         try {
-            result = handleYoutubeDlUrl(url, isM3u8OrMpd)
+            result = handleYoutubeDlUrl(url, isM3u8OrMpd, isAudioCheck)
         } catch (e: Throwable) {
             AppLogger.d("YoutubeDL Error: $e")
         }
@@ -41,7 +49,11 @@ open class VideoServiceLocal(
         return result
     }
 
-    private fun handleYoutubeDlUrl(url: Request, isM3u8OrMpd: Boolean = false): VideoInfoWrapper {
+    private fun handleYoutubeDlUrl(
+        url: Request,
+        isM3u8OrMpd: Boolean = false,
+        isAudioCheck: Boolean
+    ): VideoInfoWrapper {
         val request = YoutubeDLRequest(url.url.toString())
         url.headers.forEach { (name, value) ->
             if (name != COOKIE_HEADER) {
@@ -68,19 +80,24 @@ open class VideoServiceLocal(
             }
 
             val listFormats = VideFormatEntityList(filtered.ifEmpty {
-                formats
+                if (isAudioCheck) {
+                    formats
+                } else {
+                    formats.filter { it.vcodec != "none" || it.acodec == "none" }
+                }
             })
 
-            return VideoInfoWrapper(VideoInfo(
-                title = info.title ?: "no title", formats = listFormats
-            ).apply {
-                ext = info.ext ?: MP4_EXT
-                thumbnail = info.thumbnail ?: ""
-                duration = info.duration.toLong()
-                originalUrl = url.url.toString()
-                downloadUrls = if (isM3u8OrMpd) emptyList() else listOf(url)
-                isRegularDownload = false
-            })
+            return VideoInfoWrapper(
+                VideoInfo(
+                    title = info.title ?: "no title", formats = listFormats
+                ).apply {
+                    ext = info.ext ?: MP4_EXT
+                    thumbnail = info.thumbnail ?: ""
+                    duration = info.duration.toLong()
+                    originalUrl = url.url.toString()
+                    downloadUrls = if (isM3u8OrMpd) emptyList() else listOf(url)
+                    isRegularDownload = false
+                })
         } catch (e: Throwable) {
             throw e
         } finally {

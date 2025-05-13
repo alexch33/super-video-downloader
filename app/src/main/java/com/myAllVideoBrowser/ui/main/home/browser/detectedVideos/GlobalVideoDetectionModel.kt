@@ -100,7 +100,11 @@ class GlobalVideoDetectionModel @Inject constructor(
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 downloadButtonState.set(DownloadButtonStateLoading())
                 val info = try {
-                    videoRepository.getVideoInfo(resourceRequest, isM3u8)
+                    videoRepository.getVideoInfo(
+                        resourceRequest,
+                        isM3u8,
+                        settingsModel.isCheckOnAudio.get()
+                    )
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     null

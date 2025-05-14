@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser.ui.main.home.browser.detectedVideos
 
-import android.net.Uri
 import android.webkit.CookieManager
 import androidx.databinding.Observable
 import androidx.databinding.Observable.OnPropertyChangedCallback
@@ -39,6 +38,7 @@ import java.net.HttpCookie
 import java.net.URL
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 open class VideoDetectionTabViewModel @Inject constructor(
     private val videoRepository: VideoRepository,
@@ -206,7 +206,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
         verifyVideoLinkJobStorage[taskUrlCleaned] =
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 val info = try {
-                    videoRepository.getVideoInfo(resourceRequest, isM3u8)
+                    videoRepository.getVideoInfo(
+                        resourceRequest,
+                        isM3u8,
+                        settingsModel.isCheckOnAudio.get()
+                    )
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     null
@@ -284,14 +288,18 @@ open class VideoDetectionTabViewModel @Inject constructor(
         return downloadButtonIcon
     }
 
-    override fun checkRegularMp4(request: Request?): Disposable? {
+    override fun checkRegularVideoOrAudio(
+        request: Request?,
+        isCheckOnAudio: Boolean,
+        isCheckOnVideo: Boolean
+    ): Disposable? {
         if (request == null) {
             return null
         }
 
         val uriString = request.url.toString()
 
-        val isAd = webTabModel?.isAd(uriString) ?: false
+        val isAd = webTabModel?.isAd(uriString) == true
         if (!uriString.startsWith("http") || isAd) {
             return null
         }
@@ -304,7 +312,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
         val headers = try {
             request.headers.toMap().toMutableMap()
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             mutableMapOf()
         }
 
@@ -315,7 +323,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             val loadings = regularLoadingList.get()
             loadings?.add(request.url.toString())
             regularLoadingList.set(loadings?.toMutableSet())
-            propagateCheckJob(uriString, headers)
+            propagateCheckJob(uriString, headers, isCheckOnAudio, isCheckOnVideo)
             it.onComplete()
         }.subscribeOn(baseSchedulers.io).doOnComplete {
             val loadings = regularLoadingList.get()
@@ -385,7 +393,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             val cookies = try {
                 CookieManager.getInstance().getCookie(url) ?: CookieManager.getInstance()
                     .getCookie(originalUrl) ?: ""
-            } catch (e: Throwable) {
+            } catch (_: Throwable) {
                 ""
             }
             val stringBuilder = StringBuilder()
@@ -402,10 +410,10 @@ open class VideoDetectionTabViewModel @Inject constructor(
             if (alternativeHeaders.isEmpty()) {
                 val builder = try {
                     Request.Builder().url(url.trim())
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
-                builder?.addHeader("Referer", "https://${Uri.parse(originalUrl).host}/")
+                builder?.addHeader("Referer", "https://${originalUrl.toUri().host}/")
 
                 builder?.addHeader("User-Agent", userAgent)
 
@@ -421,7 +429,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             } else {
                 val builder = try {
                     Request.Builder().url(url.trim())
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
                 builder?.headers(alternativeHeaders.toHeaders())
@@ -438,11 +446,16 @@ open class VideoDetectionTabViewModel @Inject constructor(
         return null
     }
 
-    fun propagateCheckJob(url: String, headersMap: Map<String, String>) {
+    fun propagateCheckJob(
+        url: String,
+        headersMap: Map<String, String>,
+        isCheckOnAudio: Boolean,
+        isCheckOnVideo: Boolean
+    ) {
         val threshold = settingsModel.videoDetectionTreshold.get()
 
         val finalUrlPair = runCatching {
-            CookieUtils.getFinalRedirectURL(URL(Uri.parse(url).toString()), headersMap)
+            CookieUtils.getFinalRedirectURL(URL(url.toUri().toString()), headersMap)
         }.getOrNull() ?: return
 
         val cookies = runCatching {
@@ -465,18 +478,33 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val contentLength = response.body.contentLength()
 
                 if (response.code == 403 || response.code == 401) {
-                    handleUnauthorizedResponse(url, threshold)
+                    handleUnauthorizedResponse(url, threshold, isCheckOnAudio, isCheckOnVideo)
                     return
                 }
 
                 val isTikTok = url.contains(".tiktok.com/")
-                if (contentType.contains("video") && (contentLength > threshold || (isTikTok && contentLength > 1024 * 1024 / 3))) {
-                    setVideoInfoWrapperFromUrl(
-                        finalUrlPair.first,
-                        webTabModel?.getTabTextInput()?.get(),
-                        finalUrlPair.second.toMap(),
-                        contentLength
-                    )
+                when {
+                    contentType.contains(
+                        "video",
+                        true
+                    ) && isCheckOnVideo && (contentLength > threshold || (isTikTok && contentLength > 1024 * 1024 / 3)) -> {
+                        setMediaInfoWrapperFromUrl(
+                            finalUrlPair.first,
+                            webTabModel?.getTabTextInput()?.get(),
+                            finalUrlPair.second.toMap(),
+                            contentLength
+                        )
+                    }
+
+                    contentType.contains("audio", true) && isCheckOnAudio -> {
+                        setMediaInfoWrapperFromUrl(
+                            finalUrlPair.first,
+                            webTabModel?.getTabTextInput()?.get(),
+                            finalUrlPair.second.toMap(),
+                            contentLength,
+                            true
+                        )
+                    }
                 }
             }
         }.onFailure { e ->
@@ -484,9 +512,15 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
-    private fun handleUnauthorizedResponse(url: String, threshold: Int) {
+    // THIS BULLSHIT NEEDED FOR SOME INDIAN WEB-SITES
+    private fun handleUnauthorizedResponse(
+        url: String,
+        threshold: Int,
+        isCheckOnAudio: Boolean,
+        isCheckOnVideo: Boolean
+    ) {
         val finalUrlPairEmpty = runCatching {
-            CookieUtils.getFinalRedirectURL(URL(Uri.parse(url).toString()), emptyMap())
+            CookieUtils.getFinalRedirectURL(URL(url.toUri().toString()), emptyMap())
         }.getOrNull() ?: return
 
         runCatching {
@@ -495,23 +529,39 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val contentType = response.body.contentType().toString()
                 val contentLength = response.body.contentLength()
 
-                if (contentType.contains("video") && contentLength > threshold.toLong()) {
-                    setVideoInfoWrapperFromUrl(
-                        finalUrlPairEmpty.first,
-                        webTabModel?.getTabTextInput()?.get(),
-                        finalUrlPairEmpty.second.toMap(),
-                        contentLength
-                    )
+                when {
+                    contentType.contains(
+                        "video",
+                        true
+                    ) && isCheckOnVideo && contentLength > threshold.toLong() -> {
+                        setMediaInfoWrapperFromUrl(
+                            finalUrlPairEmpty.first,
+                            webTabModel?.getTabTextInput()?.get(),
+                            finalUrlPairEmpty.second.toMap(),
+                            contentLength
+                        )
+                    }
+
+                    contentType.contains("audio", true) && isCheckOnAudio -> {
+                        setMediaInfoWrapperFromUrl(
+                            finalUrlPairEmpty.first,
+                            webTabModel?.getTabTextInput()?.get(),
+                            finalUrlPairEmpty.second.toMap(),
+                            contentLength,
+                            true
+                        )
+                    }
                 }
             }
         }
     }
 
-    private fun setVideoInfoWrapperFromUrl(
+    private fun setMediaInfoWrapperFromUrl(
         url: URL,
         originalUrl: String?,
         alternativeHeaders: Map<String, String> = emptyMap(),
-        contentLength: Long
+        contentLength: Long,
+        isAudio: Boolean = false
     ) {
         try {
             if (!url.toString().startsWith("http")) {
@@ -532,16 +582,16 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 VideoInfo(
                     downloadUrls = downloadUrls,
                     title = webTabModel?.currentTitle?.get() ?: "no_title",
-                    ext = "mp4",
+                    ext = if (isAudio) "mp3" else "mp4",
                     originalUrl = webTabModel?.getTabTextInput()?.get() ?: "",
                     // TODO format regular file link
                     formats = VideFormatEntityList(
                         mutableListOf(
                             VideoFormatEntity(
                                 formatId = "0",
-                                format = ContextUtils.getApplicationContext()
+                                format = if (isAudio) "audio" else ContextUtils.getApplicationContext()
                                     .getString(R.string.player_resolution),
-                                ext = "mp4",
+                                ext = if (isAudio) "mp3" else "mp4",
                                 url = downloadUrls.first().url.toString(),
                                 httpHeaders = downloadUrls.first().headers.toMap(),
                                 fileSize = contentLength

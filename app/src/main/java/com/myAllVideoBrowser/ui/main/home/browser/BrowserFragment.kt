@@ -168,6 +168,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
             val isM3u8Check = settingsModel.isCheckIfEveryRequestOnM3u8.get()
             val isMp4Check = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
+            val isCheckOnAudio = settingsModel.isCheckOnAudio.get()
 
             if (isM3u8Check || isMp4Check) {
                 val requestWithCookies = request.let { resourceRequest ->
@@ -175,7 +176,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
                         CookieUtils.webRequestToHttpWithCookies(
                             resourceRequest
                         )
-                    } catch (e: Throwable) {
+                    } catch (_: Throwable) {
                         null
                     }
                 }
@@ -195,8 +196,8 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
                             videoDetectionModel.verifyLinkStatus(requestWithCookies, "", true)
                         }
                     }
-                } else if (contentType == ContentType.MP4 && isMp4Check) {
-                    videoDetectionModel.checkRegularMp4(requestWithCookies)
+                } else if (contentType == ContentType.VIDEO && isMp4Check || contentType == ContentType.AUDIO && isCheckOnAudio) {
+                    videoDetectionModel.checkRegularVideoOrAudio(requestWithCookies, isCheckOnAudio, isMp4Check)
                 }
             }
 

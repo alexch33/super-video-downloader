@@ -88,6 +88,9 @@ class SettingsFragment : BaseFragment() {
             this.isCheckEveryRequestOnMp4.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsCheckEveryRequestOnVideo(checked)
             }
+            this.isCheckEveryRequestOnAudio.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setIsCheckOnAudio(checked)
+            }
             this.findVideosByUrl.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsFindVideoByUrl(checked)
             }

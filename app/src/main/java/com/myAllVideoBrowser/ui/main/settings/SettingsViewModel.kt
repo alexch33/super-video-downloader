@@ -38,6 +38,7 @@ class SettingsViewModel @Inject constructor(
     val isAutoDarkMode = ObservableBoolean(true)
     val isLockPortrait = ObservableBoolean(false)
     val isCheckIfEveryRequestOnM3u8 = ObservableBoolean(true)
+    val isCheckOnAudio = ObservableBoolean(true)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
     private val isCheckEveryRequestOnVideo = ObservableBoolean(true)
@@ -58,6 +59,7 @@ class SettingsViewModel @Inject constructor(
             isDarkMode.set(isDark)
             regularThreadsCount.set(sharedPrefHelper.getRegularDownloaderThreadCount())
             m3u8ThreadsCount.set(sharedPrefHelper.getM3u8DownloaderThreadCount())
+            isCheckOnAudio.set(sharedPrefHelper.getIsCheckOnAudio())
             videoDetectionTreshold.set(sharedPrefHelper.getVideoDetectionTreshold())
             isLockPortrait.set(sharedPrefHelper.getIsLockPortrait())
 
@@ -104,6 +106,13 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             isCheckIfEveryRequestOnM3u8.set(isCheck)
             sharedPrefHelper.saveIsCheckEveryOnM3u8(isCheck)
+        }
+    }
+
+    fun setIsCheckOnAudio(isCheck: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            isCheckOnAudio.set(isCheck)
+            sharedPrefHelper.saveIsCheckOnAudio(isCheck)
         }
     }
 

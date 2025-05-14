@@ -287,7 +287,12 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             val list = tmpFile.listFiles()
             val finalFile = if (!list.isNullOrEmpty()) {
                 tmpFile.walkTopDown()
-                    .filter { it.isFile && it.extension.equals("mp4", ignoreCase = true) }
+                    .filter {
+                        it.isFile && it.extension.equals(
+                            "mp4",
+                            ignoreCase = true
+                        ) || it.isFile && it.extension.equals("mp3", ignoreCase = true)
+                    }
                     .firstOrNull()
             } else {
                 null
@@ -344,12 +349,9 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         val isAudioOnly = vFormat.vcodec == "none" && vFormat.acodec != "none"
 
         if (isAudioOnly) {
-            request.addOption("-f", "bestaudio")
-
-            if (vFormat.ext?.lowercase() != "mp3") {
-                request.addOption("--extract-audio")
-                request.addOption("--audio-format", "mp3")
-            }
+            request.addOption("--audio-quality", "0")
+            request.addOption("--extract-audio")
+            request.addOption("--audio-format", "mp3")
         } else {
             val videoOnly = vFormat.vcodec != "none" && vFormat.acodec == "none"
             if (videoOnly) {

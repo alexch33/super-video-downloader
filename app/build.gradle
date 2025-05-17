@@ -151,7 +151,7 @@ dependencies {
     implementation('androidx.work:work-rxjava3:2.10.1')
 
     // optional - GCMNetworkManager support
-    implementation 'androidx.fragment:fragment-ktx:1.8.6'
+    implementation 'androidx.fragment:fragment-ktx:1.8.7'
     // optional - Test helpers
     androidTestImplementation('androidx.work:work-testing:2.10.1')
 
@@ -208,7 +208,7 @@ dependencies {
     implementation deps.okhttp.runtime
     implementation deps.okhttp.logging
     implementation deps.retrofit.runtime
-    implementation 'com.squareup.retrofit2:adapter-rxjava3:2.11.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava3:3.0.0'
     implementation deps.retrofit.gson
 
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
@@ -234,7 +234,7 @@ dependencies {
 
     implementation 'com.github.marlonlom:timeago:4.1.0'
 
-    var media3_version = '1.6.1'
+    var media3_version = '1.7.1'
 
     // For media playback using ExoPlayer
     implementation "androidx.media3:media3-exoplayer:$media3_version"

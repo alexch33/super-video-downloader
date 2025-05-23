@@ -180,12 +180,20 @@
                 app:layout_constraintTop_toBottomOf="@+id/is_check_every_request_on_mp4" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/is_check_every_request_on_audio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.isCheckOnAudio}"
+                android:text="@string/check_every_request_on_audio"
+                app:layout_constraintTop_toBottomOf="@+id/is_check_every_request_on_m3u8" />
+
+            <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/find_videos_by_url"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getIsFindVideoByUrl()}"
                 android:text="@string/find_videos_by_url"
-                app:layout_constraintTop_toBottomOf="@+id/is_check_every_request_on_m3u8" />
+                app:layout_constraintTop_toBottomOf="@+id/is_check_every_request_on_audio" />
 
             <LinearLayout
                 android:id="@+id/regular_container"

@@ -16,7 +16,11 @@ interface IVideoDetector {
 
     fun getDownloadBtnIcon(): ObservableInt
 
-    fun checkRegularMp4(request: Request?): Disposable?
+    fun checkRegularVideoOrAudio(
+        request: Request?,
+        isCheckOnAudio: Boolean,
+        isCheckOnVideo: Boolean
+    ): Disposable?
 
     fun cancelAllCheckJobs()
 

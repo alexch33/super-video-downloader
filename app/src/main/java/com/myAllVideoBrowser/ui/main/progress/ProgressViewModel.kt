@@ -53,7 +53,11 @@ class ProgressViewModel @Inject constructor(
                 )
             }
         } else {
-            // TODO For Regular
+            inf?.let {
+                CustomRegularDownloader.stopAndSaveDownload(
+                    ContextUtils.getApplicationContext(), it
+                )
+            }
         }
     }
 

@@ -30,7 +30,12 @@ class VideoUtils {
                         when {
                             contentTypeStr?.contains("mpegurl") == true -> ContentType.M3U8
                             contentTypeStr?.contains("dash") == true -> ContentType.MPD
-                            contentTypeStr?.contains("mp4") == true -> ContentType.MP4
+                            contentTypeStr?.contains("video") == true -> ContentType.VIDEO
+                            contentTypeStr?.contains(
+                                "audio",
+                                ignoreCase = true
+                            ) == true -> ContentType.AUDIO
+
                             contentTypeStr?.contains("application/octet-stream") == true -> {
                                 response.body.charStream().use { reader ->
                                     val content = reader.read(CharArray(7), 0, 7)

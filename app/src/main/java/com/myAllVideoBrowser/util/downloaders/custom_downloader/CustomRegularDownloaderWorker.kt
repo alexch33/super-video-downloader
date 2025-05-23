@@ -10,6 +10,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
+import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker.Companion.STOP_SAVE_ACTION
 import java.io.File
 import java.net.URL
 import java.util.Date
@@ -56,7 +57,31 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
                 startDownload(task, headers)
             }
+
+            STOP_SAVE_ACTION -> {
+                isCanceled = false
+
+                stopAndSave(task)
+            }
         }
+    }
+
+    private fun stopAndSave(task: VideoTaskItem) {
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
+
+        if (taskId == null) {
+            finishWorkWithFailureTaskId(task)
+
+            return
+        }
+
+        val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(task.fileName).name)
+        CustomFileDownloader.stop(tmpFile)
+
+        finishWork(task.also {
+            it.mId = taskId
+            it.taskState = VideoTaskState.SUCCESS
+        })
     }
 
     override fun finishWork(item: VideoTaskItem?) {
@@ -351,6 +376,9 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         }
 
         dbTask?.downloadStatus = downloadStatus
+
+        dbTask?.isLive =
+            dbTask.progressTotal == dbTask.progressDownloaded && downloadStatus == VideoTaskState.DOWNLOADING
 
         if (dbTask != null) {
             if (getDone() && downloadStatus == VideoTaskState.DOWNLOADING) {

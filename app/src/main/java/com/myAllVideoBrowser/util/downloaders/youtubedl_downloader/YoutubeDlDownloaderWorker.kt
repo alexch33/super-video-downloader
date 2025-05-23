@@ -157,7 +157,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         configureYoutubedlRequest(request, vFormat, taskTitle, isContinue)
 
         showProgress(taskId, taskTitle, 0, "Starting...", tmpFile)
-        saveProgress(taskId,
+        saveProgress(
+            taskId,
             line = LineInfo(taskId, 0.0, 0.0, sourceLine = "Starting..."),
             task.also { it.taskState = VideoTaskState.DOWNLOADING }).blockingFirst(Unit)
 
@@ -286,7 +287,12 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             val list = tmpFile.listFiles()
             val finalFile = if (!list.isNullOrEmpty()) {
                 tmpFile.walkTopDown()
-                    .filter { it.isFile && it.extension.equals("mp4", ignoreCase = true) }
+                    .filter {
+                        it.isFile && it.extension.equals(
+                            "mp4",
+                            ignoreCase = true
+                        ) || it.isFile && it.extension.equals("mp3", ignoreCase = true)
+                    }
                     .firstOrNull()
             } else {
                 null
@@ -340,8 +346,25 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         val threadsCount = sharedPrefHelper.getM3u8DownloaderThreadCount() + 1
         request.addOption("-N", threadsCount)
 
-        request.addOption("--recode-video", "mp4")
-        request.addOption("--merge-output-format", "mp4")
+        val isAudioOnly = vFormat.vcodec == "none" && vFormat.acodec != "none"
+
+        if (isAudioOnly) {
+            request.addOption("--audio-quality", "0")
+            request.addOption("--extract-audio")
+            request.addOption("--audio-format", "mp3")
+        } else {
+            val videoOnly = vFormat.vcodec != "none" && vFormat.acodec == "none"
+            if (videoOnly) {
+                request.addOption("-f", "${vFormat.formatId}+bestaudio")
+            } else {
+                request.addOption("-f", "${vFormat.formatId}")
+            }
+
+            request.addOption("--recode-video", "mp4")
+            request.addOption("--merge-output-format", "mp4")
+        }
+
+
         // any another downloader has issues
         request.addOption("--hls-prefer-native")
         // without this download will start again from beginning after error
@@ -366,13 +389,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         }
 
         request.addOption("-o", "${tmpFile.absolutePath}/${fileName}.%(ext)s")
-
-        val videoOnly = vFormat.vcodec != "none" && vFormat.acodec == "none"
-        if (videoOnly) {
-            request.addOption("-f", "${vFormat.formatId}+bestaudio")
-        } else {
-            request.addOption("-f", "${vFormat.formatId}")
-        }
 
         vFormat.httpHeaders?.forEach {
             if (it.key != "Cookie") {
@@ -404,17 +420,18 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                 isLiveCounter = 3
 
                                 val downloaded = lastTmpDirSize
-                                saveProgress(taskId, LineInfo(
-                                    "LIVE",
-                                    downloaded.toDouble(),
-                                    downloaded.toDouble(),
-                                    sourceLine = "Downloading live stream...downloaded: $downloadedTmpFolderSize, press stop and save, to stop downloading and save downloaded at any time...!"
-                                ), task.also { item ->
-                                    item.taskState = VideoTaskState.DOWNLOADING
-                                    item.lineInfo = downloadedTmpFolderSize
-                                    item.downloadSize = downloaded
-                                    item.totalSize = downloaded
-                                }).blockingFirst(Unit)
+                                saveProgress(
+                                    taskId, LineInfo(
+                                        "LIVE",
+                                        downloaded.toDouble(),
+                                        downloaded.toDouble(),
+                                        sourceLine = "Downloading live stream...downloaded: $downloadedTmpFolderSize, press stop and save, to stop downloading and save downloaded at any time...!"
+                                    ), task.also { item ->
+                                        item.taskState = VideoTaskState.DOWNLOADING
+                                        item.lineInfo = downloadedTmpFolderSize
+                                        item.downloadSize = downloaded
+                                        item.totalSize = downloaded
+                                    }).blockingFirst(Unit)
                                 showProgress(
                                     taskId,
                                     task.title,

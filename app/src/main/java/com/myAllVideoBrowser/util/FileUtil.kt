@@ -186,7 +186,8 @@ class FileUtil @Inject constructor() {
 
     fun renameMedia(context: Context, from: Uri, newName: String): Pair<String, Uri>? {
         try {
-            val cleanedFileName = FileNameCleaner.cleanFileName(newName) + ".mp4"
+            val originExtension = from.toFile().extension
+            val cleanedFileName = FileNameCleaner.cleanFileName(newName) + ".$originExtension"
             val isNewFileNotExists = isFileWithNameNotExists(context, from, newName)
 
             if (cleanedFileName.isEmpty()) {
@@ -407,7 +408,9 @@ class FileUtil @Inject constructor() {
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toURI()
         )
         val filesList =
-            downloadsDir.listFiles()?.filter { it.isFile && it.extension == "mp4" }?.toTypedArray()
+            downloadsDir.listFiles()
+                ?.filter { it.isFile && it.extension == "mp4" || it.isFile && it.extension == "mp3" }
+                ?.toTypedArray()
                 ?: emptyArray<File>()
         val filesMap = mutableMapOf<String, Pair<Long, Uri>>()
 
@@ -489,6 +492,8 @@ class FileUtil @Inject constructor() {
         AppLogger.d(
             "moveFileToDownloadsFoldermoveFileToDownloadsFolder $sourceFile $fileName"
         )
+        val isAudio = sourceFile.extension == "mp3"
+
         // Check if there is enough free space in the Downloads folder
         val downloadsDirectory = folderDir
         val isFolderExternal = isExternalUri(folderDir.toUri())
@@ -509,8 +514,9 @@ class FileUtil @Inject constructor() {
 
         val cleaned = FileNameCleaner.cleanFileName(name)
         val values = ContentValues().apply {
+            val mimeType = if (isAudio) "audio/mpeg" else "video/mp4"
             put(MediaStore.MediaColumns.DISPLAY_NAME, cleaned)
-            put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
+            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
             put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
         }
 
@@ -522,7 +528,10 @@ class FileUtil @Inject constructor() {
         }
         var fileUri = contentResolver.insert(collectionUri, values)
         if (fileUri == null) {
-            values.put(MediaStore.MediaColumns.DISPLAY_NAME, cleaned.replace("mp4", "") + "_e")
+            values.put(
+                MediaStore.MediaColumns.DISPLAY_NAME,
+                cleaned.replace("mp4", "").replace("mp3", "") + "_e"
+            )
             fileUri = contentResolver.insert(collectionUri, values)
         }
 
@@ -644,6 +653,7 @@ object FileNameCleaner {
             }
         }
         var finalName = cleanName.toString()
+            .replace(".mp3", "")
             .replace(".mp4", "")
             .replace("/", "").replace("\\", "")
             .replace(":", "")

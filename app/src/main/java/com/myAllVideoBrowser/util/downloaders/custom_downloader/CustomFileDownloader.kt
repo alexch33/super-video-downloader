@@ -98,7 +98,8 @@ class CustomFileDownloader(
 
         if (!isUrlSupportBytesRangeHeader) {
             val result = executorService.submit {
-                this.onFailure(Exception("Connection Error or download type not supported, try again"))
+                AppLogger.d("Range header not supported, falling back to single-threaded download.")
+                downloadRegularStream(fileChannel)
             }
             try {
                 result.get()
@@ -151,6 +152,56 @@ class CustomFileDownloader(
         } else {
             AppLogger.d("CHUNKS ERROR")
             this.onFailure(Error("Not All Chunks downloaded, retry"))
+        }
+    }
+
+    private fun downloadRegularStream(fileChannel: FileChannel) {
+        val req = getOkRequest()
+        val res = client.newCall(req).execute()
+
+        if (!res.isSuccessful) {
+            this.onFailure(Exception("Failed to download file: ${res.code}"))
+            return
+        }
+
+        val contentLength = res.body.contentLength()
+        if (contentLength == -1L) {
+            AppLogger.w("Content length is unknown for single-threaded download.")
+            // Continue download even if content length is unknown, progress updates might be limited
+        } else {
+            totalBytesAll.set(contentLength)
+        }
+
+        val inputStream = res.body.byteStream()
+        val buffer = ByteArray(Helper.DOWNLOAD_BUFFER_SIZE)
+        var bytesCopied = 0L
+        var bytesRead = 0
+
+        copiedBytesChunks[0] = 0L
+        totalBytesChunks[0] = contentLength
+
+        try {
+            inputStream.use { urlStream ->
+                while (!isPaused.get() && !isCanceled.get() && (urlStream.read(buffer).also { bytesRead = it }) >= 0) {
+                    fileChannel.write(ByteBuffer.wrap(buffer, 0, bytesRead), bytesCopied)
+                    bytesCopied += bytesRead
+                    copiedBytesChunks[0] = bytesCopied
+                    onProgressUpdate(bytesCopied, totalBytesAll.get())
+                }
+            }
+
+            if (Helper.isStopped(file)) {
+                this.onFailure(Error(STOPPED))
+            } else if (Helper.isCanceled(file)) {
+                this.onFailure(Error(CANCELED))
+            } else {
+                this.onSuccess()
+            }
+        } catch (e: Throwable) {
+            this.onFailure(e)
+        } finally {
+            res.close()
+            fileChannel.close()
         }
     }
 

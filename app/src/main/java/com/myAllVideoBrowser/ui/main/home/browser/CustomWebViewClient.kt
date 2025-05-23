@@ -30,7 +30,8 @@ import kotlinx.coroutines.yield
 enum class ContentType {
     M3U8,
     MPD,
-    MP4,
+    VIDEO,
+    AUDIO,
     OTHER
 }
 
@@ -61,7 +62,7 @@ class CustomWebViewClient(
                     FaviconUtils.getEncodedFaviconFromUrl(
                         okHttpProxyClient.getProxyOkHttpClient(), url
                     )
-                } catch (e: Throwable) {
+                } catch (_: Throwable) {
                     null
                 }
                 saveUrlToHistory(url, icon, viewTitle ?: title)
@@ -103,14 +104,15 @@ class CustomWebViewClient(
 
         val isCheckM3u8 = settingsModel.isCheckIfEveryRequestOnM3u8.get()
         val isCheckOnMp4 = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
+        val isCheckOnAudio = settingsModel.isCheckOnAudio.get()
 
-        if (isCheckOnMp4 || isCheckM3u8) {
+        if (isCheckOnMp4 || isCheckM3u8 || isCheckOnAudio) {
             val requestWithCookies = request?.let { resourceRequest ->
                 try {
                     CookieUtils.webRequestToHttpWithCookies(
                         resourceRequest
                     )
-                } catch (e: Throwable) {
+                } catch (_: Throwable) {
                     null
                 }
             }
@@ -131,8 +133,8 @@ class CustomWebViewClient(
                 }
 
                 else -> {
-                    if (isCheckOnMp4) {
-                        val disposable = videoDetectionModel.checkRegularMp4(requestWithCookies)
+                    if (isCheckOnMp4 || isCheckOnAudio) {
+                        val disposable = videoDetectionModel.checkRegularVideoOrAudio(requestWithCookies, isCheckOnAudio, isCheckOnMp4)
 
                         val currentUrl = tabViewModel.getTabTextInput().get() ?: ""
                         if (currentUrl != lastRegularCheckUrl) {

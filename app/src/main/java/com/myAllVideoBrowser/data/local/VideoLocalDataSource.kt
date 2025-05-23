@@ -12,7 +12,11 @@ class VideoLocalDataSource @Inject constructor(
     private val videoDao: VideoDao
 ) : VideoRepository {
 
-    override fun getVideoInfo(url: Request, isM3u8OrMpd: Boolean): VideoInfo {
+    override fun getVideoInfo(
+        url: Request,
+        isM3u8OrMpd: Boolean,
+        isAudioCheck: Boolean
+    ): VideoInfo? {
         return videoDao.getVideoById(url.url.toString()).toSingle().blockingGet()
     }
 

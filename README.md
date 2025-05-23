@@ -1,4 +1,4 @@
-# Android Video Downloader app with browser, player and custom downloaders
+# Android Video and Audio Downloader app with browser, player and custom downloaders
 
 [![F-Droid](https://img.shields.io/f-droid/v/com.myAllVideoBrowser?color=b4eb12&label=F-Droid&logo=fdroid&logoColor=1f78d2)](https://f-droid.org/packages/com.myAllVideoBrowser)
 
@@ -10,13 +10,14 @@
   than [other 1000 sites](http://rg3.github.io/youtube-dl/supportedsites.html), also inrecept all
   streams data in browser like m3u8 or mpd links and download them, also intrecepts mp4 streaming
   video data
-- Browse videos with the built-in browser
-- Download videos with the built-in download manager
-- Play videos offline with the built-in player
-- Save your favorite videos online and watch them later without downloading them
+- Browse videos and audio with the built-in browser
+- Download videos and audio with the built-in download manager
+- Play videos and audio offline with the built-in player
+- Save your favorite videos and audio online and watch them later without downloading them
 - Save history as a real browser
 - Bookmarks support
 - Live streams download support
+- Live MP3 streams support
 - Cokies support
 - HTTP proxy support
 

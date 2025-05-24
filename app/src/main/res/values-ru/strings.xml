@@ -6,7 +6,7 @@
     <string name="dialog_video_title">Найдено видео:</string>
     <string name="dialog_download_video">Скачать видео</string>
     <string name="dialog_download_cancel">Отмена</string>
-    <string name="video_empty_message">Вы еще не загрузили ни одного видео.</string>
+    <string name="video_empty_message">Вы ещё не загрузили ни одного видео.</string>
     <string name="video_menu_rename">Переименовать</string>
     <string name="video_menu_share">Поделиться</string>
     <string name="video_rename_title">Переименовать видео</string>
@@ -82,4 +82,22 @@
     <string name="browser_search_hint">Поиск в DuckDuckGo или введите URL-адрес</string>
     <string name="dialog_preview_video">Предпросмотр видеоролика</string>
     <string name="instruction">Привет; -)\nДля обнаружения видео перейдите на видео в браузере, нажмите кнопку воспроизвести и ждать до обнаружения видео (может занять 5-50 секунд)\n1. Вы можете изменить порог обнаружения объявлений в настройках\n2. Если видео не работает для некоторых веб-сайтов в мобильном режиме, попробуйте использовать настольную версию веб-сайта, если видео не работает в мобильном режиме\nЕсли не попробовать перезагрузить видео на видео странице или попробовать перезагрузить страницу и повторить.\nЕсли не напишешь мне.\n\n\nДля загрузки видео:\n\n1. Нажмите кнопку загрузить, на появившемся экране выберите разрешение, если оно доступно\n\n2. Нажмите кнопку загрузки.\n\n\nПосле загрузки видео доступно в приложении. \n</string>
+    <string name="check_if_in_list">Проверьте только URL-адреса веб-сайтов, если они находятся в поддерживаемом списке</string>
+    <string name="app_icon">Значок приложения</string>
+    <string name="thread_count_for_regular_files">Количество потоков для обычных файлов: %1$s</string>
+    <string name="thread_count_for_hls_and_mpd">Количество потоков для HLS и MPD: %1$s</string>
+    <string name="check_every_request_on_audio">Проверь каждый запрос на аудио</string>
+    <string name="get_started_guide">Привет ;–) Для обнаружения видео перейдите к видео в обозревателе, нажмите «Воспроизвести» и подождите, пока оно не обнаружится (может занять 5–50 секунд)\n1. Вы можете изменить порог обнаружения рекламы в настройках\n2. Некоторые видео скачиваются поврежденными в многопоточном режиме, используйте один поток для скачивания в таких ситуациях\n\nДля скачивания видео:\n\n1. Нажмите кнопку, в диалоговом окне выберите разрешение, если доступно, и нажмите цветную кнопку\n\n2, 3. Нажмите «Воспроизвести» в проигрывателе на странице с видео, после этого видео должно быть обнаружено.\n\nЕсли нет, попробуйте нажать «Перезагрузить видео» на странице видео или попробуйте перезагрузить страницу и повторить.\nЕсли всё равно не получилось, напишите мне.\n\n\nПосле скачивания видео станет доступно в приложении. \n</string>
+    <string name="app_name">SuperX</string>
+    <string name="more_tabs_in_next_updates">В следующих обновлениях будут разрешены дополнительные вкладки</string>
+    <string name="player_resolution">Разрешение видео как в проигрывателе</string>
+    <string name="show_video_found_alert">Показать диалоговое окно скачивания видео</string>
+    <string name="dialog_preview_video_force">Предварительный просмотр Video Force</string>
+    <string name="check_every_request_on_video_mp4">Проверять каждый запрос на видео MP4</string>
+    <string name="find_videos_by_url">Проверить URL-адреса веб-сайтов</string>
+    <string name="lock_screen_orientation_portrait">Закрепить портретного ориентацию экрана</string>
+    <string name="regular_threads_count">Обычное количество потоков:</string>
+    <string name="m3u8_threads_count">Количество потоков M3U8:</string>
+    <string name="sd_app_folder">Папка приложения SD</string>
+    <string name="http_proxy">HTTP Прокси</string>
 </resources>

@@ -133,8 +133,12 @@ class CustomWebViewClient(
                 }
 
                 else -> {
-                    if (isCheckOnMp4 || isCheckOnAudio) {
-                        val disposable = videoDetectionModel.checkRegularVideoOrAudio(requestWithCookies, isCheckOnAudio, isCheckOnMp4)
+                    if ((isCheckOnMp4 || isCheckOnAudio) && contentType != ContentType.OTHER) {
+                        val disposable = videoDetectionModel.checkRegularVideoOrAudio(
+                            requestWithCookies,
+                            isCheckOnAudio,
+                            isCheckOnMp4
+                        )
 
                         val currentUrl = tabViewModel.getTabTextInput().get() ?: ""
                         if (currentUrl != lastRegularCheckUrl) {
@@ -208,7 +212,8 @@ class CustomWebViewClient(
                 view == webView && detail?.didCrash() == true
             } else {
                 view == webView
-            }) {
+            }
+        ) {
             webView?.destroy()
             return true
         }

@@ -60,8 +60,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 40
-        versionName "0.6.0"
+        versionCode 45
+        versionName "0.6.1"
         testInstrumentationRunner "util.TestRunner"
 
         if (splitApks) {
@@ -81,8 +81,7 @@ android {
         debug {
             minifyEnabled false
             shrinkResources false
-            enableUnitTestCoverage false
-            enableAndroidTestCoverage false
+            testCoverageEnabled true
         }
         release {
             signingConfig signingConfigs.release
@@ -145,18 +144,18 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     // Kotlin + coroutines
-    implementation('androidx.work:work-runtime-ktx:2.10.1')
+    implementation('androidx.work:work-runtime-ktx:2.10.0')
 
     // optional - RxJava2 support
-    implementation('androidx.work:work-rxjava3:2.10.1')
+    implementation('androidx.work:work-rxjava3:2.10.0')
 
     // optional - GCMNetworkManager support
-    implementation 'androidx.fragment:fragment-ktx:1.8.7'
+    implementation 'androidx.fragment:fragment-ktx:1.8.6'
     // optional - Test helpers
-    androidTestImplementation('androidx.work:work-testing:2.10.1')
+    androidTestImplementation('androidx.work:work-testing:2.10.0')
 
     // optional - Multiprocess support
-    implementation 'androidx.work:work-multiprocess:2.10.1'
+    implementation 'androidx.work:work-multiprocess:2.10.0'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
@@ -177,25 +176,30 @@ dependencies {
 
     // Life cycle
     implementation deps.lifecycle.extensions
-    implementation 'androidx.lifecycle:lifecycle-common-java8:2.9.0'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.9.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.0'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7'
     testImplementation 'androidx.arch.core:core-testing:2.2.0'
     androidTestImplementation 'androidx.arch.core:core-testing:2.2.0'
 
     // Room
 
-    implementation('androidx.room:room-runtime:2.7.1')
-    annotationProcessor('androidx.room:room-compiler:2.7.1')
+    implementation('androidx.room:room-runtime:2.6.1')
+    annotationProcessor('androidx.room:room-compiler:2.6.1')
 
-    ksp 'androidx.room:room-compiler:2.7.1'
+    ksp "androidx.room:room-compiler:2.6.1"
 
     // optional - Kotlin Extensions and Coroutines support for Room
-    implementation('androidx.room:room-ktx:2.7.1')
+    implementation('androidx.room:room-ktx:2.6.1')
 
     // optional - RxJava3 support for Room
-    implementation('androidx.room:room-rxjava3:2.7.1')
+    implementation('androidx.room:room-rxjava3:2.6.1')
 
+    // optional - Guava support for Room, including Optional and ListenableFuture
+    implementation('androidx.room:room-guava:2.6.1')
+
+    // optional - Test helpers
+    testImplementation('androidx.room:room-testing:2.6.1')
 
     // Dagger2
     implementation deps.dagger.runtime
@@ -208,7 +212,7 @@ dependencies {
     implementation deps.okhttp.runtime
     implementation deps.okhttp.logging
     implementation deps.retrofit.runtime
-    implementation 'com.squareup.retrofit2:adapter-rxjava3:3.0.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava3:2.11.0'
     implementation deps.retrofit.gson
 
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
@@ -226,15 +230,15 @@ dependencies {
 
     implementation('androidx.webkit:webkit:1.12.1')
 
-    implementation 'androidx.core:core-ktx:1.16.0'
+    implementation 'androidx.core:core-ktx:1.15.0'
 
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1'
 
-    implementation 'org.jsoup:jsoup:1.20.1'
+    implementation 'org.jsoup:jsoup:1.19.1'
 
     implementation 'com.github.marlonlom:timeago:4.1.0'
 
-    var media3_version = '1.7.1'
+    var media3_version = '1.6.0'
 
     // For media playback using ExoPlayer
     implementation "androidx.media3:media3-exoplayer:$media3_version"

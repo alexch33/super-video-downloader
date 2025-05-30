@@ -12,7 +12,8 @@ class VideoUtils {
             headers: Headers?,
             okHttpProxyClient: OkHttpProxyClient
         ): ContentType {
-            if (url.contains(".js") || url.contains(".css") || url.startsWith("blob")) {
+            val regex = Regex("\\.(js|css|m4s|ts)$|^blob:")
+            if (regex.containsMatchIn(url)) {
                 return ContentType.OTHER
             }
 

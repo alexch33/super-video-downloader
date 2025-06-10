@@ -36,6 +36,7 @@ Support for project are welcome:) BTC wallet: [bc1q97xgwurjf2p5at9kzm96fkxymf3rh
 ## Translations
 
 Please help with translations using the [Weblate](https://toolate.othing.xyz/projects/super-video-downloader/).
+
 <a href="https://toolate.othing.xyz/projects/super-video-downloader/">
 <img alt="Translation status" src="https://toolate.othing.xyz/widget/super-video-downloader/multi-auto.svg"/>
 </a>

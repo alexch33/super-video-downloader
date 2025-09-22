@@ -71,9 +71,9 @@
     <string name="thread_count_for_regular_files">常规文件下载线程数：%1$s</string>
     <string name="m3u8_threads_count">M3U8线程数：</string>
     <string name="downloads_location">下载位置</string>
-    <string name="downloads_folder">下载目录</string>
-    <string name="hidden_folder">隐藏目录</string>
-    <string name="sd_app_folder">SD卡应用目录</string>
+    <string name="downloads_folder">公共下载目录</string>
+    <string name="hidden_folder">应用私有目录</string>
+    <string name="sd_app_folder">应用专属目录</string>
     <string name="port_hint">端口</string>
     <string name="host_hint">主机</string>
     <string name="login_hint">用户</string>

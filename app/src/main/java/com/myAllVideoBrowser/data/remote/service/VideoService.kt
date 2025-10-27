@@ -54,7 +54,9 @@ open class VideoServiceLocal(
         isM3u8OrMpd: Boolean = false,
         isAudioCheck: Boolean
     ): VideoInfoWrapper {
-        val request = YoutubeDLRequest(url.url.toString())
+        val request = YoutubeDLRequest(
+            url.url.toString().replace(Regex("&feature=youtu.be|#bottom-sheet"), "").trim()
+        )
         url.headers.forEach { (name, value) ->
             if (name != COOKIE_HEADER) {
                 request.addOption("--add-header", "$name:${value}")

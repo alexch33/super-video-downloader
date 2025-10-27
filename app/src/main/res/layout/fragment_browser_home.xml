@@ -76,6 +76,7 @@
 
             </com.google.android.material.appbar.AppBarLayout>
 
+
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/home_et_search"
                 android:layout_width="match_parent"
@@ -98,8 +99,22 @@
                 app:items="@{viewModel.listSuggestions}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+                app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
+                app:layout_constraintVertical_bias="0.476" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/go_button"
+                android:layout_width="150dp"
+                android:layout_height="50dp"
+                android:layout_margin="@dimen/padding_normal"
+                android:text="@string/go"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/home_et_search"
+                app:layout_constraintVertical_bias="0.0" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

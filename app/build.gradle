@@ -38,6 +38,7 @@ android {
                          'META-INF/LICENSE.txt',
                          'META-INF/license.txt',
                          'META-INF/NOTICE',
+                         'META-INF/versions/9/OSGI-INF/MANIFEST.MF',
                          'META-INF/NOTICE.txt',
                          'META-INF/notice.txt',
                          'META-INF/ASL2.0',
@@ -144,18 +145,18 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     // Kotlin + coroutines
-    implementation('androidx.work:work-runtime-ktx:2.10.4')
+    implementation('androidx.work:work-runtime-ktx:2.11.0')
 
     // optional - RxJava2 support
-    implementation('androidx.work:work-rxjava3:2.10.4')
+    implementation('androidx.work:work-rxjava3:2.11.0')
 
     // optional - GCMNetworkManager support
     implementation 'androidx.fragment:fragment-ktx:1.8.9'
     // optional - Test helpers
-    androidTestImplementation('androidx.work:work-testing:2.10.4')
+    androidTestImplementation('androidx.work:work-testing:2.11.0')
 
     // optional - Multiprocess support
-    implementation 'androidx.work:work-multiprocess:2.10.4'
+    implementation 'androidx.work:work-multiprocess:2.11.0'
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
@@ -176,30 +177,30 @@ dependencies {
 
     // Life cycle
     implementation deps.lifecycle.extensions
-    implementation 'androidx.lifecycle:lifecycle-common-java8:2.9.3'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.9.3'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.3'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.9.4'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.9.4'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4'
     testImplementation 'androidx.arch.core:core-testing:2.2.0'
     androidTestImplementation 'androidx.arch.core:core-testing:2.2.0'
 
     // Room
 
-    implementation('androidx.room:room-runtime:2.6.1')
-    annotationProcessor('androidx.room:room-compiler:2.6.1')
+    implementation('androidx.room:room-runtime:2.8.3')
+    annotationProcessor('androidx.room:room-compiler:2.8.3')
 
-    ksp "androidx.room:room-compiler:2.6.1"
+    ksp 'androidx.room:room-compiler:2.8.3'
 
     // optional - Kotlin Extensions and Coroutines support for Room
-    implementation('androidx.room:room-ktx:2.6.1')
+    implementation('androidx.room:room-ktx:2.8.3')
 
     // optional - RxJava3 support for Room
-    implementation('androidx.room:room-rxjava3:2.6.1')
+    implementation('androidx.room:room-rxjava3:2.8.3')
 
     // optional - Guava support for Room, including Optional and ListenableFuture
-    implementation('androidx.room:room-guava:2.6.1')
+    implementation('androidx.room:room-guava:2.8.3')
 
     // optional - Test helpers
-    testImplementation('androidx.room:room-testing:2.6.1')
+    testImplementation('androidx.room:room-testing:2.8.3')
 
     // Dagger2
     implementation deps.dagger.runtime
@@ -219,16 +220,16 @@ dependencies {
     // Because RxAndroid releases are few and far between, it is recommended you also
     // explicitly depend on RxJava's latest version for bug fixes and new features.
     // (see https://github.com/ReactiveX/RxJava/releases for latest 3.x.x version)
-    implementation 'io.reactivex.rxjava3:rxjava:3.1.11'
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.12'
 
-    implementation('io.github.junkfood02.youtubedl-android:library:0.17.4')
-    implementation('io.github.junkfood02.youtubedl-android:ffmpeg:0.17.4')
-
-    implementation 'com.github.bumptech.glide:glide:5.0.5'
+    implementation('io.github.junkfood02.youtubedl-android:library:0.18.0')
+    implementation('io.github.junkfood02.youtubedl-android:ffmpeg:0.18.0')
 
     implementation 'com.github.bumptech.glide:glide:5.0.5'
 
-    implementation('androidx.webkit:webkit:1.14.0')
+    implementation 'com.github.bumptech.glide:glide:5.0.5'
+
+    implementation('androidx.webkit:webkit:1.12.1')
 
     implementation 'androidx.core:core-ktx:1.17.0'
 

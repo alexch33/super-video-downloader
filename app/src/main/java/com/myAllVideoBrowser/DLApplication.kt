@@ -97,7 +97,7 @@ open class DLApplication : DaggerApplication() {
     private fun updateYoutubeDL() {
         try {
             val status = YoutubeDL.getInstance()
-                .updateYoutubeDL(applicationContext, YoutubeDL.UpdateChannel.MASTER)
+                .updateYoutubeDL(applicationContext, YoutubeDL.UpdateChannel._STABLE)
             AppLogger.d("UPDATE_STATUS MASTER: $status")
         } catch (e: Throwable) {
             e.printStackTrace()

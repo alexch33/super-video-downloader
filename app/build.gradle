@@ -64,8 +64,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 47
-        versionName "0.6.3"
+        versionCode 48
+        versionName "0.6.4"
         testInstrumentationRunner "util.TestRunner"
 
         if (splitApks) {

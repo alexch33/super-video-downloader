@@ -33,6 +33,7 @@ android {
     packagingOptions {
         resources {
             excludes += ['mozilla/public-suffix-list.txt',
+                         'META-INF/*.kotlin_module',
                          'META-INF/DEPENDENCIES',
                          'META-INF/LICENSE',
                          'META-INF/LICENSE.txt',

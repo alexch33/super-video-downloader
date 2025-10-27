@@ -216,7 +216,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             threadCount,
             headers,
             okHttpClient,
-            createDownloadListener(taskItem, taskId)
+            createDownloadListener(taskItem, taskId),
+            false
         ).download()
     }
 

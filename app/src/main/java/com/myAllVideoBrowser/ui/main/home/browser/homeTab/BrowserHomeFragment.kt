@@ -3,9 +3,11 @@ package com.myAllVideoBrowser.ui.main.home.browser.homeTab
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.MotionEvent
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import androidx.lifecycle.ViewModelProvider
@@ -99,6 +101,13 @@ class BrowserHomeFragment : BaseWebTabFragment() {
                     }
                     false
                 } else false
+            }
+            this.goButton.setOnClickListener {
+                viewModel?.viewModelScope?.launch {
+                    val inputText = (this@apply.homeEtSearch as EditText).text.toString()
+                    this@apply.homeEtSearch.text.clear()
+                    openNewTab(inputText)
+                }
             }
         }
 

@@ -280,7 +280,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 newInfo.formats.formats.any { newFormat ->
                     existingFormat.url == newFormat.url
                 }
-            } || existing.originalUrl == newInfo.originalUrl
+            }
         }
     }
 

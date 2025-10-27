@@ -1,10 +1,9 @@
 package com.myAllVideoBrowser.ui.main.player
 
-//import com.allVideoDownloaderXmaster.OpenForTesting
-
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.res.Configuration
 import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.Bundle
@@ -29,6 +28,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView.SHOW_BUFFERING_ALWAYS
 import com.myAllVideoBrowser.databinding.FragmentPlayerBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
@@ -42,7 +42,7 @@ import java.net.URI
 import javax.inject.Inject
 
 
-@UnstableApi //@OpenForTesting
+@UnstableApi
 class VideoPlayerFragment : BaseFragment() {
 
     companion object {
@@ -69,6 +69,7 @@ class VideoPlayerFragment : BaseFragment() {
     private lateinit var videoPlayerViewModel: VideoPlayerViewModel
 
     private lateinit var dataBinding: FragmentPlayerBinding
+    private var isStretched = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -126,11 +127,7 @@ class VideoPlayerFragment : BaseFragment() {
             currentBinding.videoView.player = player
             currentBinding.videoView.setShowBuffering(SHOW_BUFFERING_ALWAYS)
             currentBinding.videoView.setFullscreenButtonClickListener {
-                if (it) {
-                    this.toolbar.visibility = View.GONE
-                } else {
-                    this.toolbar.visibility = View.VISIBLE
-                }
+                toggleStretchMode()
             }
 
             player.addListener(object : Player.Listener {
@@ -270,5 +267,25 @@ class VideoPlayerFragment : BaseFragment() {
     private fun handleClose() {
         videoPlayerViewModel.stop()
         activity?.finish()
+    }
+
+    private fun toggleStretchMode() {
+        isStretched = !isStretched
+
+        if (isStretched) {
+            val orientation = resources.configuration.orientation
+            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+                dataBinding.videoView.resizeMode =
+                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            } else {
+                dataBinding.videoView.resizeMode =
+                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            }
+            dataBinding.toolbar.visibility = View.GONE
+        } else {
+            dataBinding.videoView.resizeMode =
+                AspectRatioFrameLayout.RESIZE_MODE_FIT
+            dataBinding.toolbar.visibility = View.VISIBLE
+        }
     }
 }

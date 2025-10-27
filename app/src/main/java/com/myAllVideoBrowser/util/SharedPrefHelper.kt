@@ -308,7 +308,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsCheckOnAudio(): Boolean {
-        return sharedPreferences.getBoolean(IS_CHECK_ON_AUDIO, true)
+        return sharedPreferences.getBoolean(IS_CHECK_ON_AUDIO, false)
     }
 
     fun saveIsCheckOnAudio(isCheck: Boolean) {

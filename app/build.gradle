@@ -85,7 +85,8 @@ android {
         debug {
             minifyEnabled false
             shrinkResources false
-            testCoverageEnabled true
+            enableUnitTestCoverage true
+            enableAndroidTestCoverage true
         }
         release {
             signingConfig signingConfigs.release

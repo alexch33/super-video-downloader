@@ -1,3 +1,5 @@
+import com.android.build.api.variant.FilterConfiguration
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
@@ -103,30 +105,24 @@ android {
             returnDefaultValues = true
         }
     }
-    // Assign a unique version code for each architecture
-    applicationVariants.configureEach { variant ->
-        variant.outputs.each { output ->
-            def name
-            if (splitApks) {
-                name = output.getFilter(com.android.build.OutputFile.ABI)
-            } else {
-                name = abiFilterList[0]
-            }
 
-            def baseAbiCode = abiCodes[name]
+    androidComponents {
+        onVariants(selector().all()) { variant ->
+            variant.outputs.forEach { output ->
+                def name
+                if (splitApks) {
+                    name = output.filters.find { it.filterType == FilterConfiguration.FilterType.ABI }?.identifier
+                } else {
+                    name = abiFilterList[0]
+                }
 
-            if (baseAbiCode != null) {
-                output.versionCodeOverride = output.versionCode + baseAbiCode
+                def baseAbiCode = abiCodes[name]
+
+                if (baseAbiCode != null) {
+                    output.versionCode.set(baseAbiCode + (output.versionCode.get() ?: 0))
+                }
             }
         }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = "1.8"
     }
     namespace 'com.myAllVideoBrowser'
     lint {
@@ -137,6 +133,10 @@ android {
             jniLibs.srcDirs = ['libs']
         }
     }
+}
+
+kotlin {
+    jvmToolchain(21)
 }
 
 dependencies {
@@ -187,7 +187,6 @@ dependencies {
     // Room
 
     implementation('androidx.room:room-runtime:2.8.3')
-    annotationProcessor('androidx.room:room-compiler:2.8.3')
 
     ksp 'androidx.room:room-compiler:2.8.3'
 

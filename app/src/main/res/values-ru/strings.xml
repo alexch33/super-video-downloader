@@ -100,4 +100,5 @@
     <string name="m3u8_threads_count">Количество потоков M3U8:</string>
     <string name="sd_app_folder">Папка приложения SD</string>
     <string name="http_proxy">HTTP Прокси</string>
+    <string name="go">НАЧАТЬ</string>
 </resources>

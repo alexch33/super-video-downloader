@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.Message
 import android.view.View
 import android.view.WindowManager
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import com.myAllVideoBrowser.R
@@ -26,6 +27,19 @@ class CustomWebChromeClient(
     private val appUtil: AppUtil,
     private val mainActivity: MainActivity
 ) : WebChromeClient() {
+    override fun onPermissionRequest(request: PermissionRequest?) {
+        val resources = request?.resources
+        resources?.forEach { resource ->
+            if (
+                PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID == resource
+            ) {
+                request.grant(resources)
+                return
+            }
+        }
+        super.onPermissionRequest(request)
+    }
+
     override fun onCreateWindow(
         view: WebView?,
         isDialog: Boolean,

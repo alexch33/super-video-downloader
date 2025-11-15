@@ -27,26 +27,12 @@ class CustomWebChromeClient(
     private val appUtil: AppUtil,
     private val mainActivity: MainActivity
 ) : WebChromeClient() {
-    override fun onPermissionRequest(request: PermissionRequest?) {
-        val resources = request?.resources
-        resources?.forEach { resource ->
-            if (
-                PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID == resource
-            ) {
-                request.grant(resources)
-                return
-            }
-        }
-        super.onPermissionRequest(request)
-    }
-
     override fun onCreateWindow(
         view: WebView?,
         isDialog: Boolean,
         isUserGesture: Boolean,
         resultMsg: Message?
     ): Boolean {
-
         if (view != null && view.handler != null) {
             val href = view.handler.obtainMessage()
             view.requestFocusNodeHref(href)

@@ -186,7 +186,7 @@ class CustomWebViewClient(
     override fun shouldOverrideUrlLoading(view: WebView, url: WebResourceRequest): Boolean {
         val isAdBlockerOn = settingsModel.isAdBlocker.get()
         val isAd = if (isAdBlockerOn) tabViewModel.isAd(url.url.toString()) else false
-
+            return true
         return if (url.url.toString().startsWith("http") && url.isForMainFrame && !isAd) {
             if (!tabViewModel.isTabInputFocused.get()) {
                 tabViewModel.setTabTextInput(url.url.toString())

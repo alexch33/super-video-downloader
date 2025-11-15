@@ -483,28 +483,36 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
 
                 val isTikTok = url.contains(".tiktok.com/")
-                when {
-                    contentType.contains(
-                        "video",
-                        true
-                    ) && isCheckOnVideo && (contentLength > threshold || (isTikTok && contentLength > 1024 * 1024 / 3)) -> {
-                        setMediaInfoWrapperFromUrl(
-                            finalUrlPair.first,
-                            webTabModel?.getTabTextInput()?.get(),
-                            finalUrlPair.second.toMap(),
-                            contentLength
-                        )
-                    }
+                val isRegularStreamDetectionOn = true
 
-                    contentType.contains("audio", true) && isCheckOnAudio -> {
-                        setMediaInfoWrapperFromUrl(
-                            finalUrlPair.first,
-                            webTabModel?.getTabTextInput()?.get(),
-                            finalUrlPair.second.toMap(),
-                            contentLength,
-                            true
-                        )
-                    }
+                val isVideo = contentType.contains("video", true)
+                val isAudio = contentType.contains("audio", true)
+
+                val tikTokThreshold = 1024 * 1024 / 3 // ~333KB
+                val isLargeEnoughForTikTok = isTikTok && contentLength > tikTokThreshold
+                val isAboveUserThreshold = contentLength > threshold
+                val isStreamDetectionOn = isRegularStreamDetectionOn && threshold == -1
+
+                val isVideoContent = isVideo && isCheckOnVideo &&
+                        (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)
+
+                val isAudioContent = isAudio && isCheckOnAudio
+
+                if (isVideoContent) {
+                    setMediaInfoWrapperFromUrl(
+                        finalUrlPair.first,
+                        webTabModel?.getTabTextInput()?.get(),
+                        finalUrlPair.second.toMap(),
+                        contentLength
+                    )
+                } else if (isAudioContent) {
+                    setMediaInfoWrapperFromUrl(
+                        finalUrlPair.first,
+                        webTabModel?.getTabTextInput()?.get(),
+                        finalUrlPair.second.toMap(),
+                        contentLength,
+                        isAudio = true
+                    )
                 }
             }
         }.onFailure { e ->

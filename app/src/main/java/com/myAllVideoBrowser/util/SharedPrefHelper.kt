@@ -328,6 +328,7 @@ class SharedPrefHelper @Inject constructor(
     fun setIsForceStreamDownload(isForce: Boolean) {
         sharedPreferences.edit().let {
             it.putBoolean(IS_FORCE_STREAM_DOWNLOAD, isForce)
+            it.apply()
         }
     }
 
@@ -338,6 +339,7 @@ class SharedPrefHelper @Inject constructor(
     fun setIsForceStreamDetection(isForce: Boolean) {
         sharedPreferences.edit().let {
             it.putBoolean(IS_FORCE_STREAM_DETECTION, isForce)
+            it.apply()
         }
     }
 }

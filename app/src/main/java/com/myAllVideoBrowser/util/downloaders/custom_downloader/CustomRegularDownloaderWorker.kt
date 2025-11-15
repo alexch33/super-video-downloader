@@ -5,6 +5,7 @@ import android.util.Base64
 import androidx.core.net.toUri
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
@@ -210,6 +211,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val threadCount = sharedPrefHelper.getRegularDownloaderThreadCount()
         val okHttpClient = proxyOkHttpClient.getProxyOkHttpClient()
 
+        // for videos not supporting range headers
+        val isForceStreamDownload = sharedPrefHelper.getIsForceStreamDownload()
         CustomFileDownloader(
             URL(url),
             File(outputFileName!!),
@@ -217,7 +220,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             headers,
             okHttpClient,
             createDownloadListener(taskItem, taskId),
-            false
+            isForceStreamDownload
         ).download()
     }
 

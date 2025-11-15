@@ -39,6 +39,8 @@ class SettingsViewModel @Inject constructor(
     val isLockPortrait = ObservableBoolean(false)
     val isCheckIfEveryRequestOnM3u8 = ObservableBoolean(true)
     val isCheckOnAudio = ObservableBoolean(true)
+    val isForceStreamDownloading = ObservableBoolean(false)
+    val isForceStreamDetection = ObservableBoolean(false)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
     private val isCheckEveryRequestOnVideo = ObservableBoolean(true)
@@ -46,6 +48,8 @@ class SettingsViewModel @Inject constructor(
 
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
+            isForceStreamDownloading.set(sharedPrefHelper.getIsForceStreamDownload())
+            isForceStreamDetection.set(sharedPrefHelper.getIsForceStreamDetection())
             isCheckIfEveryRequestOnM3u8.set(sharedPrefHelper.getIsCheckEveryOnM3u8())
             isDesktopMode.set(sharedPrefHelper.getIsDesktop())
             isAdBlocker.set(sharedPrefHelper.getIsAdBlocker())
@@ -74,6 +78,20 @@ class SettingsViewModel @Inject constructor(
     }
 
     override fun stop() {
+    }
+
+    fun setForceStreamDownloading(isTurnedOn: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            isForceStreamDownloading.set(isTurnedOn)
+            sharedPrefHelper.setIsForceStreamDownload(isTurnedOn)
+        }
+    }
+
+    fun setForceStreamDetection(isTurnedOn: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            isForceStreamDetection.set(isTurnedOn)
+            sharedPrefHelper.setIsForceStreamDetection(isTurnedOn)
+        }
     }
 
     fun setIsLockPortrait(isLock: Boolean) {

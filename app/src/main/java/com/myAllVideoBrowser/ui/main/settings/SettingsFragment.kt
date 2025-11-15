@@ -65,6 +65,15 @@ class SettingsFragment : BaseFragment() {
         dataBinding = FragmentSettingsBinding.inflate(inflater, container, false).apply {
             this.settingsBackground.setBackgroundColor(color)
             this.viewModel = settingsViewModel
+            this.isForceStreamDetection.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setForceStreamDetection(checked)
+                if (checked) {
+                    settingsViewModel.setRegularThreadsCount(1)
+                }
+            }
+            this.isForceStreamDownloading.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setForceStreamDownloading(checked)
+            }
             this.isAutoThemeCheckBox.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsAutoTheme(checked)
             }

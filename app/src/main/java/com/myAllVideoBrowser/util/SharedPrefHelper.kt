@@ -38,6 +38,9 @@ class SharedPrefHelper @Inject constructor(
         private const val IS_CHECK_EVERY_ON_M3U8 = "IS_CHECK_EVERY_ON_M3U8"
         private const val IS_AUTO_THEME = "IS_AUTO_THEME"
         private const val IS_CHECK_ON_AUDIO = "IS_CHECK_ON_AUDIO"
+        private const val IS_FORCE_STREAM_DOWNLOAD = "IS_FORCE_STREAM_DOWNLOAD"
+
+        private const val IS_FORCE_STREAM_DETECTION = "IS_FORCE_STREAM_DETECTION"
     }
 
     private val gson = Gson()
@@ -315,6 +318,26 @@ class SharedPrefHelper @Inject constructor(
         sharedPreferences.edit().let {
             it.putBoolean(IS_CHECK_ON_AUDIO, isCheck)
             it.apply()
+        }
+    }
+
+    fun getIsForceStreamDownload(): Boolean {
+        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DOWNLOAD, false)
+    }
+
+    fun setIsForceStreamDownload(isForce: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_FORCE_STREAM_DOWNLOAD, isForce)
+        }
+    }
+
+    fun getIsForceStreamDetection(): Boolean {
+        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DOWNLOAD, false)
+    }
+
+    fun setIsForceStreamDetection(isForce: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_FORCE_STREAM_DETECTION, isForce)
         }
     }
 }

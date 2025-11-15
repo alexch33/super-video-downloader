@@ -73,7 +73,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
     val detectedVideosList = ObservableField(setOf<VideoInfo>())
 
     val filterRegex =
-        Regex("^(.*\\.(apk|html|xml|ico|css|js|png|gif|json|jpg|jpeg|svg|woff|woff2|m3u8|mpd|ts|php|ttf|otf|eot|cur|webp|bmp|tif|tiff|psd|ai|eps|pdf|doc|docx|xls|xlsx|ppt|pptx|csv|md|rtf|vtt|srt|swf|jar|log|txt))?$")
+        Regex("^(.*\\.(apk|html|xml|ico|css|js|png|gif|json|jpg|jpeg|svg|woff|woff2|m3u8|mpd|ts|php|ttf|otf|eot|cur|webp|bmp|tif|tiff|psd|ai|eps|pdf|doc|docx|xls|xlsx|ppt|pptx|csv|md|rtf|vtt|srt|swf|jar|log|txt|m4s))?$")
     val downloadButtonIcon = ObservableInt(R.drawable.invisible_24px)
 
     @Volatile
@@ -483,7 +483,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
 
                 val isTikTok = url.contains(".tiktok.com/")
-                val isRegularStreamDetectionOn = true
+                val isRegularStreamDetectionOn = settingsModel.isForceStreamDetection.get()
 
                 val isVideo = contentType.contains("video", true)
                 val isAudio = contentType.contains("audio", true)

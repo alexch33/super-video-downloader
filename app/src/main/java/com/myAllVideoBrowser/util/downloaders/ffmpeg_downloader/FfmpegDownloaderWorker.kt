@@ -218,7 +218,7 @@ class FfmpegDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             arguments.add("aac_adtstoasc")
 
             arguments.add("-movflags")
-            arguments.add("frag_keyframe+empty_moov")
+            arguments.add("faststart")
         }
 
         if (!validateOutputPath(fullOutputPath)) {

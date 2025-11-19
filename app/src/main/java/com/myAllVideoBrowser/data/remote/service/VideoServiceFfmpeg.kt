@@ -33,7 +33,23 @@ class VideoServiceFfmpeg(private val proxyController: CustomProxyController) : V
             return null;
         }
 
+        val proxyHost = proxyController.getCurrentRunningProxy().host
+        val proxyPort = proxyController.getCurrentRunningProxy().port
+        val pass = proxyController.getCurrentRunningProxy().password
+        val user = proxyController.getCurrentRunningProxy().user
+
         val commandList = mutableListOf<String>()
+
+        if (proxyHost.isNotEmpty() && proxyPort.isNotEmpty()) {
+            val proxyUrl = if (user.isNotEmpty() && pass.isNotEmpty()) {
+                "http://$user:$pass@$proxyHost:$proxyPort"
+            } else {
+                "http://$proxyHost:$proxyPort"
+            }
+
+            commandList.add("-http_proxy")
+            commandList.add(proxyUrl)
+        }
 
         // Use '-v error' to keep the output clean and focused on the JSON data
         commandList.add("-v")

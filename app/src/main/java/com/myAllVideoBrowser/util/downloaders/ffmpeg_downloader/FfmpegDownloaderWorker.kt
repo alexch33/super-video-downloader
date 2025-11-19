@@ -113,14 +113,29 @@ class FfmpegDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         if (url.isEmpty()) {
             throw IllegalArgumentException("Input URL is empty or invalid.")
         }
+        val proxyHost = proxyController.getCurrentRunningProxy().host
+        val proxyPort = proxyController.getCurrentRunningProxy().port
+        val pass = proxyController.getCurrentRunningProxy().password
+        val user = proxyController.getCurrentRunningProxy().user
+
 
         val arguments = mutableListOf<String>()
         val fixedHeaders = decodeCookieHeader(headers).toMutableMap()
 
         arguments.add("-y") // Overwrite output file if it exists
 
+        if (proxyHost.isNotEmpty() && proxyPort.isNotEmpty()) {
+            val proxyUrl = if (user.isNotEmpty() && pass.isNotEmpty()) {
+                "http://$user:$pass@$proxyHost:$proxyPort"
+            } else {
+                "http://$proxyHost:$proxyPort"
+            }
+            arguments.add("-http_proxy")
+            arguments.add(proxyUrl)
+        }
+
         arguments.add("-protocol_whitelist")
-        arguments.add("http,https,tcp,tls,crypto")
+        arguments.add("http,https,tcp,tls,crypto,httpproxy")
 
         arguments.add("-allowed_extensions")
         arguments.add("ALL")

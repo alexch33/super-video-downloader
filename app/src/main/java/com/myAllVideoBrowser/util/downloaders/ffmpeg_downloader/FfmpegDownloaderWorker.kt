@@ -120,14 +120,10 @@ class FfmpegDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         arguments.add("-y") // Overwrite output file if it exists
 
         arguments.add("-protocol_whitelist")
-        arguments.add("file,http,https,tcp,tls,crypto")
+        arguments.add("http,https,tcp,tls,crypto")
 
         arguments.add("-allowed_extensions")
         arguments.add("ALL")
-
-        arguments.add("-seekable")
-        arguments.add("0")
-
 
         val cookieValue =
             fixedHeaders.remove("Cookie")
@@ -135,7 +131,6 @@ class FfmpegDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             try {
                 val domain = url.toHttpUrlOrNull()
                     ?.let { getBaseDomain(it.host) }
-                AppLogger.d("BASE DOMAIN ---- URL   $domain  ---- $url")
                 if (domain != null) {
                     val ffmpegCookieString = cookieValue
                         .split(';')
@@ -209,6 +204,10 @@ class FfmpegDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         } else {
             arguments.add("-c")
             arguments.add("copy")
+
+            arguments.add("-bsf:a")
+            arguments.add("aac_adtstoasc")
+
             arguments.add("-movflags")
             arguments.add("frag_keyframe+empty_moov")
         }

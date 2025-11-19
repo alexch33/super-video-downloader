@@ -135,7 +135,7 @@ class FfmpegDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         }
 
         arguments.add("-protocol_whitelist")
-        arguments.add("http,https,tcp,tls,crypto,httpproxy")
+        arguments.add("http,https,tcp,tls,crypto,httpproxy,hls,file,pipe")
 
         arguments.add("-allowed_extensions")
         arguments.add("ALL")
@@ -172,12 +172,6 @@ class FfmpegDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 e.printStackTrace()
                 fixedHeaders["Cookie"] = cookieValue
             }
-        }
-
-        // TODO when this need?
-        val host = url.toHttpUrlOrNull()?.host;
-        if (host != null) {
-            fixedHeaders["Host"] = host
         }
 
         var userAgent: String? = null

@@ -11,6 +11,13 @@ import javax.inject.Singleton
 class VideoLocalDataSource @Inject constructor(
     private val videoDao: VideoDao
 ) : VideoRepository {
+    override fun getVideoInfoByFfmpeg(
+        url: Request,
+        isM3u8OrMpd: Boolean,
+        isAudioCheck: Boolean
+    ): VideoInfo? {
+        return videoDao.getVideoById(url.url.toString()).toSingle().blockingGet()
+    }
 
     override fun getVideoInfo(
         url: Request,

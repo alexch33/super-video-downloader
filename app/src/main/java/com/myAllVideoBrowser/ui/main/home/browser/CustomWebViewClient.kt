@@ -129,6 +129,8 @@ class CustomWebViewClient(
                         videoDetectionModel.verifyLinkStatus(
                             requestWithCookies, tabViewModel.currentTitle.get(), true
                         )
+                        // TODO remove or add to settings
+                        return AdBlockerHelper.createEmptyResource()
                     }
                 }
 

@@ -8,6 +8,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 interface VideoRepository {
+    fun getVideoInfoByFfmpeg(
+        url: Request,
+        isM3u8OrMpd: Boolean = false,
+        isAudioCheck: Boolean
+    ): VideoInfo?
 
     fun getVideoInfo(url: Request, isM3u8OrMpd: Boolean = false, isAudioCheck: Boolean): VideoInfo?
 
@@ -21,6 +26,17 @@ class VideoRepositoryImpl @Inject constructor(
 
     @VisibleForTesting
     internal var cachedVideos: MutableMap<String, VideoInfo> = mutableMapOf()
+    internal var cachedVideosFfmpeg: MutableMap<String, VideoInfo> = mutableMapOf()
+
+    override fun getVideoInfoByFfmpeg(
+        url: Request,
+        isM3u8OrMpd: Boolean,
+        isAudioCheck: Boolean
+    ): VideoInfo? {
+        cachedVideosFfmpeg[url.url.toString()]?.let { return it }
+
+        return getAndCacheRemoteVideoFfmpeg(url, isM3u8OrMpd, isAudioCheck)
+    }
 
     override fun getVideoInfo(
         url: Request,
@@ -34,6 +50,21 @@ class VideoRepositoryImpl @Inject constructor(
 
     override fun saveVideoInfo(videoInfo: VideoInfo) {
         cachedVideos[videoInfo.originalUrl] = videoInfo
+    }
+
+    private fun getAndCacheRemoteVideoFfmpeg(
+        url: Request,
+        isM3u8OrMpd: Boolean,
+        isAudioCheck: Boolean
+    ): VideoInfo? {
+        val videoInfo = remoteDataSource.getVideoInfoByFfmpeg(url, isM3u8OrMpd, isAudioCheck)
+        if (videoInfo != null) {
+            videoInfo.originalUrl = url.url.toString()
+            cachedVideosFfmpeg[videoInfo.originalUrl] = videoInfo
+
+            return videoInfo
+        }
+        return null
     }
 
     private fun getAndCacheRemoteVideo(

@@ -203,16 +203,41 @@ open class VideoDetectionTabViewModel @Inject constructor(
         m3u8LoadingList.set(loadings?.toMutableSet())
         setButtonState(DownloadButtonStateLoading())
 
+        var isFallBackFfmpegDetectionOn = true
+        val isFfmpegDetectionOnly = true
+
         verifyVideoLinkJobStorage[taskUrlCleaned] =
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 val info = try {
-                    videoRepository.getVideoInfo(
-                        resourceRequest,
-                        isM3u8,
-                        settingsModel.isCheckOnAudio.get()
-                    )
+                    if (!isFfmpegDetectionOnly) {
+                        videoRepository.getVideoInfo(
+                            resourceRequest,
+                            isM3u8,
+                            settingsModel.isCheckOnAudio.get()
+                        )
+                    } else {
+                        isFallBackFfmpegDetectionOn = false // this for preventing same request twice on fallback call
+                        videoRepository.getVideoInfoByFfmpeg(
+                            resourceRequest,
+                            isM3u8,
+                            settingsModel.isCheckOnAudio.get()
+                        )
+                    }
+
                 } catch (e: Throwable) {
                     e.printStackTrace()
+                    AppLogger.d("Youtubedlp error: ${e.message} \n isFallBackFfmpegDetectionOn is $isFallBackFfmpegDetectionOn")
+                    if (isFallBackFfmpegDetectionOn) {
+                        try {
+                            videoRepository.getVideoInfoByFfmpeg(
+                                resourceRequest,
+                                isM3u8,
+                                settingsModel.isCheckOnAudio.get()
+                            )
+                        } catch (e: Throwable) {
+                            e.printStackTrace()
+                        }
+                    }
                     null
                 }
                 if (info != null) {
@@ -259,8 +284,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
         val detectedVideos = detectedVideosList.get() ?: emptySet()
 
         if (detectedVideos.any { isVideoInfoDuplicate(it, newInfo) }) {
-            AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
-            return
+//            AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
+//            return
         }
 
         AppLogger.d("PUSHING $newInfo to list: \n  $detectedVideos")

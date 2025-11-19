@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.di.module
 import android.app.Application
 import com.myAllVideoBrowser.data.remote.service.ConfigService
 import com.myAllVideoBrowser.data.remote.service.VideoService
+import com.myAllVideoBrowser.data.remote.service.VideoServiceFfmpeg
 import com.myAllVideoBrowser.data.remote.service.VideoServiceLocal
 import com.myAllVideoBrowser.util.Memory
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
@@ -58,4 +59,11 @@ class NetworkModule {
     ): VideoService = VideoServiceLocal(
         proxyController
     )
+
+    @Provides
+    @Singleton
+    fun provideFfmpegVideoService(proxyController: CustomProxyController): VideoServiceFfmpeg =
+        VideoServiceFfmpeg(
+            proxyController
+        )
 }

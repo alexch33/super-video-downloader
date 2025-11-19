@@ -8,10 +8,12 @@ import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.ProgressRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
+import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.CustomRegularDownloader
+import com.myAllVideoBrowser.util.downloaders.ffmpeg_downloader.FfmpegDownloader
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloader
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Observable
@@ -109,7 +111,7 @@ class ProgressViewModel @Inject constructor(
                 val updated = inf.copy(downloadStatus = VideoTaskState.PREPARE)
 
                 saveProgressInfo(updated) { info ->
-                    YoutubeDlDownloader.resumeDownload(
+                    FfmpegDownloader.resumeDownload(
                         ContextUtils.getApplicationContext(),
                         info
                     )
@@ -138,7 +140,8 @@ class ProgressViewModel @Inject constructor(
                 if (info.videoInfo.isRegularDownload) {
                     CustomRegularDownloader.startDownload(context, info.videoInfo)
                 } else {
-                    YoutubeDlDownloader.startDownload(context, info.videoInfo)
+                    FfmpegDownloader.startDownload(context, info.videoInfo)
+//                    YoutubeDlDownloader.startDownload(context, info.videoInfo)
                 }
             }
         }

@@ -168,7 +168,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 val isProcessFfmpeg = sharedPrefHelper.getIsProcessDownloadFfmpeg()
                 val processedUri: Uri? = null
                 if (isProcessFfmpeg) {
-                    showProgress(item, startProgress)
+                    showProgressProcessing(item, startProgress)
                     saveProgress(
                         item.mId,
                         startProgress,
@@ -177,9 +177,25 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                     )
                     AppLogger.d("START FFMPEG PROCESSING...  $sourcePath")
                     val processedUri =
-                        YoutubeDlpFfmpegProcessor.getInstance().processDownload(sourcePath.toUri())
+                        YoutubeDlpFfmpegProcessor.getInstance()
+                            .processDownload(sourcePath.toUri()) { percents ->
+                                val percentInt = percents
+                                if (percentInt > 0 && percentInt < 100 && percentInt % 10 == 0) {
+                                    val currentProgress = Progress(
+                                        (sourcePath.length() * percents / 100f).toLong(),
+                                        sourcePath.length()
+                                    )
+                                    showProgressProcessing(item, currentProgress)
+                                    saveProgress(
+                                        item.mId,
+                                        currentProgress,
+                                        VideoTaskState.PENDING,
+                                        "Ffmpeg processing..."
+                                    )
+                                }
+                            }
                     AppLogger.d("END FFMPEG PROCESSING...  $processedUri")
-                    showProgress(item, endProgress)
+                    showProgressProcessing(item, endProgress)
                     saveProgress(
                         item.mId,
                         endProgress,
@@ -193,31 +209,25 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 }
                 val finalSource = processedUri ?: sourcePath.toUri()
                 AppLogger.d("START MOOVING...  $finalSource  $target")
-                showProgress(item, startProgress)
-                saveProgress(
-                    item.mId,
-                    startProgress,
-                    VideoTaskState.PREPARE,
-                    "Ffmpeg processing success!"
-                )
                 fileMovedSuccess =
                     fileUtil.moveMedia(
                         applicationContext,
                         finalSource,
                         File(target).toUri()
                     )
-                showProgress(item, endProgress)
-                saveProgress(
-                    item.mId,
-                    endProgress,
-                    VideoTaskState.SUCCESS,
-                    "Ffmpeg processing success!"
-                )
                 AppLogger.d("END MOOVING...  $finalSource  $target  fileMovedSuccess: $fileMovedSuccess")
 
                 if (!fileMovedSuccess) {
                     throw Error("File Move error")
                 } else {
+                    val finalSize = File(target).length()
+                    item.apply {
+                        taskState = VideoTaskState.SUCCESS
+                        filePath = target
+                        lineInfo = "Download Success"
+                        totalSize = File(target).length()
+                        downloadSize = finalSize
+                    }
                     finalSource.toFile().parentFile?.deleteRecursively()
                 }
             } catch (e: Throwable) {
@@ -378,6 +388,24 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             it.taskState = VideoTaskState.PAUSE
         })
     }
+
+    private fun showProgressProcessing(taskItem: VideoTaskItem, progress: Progress?) {
+        val text = "Processing: ${taskItem.fileName}"
+        val totalSize = progress?.totalBytes ?: 0
+        val downloadSize = progress?.currentBytes ?: 0
+
+        taskItem.apply {
+            lineInfo = text
+            taskState = VideoTaskState.PREPARE
+            this.totalSize = totalSize
+            this.downloadSize = downloadSize
+            percent = getPercentFromBytes(downloadSize, totalSize)
+        }
+
+        val notificationData = notificationsHelper.createNotificationBuilder(taskItem)
+        showLongRunningNotificationAsync(notificationData.first, notificationData.second)
+    }
+
 
     private fun showProgress(taskItem: VideoTaskItem, progress: Progress?) {
         val text = "Downloading: ${taskItem.fileName}"

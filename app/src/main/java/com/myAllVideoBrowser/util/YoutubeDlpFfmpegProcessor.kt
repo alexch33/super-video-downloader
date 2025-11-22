@@ -7,6 +7,7 @@ import com.yausername.youtubedl_android.YoutubeDLException
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import java.io.File
 import java.util.UUID
+import java.util.regex.Pattern
 
 class YoutubeDlpFfmpegProcessor private constructor() {
 
@@ -15,6 +16,8 @@ class YoutubeDlpFfmpegProcessor private constructor() {
         private var instance: YoutubeDlpFfmpegProcessor? = null
 
         private val AUDIO_EXTENSIONS = setOf("mp3", "m4a", "ogg", "wav", "flac")
+        private val progressPattern: Pattern =
+            Pattern.compile("""\[download]\s+(\d{1,3}\.\d)%\s+of""")
 
         fun getInstance(): YoutubeDlpFfmpegProcessor =
             instance ?: synchronized(this) {
@@ -22,7 +25,7 @@ class YoutubeDlpFfmpegProcessor private constructor() {
             }
     }
 
-    fun processDownload(inputUri: Uri): Uri? {
+    fun processDownload(inputUri: Uri, onProgress: (Int) -> Unit): Uri? {
         val inputFile = File(inputUri.path ?: run {
             AppLogger.e("Input URI path is null.")
             return null
@@ -60,6 +63,7 @@ class YoutubeDlpFfmpegProcessor private constructor() {
 
         request.addOption("--force-overwrites")
         request.addOption("--enable-file-urls")
+        request.addOption("--progress")
         request.addOption("-o", outputFile.absolutePath)
 
         if (isAudio) {
@@ -78,11 +82,20 @@ class YoutubeDlpFfmpegProcessor private constructor() {
             YoutubeDL.getInstance()
                 .execute(request, "remux_${UUID.randomUUID()}") { progress, etaInSeconds, line ->
                     AppLogger.d("[REDUX_LOG] $line")
+
+                    val matcher = progressPattern.matcher(line)
+                    if (matcher.find()) {
+                        matcher.group(1)?.toFloatOrNull()?.toInt()?.let { percent ->
+                            onProgress(percent)
+                        }
+                    }
+
                     if (line.contains("[ffmpeg] Deleting original file") || line.contains("already is in target format") || line.contains(
-                            "ExtractAudio] Destination:"
+                            "[ExtractAudio] Destination:"
                         )
                     ) {
                         processingSuccess = true
+                        onProgress(100)
                     }
                 }
         } catch (e: YoutubeDLException) {
@@ -94,9 +107,10 @@ class YoutubeDlpFfmpegProcessor private constructor() {
             return null
         }
 
-        if (processingSuccess && outputFile.exists()) {
-            AppLogger.d("Remux process successful. Output: ${outputFile.absolutePath}")
-            return outputFile.toUri()
+        if (processingSuccess && (outputFile.exists() || inputFile.exists())) {
+            val resultFile = if (outputFile.exists()) outputFile else inputFile
+            AppLogger.d("Remux process successful. Output: ${resultFile.absolutePath}")
+            return resultFile.toUri()
         } else {
             AppLogger.e("Remux process failed. 'processingSuccess' flag was not set or output file not found.")
             if (outputFile.exists()) {

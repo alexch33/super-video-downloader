@@ -14,6 +14,8 @@ class YoutubeDlpFfmpegProcessor private constructor() {
         @Volatile
         private var instance: YoutubeDlpFfmpegProcessor? = null
 
+        private val AUDIO_EXTENSIONS = setOf("mp3", "m4a", "ogg", "wav", "flac")
+
         fun getInstance(): YoutubeDlpFfmpegProcessor =
             instance ?: synchronized(this) {
                 instance ?: YoutubeDlpFfmpegProcessor().also { instance = it }
@@ -31,9 +33,24 @@ class YoutubeDlpFfmpegProcessor private constructor() {
             return null
         }
 
+        val inputExtension = inputFile.extension.lowercase(java.util.Locale.ROOT)
+        val isAudio = AUDIO_EXTENSIONS.contains(inputExtension)
+
+        val remuxFormat: String
+        val outputExtension: String
+
+        if (isAudio) {
+            remuxFormat = "mp3"
+            outputExtension = "mp3"
+        } else {
+            remuxFormat = "mp4"
+            outputExtension = "mp4"
+        }
+
         val outputDir = inputFile.parentFile ?: return null
-        val outputName = "${inputFile.nameWithoutExtension}_processed.mp4"
+        val outputName = "${inputFile.nameWithoutExtension}_processed.$outputExtension"
         val outputFile = File(outputDir, outputName)
+
 
         if (outputFile.exists()) {
             outputFile.delete()
@@ -44,9 +61,15 @@ class YoutubeDlpFfmpegProcessor private constructor() {
         request.addOption("--force-overwrites")
         request.addOption("--enable-file-urls")
         request.addOption("-o", outputFile.absolutePath)
-        request.addOption("--remux-video", "mp4")
 
-        AppLogger.d("Starting youtube-dlp remux process for: ${inputFile.name}")
+        if (isAudio) {
+            request.addOption("--extract-audio")
+            request.addOption("--audio-format", remuxFormat)
+        } else {
+            request.addOption("--remux-video", remuxFormat)
+        }
+
+        AppLogger.d("Starting youtube-dlp process for: ${inputFile.name}")
         AppLogger.d("Command options: ${request.buildCommand().joinToString(" ")}")
 
         var processingSuccess = false
@@ -77,7 +100,9 @@ class YoutubeDlpFfmpegProcessor private constructor() {
 
         if (processingSuccess && outputFile.exists()) {
             AppLogger.d("Remux process successful. Output: ${outputFile.absolutePath}")
-            // The original input file is deleted automatically by youtube-dlp on success.
+            if (inputFile.exists()) {
+                inputFile.delete()
+            }
             return outputFile.toUri()
         } else {
             AppLogger.e("Remux process failed. 'processingSuccess' flag was not set or output file not found.")

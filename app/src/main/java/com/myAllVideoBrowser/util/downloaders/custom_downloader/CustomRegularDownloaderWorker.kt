@@ -1,11 +1,13 @@
 package com.myAllVideoBrowser.util.downloaders.custom_downloader
 
 import android.content.Context
+import android.net.Uri
 import android.util.Base64
+import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.util.AppLogger
-import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.YoutubeDlpFfmpegProcessor
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
@@ -159,15 +161,36 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
         if (sourcePath.exists()) {
             try {
-                AppLogger.d("START MOOVING...  $sourcePath  $target")
+                val isProcessFfmpeg = sharedPrefHelper.getIsProcessDownloadFfmpeg()
+                val processedUri: Uri? = null
+                if (isProcessFfmpeg) {
+                    saveProgress(item.mId, progressCached, item.taskState, "Ffmpeg processing...")
+                    AppLogger.d("START FFMPEG PROCESSING...  $sourcePath")
+                    val processedUri =
+                        YoutubeDlpFfmpegProcessor.getInstance().processDownload(sourcePath.toUri())
+                    AppLogger.d("END FFMPEG PROCESSING...  $processedUri")
+                    saveProgress(
+                        item.mId,
+                        progressCached,
+                        item.taskState,
+                        "Ffmpeg processing success!"
+                    )
+                }
+
+                val finalSource = processedUri ?: sourcePath.toUri()
+                AppLogger.d("START MOOVING...  $finalSource  $target")
                 fileMovedSuccess =
-                    fileUtil.moveMedia(applicationContext, sourcePath.toUri(), File(target).toUri())
-                AppLogger.d("END MOOVING...  $sourcePath  $target  fileMovedSuccess: $fileMovedSuccess")
+                    fileUtil.moveMedia(
+                        applicationContext,
+                        finalSource,
+                        File(target).toUri()
+                    )
+                AppLogger.d("END MOOVING...  $finalSource  $target  fileMovedSuccess: $fileMovedSuccess")
 
                 if (!fileMovedSuccess) {
                     throw Error("File Move error")
                 } else {
-                    sourcePath.parentFile?.deleteRecursively()
+                    finalSource.toFile().parentFile?.deleteRecursively()
                 }
             } catch (e: Throwable) {
                 finishWork(item.also {

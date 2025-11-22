@@ -95,8 +95,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             return
         }
 
-        setDone()
-
         val taskId = item?.mId ?: run {
             AppLogger.d("SMTH WRONG, taskId is NULL  $item")
             getContinuation().resume(Result.failure())
@@ -116,6 +114,18 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             } else {
                 Result.success()
             }
+
+            val progressInfo = if (item.taskState == VideoTaskState.SUCCESS && !fileMovedSuccess) {
+                item.taskState = VideoTaskState.ERROR
+                "Error Transfer file"
+            } else {
+                item.errorMessage ?: "Error"
+            }
+
+            saveProgress(item.mId, progressCached, item.taskState, progressInfo)
+
+            setDone()
+
             getContinuation().resume(result)
         } catch (e: Throwable) {
             AppLogger.d("FINISHING UNEXPECTED ERROR  $item  $e")
@@ -140,15 +150,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             VideoTaskState.SUCCESS -> handleSuccessfulDownload(item, sourcePath)
             else -> {} // No action needed for other states
         }
-
-        val progressInfo = if (item.taskState == VideoTaskState.SUCCESS && !fileMovedSuccess) {
-            item.taskState = VideoTaskState.ERROR
-            "Error Transfer file"
-        } else {
-            item.errorMessage ?: "Error"
-        }
-
-        saveProgress(item.mId, progressCached, item.taskState, progressInfo)
     }
 
     private fun handleSuccessfulDownload(item: VideoTaskItem, sourcePath: File) {
@@ -161,18 +162,28 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
         if (sourcePath.exists()) {
             try {
+                val startProgress = Progress(0, sourcePath.length())
+                val endProgress = Progress(sourcePath.length(), sourcePath.length() + 1)
+
                 val isProcessFfmpeg = sharedPrefHelper.getIsProcessDownloadFfmpeg()
                 val processedUri: Uri? = null
                 if (isProcessFfmpeg) {
-                    saveProgress(item.mId, progressCached, item.taskState, "Ffmpeg processing...")
+                    showProgress(item, startProgress)
+                    saveProgress(
+                        item.mId,
+                        startProgress,
+                        VideoTaskState.PENDING,
+                        "Ffmpeg processing..."
+                    )
                     AppLogger.d("START FFMPEG PROCESSING...  $sourcePath")
                     val processedUri =
                         YoutubeDlpFfmpegProcessor.getInstance().processDownload(sourcePath.toUri())
                     AppLogger.d("END FFMPEG PROCESSING...  $processedUri")
+                    showProgress(item, endProgress)
                     saveProgress(
                         item.mId,
-                        progressCached,
-                        item.taskState,
+                        endProgress,
+                        VideoTaskState.PREPARE,
                         "Ffmpeg processing success!"
                     )
                 }
@@ -182,12 +193,26 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 }
                 val finalSource = processedUri ?: sourcePath.toUri()
                 AppLogger.d("START MOOVING...  $finalSource  $target")
+                showProgress(item, startProgress)
+                saveProgress(
+                    item.mId,
+                    startProgress,
+                    VideoTaskState.PREPARE,
+                    "Ffmpeg processing success!"
+                )
                 fileMovedSuccess =
                     fileUtil.moveMedia(
                         applicationContext,
                         finalSource,
                         File(target).toUri()
                     )
+                showProgress(item, endProgress)
+                saveProgress(
+                    item.mId,
+                    endProgress,
+                    VideoTaskState.SUCCESS,
+                    "Ffmpeg processing success!"
+                )
                 AppLogger.d("END MOOVING...  $finalSource  $target  fileMovedSuccess: $fileMovedSuccess")
 
                 if (!fileMovedSuccess) {

@@ -73,18 +73,18 @@ class YoutubeDlpFfmpegProcessor private constructor() {
         AppLogger.d("Command options: ${request.buildCommand().joinToString(" ")}")
 
         var processingSuccess = false
-        val taskId = "remux_${UUID.randomUUID()}"
 
         try {
-            YoutubeDL.getInstance().execute(request, taskId) { progress, etaInSeconds, line ->
-                AppLogger.d("[REDUX_LOG] $line")
-                if (line.contains("[ffmpeg] Deleting original file") || line.contains("already is in target format") || line.contains(
-                        "ExtractAudio] Destination:"
-                    )
-                ) {
-                    processingSuccess = true
+            YoutubeDL.getInstance()
+                .execute(request, "remux_${UUID.randomUUID()}") { progress, etaInSeconds, line ->
+                    AppLogger.d("[REDUX_LOG] $line")
+                    if (line.contains("[ffmpeg] Deleting original file") || line.contains("already is in target format") || line.contains(
+                            "ExtractAudio] Destination:"
+                        )
+                    ) {
+                        processingSuccess = true
+                    }
                 }
-            }
         } catch (e: YoutubeDLException) {
             AppLogger.e("youtube-dlp execution failed. ${e.message}")
             e.printStackTrace()

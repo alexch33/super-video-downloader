@@ -82,12 +82,17 @@ class CustomWebViewClient(
         super.doUpdateVisitedHistory(view, url, isReload)
     }
 
-    // TODO handle for proxy and others
     override fun onReceivedHttpAuthRequest(
         view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?
     ) {
-        val creds = proxyController.getProxyCredentials()
-        handler?.proceed(creds.first, creds.second)
+        if (proxyController.getCurrentRunningProxy().host == host) {
+            val creds = proxyController.getProxyCredentials()
+
+            if (creds.first.isNotEmpty() || creds.second.isNotEmpty()) {
+                handler?.proceed(creds.first, creds.second)
+            }
+        }
+        super.onReceivedHttpAuthRequest(view, handler, host, realm)
     }
 
     override fun shouldInterceptRequest(

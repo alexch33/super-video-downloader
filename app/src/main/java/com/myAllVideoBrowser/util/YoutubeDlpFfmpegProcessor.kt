@@ -78,31 +78,24 @@ class YoutubeDlpFfmpegProcessor private constructor() {
         try {
             YoutubeDL.getInstance().execute(request, taskId) { progress, etaInSeconds, line ->
                 AppLogger.d("[REDUX_LOG] $line")
-                if (line.contains("[ffmpeg] Deleting original file") || line.contains("already is in target format")) {
+                if (line.contains("[ffmpeg] Deleting original file") || line.contains("already is in target format") || line.contains(
+                        "ExtractAudio] Destination:"
+                    )
+                ) {
                     processingSuccess = true
                 }
             }
         } catch (e: YoutubeDLException) {
             AppLogger.e("youtube-dlp execution failed. ${e.message}")
             e.printStackTrace()
-            if (outputFile.exists()) {
-                outputFile.delete()
-            }
             return null
         } catch (_: InterruptedException) {
             AppLogger.e("youtube-dlp process was interrupted.")
-            Thread.currentThread().interrupt()
-            if (outputFile.exists()) {
-                outputFile.delete()
-            }
             return null
         }
 
         if (processingSuccess && outputFile.exists()) {
             AppLogger.d("Remux process successful. Output: ${outputFile.absolutePath}")
-            if (inputFile.exists()) {
-                inputFile.delete()
-            }
             return outputFile.toUri()
         } else {
             AppLogger.e("Remux process failed. 'processingSuccess' flag was not set or output file not found.")

@@ -177,6 +177,9 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                     )
                 }
 
+                if (processedUri != null) {
+                    sourcePath.deleteRecursively()
+                }
                 val finalSource = processedUri ?: sourcePath.toUri()
                 AppLogger.d("START MOOVING...  $finalSource  $target")
                 fileMovedSuccess =

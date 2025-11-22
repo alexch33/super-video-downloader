@@ -165,7 +165,11 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 val startProgress = Progress(0, sourcePath.length())
                 val endProgress = Progress(sourcePath.length(), sourcePath.length() + 1)
 
-                val isProcessFfmpeg = sharedPrefHelper.getIsProcessDownloadFfmpeg()
+                var isProcessFfmpeg: Boolean = sharedPrefHelper.getIsProcessDownloadFfmpeg()
+                if (!isProcessFfmpeg) {
+                    val isOnlyLive = sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg()
+                    isProcessFfmpeg = isOnlyLive && item.isLive
+                }
                 val processedUri: Uri? = null
                 if (isProcessFfmpeg) {
                     showProgressProcessing(item, startProgress)
@@ -460,8 +464,11 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
         dbTask?.downloadStatus = downloadStatus
 
-        dbTask?.isLive =
-            dbTask.progressTotal == dbTask.progressDownloaded && downloadStatus == VideoTaskState.DOWNLOADING
+        val isLive =
+            dbTask?.progressTotal == dbTask?.progressDownloaded && downloadStatus == VideoTaskState.DOWNLOADING
+        if (dbTask?.isLive != true && isLive) {
+            dbTask?.isLive = true
+        }
 
         if (dbTask != null) {
             if (getDone() && downloadStatus == VideoTaskState.DOWNLOADING) {

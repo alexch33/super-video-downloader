@@ -27,6 +27,7 @@ public class VideoTaskItem implements Cloneable {
     private String mFileName;            //文件名
     private String mFilePath;            //文件完整路径(包括文件名)
     private boolean mPaused;
+    private boolean mIsLive;
 
     private String mErrorMessage;
 
@@ -44,6 +45,14 @@ public class VideoTaskItem implements Cloneable {
         if (totalSize == 0) return 0;
 
         return (1F * downloadSize / totalSize) * 100F;
+    }
+
+    public boolean isLive() {
+        return mIsLive;
+    }
+
+    public void setIsLive(boolean isLive) {
+        this.mIsLive = isLive;
     }
 
     public void setLineInfo(String info) {
@@ -326,6 +335,7 @@ public class VideoTaskItem implements Cloneable {
         taskItem.setCoverPath(mCoverPath);
         taskItem.setTitle(mTitle);
         taskItem.setGroupName(mGroupName);
+        taskItem.setIsLive(mIsLive);
         return taskItem;
     }
 
@@ -351,6 +361,7 @@ public class VideoTaskItem implements Cloneable {
                 ", CoverUrl=" + mCoverUrl +
                 ", CoverPath=" + mCoverPath +
                 ", Title=" + mTitle +
+                ", isLive=" + mIsLive +
                 "]";
     }
 }

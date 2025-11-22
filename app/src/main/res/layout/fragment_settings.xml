@@ -127,6 +127,7 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <View
+                android:id="@+id/divider_after_clear_cookie"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 app:layout_constraintTop_toBottomOf="@+id/layout_clear_cookie" />
@@ -137,7 +138,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isAutoDarkMode}"
                 android:text="@string/is_auto_dark"
-                app:layout_constraintTop_toBottomOf="@+id/layout_clear_cookie" />
+                app:layout_constraintTop_toBottomOf="@+id/divider_after_clear_cookie" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/lock_orientation_check_box"
@@ -164,12 +165,20 @@
                 app:layout_constraintTop_toBottomOf="@+id/show_video_alert_check_box" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/find_videos_by_url"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.getIsFindVideoByUrl()}"
+                android:text="@string/find_videos_by_url"
+                app:layout_constraintTop_toBottomOf="@+id/show_video_action_button_check_box" />
+
+            <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/is_check_every_request_on_mp4"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getIsCheckEveryRequestOnMp4Video()}"
                 android:text="@string/check_every_request_on_video_mp4"
-                app:layout_constraintTop_toBottomOf="@+id/show_video_action_button_check_box" />
+                app:layout_constraintTop_toBottomOf="@+id/find_videos_by_url" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/is_check_every_request_on_m3u8"
@@ -188,20 +197,12 @@
                 app:layout_constraintTop_toBottomOf="@+id/is_check_every_request_on_m3u8" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
-                android:id="@+id/find_videos_by_url"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:checked="@{viewModel.getIsFindVideoByUrl()}"
-                android:text="@string/find_videos_by_url"
-                app:layout_constraintTop_toBottomOf="@+id/is_check_every_request_on_audio" />
-
-            <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/is_force_stream_detection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isForceStreamDetection}"
                 android:text="@string/force_stream_detection"
-                app:layout_constraintTop_toBottomOf="@+id/find_videos_by_url" />
+                app:layout_constraintTop_toBottomOf="@+id/is_check_every_request_on_audio" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/is_force_stream_downloading"
@@ -211,12 +212,28 @@
                 android:text="@string/force_stream_downloading"
                 app:layout_constraintTop_toBottomOf="@+id/is_force_stream_detection" />
 
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/is_always_remux_regular_downloads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.isAlwaysRemuxRegularDownloads}"
+                android:text="@string/is_always_remux_regular_downloads"
+                app:layout_constraintTop_toBottomOf="@+id/is_force_stream_downloading" />
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/is_remux_only_live_regular_downloads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.isRemuxOnlyLiveRegularDownloads}"
+                android:text="@string/is_remux_only_live_regular_downloads"
+                app:layout_constraintTop_toBottomOf="@+id/is_always_remux_regular_downloads" />
+
             <LinearLayout
                 android:id="@+id/regular_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                app:layout_constraintTop_toBottomOf="@+id/is_force_stream_downloading">
+                app:layout_constraintTop_toBottomOf="@+id/is_remux_only_live_regular_downloads">
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/regular_threads_count_text"
@@ -302,8 +319,7 @@
                     android:id="@+id/ads_treshold"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    app:layout_constraintTop_toBottomOf="@+id/downloads_location_container">
+                    android:orientation="vertical">
 
                     <com.google.android.material.textview.MaterialTextView
                         android:id="@+id/ads_treshold_text"

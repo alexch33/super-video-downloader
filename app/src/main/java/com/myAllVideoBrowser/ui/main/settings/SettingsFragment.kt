@@ -108,6 +108,20 @@ class SettingsFragment : BaseFragment() {
                 settingsViewModel.setIsCheckIfEveryUrlOnM3u8(checked)
             }
 
+            this.isRemuxOnlyLiveRegularDownloads.setOnCheckedChangeListener { _, checked ->
+                if (!checked) {
+                    settingsViewModel.setIsRemuxOnlyRegularDownloads(false)
+                }
+                settingsViewModel.setIsRemuxOnlyLiveRegularDownloads(checked)
+            }
+
+            this.isAlwaysRemuxRegularDownloads.setOnCheckedChangeListener { _, checked ->
+                if (checked) {
+                    settingsViewModel.setIsRemuxOnlyLiveRegularDownloads(true)
+                }
+                settingsViewModel.setIsRemuxOnlyRegularDownloads(checked)
+            }
+
             this.seekBarM3u8.progress = settingsViewModel.m3u8ThreadsCount.get()
             this.seekBarM3u8.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(

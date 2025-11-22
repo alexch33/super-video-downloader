@@ -41,6 +41,8 @@ class SettingsViewModel @Inject constructor(
     val isCheckOnAudio = ObservableBoolean(true)
     val isForceStreamDownloading = ObservableBoolean(false)
     val isForceStreamDetection = ObservableBoolean(false)
+    val isAlwaysRemuxRegularDownloads = ObservableBoolean(false)
+    val isRemuxOnlyLiveRegularDownloads = ObservableBoolean(false)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
     private val isCheckEveryRequestOnVideo = ObservableBoolean(true)
@@ -48,6 +50,8 @@ class SettingsViewModel @Inject constructor(
 
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
+            isAlwaysRemuxRegularDownloads.set(sharedPrefHelper.getIsProcessDownloadFfmpeg())
+            isRemuxOnlyLiveRegularDownloads.set(sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg())
             isForceStreamDownloading.set(sharedPrefHelper.getIsForceStreamDownload())
             isForceStreamDetection.set(sharedPrefHelper.getIsForceStreamDetection())
             isCheckIfEveryRequestOnM3u8.set(sharedPrefHelper.getIsCheckEveryOnM3u8())
@@ -79,6 +83,21 @@ class SettingsViewModel @Inject constructor(
 
     override fun stop() {
     }
+
+    fun setIsRemuxOnlyLiveRegularDownloads(isTurnedOn: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            isRemuxOnlyLiveRegularDownloads.set(isTurnedOn)
+            sharedPrefHelper.setIsProcessOnlyLiveDownloadFfmpeg(isTurnedOn)
+        }
+    }
+
+    fun setIsRemuxOnlyRegularDownloads(isTurnedOn: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            isAlwaysRemuxRegularDownloads.set(isTurnedOn)
+            sharedPrefHelper.setIsProcessDownloadFfmpeg(isTurnedOn)
+        }
+    }
+
 
     fun setForceStreamDownloading(isTurnedOn: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {

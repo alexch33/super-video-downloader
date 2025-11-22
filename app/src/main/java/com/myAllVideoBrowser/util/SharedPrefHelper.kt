@@ -41,6 +41,8 @@ class SharedPrefHelper @Inject constructor(
         private const val IS_FORCE_STREAM_DOWNLOAD = "IS_FORCE_STREAM_DOWNLOAD"
 
         private const val IS_FORCE_STREAM_DETECTION = "IS_FORCE_STREAM_DETECTION"
+
+        private const val IS_PROCESS_DOWNLOAD_FFMPEG = "IS_PROCESS_DOWNLOAD_FFMPEG"
     }
 
     private val gson = Gson()
@@ -339,6 +341,17 @@ class SharedPrefHelper @Inject constructor(
     fun setIsForceStreamDetection(isForce: Boolean) {
         sharedPreferences.edit().let {
             it.putBoolean(IS_FORCE_STREAM_DETECTION, isForce)
+            it.apply()
+        }
+    }
+
+    fun getIsProcessDownloadFfmpeg(): Boolean {
+        return sharedPreferences.getBoolean(IS_PROCESS_DOWNLOAD_FFMPEG, true)
+    }
+
+    fun setIsProcessDownloadFfmpeg(isProcessFfmpeg: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_PROCESS_DOWNLOAD_FFMPEG, isProcessFfmpeg)
             it.apply()
         }
     }

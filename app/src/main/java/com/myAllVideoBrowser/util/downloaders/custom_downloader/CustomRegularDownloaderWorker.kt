@@ -30,6 +30,9 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
     companion object {
         var isCanceled: Boolean = false
+
+        var isStoppedAndSaved = false
+
         private const val PROGRESS_UPDATE_INTERVAL = 1000
     }
 
@@ -63,7 +66,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
             STOP_SAVE_ACTION -> {
                 isCanceled = false
-
+                isStoppedAndSaved = true
                 stopAndSave(task)
             }
         }
@@ -79,11 +82,15 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         }
 
         val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(task.fileName).name)
+        outputFileName = tmpFile.path
+
         CustomFileDownloader.stop(tmpFile)
 
         finishWork(task.also {
             it.mId = taskId
             it.taskState = VideoTaskState.SUCCESS
+            it.setIsLive(true)
+            it.filePath = outputFileName
         })
     }
 
@@ -240,6 +247,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                     it.errorMessage = e.message
                 })
             }
+        } else {
+            AppLogger.w("Source not exists:   $sourcePath")
         }
     }
 
@@ -304,15 +313,17 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 AppLogger.d("Download Failed  ${e.message} $outputFileName")
                 val taskState = when {
                     e.message == CustomFileDownloader.STOPPED && !isCanceled -> VideoTaskState.PAUSE
+                    e.message == CustomFileDownloader.STOPPED && !isCanceled && isStoppedAndSaved -> VideoTaskState.SUCCESS
                     e.message == CustomFileDownloader.CANCELED && isCanceled -> VideoTaskState.CANCELED
                     else -> VideoTaskState.ERROR
                 }
-
-                finishWork(taskItem.also {
-                    it.taskState = taskState
-                    it.errorMessage = e.message
-                    it.mId = taskId
-                })
+                if (taskState != VideoTaskState.SUCCESS) {
+                    finishWork(taskItem.also {
+                        it.taskState = taskState
+                        it.errorMessage = e.message
+                        it.mId = taskId
+                    })
+                }
             }
 
             override fun onProgressUpdate(downloadedBytes: Long, totalBytes: Long) {

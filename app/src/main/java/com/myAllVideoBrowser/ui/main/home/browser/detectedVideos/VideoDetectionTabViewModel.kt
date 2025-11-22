@@ -491,7 +491,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val tikTokThreshold = 1024 * 1024 / 3 // ~333KB
                 val isLargeEnoughForTikTok = isTikTok && contentLength > tikTokThreshold
                 val isAboveUserThreshold = contentLength > threshold
-                val isStreamDetectionOn = isRegularStreamDetectionOn && threshold == -1
+                val isStreamDetectionOn = isRegularStreamDetectionOn
 
                 val isVideoContent = isVideo && isCheckOnVideo &&
                         (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)

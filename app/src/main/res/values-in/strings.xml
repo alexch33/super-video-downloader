@@ -100,4 +100,5 @@
     <string name="insert_your_regular_video">Tempelkan URL video reguler Anda atau tautan M3U8 di sini</string>
     <string name="check_if_in_list">Hanya periksa URL situs web jika ada dalam daftar yang didukung</string>
     <string name="instruction">Hai; -) \n Untuk mendeteksi video, buka video di browser, klik putar dan tunggu hingga video terdeteksi (dapat membutuhkan waktu 5-50 detik) \n 1. Anda dapat mengubah ambang batas pendeteksian iklan di pengaturan \n 2. Deteksi Video tidak berfungsi untuk beberapa situs web dalam mode seluler, coba gunakan situs web versi desktop jika video tidak terdeteksi dalam mode seluler \n Jika tidak, coba tekan muat ulang video di halaman video atau coba muat ulang halaman dan ulangi. \n Jika tidak, kirimkan email kepada saya.\n \n\n Untuk Mengunduh Video: \n \n 1. Tekan tombol Unduh, di layar yang muncul pilihan resolusi, jika tersedia \n \n 2. Tekan tombol unduh. \n \n \n Setelah mengunduh video yang tersedia di aplikasi. \n</string>
+    <string name="go">LANJUT</string>
 </resources>

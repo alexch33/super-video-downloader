@@ -43,6 +43,7 @@ class SettingsViewModel @Inject constructor(
     val isForceStreamDetection = ObservableBoolean(false)
     val isAlwaysRemuxRegularDownloads = ObservableBoolean(false)
     val isRemuxOnlyLiveRegularDownloads = ObservableBoolean(false)
+    val isInterruptIntreceptedResources = ObservableBoolean(false)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
     private val isCheckEveryRequestOnVideo = ObservableBoolean(true)
@@ -54,6 +55,7 @@ class SettingsViewModel @Inject constructor(
             isRemuxOnlyLiveRegularDownloads.set(sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg())
             isForceStreamDownloading.set(sharedPrefHelper.getIsForceStreamDownload())
             isForceStreamDetection.set(sharedPrefHelper.getIsForceStreamDetection())
+            isInterruptIntreceptedResources.set(sharedPrefHelper.getIsInterruptInterceptedResources())
             isCheckIfEveryRequestOnM3u8.set(sharedPrefHelper.getIsCheckEveryOnM3u8())
             isDesktopMode.set(sharedPrefHelper.getIsDesktop())
             isAdBlocker.set(sharedPrefHelper.getIsAdBlocker())
@@ -123,6 +125,14 @@ class SettingsViewModel @Inject constructor(
     fun clearCookies() {
         clearCookiesEvent.call()
     }
+
+    fun setIsInterruptInterceptedResources(isTurnedOn: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            isInterruptIntreceptedResources.set(isTurnedOn)
+            sharedPrefHelper.setIsInterruptInterceptedResources(isTurnedOn)
+        }
+    }
+
 
     fun openVideoFolder() {
         openVideoFolderEvent.call()

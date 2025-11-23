@@ -122,6 +122,10 @@ class SettingsFragment : BaseFragment() {
                 settingsViewModel.setIsRemuxOnlyRegularDownloads(checked)
             }
 
+            this.isInterruptIntreceptedResources.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setIsInterruptInterceptedResources(checked)
+            }
+
             this.seekBarM3u8.progress = settingsViewModel.m3u8ThreadsCount.get()
             this.seekBarM3u8.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(

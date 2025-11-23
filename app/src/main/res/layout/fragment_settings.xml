@@ -228,12 +228,20 @@
                 android:text="@string/is_remux_only_live_regular_downloads"
                 app:layout_constraintTop_toBottomOf="@+id/is_always_remux_regular_downloads" />
 
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/is_interrupt_intrecepted_resources"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.isInterruptIntreceptedResources}"
+                android:text="@string/is_interrupt_intrecepted_resources"
+                app:layout_constraintTop_toBottomOf="@+id/is_remux_only_live_regular_downloads" />
+
             <LinearLayout
                 android:id="@+id/regular_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                app:layout_constraintTop_toBottomOf="@+id/is_remux_only_live_regular_downloads">
+                app:layout_constraintTop_toBottomOf="@+id/is_interrupt_intrecepted_resources">
 
                 <com.google.android.material.textview.MaterialTextView
                     android:id="@+id/regular_threads_count_text"

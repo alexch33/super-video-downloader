@@ -114,4 +114,5 @@
     <string name="force_stream_detection">Force Stream Detection(Detection urls with body content length -1, sometimes used for regular live streams)</string>
     <string name="is_always_remux_regular_downloads">Always remux all regular downloads</string>
     <string name="is_remux_only_live_regular_downloads">Remux only live regular downloads</string>
+    <string name="is_interrupt_intrecepted_resources">Interrupt intrecepted media content for browser</string>
 </resources>

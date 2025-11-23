@@ -92,7 +92,7 @@ class YoutubeDlpFfmpegProcessor private constructor() {
 
                     if (line.contains("[ffmpeg] Deleting original file") || line.contains("already is in target format") || line.contains(
                             "[ExtractAudio] Destination:"
-                        )
+                        ) || line.contains("[download] 100% of")
                     ) {
                         processingSuccess = true
                         onProgress(100)

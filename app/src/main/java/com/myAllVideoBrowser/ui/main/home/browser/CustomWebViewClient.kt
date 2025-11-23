@@ -124,7 +124,7 @@ class CustomWebViewClient(
 
             val contentType =
                 VideoUtils.getContentTypeByUrl(url, requestWithCookies?.headers, okHttpProxyClient)
-            val isInterruptIntreceptedResources = false
+            val isInterruptIntreceptedResources = true
             when {
 
                 contentType == ContentType.M3U8 || contentType == ContentType.MPD || url.contains(".m3u8") || url.contains(

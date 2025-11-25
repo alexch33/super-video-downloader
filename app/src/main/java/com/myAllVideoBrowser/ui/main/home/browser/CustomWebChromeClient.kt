@@ -54,7 +54,7 @@ class CustomWebChromeClient(
                 WebTab(
                     webview = transport.webView,
                     resultMsg = resultMsg,
-                    url = "url",
+                    url = url,
                     title = view.title,
                     iconBytes = null
                 )

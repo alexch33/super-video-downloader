@@ -26,8 +26,6 @@ to [@cuongpm](https://github.com/cuongpm), [@yausername](https://github.com/yaus
 
 Inspired from [cuongpm/youtube-dl-android](https://github.com/cuongpm/youtube-dl-android)
 
-Support for project are welcome:) BTC wallet: [bc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fj](bitcoin:BC1Q97XGWURJF2P5AT9KZM96FKXYMF3RH6GFMFQ8FJ)
-
 ## Screenshots
 
 <img src="screenshots/screenshot_1.png" width="170"> <img src="screenshots/screenshot_2.png" width="170"> <img src="screenshots/screenshot_3.png" width="170"> <img src="screenshots/screenshot_4.png" width="170">
@@ -47,10 +45,15 @@ Please help with translations using the [Weblate](https://toolate.othing.xyz/pro
 - Architecture: MVVM
 - Android architecture components: ViewModel, LiveData, Room
 - Dependency injection: Dagger2
-- Network: Retrofit, Okhttp
-- Testing: JUnit, Espresso, Mockito
+- Network: Okhttp
 - Data layer with repository pattern and Coroutines and RxJava
 
 ## License
 
 This package is licensed under the [LICENSE](./LICENSE) for details.
+
+## Donate
+You can support the project by donating to below address.
+| Type  | Address |
+| ------------- | ------------- |
+| <img src="https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" alt="Bitcoin" width="50"/>  | bc1qw3g7grh6dxk69mzwjmewanj9gj2ycc5mju5dc4  |

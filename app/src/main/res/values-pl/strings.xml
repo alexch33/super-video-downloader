@@ -1,3 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">SuperX</string>
+    <string name="browser_search_hint">Wyszukaj w DuckDuckGo lub wprowadź adres URL</string>
+    <string name="title_video">Wideo</string>
+    <string name="title_progress">Postęp</string>
+    <string name="title_settings">Ustawienia</string>
+    <string name="dialog_video_title">Znaleziono wideo:</string>
+    <string name="dialog_preview_video">Podgląd wideo</string>
+    <string name="dialog_download_cancel">Anuluj</string>
+    <string name="video_menu_delete">Usuń</string>
+    <string name="video_menu_share">Udostępnij</string>
+    <string name="settings_videos_folder">Folder wideo</string>
+    <string name="settings_clear_browser_cookies">Wyczyść pliki cookie przeglądarki</string>
+    <string name="progress_menu_cancel">Anuluj</string>
+    <string name="all_text_cancel">Anuluj</string>
+    <string name="progress_menu_pause">Wstrzymaj</string>
+    <string name="progress_menu_resume">Wznów</string>
+    <string name="download_link_label">Adres URL wideo</string>
+    <string name="paste">Wklej</string>
+    <string name="history">Historia</string>
+    <string name="share_link">Udostępnij link</string>
+    <string name="searchbar_hint">Szukaj</string>
+    <string name="settings">Ustawienia</string>
+    <string name="about_an_hour_ago">Około godzinę temu</string>
+    <string name="remove">Usuń</string>
+    <string name="dialog_download_video">Pobierz wideo</string>
+    <string name="bookmark">Zakładka</string>
+    <string name="bookmarks_list">Zakładki</string>
+    <string name="video_rename_invalid">Nieprawidłowa nazwa. Spróbuj ponownie!</string>
+    <string name="help">Pomoc</string>
+    <string name="ok">Ok</string>
+    <string name="dontshow">Nie pokazuj ponownie</string>
+    <string name="video_menu_open_with">Otwórz w…</string>
+    <string name="video_found">Znaleziono wideo</string>
+    <string name="new_tab">Nowa karta</string>
+    <string name="app_icon">Ikona aplikacji</string>
+    <string name="video_menu_rename">Zmień</string>
+    <string name="title">Tytuł</string>
+    <string name="save_proxy">Zapisz</string>
 </resources>

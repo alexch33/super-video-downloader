@@ -213,7 +213,6 @@
                 app:layout_constraintTop_toBottomOf="@+id/is_force_stream_detection" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
-                android:visibility="gone"
                 android:id="@+id/is_always_remux_regular_downloads"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -222,7 +221,6 @@
                 app:layout_constraintTop_toBottomOf="@+id/is_force_stream_downloading" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
-                android:visibility="gone"
                 android:id="@+id/is_remux_only_live_regular_downloads"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

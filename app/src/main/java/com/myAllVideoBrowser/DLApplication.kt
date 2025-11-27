@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser
 
+import myproxy.Myproxy
 import android.content.Context
 import androidx.work.Configuration
 import androidx.work.WorkManager
@@ -74,6 +75,8 @@ open class DLApplication : DaggerApplication() {
             initializeYoutubeDl()
             updateYoutubeDL()
         }
+
+        Myproxy.start("127.0.0.1:8081")
     }
 
     private fun initializeFileUtils() {

@@ -1,0 +1,5 @@
+cd GO_PROXY/myproxy
+
+gomobile init
+
+gomobile bind -target=android -o ../../app/libs/myproxy.aar .

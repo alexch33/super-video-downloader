@@ -76,6 +76,14 @@ open class DLApplication : DaggerApplication() {
             updateYoutubeDL()
         }
 
+        Myproxy.setUpstreams(
+            listOf("http://10.0.2.2:2080").joinToString(",")
+        )
+
+        // Set adblocked hosts from SQLite
+        val hosts = listOf("imdb.com").joinToString(",")
+        Myproxy.setBlockedHosts(hosts)
+
         Myproxy.start("127.0.0.1:8081")
     }
 

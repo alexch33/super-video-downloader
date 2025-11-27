@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.Message
 import android.view.View
 import android.view.WindowManager
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import com.myAllVideoBrowser.R
@@ -32,7 +33,6 @@ class CustomWebChromeClient(
         isUserGesture: Boolean,
         resultMsg: Message?
     ): Boolean {
-
         if (view != null && view.handler != null) {
             val href = view.handler.obtainMessage()
             view.requestFocusNodeHref(href)
@@ -54,7 +54,7 @@ class CustomWebChromeClient(
                 WebTab(
                     webview = transport.webView,
                     resultMsg = resultMsg,
-                    url = "url",
+                    url = url,
                     title = view.title,
                     iconBytes = null
                 )

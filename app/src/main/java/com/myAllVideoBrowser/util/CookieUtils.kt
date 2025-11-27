@@ -310,7 +310,8 @@ class ChromeBrowser : Browser() {
      */
 
     fun getCookiesNetscapeForDomain(domain: String?, cookiesStore: File): String {
-        val dm: String = domain?.let { InternetDomainName.from(it).topPrivateDomain().toString() }.toString()
+        val dm: String =
+            domain?.let { InternetDomainName.from(it).topPrivateDomain().toString() }.toString()
 
         return processCookiesToNetscape(cookiesStore, dm)
     }
@@ -333,23 +334,36 @@ class ChromeBrowser : Browser() {
             file.copyTo(cookieStoreCopy, overwrite = true)
 
             try {
-                SQLiteDatabase.openDatabase(cookieStoreCopy.absolutePath, null, 0).use { db ->
-                    val cursor = db.rawQuery(
-                        "SELECT * FROM cookies ${if (domainFilter.isNullOrEmpty()) "" else "WHERE host_key LIKE '%$domainFilter%'"}",
-                        null
-                    )
-                    cursor.use {
-                        while (it.moveToNext()) {
-                            val cookieData = extractCookieData(it)
-                            netscapeCookieFile.appendLine(formatCookieLine(cookieData))
+                SQLiteDatabase.openDatabase(
+                    cookieStoreCopy.absolutePath,
+                    null,
+                    SQLiteDatabase.OPEN_READONLY
+                ).use { db ->
+
+                    val query = if (domainFilter.isNullOrEmpty()) {
+                        "SELECT * FROM cookies"
+                    } else {
+                        "SELECT * FROM cookies WHERE host_key LIKE ?"
+                    }
+
+                    val args =
+                        if (domainFilter.isNullOrEmpty()) null else arrayOf("%$domainFilter%")
+
+                    db.rawQuery(query, args).use { cursor ->
+                        if (cursor.moveToFirst()) {
+                            do {
+                                val cookieData = extractCookieData(cursor)
+                                netscapeCookieFile.appendLine(formatCookieLine(cookieData))
+                            } while (cursor.moveToNext())
                         }
                     }
                 }
             } catch (e: Exception) {
-                AppLogger.d(e.toString())
-                e.printStackTrace()
+                AppLogger.d("Cookie extraction error: ${e.message}")
             } finally {
-                cookieStoreCopy.delete()
+                if (!cookieStoreCopy.delete()) {
+                    AppLogger.d("Warning: failed to delete temp cookie file")
+                }
             }
         }
 
@@ -400,7 +414,7 @@ class ChromeBrowser : Browser() {
      * @return
      */
     protected override fun decrypt(encryptedCookie: EncryptedCookie?): DecryptedCookie? {
-       return null
+        return null
     }
 
     companion object {

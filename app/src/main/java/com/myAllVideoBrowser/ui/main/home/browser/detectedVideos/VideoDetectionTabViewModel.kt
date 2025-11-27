@@ -73,7 +73,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
     val detectedVideosList = ObservableField(setOf<VideoInfo>())
 
     val filterRegex =
-        Regex("^(.*\\.(apk|html|xml|ico|css|js|png|gif|json|jpg|jpeg|svg|woff|woff2|m3u8|mpd|ts|php|ttf|otf|eot|cur|webp|bmp|tif|tiff|psd|ai|eps|pdf|doc|docx|xls|xlsx|ppt|pptx|csv|md|rtf|vtt|srt|swf|jar|log|txt))?$")
+        Regex("^(.*\\.(apk|html|xml|ico|css|js|png|gif|json|jpg|jpeg|svg|woff|woff2|m3u8|mpd|ts|php|ttf|otf|eot|cur|webp|bmp|tif|tiff|psd|ai|eps|pdf|doc|docx|xls|xlsx|ppt|pptx|csv|md|rtf|vtt|srt|swf|jar|log|txt|m4s))?$")
     val downloadButtonIcon = ObservableInt(R.drawable.invisible_24px)
 
     @Volatile
@@ -483,28 +483,36 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
 
                 val isTikTok = url.contains(".tiktok.com/")
-                when {
-                    contentType.contains(
-                        "video",
-                        true
-                    ) && isCheckOnVideo && (contentLength > threshold || (isTikTok && contentLength > 1024 * 1024 / 3)) -> {
-                        setMediaInfoWrapperFromUrl(
-                            finalUrlPair.first,
-                            webTabModel?.getTabTextInput()?.get(),
-                            finalUrlPair.second.toMap(),
-                            contentLength
-                        )
-                    }
+                val isRegularStreamDetectionOn = settingsModel.isForceStreamDetection.get()
 
-                    contentType.contains("audio", true) && isCheckOnAudio -> {
-                        setMediaInfoWrapperFromUrl(
-                            finalUrlPair.first,
-                            webTabModel?.getTabTextInput()?.get(),
-                            finalUrlPair.second.toMap(),
-                            contentLength,
-                            true
-                        )
-                    }
+                val isVideo = contentType.contains("video", true)
+                val isAudio = contentType.contains("audio", true)
+
+                val tikTokThreshold = 1024 * 1024 / 3 // ~333KB
+                val isLargeEnoughForTikTok = isTikTok && contentLength > tikTokThreshold
+                val isAboveUserThreshold = contentLength > threshold
+                val isStreamDetectionOn = isRegularStreamDetectionOn
+
+                val isVideoContent = isVideo && isCheckOnVideo &&
+                        (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)
+
+                val isAudioContent = isAudio && isCheckOnAudio
+
+                if (isVideoContent) {
+                    setMediaInfoWrapperFromUrl(
+                        finalUrlPair.first,
+                        webTabModel?.getTabTextInput()?.get(),
+                        finalUrlPair.second.toMap(),
+                        contentLength
+                    )
+                } else if (isAudioContent) {
+                    setMediaInfoWrapperFromUrl(
+                        finalUrlPair.first,
+                        webTabModel?.getTabTextInput()?.get(),
+                        finalUrlPair.second.toMap(),
+                        contentLength,
+                        isAudio = true
+                    )
                 }
             }
         }.onFailure { e ->

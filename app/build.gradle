@@ -64,8 +64,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 65
-        versionName "0.6.5"
+        versionCode 70
+        versionName "0.6.6"
         testInstrumentationRunner "util.TestRunner"
 
         if (splitApks) {
@@ -179,29 +179,29 @@ dependencies {
 
     // Life cycle
     implementation deps.lifecycle.extensions
-    implementation 'androidx.lifecycle:lifecycle-common-java8:2.9.4'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.9.4'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.10.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.10.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0'
     testImplementation 'androidx.arch.core:core-testing:2.2.0'
     androidTestImplementation 'androidx.arch.core:core-testing:2.2.0'
 
     // Room
 
-    implementation('androidx.room:room-runtime:2.8.3')
+    implementation('androidx.room:room-runtime:2.8.4')
 
-    ksp 'androidx.room:room-compiler:2.8.3'
+    ksp 'androidx.room:room-compiler:2.8.4'
 
     // optional - Kotlin Extensions and Coroutines support for Room
-    implementation('androidx.room:room-ktx:2.8.3')
+    implementation('androidx.room:room-ktx:2.8.4')
 
     // optional - RxJava3 support for Room
-    implementation('androidx.room:room-rxjava3:2.8.3')
+    implementation('androidx.room:room-rxjava3:2.8.4')
 
     // optional - Guava support for Room, including Optional and ListenableFuture
-    implementation('androidx.room:room-guava:2.8.3')
+    implementation('androidx.room:room-guava:2.8.4')
 
     // optional - Test helpers
-    testImplementation('androidx.room:room-testing:2.8.3')
+    testImplementation('androidx.room:room-testing:2.8.4')
 
     // Dagger2
     implementation deps.dagger.runtime
@@ -223,8 +223,8 @@ dependencies {
     // (see https://github.com/ReactiveX/RxJava/releases for latest 3.x.x version)
     implementation 'io.reactivex.rxjava3:rxjava:3.1.12'
 
-    implementation('io.github.junkfood02.youtubedl-android:library:0.18.0')
-    implementation('io.github.junkfood02.youtubedl-android:ffmpeg:0.18.0')
+    implementation('io.github.junkfood02.youtubedl-android:library:0.18.1')
+    implementation('io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1')
 
     implementation 'com.github.bumptech.glide:glide:5.0.5'
 
@@ -272,7 +272,7 @@ dependencies {
 
     // https://firebase.google.com/docs/android/setup#available-libraries
 
-    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'androidx.core:core-splashscreen:1.2.0'
 }
 
 ksp {

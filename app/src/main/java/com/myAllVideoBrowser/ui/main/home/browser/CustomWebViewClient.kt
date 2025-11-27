@@ -82,12 +82,17 @@ class CustomWebViewClient(
         super.doUpdateVisitedHistory(view, url, isReload)
     }
 
-    // TODO handle for proxy and others
     override fun onReceivedHttpAuthRequest(
         view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?
     ) {
-        val creds = proxyController.getProxyCredentials()
-        handler?.proceed(creds.first, creds.second)
+        if (proxyController.getCurrentRunningProxy().host == host) {
+            val creds = proxyController.getProxyCredentials()
+
+            if (creds.first.isNotEmpty() || creds.second.isNotEmpty()) {
+                handler?.proceed(creds.first, creds.second)
+            }
+        }
+        super.onReceivedHttpAuthRequest(view, handler, host, realm)
     }
 
     override fun shouldInterceptRequest(
@@ -119,7 +124,7 @@ class CustomWebViewClient(
 
             val contentType =
                 VideoUtils.getContentTypeByUrl(url, requestWithCookies?.headers, okHttpProxyClient)
-
+            val isInterruptIntreceptedResources = settingsModel.isInterruptIntreceptedResources.get()
             when {
 
                 contentType == ContentType.M3U8 || contentType == ContentType.MPD || url.contains(".m3u8") || url.contains(
@@ -129,6 +134,9 @@ class CustomWebViewClient(
                         videoDetectionModel.verifyLinkStatus(
                             requestWithCookies, tabViewModel.currentTitle.get(), true
                         )
+                    }
+                    if (isInterruptIntreceptedResources) {
+                        return AdBlockerHelper.createEmptyResource()
                     }
                 }
 
@@ -153,6 +161,9 @@ class CustomWebViewClient(
                             overall.addAll(regularJobsStorage[currentUrl]?.toList() ?: emptyList())
                             overall.add(disposable)
                             regularJobsStorage[currentUrl] = overall
+                        }
+                        if (isInterruptIntreceptedResources) {
+                            return AdBlockerHelper.createEmptyResource()
                         }
                     }
                 }
@@ -186,7 +197,6 @@ class CustomWebViewClient(
     override fun shouldOverrideUrlLoading(view: WebView, url: WebResourceRequest): Boolean {
         val isAdBlockerOn = settingsModel.isAdBlocker.get()
         val isAd = if (isAdBlockerOn) tabViewModel.isAd(url.url.toString()) else false
-
         return if (url.url.toString().startsWith("http") && url.isForMainFrame && !isAd) {
             if (!tabViewModel.isTabInputFocused.get()) {
                 tabViewModel.setTabTextInput(url.url.toString())

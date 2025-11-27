@@ -65,6 +65,15 @@ class SettingsFragment : BaseFragment() {
         dataBinding = FragmentSettingsBinding.inflate(inflater, container, false).apply {
             this.settingsBackground.setBackgroundColor(color)
             this.viewModel = settingsViewModel
+            this.isForceStreamDetection.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setForceStreamDetection(checked)
+                if (checked) {
+                    settingsViewModel.setRegularThreadsCount(1)
+                }
+            }
+            this.isForceStreamDownloading.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setForceStreamDownloading(checked)
+            }
             this.isAutoThemeCheckBox.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsAutoTheme(checked)
             }
@@ -97,6 +106,24 @@ class SettingsFragment : BaseFragment() {
 
             this.isCheckEveryRequestOnM3u8.setOnCheckedChangeListener { _, checked ->
                 settingsViewModel.setIsCheckIfEveryUrlOnM3u8(checked)
+            }
+
+            this.isRemuxOnlyLiveRegularDownloads.setOnCheckedChangeListener { _, checked ->
+                if (!checked) {
+                    settingsViewModel.setIsRemuxOnlyRegularDownloads(false)
+                }
+                settingsViewModel.setIsRemuxOnlyLiveRegularDownloads(checked)
+            }
+
+            this.isAlwaysRemuxRegularDownloads.setOnCheckedChangeListener { _, checked ->
+                if (checked) {
+                    settingsViewModel.setIsRemuxOnlyLiveRegularDownloads(true)
+                }
+                settingsViewModel.setIsRemuxOnlyRegularDownloads(checked)
+            }
+
+            this.isInterruptIntreceptedResources.setOnCheckedChangeListener { _, checked ->
+                settingsViewModel.setIsInterruptInterceptedResources(checked)
             }
 
             this.seekBarM3u8.progress = settingsViewModel.m3u8ThreadsCount.get()

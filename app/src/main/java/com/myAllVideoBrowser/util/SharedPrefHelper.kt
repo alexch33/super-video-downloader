@@ -38,6 +38,15 @@ class SharedPrefHelper @Inject constructor(
         private const val IS_CHECK_EVERY_ON_M3U8 = "IS_CHECK_EVERY_ON_M3U8"
         private const val IS_AUTO_THEME = "IS_AUTO_THEME"
         private const val IS_CHECK_ON_AUDIO = "IS_CHECK_ON_AUDIO"
+        private const val IS_FORCE_STREAM_DOWNLOAD = "IS_FORCE_STREAM_DOWNLOAD"
+
+        private const val IS_FORCE_STREAM_DETECTION = "IS_FORCE_STREAM_DETECTION"
+
+        private const val IS_PROCESS_DOWNLOAD_FFMPEG = "IS_PROCESS_DOWNLOAD_FFMPEG"
+        private const val IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG =
+            "IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG"
+        private const val IS_INTERRUPT_INTERCEPTED_RESOURCES =
+            "IS_INTERRUPT_INTERCEPTED_RESOURCES"
     }
 
     private val gson = Gson()
@@ -316,5 +325,60 @@ class SharedPrefHelper @Inject constructor(
             it.putBoolean(IS_CHECK_ON_AUDIO, isCheck)
             it.apply()
         }
+    }
+
+    fun getIsForceStreamDownload(): Boolean {
+        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DOWNLOAD, false)
+    }
+
+    fun setIsForceStreamDownload(isForce: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_FORCE_STREAM_DOWNLOAD, isForce)
+            it.apply()
+        }
+    }
+
+    fun getIsForceStreamDetection(): Boolean {
+        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DOWNLOAD, false)
+    }
+
+    fun setIsForceStreamDetection(isForce: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_FORCE_STREAM_DETECTION, isForce)
+            it.apply()
+        }
+    }
+
+    fun getIsProcessDownloadFfmpeg(): Boolean {
+        return sharedPreferences.getBoolean(IS_PROCESS_DOWNLOAD_FFMPEG, false)
+    }
+
+    fun setIsProcessDownloadFfmpeg(isProcessFfmpeg: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_PROCESS_DOWNLOAD_FFMPEG, isProcessFfmpeg)
+            it.apply()
+        }
+    }
+
+    fun getIsProcessOnlyLiveDownloadFfmpeg(): Boolean {
+        return sharedPreferences.getBoolean(IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG, false)
+    }
+
+    fun setIsProcessOnlyLiveDownloadFfmpeg(isProcessFfmpeg: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG, isProcessFfmpeg)
+            it.apply()
+        }
+    }
+
+    fun setIsInterruptInterceptedResources(isTurnedOn: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_INTERRUPT_INTERCEPTED_RESOURCES, isTurnedOn)
+            it.apply()
+        }
+    }
+
+    fun getIsInterruptInterceptedResources(): Boolean {
+        return sharedPreferences.getBoolean(IS_INTERRUPT_INTERCEPTED_RESOURCES, false)
     }
 }

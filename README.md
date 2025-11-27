@@ -56,4 +56,4 @@ This package is licensed under the [LICENSE](./LICENSE) for details.
 You can support the project by donating to below address.
 | Type  | Address |
 | ------------- | ------------- |
-| <img src="https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" alt="Bitcoin" width="50"/>  | bc1qw3g7grh6dxk69mzwjmewanj9gj2ycc5mju5dc4  |
+| <img src="https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" alt="Bitcoin" width="50"/>  | bc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fj  |

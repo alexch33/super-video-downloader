@@ -25,9 +25,7 @@ var rr uint32 = 0
 var blockedHosts = make(map[string]bool)
 var blockedLock sync.RWMutex
 
-// =========================================================
-//                    EXPORTED API
-// =========================================================
+// ===================== EXPORTED API =====================
 
 // SetUpstreams accepts comma or newline separated upstream URLs
 func SetUpstreams(list string) {
@@ -37,22 +35,22 @@ func SetUpstreams(list string) {
 	splitter := func(c rune) bool { return c == ',' || c == '\n' }
 	rawEntries := strings.FieldsFunc(list, splitter)
 
-	filteredUpstream := make([]string, 0, len(rawEntries))
+	filtered := make([]string, 0, len(rawEntries))
 	for _, entry := range rawEntries {
 		trimmed := strings.TrimSpace(entry)
 		if trimmed != "" {
 			if _, err := url.Parse(trimmed); err == nil {
-				filteredUpstream = append(filteredUpstream, trimmed)
+				filtered = append(filtered, trimmed)
 			} else {
-				log.Printf("Invalid proxy URL format, skipping: %s", trimmed)
+				log.Printf("[SetUpstreams] Invalid URL, skipped: %s", trimmed)
 			}
 		}
 	}
-	upstream = filteredUpstream
-	log.Printf("[SetUpstreams] Updated upstream proxies. Count: %d, List: %v", len(upstream), upstream)
+	upstream = filtered
+	log.Printf("[SetUpstreams] Updated upstreams: %v", upstream)
 }
 
-// SetBlockedHosts accepts comma or newline separated hosts/patterns
+// SetBlockedHosts accepts comma or newline separated hosts or domains
 func SetBlockedHosts(list string) {
 	blockedLock.Lock()
 	defer blockedLock.Unlock()
@@ -67,28 +65,30 @@ func SetBlockedHosts(list string) {
 			blockedHosts[trimmed] = true
 		}
 	}
-
-	log.Printf("[SetBlockedHosts] Updated blocked hosts. Count: %d, List: %v", len(blockedHosts), blockedHosts)
+	log.Printf("[SetBlockedHosts] Updated blocked hosts: %v", blockedHosts)
 }
 
 // Start the proxy server
 func Start(addr string) {
 	go func() {
 		log.Println("[Proxy] Listening on:", addr)
-		err := http.ListenAndServe(addr, http.HandlerFunc(handler))
-		if err != nil {
-			log.Println("[Proxy] Error:", err)
+		if err := http.ListenAndServe(addr, http.HandlerFunc(handler)); err != nil {
+			log.Println("[Proxy] Server error:", err)
 		}
 	}()
 }
 
-// =========================================================
-//                    MAIN HANDLER
-// =========================================================
+// ===================== MAIN HANDLER =====================
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	// Remove Chrome/WebView X-Requested-With
+	// Remove X-Requested-With header
 	r.Header.Del("X-Requested-With")
+
+	// Anti-DNS rebinding check
+	if err := checkDNSRebinding(r.Host); err != nil {
+		http.Error(w, err.Error(), 403)
+		return
+	}
 
 	// Adblock check
 	if isBlocked(r.Host) {
@@ -103,20 +103,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// HTTP request
-	err := forwardViaChainOrDirect(w, r)
-	if err != nil {
+	if err := forwardViaChainOrDirect(w, r); err != nil {
 		http.Error(w, err.Error(), 502)
 	}
 }
 
-// =========================================================
-//                         ADBLOCK
-// =========================================================
+// ===================== ADBLOCK =====================
 
 func isBlocked(host string) bool {
-	host = strings.ToLower(host)
-	parts := strings.Split(host, ":")
-	host = parts[0]
+	host = strings.ToLower(strings.Split(host, ":")[0])
 
 	blockedLock.RLock()
 	defer blockedLock.RUnlock()
@@ -130,17 +125,38 @@ func isBlocked(host string) bool {
 			return true
 		}
 	}
-
 	return false
 }
 
-// =========================================================
-//                     CONNECT (HTTPS)
-// =========================================================
+// ===================== ANTI-DNS-REBIND =====================
+
+func checkDNSRebinding(host string) error {
+	hostOnly := strings.Split(host, ":")[0]
+	ips, err := net.LookupIP(hostOnly)
+	if err != nil {
+		return err
+	}
+
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			log.Printf("[DNS-Rebind] Blocked host %s -> %s", host, ip.String())
+			return errors.New("blocked by DNS rebind protection")
+		}
+		if ip4 := ip.To4(); ip4 != nil {
+			if ip4[0] == 10 || (ip4[0] == 172 && ip4[1]&0xf0 == 16) || (ip4[0] == 192 && ip4[1] == 168) {
+				log.Printf("[DNS-Rebind] Blocked host %s -> %s", host, ip.String())
+				return errors.New("blocked by DNS rebind protection")
+			}
+		}
+	}
+	return nil
+}
+
+// ===================== CONNECT (HTTPS) =====================
 
 func handleConnect(w http.ResponseWriter, r *http.Request) {
 	upstreamURL, err := pickUpstreamURL()
-	directMode := err != nil // if no upstreams, we go direct
+	directMode := err != nil
 
 	var conn net.Conn
 	if directMode {
@@ -186,13 +202,11 @@ func handleConnect(w http.ResponseWriter, r *http.Request) {
 	go io.Copy(clientConn, conn)
 }
 
-// =========================================================
-//                   HTTP FORWARDING (CHAIN OR DIRECT)
-// =========================================================
+// ===================== HTTP FORWARDING =====================
 
 func forwardViaChainOrDirect(w http.ResponseWriter, r *http.Request) error {
 	upstreamURL, err := pickUpstreamURL()
-	directMode := err != nil // no upstreams, direct connection
+	directMode := err != nil
 
 	transport := &http.Transport{
 		DisableCompression: false,
@@ -226,9 +240,7 @@ func forwardViaChainOrDirect(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// =========================================================
-//                        FAILOVER
-// =========================================================
+// ===================== FAILOVER =====================
 
 func failover(w http.ResponseWriter, r *http.Request, originalErr error) error {
 	upstreamLock.RLock()
@@ -257,16 +269,14 @@ func failover(w http.ResponseWriter, r *http.Request, originalErr error) error {
 	return errors.New("all upstream proxies failed: " + originalErr.Error())
 }
 
-// =========================================================
-//                    ROUND ROBIN PICKER
-// =========================================================
+// ===================== ROUND-ROBIN PICKER =====================
 
 func pickUpstreamURL() (*url.URL, error) {
 	upstreamLock.RLock()
 	defer upstreamLock.RUnlock()
 
 	if len(upstream) == 0 {
-		return nil, errors.New("no upstream proxies")
+		return nil, errors.New("no upstream proxies configured")
 	}
 
 	i := atomic.AddUint32(&rr, 1)

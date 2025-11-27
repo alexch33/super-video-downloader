@@ -64,9 +64,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 70
+        versionCode 75
         versionName "0.6.6"
-        testInstrumentationRunner "util.TestRunner"
 
         if (splitApks) {
             splits {
@@ -85,8 +84,8 @@ android {
         debug {
             minifyEnabled false
             shrinkResources false
-            enableUnitTestCoverage true
-            enableAndroidTestCoverage true
+            enableUnitTestCoverage false
+            enableAndroidTestCoverage false
         }
         release {
             signingConfig signingConfigs.release
@@ -284,37 +283,4 @@ ksp {
 tasks.coveralls {
     dependsOn 'check'
     onlyIf { System.getenv("COVERALLS_REPO_TOKEN") }
-}
-
-tasks.register('jacocoTestReport', JacocoReport) {
-    dependsOn 'testDebugUnitTest'
-    group = 'Reporting'
-    description = 'Generate Jacoco coverage reports after running tests.'
-
-    reports {
-        xml.enabled = true
-        html.enabled = true
-    }
-
-    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*',
-                      '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*',
-
-                      '**/Lambda$*.class', '**/Lambda.class', '**/*Lambda.class',
-                      '**/*Lambda*.class', '**/*Builder.*',
-
-                      '**/*_Injector.class', '**/*_Injector*.*', '**/*_*Factory*.*',
-                      '**/*Component*.*', '**/*Module*.*',
-
-                      '**/component/widget/*.*', '**/component/binding/*.*', '**/util/ext/*.*',
-                      '**/util/scheduler/*.*', '**/util/fragment/*.*', '**/DLApplication.*',
-                      '**/ViewModelFactory.*', '**/RoomConverter.*', '**/AppDatabase.*']
-
-    def javaClasses = fileTree(dir: "$getLayout().getBuildDirectory()/intermediates/javac/debug", excludes: fileFilter)
-    def kotlinClasses = fileTree(dir: "$getLayout().getBuildDirectory()/tmp/kotlin-classes/debug", excludes: fileFilter)
-
-    sourceDirectories.from files(android.sourceSets.main.java.srcDirs)
-    classDirectories.from files([javaClasses, kotlinClasses])
-    executionData.from fileTree(dir: getLayout().getBuildDirectory(), includes: [
-            'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
-    ])
 }

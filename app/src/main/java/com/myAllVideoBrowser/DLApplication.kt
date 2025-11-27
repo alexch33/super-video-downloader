@@ -19,6 +19,7 @@ import io.reactivex.rxjava3.plugins.RxJavaPlugins
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import myproxy.Myproxy.DNS_MODE_OFF
 import java.io.File
 import javax.inject.Inject
 
@@ -67,24 +68,25 @@ open class DLApplication : DaggerApplication() {
             AppLogger.e("RxJavaError unhandled $error")
         }
 
-        CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             if (!file.exists()) {
                 file.mkdirs()
             }
 
             initializeYoutubeDl()
             updateYoutubeDL()
+
+            Myproxy.setDNSMode(DNS_MODE_OFF) // AUTO
+//          Myproxy.setDoHServers("https://cloudflare-dns.com/dns-query")
+//          Myproxy.setDoTServers("1.1.1.1:853,dns.google:853")
+            Myproxy.setUpstreams(
+                listOf("http://10.0.2.2:2080").joinToString(",")
+            )
+
+            Myproxy.loadAdblockRules("@@good.com\n||ads.com\n||tracker.com\n||imdb.com")
+
+            Myproxy.start("127.0.0.1:8081")
         }
-
-        Myproxy.setUpstreams(
-            listOf("http://10.0.2.2:2080").joinToString(",")
-        )
-
-        // Set adblocked hosts from SQLite
-        val hosts = listOf("imdb.com").joinToString(",")
-        Myproxy.setBlockedHosts(hosts)
-
-        Myproxy.start("127.0.0.1:8081")
     }
 
     private fun initializeFileUtils() {

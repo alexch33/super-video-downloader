@@ -1,4 +1,3 @@
-// myproxy.go
 package myproxy
 
 import (
@@ -20,7 +19,6 @@ import (
 	"time"
 
 	socks5 "golang.org/x/net/proxy"
-	dnsmsg "github.com/miekg/dns"
 )
 
 /* ============================================================
@@ -29,11 +27,10 @@ import (
 
 const (
 	// DNS modes
-	DNS_MODE_OFF        = 0  // Use system DNS, no custom handling
-	DNS_MODE_DOH        = 1  // Use DoH only
-	DNS_MODE_DOT        = 2  // Use DoT only
-	DNS_MODE_AUTO       = 3  // Try DoH, then DoT, then system
-	DNS_MODE_SYSTEM_ONLY = 4 // Use system DNS only (no custom resolution)
+	DNS_MODE_OFF         = 0 // No DNS handling - regular HTTP proxy
+	DNS_MODE_SYSTEM_ONLY = 1 // Use system DNS only
+	DNS_MODE_PROXY_ONLY  = 2 // Use DNS through proxy when available, system when no proxy
+	DNS_MODE_ALWAYS      = 3 // Always use DNS (through proxy if available, direct if not)
 
 	// Timeouts & limits
 	defaultDialTimeout       = 10 * time.Second
@@ -52,7 +49,7 @@ const (
    ============================================================ */
 
 var (
-	dnsMode     = DNS_MODE_AUTO
+	dnsMode     = DNS_MODE_PROXY_ONLY // Default: DNS through proxy when available
 	dnsModeLock sync.RWMutex
 
 	upstreams     []string
@@ -87,9 +84,9 @@ var (
 		KeepAlive: 30 * time.Second,
 	}
 
-	// Flag to control whether we do DNS resolution at all
-	disableDNSHandling     = false
-	disableDNSHandlingLock sync.RWMutex
+	// HTTP client for DNS queries through proxy
+	dnsHTTPClient     *http.Client
+	dnsHTTPClientLock sync.RWMutex
 )
 
 /* ============================================================
@@ -176,29 +173,25 @@ type dnsCacheItem struct {
    Public API (gomobile exports)
    ============================================================ */
 
-// SetDNSMode(mode int): DNS_MODE_OFF / DNS_MODE_DOH / DNS_MODE_DOT / DNS_MODE_AUTO / DNS_MODE_SYSTEM_ONLY
+// SetDNSMode(mode int): DNS_MODE_OFF / DNS_MODE_SYSTEM_ONLY / DNS_MODE_PROXY_ONLY / DNS_MODE_ALWAYS
 func SetDNSMode(mode int) {
-	if mode < DNS_MODE_OFF || mode > DNS_MODE_SYSTEM_ONLY {
+	if mode < DNS_MODE_OFF || mode > DNS_MODE_ALWAYS {
 		return
 	}
 	dnsModeLock.Lock()
 	dnsMode = mode
 	dnsModeLock.Unlock()
 
-	// Clear DNS cache when mode changes
+	// Clear DNS cache and HTTP client when mode changes
 	dnsCacheLock.Lock()
 	dnsCache = make(map[string]dnsCacheItem)
 	dnsCacheLock.Unlock()
 
-	log.Println("[proxy] SetDNSMode:", mode)
-}
+	dnsHTTPClientLock.Lock()
+	dnsHTTPClient = nil
+	dnsHTTPClientLock.Unlock()
 
-// SetDNSHandling(enable bool): enable or disable DNS handling entirely
-func SetDNSHandling(enable bool) {
-	disableDNSHandlingLock.Lock()
-	disableDNSHandling = !enable
-	disableDNSHandlingLock.Unlock()
-	log.Println("[proxy] SetDNSHandling:", enable)
+	log.Println("[proxy] SetDNSMode:", mode)
 }
 
 // SetUpstreams(list string): comma or newline separated upstreams.
@@ -224,6 +217,12 @@ func SetUpstreams(list string) {
 			log.Printf("[SetUpstreams] unsupported scheme ignored: %q", p)
 		}
 	}
+
+	// Reset DNS HTTP client when upstreams change
+	dnsHTTPClientLock.Lock()
+	dnsHTTPClient = nil
+	dnsHTTPClientLock.Unlock()
+
 	log.Println("[proxy] Upstreams:", upstreams)
 }
 
@@ -236,6 +235,12 @@ func SetDoHServers(list string) {
 	dohServersLock.Lock()
 	dohServers = parts
 	dohServersLock.Unlock()
+
+	// Reset DNS HTTP client when DoH servers change
+	dnsHTTPClientLock.Lock()
+	dnsHTTPClient = nil
+	dnsHTTPClientLock.Unlock()
+
 	log.Println("[proxy] DoH servers:", parts)
 }
 
@@ -345,20 +350,70 @@ func sanitizeRequestForUpstream(in *http.Request) *http.Request {
 }
 
 /* ============================================================
-   DNS resolution: system / DoH / DoT (miekg/dns) - NO LEAKS
+   DNS Resolution - SIMPLIFIED BEHAVIOR
    ============================================================ */
 
-func resolveHost(host string) []net.IP {
-	// Check if DNS handling is completely disabled
-	disableDNSHandlingLock.RLock()
-	if disableDNSHandling {
-		disableDNSHandlingLock.RUnlock()
-		return resolveSystem(host)
+// getDNSHTTPClient returns an HTTP client that uses the same proxy as traffic
+func getDNSHTTPClient() *http.Client {
+	dnsHTTPClientLock.RLock()
+	if dnsHTTPClient != nil {
+		defer dnsHTTPClientLock.RUnlock()
+		return dnsHTTPClient
 	}
-	disableDNSHandlingLock.RUnlock()
+	dnsHTTPClientLock.RUnlock()
 
+	// Create new client with proxy configuration
+	dnsHTTPClientLock.Lock()
+	defer dnsHTTPClientLock.Unlock()
+
+	// Double check after acquiring lock
+	if dnsHTTPClient != nil {
+		return dnsHTTPClient
+	}
+
+	tr := &http.Transport{
+		DialContext:         customDialer.DialContext,
+		TLSHandshakeTimeout: defaultTLSHandshakeTO,
+		IdleConnTimeout:     defaultIdleConnTimeout,
+	}
+
+	// Check if we have upstream proxies
+	upstreamsLock.RLock()
+	hasUpstream := len(upstreams) > 0
+	upstreamsLock.RUnlock()
+
+	if hasUpstream {
+		upstream := pickUpstream()
+		if upstream != nil {
+			switch strings.ToLower(upstream.Scheme) {
+			case "http", "https":
+				// Use HTTP proxy for DNS queries too
+				tr.Proxy = http.ProxyURL(upstream)
+				log.Printf("[DNS] Configured DNS to use HTTP proxy: %s", upstream.Host)
+			case "socks5":
+				// For SOCKS5, create a dialer that uses the proxy
+				dialer, err := socks5.SOCKS5("tcp", upstream.Host, nil, customDialer)
+				if err == nil {
+					tr.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+						return dialer.Dial(network, addr)
+					}
+					log.Printf("[DNS] Configured DNS to use SOCKS5 proxy: %s", upstream.Host)
+				}
+			}
+		}
+	}
+
+	dnsHTTPClient = &http.Client{
+		Transport: tr,
+		Timeout:   defaultDoHTimeout,
+	}
+
+	return dnsHTTPClient
+}
+
+func resolveHost(host string) []net.IP {
 	host = strings.ToLower(host)
-	// dns rebinding simple checks
+	// DNS rebinding simple checks
 	if strings.Contains(host, "..") || strings.Contains(host, "@") {
 		return nil
 	}
@@ -368,7 +423,7 @@ func resolveHost(host string) []net.IP {
 		return []net.IP{ip}
 	}
 
-	// cache
+	// Check cache first
 	dnsCacheLock.RLock()
 	item, ok := dnsCache[host]
 	if ok && time.Now().Before(item.TTL) {
@@ -378,45 +433,81 @@ func resolveHost(host string) []net.IP {
 	dnsCacheLock.RUnlock()
 
 	var ips []net.IP
+
 	dnsModeLock.RLock()
 	mode := dnsMode
 	dnsModeLock.RUnlock()
 
 	switch mode {
 	case DNS_MODE_OFF:
-		// Use system DNS but don't cache
-		return resolveSystem(host)
+		// No DNS handling - regular HTTP proxy behavior
+		// Let the system handle DNS normally
+		return nil
+
 	case DNS_MODE_SYSTEM_ONLY:
-		// Use system DNS with caching
+		// Always use system DNS
 		ips = resolveSystem(host)
-	case DNS_MODE_DOH:
-		ips, _ = resolveDoH(host)
-	case DNS_MODE_DOT:
-		ips, _ = resolveDoT(host)
-	case DNS_MODE_AUTO:
-		ips, _ = resolveDoH(host)
-		if len(ips) == 0 {
-			ips, _ = resolveDoT(host)
+
+	case DNS_MODE_PROXY_ONLY:
+		// Use DNS through proxy when available, system when no proxy
+		upstreamsLock.RLock()
+		hasUpstream := len(upstreams) > 0
+		upstreamsLock.RUnlock()
+
+		if hasUpstream {
+			// When using proxy, make DNS go through proxy too
+			ips, _ = resolveDoHProxyAware(host)
+			if len(ips) == 0 {
+				ips = resolveSystem(host)
+			}
+		} else {
+			// No proxy, use system DNS
+			ips = resolveSystem(host)
 		}
+
+	case DNS_MODE_ALWAYS:
+		// Always use DNS (through proxy if available, direct if not)
+		upstreamsLock.RLock()
+		hasUpstream := len(upstreams) > 0
+		upstreamsLock.RUnlock()
+
+		if hasUpstream {
+			// Try DNS through proxy first
+			ips, _ = resolveDoHProxyAware(host)
+		}
+
+		// If no proxy or proxy DNS failed, try direct DNS
+		if len(ips) == 0 {
+			ips, _ = resolveDoHDirect(host)
+		}
+
+		// Fallback to system DNS
 		if len(ips) == 0 {
 			ips = resolveSystem(host)
 		}
+
+	default:
+		ips = resolveSystem(host)
 	}
 
-	// Only cache if we're not in DNS_MODE_OFF and we got results
-	if mode != DNS_MODE_OFF && len(ips) > 0 {
+	// Cache the results if we got any
+	if len(ips) > 0 {
 		dnsCacheLock.Lock()
 		dnsCache[host] = dnsCacheItem{IPs: ips, TTL: time.Now().Add(defaultDNSCacheTTL)}
 		dnsCacheLock.Unlock()
 	}
+
 	return ips
 }
 
 func resolveSystem(host string) []net.IP {
+	// Use the system's DNS resolver
 	ips, err := net.LookupIP(host)
 	if err != nil {
+		log.Printf("[DNS] System resolution failed for %s: %v", host, err)
 		return nil
 	}
+
 	// Filter IPv4 addresses only for compatibility
 	var ipv4s []net.IP
 	for _, ip := range ips {
@@ -424,18 +515,23 @@ func resolveSystem(host string) []net.IP {
 			ipv4s = append(ipv4s, ip)
 		}
 	}
+
+	log.Printf("[DNS] System resolution for %s: %d IPs found", host, len(ipv4s))
 	return ipv4s
 }
 
-/* ---------------- DoH (JSON POST) ---------------- */
+/* ---------------- DoH with Proxy Support ---------------- */
 
-func resolveDoH(host string) ([]net.IP, error) {
+func resolveDoHProxyAware(host string) ([]net.IP, error) {
 	body := map[string]any{"name": host, "type": "A"}
 	b, _ := json.Marshal(body)
 
 	dohServersLock.RLock()
 	servers := append([]string{}, dohServers...)
 	dohServersLock.RUnlock()
+
+	// Get HTTP client that uses the same proxy as traffic
+	client := getDNSHTTPClient()
 
 	for _, s := range servers {
 		ctx, cancel := context.WithTimeout(context.Background(), defaultDoHTimeout)
@@ -448,21 +544,9 @@ func resolveDoH(host string) ([]net.IP, error) {
 		req.Header.Set("Content-Type", "application/dns-json")
 		req.Header.Set("Accept", "application/dns-json")
 
-		// Use custom transport that doesn't leak DNS
-		tr := &http.Transport{
-			DialContext: customDialer.DialContext,
-			TLSClientConfig: &tls.Config{
-				MinVersion: tls.VersionTLS12,
-			},
-		}
-		client := &http.Client{
-			Transport: tr,
-			Timeout:   defaultDoHTimeout,
-		}
-
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Printf("[DoH] %s failed: %v", s, err)
+			log.Printf("[DoH] %s failed via proxy: %v", s, err)
 			continue
 		}
 
@@ -491,60 +575,82 @@ func resolveDoH(host string) ([]net.IP, error) {
 			}
 		}
 		if len(ips) > 0 {
+			log.Printf("[DoH] Resolved %s via %s (through proxy): %d IPs", host, s, len(ips))
 			return ips, nil
 		}
 	}
-	return nil, errors.New("DoH failed")
+	return nil, errors.New("DoH via proxy failed")
 }
 
-/* ---------------- DoT using miekg/dns ---------------- */
+/* ---------------- DoH Direct (without proxy) ---------------- */
 
-func resolveDoT(host string) ([]net.IP, error) {
-	dotServersLock.RLock()
-	servers := append([]string{}, dotServers...)
-	dotServersLock.RUnlock()
+func resolveDoHDirect(host string) ([]net.IP, error) {
+	body := map[string]any{"name": host, "type": "A"}
+	b, _ := json.Marshal(body)
+
+	dohServersLock.RLock()
+	servers := append([]string{}, dohServers...)
+	dohServersLock.RUnlock()
 
 	for _, s := range servers {
-		// ensure host:port
-		addr := s
-		if !strings.Contains(s, ":") {
-			addr = s + ":853"
-		}
-
-		// Create DNS client with TLS
-		client := &dnsmsg.Client{
-			Net: "tcp-tls",
-			TLSConfig: &tls.Config{
-				ServerName:         strings.Split(addr, ":")[0],
-				InsecureSkipVerify: false,
-				MinVersion:         tls.VersionTLS12,
-			},
-			Timeout: defaultDoTTimeout,
-		}
-
-		m := new(dnsmsg.Msg)
-		m.SetQuestion(dnsmsg.Fqdn(host), dnsmsg.TypeA)
-
-		ctx, cancel := context.WithTimeout(context.Background(), defaultDoTTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), defaultDoHTimeout)
 		defer cancel()
 
-		in, _, err := client.ExchangeContext(ctx, m, addr)
-		if err != nil || in == nil {
-			log.Printf("[DoT] %s failed: %v", addr, err)
+		req, err := http.NewRequestWithContext(ctx, "POST", s, bytes.NewReader(b))
+		if err != nil {
+			continue
+		}
+		req.Header.Set("Content-Type", "application/dns-json")
+		req.Header.Set("Accept", "application/dns-json")
+
+		// Use direct transport (no proxy)
+		tr := &http.Transport{
+			DialContext: customDialer.DialContext,
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+			},
+		}
+		client := &http.Client{
+			Transport: tr,
+			Timeout:   defaultDoHTimeout,
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("[DoH] %s failed direct: %v", s, err)
+			continue
+		}
+
+		data, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			continue
+		}
+
+		var out struct {
+			Answer []struct {
+				Data string `json:"data"`
+				Type int    `json:"type"`
+			} `json:"Answer"`
+		}
+		if err := json.Unmarshal(data, &out); err != nil {
 			continue
 		}
 
 		var ips []net.IP
-		for _, ans := range in.Answer {
-			if a, ok := ans.(*dnsmsg.A); ok {
-				ips = append(ips, a.A)
+		for _, a := range out.Answer {
+			if a.Type == 1 { // A record
+				if ip := net.ParseIP(a.Data); ip != nil && ip.To4() != nil {
+					ips = append(ips, ip)
+				}
 			}
 		}
 		if len(ips) > 0 {
+			log.Printf("[DoH] Resolved %s via %s (direct): %d IPs", host, s, len(ips))
 			return ips, nil
 		}
 	}
-	return nil, errors.New("DoT failed")
+	return nil, errors.New("DoH direct failed")
 }
 
 /* ============================================================
@@ -565,17 +671,17 @@ func (d *dnsAwareDialer) DialContext(ctx context.Context, network, addr string) 
 		return nil, err
 	}
 
-	// Check if DNS handling is disabled - use system resolution directly
-	disableDNSHandlingLock.RLock()
-	if disableDNSHandling {
-		disableDNSHandlingLock.RUnlock()
-		return customDialer.DialContext(ctx, network, addr)
-	}
-	disableDNSHandlingLock.RUnlock()
-
 	// Resolve host using our DNS system
 	ips := resolveHost(host)
 	if len(ips) == 0 {
+		// If DNS_MODE_OFF, let system handle DNS normally
+		dnsModeLock.RLock()
+		mode := dnsMode
+		dnsModeLock.RUnlock()
+
+		if mode == DNS_MODE_OFF {
+			return customDialer.DialContext(ctx, network, addr)
+		}
 		return nil, fmt.Errorf("cannot resolve host: %s", host)
 	}
 
@@ -643,14 +749,16 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if DNS handling is disabled - skip DNS resolution for adblock only
-	disableDNSHandlingLock.RLock()
-	dnsDisabled := disableDNSHandling
-	disableDNSHandlingLock.RUnlock()
+	// DNS resolution based on mode
+	dnsModeLock.RLock()
+	mode := dnsMode
+	dnsModeLock.RUnlock()
 
-	// Only perform DNS resolution if not disabled
-	if !dnsDisabled {
-		// resolve host to ensure reachable via configured DNS
+	if mode == DNS_MODE_OFF {
+		// Regular HTTP proxy - no DNS handling, let system handle it
+		// Just proceed with normal proxy behavior
+	} else {
+		// Use our DNS system
 		ips := resolveHost(host)
 		if len(ips) == 0 {
 			http.Error(w, "DNS_FAIL", http.StatusBadGateway)
@@ -667,7 +775,7 @@ func proxyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 /* ============================================================
-   CONNECT handling (tunneling) - DNS LEAK FIXED
+   CONNECT handling (tunneling)
    ============================================================ */
 
 func handleConnect(w http.ResponseWriter, r *http.Request) {
@@ -684,17 +792,17 @@ func handleConnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if DNS handling is disabled
-	disableDNSHandlingLock.RLock()
-	dnsDisabled := disableDNSHandling
-	disableDNSHandlingLock.RUnlock()
+	// For CONNECT method, we need to resolve the target
+	dnsModeLock.RLock()
+	mode := dnsMode
+	dnsModeLock.RUnlock()
 
 	var target string
-	if dnsDisabled {
-		// Use hostname directly - system DNS will handle resolution
+	if mode == DNS_MODE_OFF {
+		// Regular proxy - use hostname directly, let system resolve
 		target = r.Host
 	} else {
-		// Resolve target using our DNS system
+		// Use our DNS system
 		ips := resolveHost(host)
 		if len(ips) == 0 {
 			http.Error(w, "DNS_FAIL", http.StatusBadGateway)
@@ -704,12 +812,8 @@ func handleConnect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if up == nil {
-		// Direct connection - use appropriate dialer based on DNS mode
-		if dnsDisabled {
-			conn, err = customDialer.DialContext(ctx, "tcp", r.Host)
-		} else {
-			conn, err = customDialer.DialContext(ctx, "tcp", target)
-		}
+		// Direct connection
+		conn, err = customDialer.DialContext(ctx, "tcp", target)
 	} else {
 		scheme := strings.ToLower(up.Scheme)
 		switch scheme {
@@ -772,46 +876,26 @@ func handleConnect(w http.ResponseWriter, r *http.Request) {
 }
 
 /* ============================================================
-   HTTP forwarding (non-CONNECT) - DNS LEAK FIXED
+   HTTP forwarding (non-CONNECT)
    ============================================================ */
 
 func handleHTTP(w http.ResponseWriter, r *http.Request) {
 	up := pickUpstream()
 	req := sanitizeRequestForUpstream(r)
 
-	// Check if DNS handling is disabled
-	disableDNSHandlingLock.RLock()
-	dnsDisabled := disableDNSHandling
-	disableDNSHandlingLock.RUnlock()
-
 	tr := &http.Transport{
 		DisableCompression:  false,
 		IdleConnTimeout:     defaultIdleConnTimeout,
 		TLSHandshakeTimeout: defaultTLSHandshakeTO,
-	}
-
-	// Set dialer based on DNS mode
-	if dnsDisabled {
-		tr.DialContext = customDialer.DialContext
-	} else {
-		tr.DialContext = customDialer.DialContext
+		DialContext:         customDialer.DialContext,
 	}
 
 	if up != nil {
 		switch strings.ToLower(up.Scheme) {
 		case "socks5":
-			var dialer socks5.Dialer
-			var err error
-			if dnsDisabled {
-				// Use system DNS for SOCKS5
-				baseDialer := &net.Dialer{Timeout: defaultDialTimeout}
-				dialer, err = socks5.SOCKS5("tcp", up.Host, nil, baseDialer)
-			} else {
-				// Use our DNS-aware dialer
-				dialer, err = socks5.SOCKS5("tcp", up.Host, nil, &dnsAwareDialer{})
-			}
-			if err != nil {
-				http.Error(w, "Upstream socks5 error: "+err.Error(), http.StatusBadGateway)
+			dialer, derr := socks5.SOCKS5("tcp", up.Host, nil, &dnsAwareDialer{})
+			if derr != nil {
+				http.Error(w, "Upstream socks5 error", http.StatusBadGateway)
 				return
 			}
 			tr.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
@@ -819,12 +903,7 @@ func handleHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		case "http", "https":
 			tr.Proxy = http.ProxyURL(up)
-			// Use appropriate dialer based on DNS mode
-			if dnsDisabled {
-				tr.DialContext = customDialer.DialContext
-			} else {
-				tr.DialContext = customDialer.DialContext
-			}
+			tr.DialContext = customDialer.DialContext
 		default:
 			http.Error(w, "Unsupported upstream", http.StatusBadGateway)
 			return

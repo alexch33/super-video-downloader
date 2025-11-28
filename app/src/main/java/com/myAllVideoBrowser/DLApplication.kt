@@ -19,6 +19,7 @@ import io.reactivex.rxjava3.plugins.RxJavaPlugins
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import myproxy.Myproxy.DNS_MODE_AUTO
 import myproxy.Myproxy.DNS_MODE_OFF
 import java.io.File
 import javax.inject.Inject
@@ -76,12 +77,20 @@ open class DLApplication : DaggerApplication() {
             initializeYoutubeDl()
             updateYoutubeDL()
 
-            Myproxy.setDNSMode(DNS_MODE_OFF) // AUTO
-//          Myproxy.setDoHServers("https://cloudflare-dns.com/dns-query")
-//          Myproxy.setDoTServers("1.1.1.1:853,dns.google:853")
+          Myproxy.setDNSMode(DNS_MODE_AUTO)
+          Myproxy.setDoHServers("https://cloudflare-dns.com/dns-query")
+          Myproxy.setDoTServers("1.1.1.1:853,dns.google:853")
+//            Myproxy.setUpstreams("") // turn off proxy
             Myproxy.setUpstreams(
                 listOf("http://10.0.2.2:2080").joinToString(",")
             )
+//            Myproxy.setUpstreams(
+//                listOf(
+//                    "http://10.0.2.2:2080",
+//                    "http://10.0.2.2:2081",
+//                    "http://10.0.2.2:2082"
+//                ).joinToString(",")
+//            )
 
             Myproxy.loadAdblockRules("@@good.com\n||ads.com\n||tracker.com\n||imdb.com")
 

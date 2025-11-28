@@ -2,4 +2,4 @@ cd GO_PROXY/myproxy
 
 gomobile init
 
-gomobile bind -target=android -o ../../app/libs/myproxy.aar .
+gomobile bind -target=android/arm,android/arm64,android/386,android/amd64 -ldflags="-extldflags=-Wl,-z,max-page-size=16384" -o ../../app/libs/myproxy.aar .

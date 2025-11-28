@@ -20,6 +20,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import myproxy.Myproxy.DNS_MODE_ALWAYS
+import myproxy.Myproxy.DNS_MODE_PROXY_ONLY
+import myproxy.Myproxy.DNS_TRANSPORT_SYSTEM
 import java.io.File
 import javax.inject.Inject
 
@@ -76,7 +78,8 @@ open class DLApplication : DaggerApplication() {
             initializeYoutubeDl()
             updateYoutubeDL()
 
-            Myproxy.setDNSMode(DNS_MODE_ALWAYS)
+            Myproxy.setDNSMode(DNS_MODE_PROXY_ONLY)
+            Myproxy.setDNSTransport(DNS_TRANSPORT_SYSTEM);
 //          Myproxy.setDoHServers("https://adblock.opendoh.com/dns-query")
 //          Myproxy.setDoHServers("https://cloudflare-dns.com/dns-query")
 //          Myproxy.setDoTServers("1.1.1.1:853,dns.google:853")

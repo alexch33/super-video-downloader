@@ -361,7 +361,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsProcessOnlyLiveDownloadFfmpeg(): Boolean {
-        return sharedPreferences.getBoolean(IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG, true)
+        return sharedPreferences.getBoolean(IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG, false)
     }
 
     fun setIsProcessOnlyLiveDownloadFfmpeg(isProcessFfmpeg: Boolean) {

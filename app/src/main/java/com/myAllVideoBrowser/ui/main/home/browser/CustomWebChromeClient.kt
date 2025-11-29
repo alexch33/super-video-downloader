@@ -33,34 +33,43 @@ class CustomWebChromeClient(
         isUserGesture: Boolean,
         resultMsg: Message?
     ): Boolean {
-        if (view != null && view.handler != null) {
-            val href = view.handler.obtainMessage()
-            view.requestFocusNodeHref(href)
-            val url = href.data.getString("url") ?: ""
-            val isAd = if (settingsViewModel.isAdBlocker.get()) {
-                tabViewModel.isAd(url)
-            } else {
-                false
-            }
-            AppLogger.d("ON_CREATE_WINDOW::************* $url ${view.url} isAd:: $isAd  $isUserGesture")
-            if (url.isEmpty() || !url.startsWith("http") || isAd || !isUserGesture) {
-                return false
-            }
-
-            val transport = resultMsg!!.obj as WebView.WebViewTransport
-            transport.webView = WebView(view.context)
-
-            tabViewModel.openPageEvent.value =
-                WebTab(
-                    webview = transport.webView,
-                    resultMsg = resultMsg,
-                    url = url,
-                    title = view.title,
-                    iconBytes = null
-                )
-            return true
+        if (!isUserGesture || view == null || resultMsg == null) {
+            return false
         }
-        return false
+        val hitTestResult = view.hitTestResult
+        val url = hitTestResult.extra
+
+        // Check if the click was on a valid link URL.
+        if (hitTestResult.type != WebView.HitTestResult.SRC_ANCHOR_TYPE || url.isNullOrBlank()) {
+            return false
+        }
+        AppLogger.d("ON_CREATE_WINDOW: URL from HitTestResult: $url")
+
+        // Now perform your ad-blocking and scheme checks
+        val isAd = if (settingsViewModel.isAdBlocker.get()) {
+            tabViewModel.isAd(url)
+        } else {
+            false
+        }
+        if (isAd || !url.startsWith("http")) {
+            AppLogger.d("ON_CREATE_WINDOW: Blocking ad or non-http scheme: $url")
+            return false // Blocked
+        }
+
+        val transport = resultMsg.obj as WebView.WebViewTransport
+        val newWebView = WebView(view.context)
+        transport.webView = newWebView
+
+        tabViewModel.openPageEvent.value =
+            WebTab(
+                webview = newWebView,
+                resultMsg = resultMsg,
+                url = url,
+                title = "Loading...",
+                iconBytes = null
+            )
+
+        return true
     }
 
     override fun onReceivedIcon(view: WebView?, icon: Bitmap?) {

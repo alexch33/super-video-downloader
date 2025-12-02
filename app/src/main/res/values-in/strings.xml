@@ -101,4 +101,9 @@
     <string name="check_if_in_list">Hanya periksa URL situs web jika ada dalam daftar yang didukung</string>
     <string name="instruction">Hai; -) \n Untuk mendeteksi video, buka video di browser, klik putar dan tunggu hingga video terdeteksi (dapat membutuhkan waktu 5-50 detik) \n 1. Anda dapat mengubah ambang batas pendeteksian iklan di pengaturan \n 2. Deteksi Video tidak berfungsi untuk beberapa situs web dalam mode seluler, coba gunakan situs web versi desktop jika video tidak terdeteksi dalam mode seluler \n Jika tidak, coba tekan muat ulang video di halaman video atau coba muat ulang halaman dan ulangi. \n Jika tidak, kirimkan email kepada saya.\n \n\n Untuk Mengunduh Video: \n \n 1. Tekan tombol Unduh, di layar yang muncul pilihan resolusi, jika tersedia \n \n 2. Tekan tombol unduh. \n \n \n Setelah mengunduh video yang tersedia di aplikasi. \n</string>
     <string name="go">LANJUT</string>
+    <string name="force_stream_downloading">Paksa Unduh Aliran(untuk mengunduh aliran langsung reguler (bukan m3u8 atau mpd))</string>
+    <string name="force_stream_detection">Paksa Deteksi Aliran (Deteksi URL dengan panjang konten utama -1, terkadang digunakan untuk siaran langsung reguler)</string>
+    <string name="is_always_remux_regular_downloads">Selalu konversi ulang semua unduhan reguler</string>
+    <string name="is_remux_only_live_regular_downloads">Konversi ulang hanya untuk unduhan siaran langsung reguler</string>
+    <string name="is_interrupt_intrecepted_resources">Menyela konten media yang diterima oleh browser</string>
 </resources>

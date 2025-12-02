@@ -38,4 +38,23 @@
     <string name="video_menu_rename">Zmień</string>
     <string name="title">Tytuł</string>
     <string name="save_proxy">Zapisz</string>
+    <string name="desktop_mode">Tryb komputerowy</string>
+    <string name="clear_history">Wyczyść historię</string>
+    <string name="proxy">Serwer proxy</string>
+    <string name="proxies">Serwery proxy</string>
+    <string name="proxies_unavailable">Serwery proxy niedostępne</string>
+    <string name="video_menu_open_in_folder">Otwórz w folderze</string>
+    <string name="cookies_cleared">Pliki cookie zostały usunięte</string>
+    <string name="download_open_in_app">Otwórz w aplikacji</string>
+    <string name="download_watch_in_app">Obejrzyj wideo</string>
+    <string name="ad_blocker">Bloker reklam</string>
+    <string name="desktop_mode_on">Tryb komputerowy włączony</string>
+    <string name="desktop_mode_off">Tryb komputerowy wyłączony</string>
+    <string name="dark_mode">Ciemny motyw</string>
+    <string name="hidden_folder">Ukryty folder</string>
+    <string name="host_hint">Host</string>
+    <string name="port_hint">Port</string>
+    <string name="login_hint">Użytkownik</string>
+    <string name="password_hint">Hasło</string>
+    <string name="insert_your_regular_video">Wklej tutaj zwykły adres URL lub M3U8 filmu</string>
 </resources>

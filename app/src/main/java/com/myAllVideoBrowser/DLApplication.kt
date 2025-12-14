@@ -9,6 +9,7 @@ import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
+import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLException
@@ -73,6 +74,32 @@ open class DLApplication : DaggerApplication() {
 
             initializeYoutubeDl()
             updateYoutubeDL()
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            // Initialize proxy chain
+            ProxyManager.init()
+
+            // Configure chain (upstream proxies + DoH)
+            ProxyManager.updateChain(
+                listOf(
+                    "socks5://10.0.2.2:2080",
+                    "doh=strict:https://cloudflare-dns.com/dns-query"
+                )
+            )
+
+            // Start local proxy with authentication
+            ProxyManager.startLocalProxyAuth(8888, "localuser", "localpass")
+
+//            // GeckoView socket usage
+//            val fd = ProxyManager.createSocket("https://example.com:443")
+//            // pass fd to GeckoView SocketProvider
+//
+//            // Stop local proxy when done
+//            ProxyManager.stopLocalProxy()
+//
+//            // Destroy chain on app exit
+//            ProxyManager.close()
         }
     }
 

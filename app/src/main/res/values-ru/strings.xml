@@ -101,4 +101,9 @@
     <string name="sd_app_folder">Папка приложения SD</string>
     <string name="http_proxy">HTTP Прокси</string>
     <string name="go">НАЧАТЬ</string>
+    <string name="force_stream_downloading">Принудительное скачивание трансляций (для обычных (не m3u8 или mpd) живых передач</string>
+    <string name="force_stream_detection">Принудительное определение трансляций (определение ссылок с размером содержимого -1, иногда используемого для обычных живых передач)</string>
+    <string name="is_always_remux_regular_downloads">Всегда перемешивать все обычные скачивания</string>
+    <string name="is_remux_only_live_regular_downloads">Перемешивать только скачивания обычных живых передач</string>
+    <string name="is_interrupt_intrecepted_resources">Прерывать перехваченные медиа для обозревателя</string>
 </resources>

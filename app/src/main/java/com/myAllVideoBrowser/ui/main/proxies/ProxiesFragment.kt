@@ -87,7 +87,6 @@ class ProxiesFragment : BaseFragment() {
 
     private fun setProxy(proxy: Proxy) {
         proxiesViewModel.setUserProxy(proxy)
-        proxiesViewModel.setProxy(proxy)
     }
 
     private fun isValidPort(port: String): Boolean {

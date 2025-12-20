@@ -3,6 +3,7 @@ package com.myAllVideoBrowser
 import android.content.Context
 import androidx.work.Configuration
 import androidx.work.WorkManager
+import com.myAllVideoBrowser.data.local.GeneratedProxyCreds
 import com.myAllVideoBrowser.di.component.DaggerAppComponent
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
@@ -77,29 +78,16 @@ open class DLApplication : DaggerApplication() {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            // Initialize proxy chain
             ProxyManager.init()
-
-            // Configure chain (upstream proxies + DoH)
-            ProxyManager.updateChain(
-                listOf(
-                    "socks5://10.0.2.2:2080",
-                    "doh=strict:https://cloudflare-dns.com/dns-query"
-                )
+            val generatedCreds = GeneratedProxyCreds.generateProxyCredentials()
+            sharedPrefHelper.setGeneratedCreds(generatedCreds)
+            AppLogger.i("New local creds generated")
+            ProxyManager.startLocalProxyAuth(
+                8888,
+                generatedCreds.localUser,
+                generatedCreds.localPassword
             )
-
-            // Start local proxy with authentication
-            ProxyManager.startLocalProxyAuth(8888, "localuser", "localpass")
-
-//            // GeckoView socket usage
-//            val fd = ProxyManager.createSocket("https://example.com:443")
-//            // pass fd to GeckoView SocketProvider
-//
-//            // Stop local proxy when done
-//            ProxyManager.stopLocalProxy()
-//
-//            // Destroy chain on app exit
-//            ProxyManager.close()
+            AppLogger.i("Local Proxy Started on port 8888")
         }
     }
 
@@ -132,3 +120,6 @@ open class DLApplication : DaggerApplication() {
     }
 }
 
+//            // GeckoView socket usage
+//            val fd = ProxyManager.createSocket("https://example.com:443")
+//            // pass fd to GeckoView SocketProvider

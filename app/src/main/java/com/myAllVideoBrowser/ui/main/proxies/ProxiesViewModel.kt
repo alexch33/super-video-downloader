@@ -6,6 +6,7 @@ import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
+import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +28,8 @@ class ProxiesViewModel @Inject constructor(
 
     private var compositeDisposable = CompositeDisposable()
 
+    private val defaultDohConfig = "doh=strict:https://cloudflare-dns.com/dns-query"
+
     override fun start() {
         if (compositeDisposable.size() >= 1) {
             compositeDisposable.dispose()
@@ -35,9 +38,45 @@ class ProxiesViewModel @Inject constructor(
 
         fetchProxies()
         viewModelScope.launch(Dispatchers.IO) {
-            userProxy.set(sharedPrefHelper.getUserProxy())
-            currentProxy.set(proxyController.getCurrentSavedProxy())
+            val usersProxy = sharedPrefHelper.getUserProxy()
+            userProxy.set(usersProxy)
+            currentProxy.set(usersProxy)
             isProxyOn.set(proxyController.isProxyOn())
+            updateChain(usersProxy)
+        }
+    }
+
+    override fun stop() {
+        compositeDisposable.clear()
+    }
+
+
+    fun turnOffProxy() {
+        viewModelScope.launch(Dispatchers.IO) {
+            proxyController.setIsProxyOn(false)
+            isProxyOn.set(false)
+            updateChain(Proxy.noProxy())
+        }
+    }
+
+    fun turnOnProxy() {
+        viewModelScope.launch(Dispatchers.IO) {
+            proxyController.setIsProxyOn(true)
+            isProxyOn.set(true)
+            updateChain(sharedPrefHelper.getUserProxy())
+        }
+    }
+
+    fun setUserProxy(userProxy: Proxy) {
+        viewModelScope.launch(Dispatchers.IO) {
+            this@ProxiesViewModel.userProxy.set(userProxy)
+            sharedPrefHelper.saveUserProxy(userProxy)
+
+            updateChain(userProxy)
+            currentProxy.set(userProxy)
+            isProxyOn.set(sharedPrefHelper.getIsProxyOn())
+
+            refreshList()
         }
     }
 
@@ -49,39 +88,24 @@ class ProxiesViewModel @Inject constructor(
         compositeDisposable.add(disposable)
     }
 
-    override fun stop() {
-        compositeDisposable.clear()
-    }
-
-
-    fun setProxy(proxy: Proxy) {
-        proxyController.setCurrentProxy(proxy)
-        currentProxy.set(proxy)
-        isProxyOn.set(true)
-
-        refreshList()
-    }
-
-    fun turnOffProxy() {
-        proxyController.setIsProxyOn(false)
-        isProxyOn.set(false)
-    }
-
-    fun turnOnProxy() {
-        proxyController.setIsProxyOn(true)
-        isProxyOn.set(true)
-    }
-
     private fun refreshList() {
         val refreshed = proxiesList.get()?.toMutableList()
         proxiesList.set(refreshed)
     }
 
-    fun setUserProxy(userProxy: Proxy) {
-        viewModelScope.launch(Dispatchers.IO) {
-            this@ProxiesViewModel.userProxy.set(userProxy)
-            sharedPrefHelper.saveUserProxy(userProxy)
-            proxyController.setCurrentProxy(userProxy)
+    private fun updateChain(proxy: Proxy) {
+        if (proxy != Proxy.noProxy()) {
+            ProxyManager.updateChain(
+                listOf(
+                    proxy.toString(), defaultDohConfig
+                )
+            )
+        } else {
+            ProxyManager.updateChain(
+                listOf(
+                    defaultDohConfig
+                )
+            )
         }
     }
 }

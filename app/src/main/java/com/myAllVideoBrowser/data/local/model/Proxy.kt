@@ -1,5 +1,9 @@
 package com.myAllVideoBrowser.data.local.model
 
+enum class ProxyType {
+    SOCKS5, HTTP
+}
+
 data class Proxy(
     val id: String = "",
     val host: String = "",
@@ -10,7 +14,8 @@ data class Proxy(
     val lastVerify: String = "",
     val countryCode: String = "",
     val cityName: String = "",
-    val createdAt: String = ""
+    val createdAt: String = "",
+    val type: ProxyType = ProxyType.HTTP
 ) {
     companion object {
         fun noProxy(): Proxy {
@@ -32,7 +37,7 @@ data class Proxy(
             )
         }
 
-        fun fromMap(tmp: Map<*, *>) : Proxy {
+        fun fromMap(tmp: Map<*, *>): Proxy {
             return Proxy(
                 id = tmp["id"].toString(),
                 host = tmp["host"].toString().replace("null", "").trim(),
@@ -83,4 +88,13 @@ data class Proxy(
         return result
     }
 
+    override fun toString(): String {
+        val scheme = if (type == ProxyType.SOCKS5) "socks5" else "http"
+
+        return if (user.isNotEmpty() && password.isNotEmpty()) {
+            "$scheme://$user:$password@$host:$port"
+        } else {
+            "$scheme://$host:$port"
+        }
+    }
 }

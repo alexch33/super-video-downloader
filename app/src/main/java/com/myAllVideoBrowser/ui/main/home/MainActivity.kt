@@ -26,9 +26,11 @@ import com.myAllVideoBrowser.ui.main.base.BaseActivity
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AdsInitializerHelper
+import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker
 import com.myAllVideoBrowser.util.fragment.FragmentFactory
+import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import javax.inject.Inject
 
@@ -215,6 +217,10 @@ class MainActivity : BaseActivity() {
     }
 
     override fun onDestroy() {
+        AppLogger.i("Local Proxy Stopping....")
+        ProxyManager.stopLocalProxy()
+        ProxyManager.close()
+        AppLogger.i("Local Proxy Stooped.")
         mainViewModel.stop()
         super.onDestroy()
     }

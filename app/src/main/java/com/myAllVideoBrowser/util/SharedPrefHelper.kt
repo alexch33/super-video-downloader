@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import com.google.gson.Gson
+import com.myAllVideoBrowser.data.local.GeneratedProxyCreds
 import com.myAllVideoBrowser.data.local.model.Proxy
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -47,6 +48,8 @@ class SharedPrefHelper @Inject constructor(
             "IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG"
         private const val IS_INTERRUPT_INTERCEPTED_RESOURCES =
             "IS_INTERRUPT_INTERCEPTED_RESOURCES"
+
+        private const val GENERATED_CREDENTIALS = "GENERATED_CREDENTIALS"
     }
 
     private val gson = Gson()
@@ -288,7 +291,7 @@ class SharedPrefHelper @Inject constructor(
         }
     }
 
-    fun getUserProxy(): Proxy? {
+    fun getUserProxy(): Proxy {
         val proxyString = sharedPreferences.getString(USER_PROXY, "")
         if (proxyString?.isNotEmpty() == true) {
             return gson.fromJson(proxyString, Proxy::class.java)
@@ -380,5 +383,21 @@ class SharedPrefHelper @Inject constructor(
 
     fun getIsInterruptInterceptedResources(): Boolean {
         return sharedPreferences.getBoolean(IS_INTERRUPT_INTERCEPTED_RESOURCES, false)
+    }
+
+    fun setGeneratedCreds(creds: GeneratedProxyCreds) {
+        sharedPreferences.edit().let {
+            it.putString(GENERATED_CREDENTIALS, creds.toJson())
+            it.apply()
+        }
+    }
+
+    fun getGeneratedCreds(): GeneratedProxyCreds {
+        val creds = sharedPreferences.getString(GENERATED_CREDENTIALS, null)
+        return if (creds != null) {
+            GeneratedProxyCreds.fromJson(creds)
+        } else {
+            GeneratedProxyCreds.generateProxyCredentials()
+        }
     }
 }

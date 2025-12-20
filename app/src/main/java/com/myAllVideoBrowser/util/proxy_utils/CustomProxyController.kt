@@ -25,66 +25,26 @@ class CustomProxyController @Inject constructor(
 
     fun getCurrentRunningProxy(): Proxy {
         return if (isProxyOn()) {
-            sharedPrefHelper.getCurrentProxy()
+            return getLocalProxy()
         } else {
             Proxy.noProxy()
         }
     }
 
-    fun getCurrentSavedProxy(): Proxy {
-        return sharedPrefHelper.getCurrentProxy()
+    fun getLocalProxy(): Proxy {
+        val creds = sharedPrefHelper.getGeneratedCreds()
+        val localProxy = Proxy(
+            host = "127.0.0.1",
+            port = "8888",
+            user = creds.localUser,
+            password = creds.localPassword
+        )
+        return localProxy
     }
 
     fun getProxyCredentials(): Pair<String, String> {
         val currProx = getCurrentRunningProxy()
         return Pair(currProx.user, currProx.password)
-    }
-
-    fun setCurrentProxy(proxy: Proxy) {
-        if (proxy == Proxy.noProxy()) {
-            System.setProperty("http.proxyUser", "")
-            System.setProperty("http.proxyPassword", "")
-            System.setProperty("https.proxyUser", "")
-            System.setProperty("https.proxyPassword", "")
-
-            Authenticator.setDefault(object : Authenticator() {})
-
-            if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
-                ProxyController.getInstance().clearProxyOverride({ }) {}
-            }
-        } else {
-            sharedPrefHelper.setIsProxyOn(true)
-
-            System.setProperty("http.proxyUser", proxy.user.trim())
-            System.setProperty("http.proxyPassword", proxy.password.trim())
-            System.setProperty("https.proxyUser", proxy.user.trim())
-            System.setProperty("https.proxyPassword", proxy.password.trim())
-
-            System.setProperty("http.proxyHost", proxy.host.trim())
-            System.setProperty("http.proxyPort", proxy.port.trim())
-
-            System.setProperty("https.proxyHost", proxy.host.trim())
-            System.setProperty("https.proxyPort", proxy.port.trim())
-            System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "")
-
-            Authenticator.setDefault(object : Authenticator() {
-                override fun getPasswordAuthentication(): PasswordAuthentication {
-                    return PasswordAuthentication(proxy.user, proxy.password.toCharArray())
-                }
-            })
-
-            val proxyConfig =
-                ProxyConfig.Builder().addProxyRule("${proxy.host}:${proxy.port}").build()
-            if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
-                try {
-                    ProxyController.getInstance().setProxyOverride(proxyConfig, { }) {}
-                } catch (e: Exception) {
-                    AppLogger.d("ERROR SETTING PROXY: $e")
-                }
-            }
-        }
-
-        sharedPrefHelper.setCurrentProxy(proxy)
     }
 
     fun fetchUserProxy(): Observable<Proxy> {
@@ -128,4 +88,52 @@ class CustomProxyController @Inject constructor(
 
         sharedPrefHelper.setIsProxyOn(isOn)
     }
+
+    private fun setCurrentProxy(proxy: Proxy) {
+        if (proxy == Proxy.noProxy()) {
+            sharedPrefHelper.setIsProxyOn(false)
+
+            System.setProperty("http.proxyUser", "")
+            System.setProperty("http.proxyPassword", "")
+            System.setProperty("https.proxyUser", "")
+            System.setProperty("https.proxyPassword", "")
+
+            Authenticator.setDefault(object : Authenticator() {})
+
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+                ProxyController.getInstance().clearProxyOverride({ }) {}
+            }
+        } else {
+            sharedPrefHelper.setIsProxyOn(true)
+
+            System.setProperty("http.proxyUser", proxy.user.trim())
+            System.setProperty("http.proxyPassword", proxy.password.trim())
+            System.setProperty("https.proxyUser", proxy.user.trim())
+            System.setProperty("https.proxyPassword", proxy.password.trim())
+
+            System.setProperty("http.proxyHost", proxy.host.trim())
+            System.setProperty("http.proxyPort", proxy.port.trim())
+
+            System.setProperty("https.proxyHost", proxy.host.trim())
+            System.setProperty("https.proxyPort", proxy.port.trim())
+            System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "")
+
+            Authenticator.setDefault(object : Authenticator() {
+                override fun getPasswordAuthentication(): PasswordAuthentication {
+                    return PasswordAuthentication(proxy.user, proxy.password.toCharArray())
+                }
+            })
+
+            val proxyConfig =
+                ProxyConfig.Builder().addProxyRule("${proxy.host}:${proxy.port}").build()
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+                try {
+                    ProxyController.getInstance().setProxyOverride(proxyConfig, { }) {}
+                } catch (e: Exception) {
+                    AppLogger.d("ERROR SETTING PROXY: $e")
+                }
+            }
+        }
+    }
+
 }

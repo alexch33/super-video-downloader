@@ -47,18 +47,6 @@ class CustomProxyController @Inject constructor(
         return Pair(currProx.user, currProx.password)
     }
 
-    fun fetchUserProxy(): Observable<Proxy> {
-        return Observable.create { emitter ->
-            val userProxy = sharedPrefHelper.getUserProxy()
-            if (userProxy != null) {
-                emitter.onNext(userProxy)
-                emitter.onComplete()
-            } else {
-                emitter.onComplete()
-            }
-        }.doOnError {}.subscribeOn(schedulers.io)
-    }
-
     fun isProxyOn(): Boolean {
         return sharedPrefHelper.getIsProxyOn()
     }

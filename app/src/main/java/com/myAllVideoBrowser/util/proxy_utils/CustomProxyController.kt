@@ -9,12 +9,15 @@ import com.myAllVideoBrowser.util.SharedPrefHelper
 import java.net.Authenticator
 import java.net.PasswordAuthentication
 import javax.inject.Inject
+import javax.inject.Singleton
 
 private data class LastConfig(val proxy: Proxy, val isDohEnabled: Boolean)
 
+@Singleton
 class CustomProxyController @Inject constructor(
     private val sharedPrefHelper: SharedPrefHelper,
 ) {
+    @Volatile
     private var lastAppliedConfig: LastConfig? = null
 
     init {
@@ -38,6 +41,7 @@ class CustomProxyController @Inject constructor(
         setCurrentProxy(getCurrentRunningProxy())
     }
 
+    @Synchronized
     private fun setCurrentProxy(proxy: Proxy) {
         val isDohEnabled = sharedPrefHelper.getIsDohOn()
         val newConfig = LastConfig(proxy, isDohEnabled)

@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.lifecycle.lifecycleScope
 import com.myAllVideoBrowser.data.local.model.Proxy
+import com.myAllVideoBrowser.data.local.model.ProxyType
 import com.myAllVideoBrowser.databinding.FragmentProxiesBinding
 import com.myAllVideoBrowser.ui.component.adapter.ProxiesAdapter
 import com.myAllVideoBrowser.ui.component.adapter.ProxiesListener
@@ -55,13 +56,20 @@ class ProxiesFragment : BaseFragment() {
                 val user = this.loginEditText.text.toString()
                 val password = this.passwordEditText.text.toString()
 
+                val selectedType = if (this.httpRadioButton.isChecked) {
+                    ProxyType.HTTP
+                } else {
+                    ProxyType.SOCKS5
+                }
+
                 if (isValidHost(host) && isValidPort(port)) {
                     val newProxy = Proxy(
-                        id = System.currentTimeMillis().toString(), // Use timestamp for a unique ID
+                        id = System.currentTimeMillis().toString(),
                         host = host,
                         port = port,
                         user = user,
-                        password = password
+                        password = password,
+                        type = selectedType
                     )
 
                     proxiesViewModel.addProxy(newProxy)
@@ -70,6 +78,7 @@ class ProxiesFragment : BaseFragment() {
                     this.portEditText.text?.clear()
                     this.loginEditText.text?.clear()
                     this.passwordEditText.text?.clear()
+                    this.httpRadioButton.isChecked = true
 
                 } else {
                     Toast.makeText(

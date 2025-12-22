@@ -84,6 +84,30 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
+                    <RadioGroup
+                        android:id="@+id/proxyTypeRadioGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/httpRadioButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:checked="true"
+                            android:text="@string/http" />
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/socks5RadioButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/socks5" />
+
+                    </RadioGroup>
+
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

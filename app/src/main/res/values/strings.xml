@@ -118,4 +118,6 @@
     <string name="add_proxy">Add Proxy</string>
     <string name="current_proxy_chain">Current proxy chain</string>
     <string name="add_http_proxy">Add http proxy</string>
+    <string name="http" translatable="false">HTTP</string>
+    <string name="socks5" translatable="false">SOCKS5</string>
 </resources>

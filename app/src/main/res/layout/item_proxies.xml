@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-        <variable name="proxy" type="com.myAllVideoBrowser.data.local.model.Proxy" />
-        <variable name="proxiesListener" type="com.myAllVideoBrowser.ui.component.adapter.ProxiesListener" />
+
+        <variable
+            name="proxy"
+            type="com.myAllVideoBrowser.data.local.model.Proxy" />
+
+        <variable
+            name="proxiesListener"
+            type="com.myAllVideoBrowser.ui.component.adapter.ProxiesListener" />
     </data>
 
     <com.google.android.material.card.MaterialCardView
@@ -16,8 +23,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:padding="16dp">
 
             <LinearLayout
@@ -26,18 +33,38 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <com.google.android.material.textview.MaterialTextView
-                    android:id="@+id/item_host"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:text="@{proxy.host + ':' + proxy.port}" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.chip.Chip
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="@{proxy.type.name()}"
+                        app:chipMinHeight="24dp"
+                        tools:text="SOCKS5" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/item_host"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{proxy.host + ':' + proxy.port}"
+                        android:textStyle="bold"
+                        tools:text="192.168.1.1:8080" />
+
+                </LinearLayout>
+
 
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
                     android:text='@{proxy.user.empty ? "No Authentication" : "Auth: " + proxy.user}'
-                    android:textSize="12sp" />
+                    android:textSize="12sp"
+                    tools:text="Auth: user" />
 
             </LinearLayout>
 
@@ -45,15 +72,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="8dp"
-                android:text="@{proxy.countryCode}" />
+                android:text="@{proxy.countryCode}"
+                tools:text="US" />
 
             <ImageButton
                 android:id="@+id/removeProxyButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/delete_forever_24px"
                 android:onClick="@{() -> proxiesListener.onProxyRemoveClicked(proxy)}"
+                android:src="@drawable/delete_forever_24px"
                 app:tint="?attr/colorError" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

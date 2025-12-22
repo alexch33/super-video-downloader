@@ -48,8 +48,9 @@ class SharedPrefHelper @Inject constructor(
             "IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG"
         private const val IS_INTERRUPT_INTERCEPTED_RESOURCES =
             "IS_INTERRUPT_INTERCEPTED_RESOURCES"
-
         private const val GENERATED_CREDENTIALS = "GENERATED_CREDENTIALS"
+        private const val IS_DOH_ON = "IS_DOH_ON"
+        private const val SELECTED_DOH_PROVIDER = "SELECTED_DOH_PROVIDER"
     }
 
     private val gson = Gson()
@@ -99,19 +100,6 @@ class SharedPrefHelper @Inject constructor(
 
     fun getIsAdBlocker(): Boolean {
         return sharedPreferences.getBoolean(IS_AD_BLOCKER, true)
-    }
-
-    fun setCurrentProxy(proxy: Proxy) {
-        sharedPreferences.edit().let {
-            it.putString(PROXY_IP_PORT, gson.toJson(proxy.toMap()))
-            it.apply()
-        }
-    }
-
-    fun getCurrentProxy(): Proxy {
-        val value = sharedPreferences.getString(PROXY_IP_PORT, "{}") ?: "{}"
-        val tmp = gson.fromJson(value, Map::class.java)
-        return Proxy.fromMap(tmp)
     }
 
     fun getIsProxyOn(): Boolean {
@@ -404,5 +392,27 @@ class SharedPrefHelper @Inject constructor(
         } else {
             GeneratedProxyCreds.generateProxyCredentials()
         }
+    }
+
+    fun getIsDohOn(): Boolean {
+        return sharedPreferences.getBoolean(IS_DOH_ON, true)
+    }
+
+    fun setIsDohOn(isOn: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_DOH_ON, isOn)
+            it.apply()
+        }
+    }
+
+    fun saveSelectedDohProvider(providerName: String) {
+        sharedPreferences.edit().let {
+            it.putString(SELECTED_DOH_PROVIDER, providerName)
+            it.apply()
+        }
+    }
+
+    fun getSelectedDohProvider(): String? {
+        return sharedPreferences.getString(SELECTED_DOH_PROVIDER, null)
     }
 }

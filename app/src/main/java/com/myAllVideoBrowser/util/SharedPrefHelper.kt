@@ -35,7 +35,7 @@ class SharedPrefHelper @Inject constructor(
         private const val M3U8_THREAD_COUNT = "M3U8_THREAD_COUNT"
         private const val VIDEO_DETECTION_TRESHOLD = "VIDEO_DETECTION_TRESHOLD"
         private const val IS_LOCK_PORTRAIT = "IS_LOCK_PORTRAIT"
-        private const val USER_PROXY = "USER_PROXY"
+        private const val USER_PROXY_CHAIN = "USER_PROXY_CHAIN"
         private const val IS_CHECK_EVERY_ON_M3U8 = "IS_CHECK_EVERY_ON_M3U8"
         private const val IS_AUTO_THEME = "IS_AUTO_THEME"
         private const val IS_CHECK_ON_AUDIO = "IS_CHECK_ON_AUDIO"
@@ -291,22 +291,27 @@ class SharedPrefHelper @Inject constructor(
         }
     }
 
-    fun getUserProxy(): Proxy {
-        val proxyString = sharedPreferences.getString(USER_PROXY, "")
-        if (proxyString?.isNotEmpty() == true) {
-            return gson.fromJson(proxyString, Proxy::class.java)
+    fun getUserProxyChain(): Array<Proxy> {
+        val proxyString = sharedPreferences.getString(USER_PROXY_CHAIN, null)
+        if (proxyString != null) {
+            try {
+                val proxies = gson.fromJson(proxyString, Array<Proxy>::class.java)
+                return proxies
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
         }
-
-        return Proxy.noProxy()
+        return arrayOf(Proxy.noProxy())
     }
 
-    fun saveUserProxy(proxy: Proxy) {
-        val proxyString = gson.toJson(proxy)
+    fun saveUserProxyChain(proxies: Array<Proxy>) {
+        val proxyString = gson.toJson(proxies)
         sharedPreferences.edit().let {
-            it.putString(USER_PROXY, proxyString)
+            it.putString(USER_PROXY_CHAIN, proxyString)
             it.apply()
         }
     }
+
 
     fun getIsCheckEveryOnM3u8(): Boolean {
         return sharedPreferences.getBoolean(IS_CHECK_EVERY_ON_M3U8, true)

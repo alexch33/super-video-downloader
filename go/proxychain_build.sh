@@ -26,14 +26,14 @@ echo "Output directory base: $OUTPUT_BASE_DIR"
 TOOLCHAIN="$NDK_PATH/toolchains/llvm/prebuilt/linux-x86_64"
 
 # --- Build Loop ---
-# Use a simple array for the loop to avoid any potential associative array bugs.
-# Each entry is a "GOARCH;ABI_DIR;COMPILER_PREFIX" tuple.
 TARGETS=(
     "arm64;arm64-v8a;aarch64-linux-android"
     "arm;armeabi-v7a;armv7a-linux-androideabi"
     "amd64;x86_64;x86_64-linux-android"
     "386;x86;i686-linux-android"
 )
+
+LDFLAGS="-s -w -buildid="
 
 for target in "${TARGETS[@]}"; do
     # Split the tuple into individual variables
@@ -62,7 +62,7 @@ for target in "${TARGETS[@]}"; do
     GOARCH="$GOARCH" \
     CC="$C_COMPILER" \
     CGO_CFLAGS="$C_FLAGS" \
-    go build -v -buildmode=c-shared -o "${OUTPUT_DIR}/libproxychain.so" "$GO_SOURCE_FILE"
+    go build -v -buildmode=c-shared -tags netgo -ldflags="$LDFLAGS" -o "${OUTPUT_DIR}/libproxychain.so" "$GO_SOURCE_FILE"
 done
 
 echo "============================================================"

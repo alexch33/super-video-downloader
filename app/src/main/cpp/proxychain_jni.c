@@ -7,13 +7,11 @@
 
 // =========================
 // JNI LIFECYCLE HOOK
-// This function is automatically called by Android when the library is loaded.
 // =========================
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
-    // Initialize the Go runtime.
-    // This must be called before any other 'go_*' function.
-    // The arguments are ignored in this context but are required by the function signature.
+    // This function is automatically called by Android when the library is loaded.
+    // It's a good place to do any initial setup.
     return JNI_VERSION_1_6;
 }
 
@@ -32,8 +30,6 @@ static char* jstring_to_utf8(JNIEnv* env, jstring js) {
 
 // =========================
 // JNI API IMPLEMENTATIONS
-// Your existing JNI functions are correct. No changes are needed here.
-// The 'extern' declarations at the top are no longer needed as they are in libproxychain.h
 // =========================
 
 JNIEXPORT jlong JNICALL
@@ -43,7 +39,7 @@ Java_com_myAllVideoBrowser_util_proxy_1utils_proxy_1manager_ProxyChainNative_go_
 ) {
     (void)env;
     (void)clazz;
-    // This call is now safe because the Go runtime was started in JNI_OnLoad
+    // The Go function returns a dummy '1' now, which we pass along.
     return (jlong) go_init_chain();
 }
 
@@ -64,11 +60,10 @@ JNIEXPORT jint JNICALL
 Java_com_myAllVideoBrowser_util_proxy_1utils_proxy_1manager_ProxyChainNative_go_1update_1chain(
         JNIEnv* env,
         jclass clazz,
-        jlong ptr,
         jstring configB64
 ) {
     (void)clazz;
-    if (ptr == 0 || !configB64) {
+    if (!configB64) {
         return -1;
     }
     char* cfg = jstring_to_utf8(env, configB64);
@@ -84,12 +79,11 @@ JNIEXPORT jint JNICALL
 Java_com_myAllVideoBrowser_util_proxy_1utils_proxy_1manager_ProxyChainNative_go_1start_1local_1proxy(
         JNIEnv* env,
         jclass clazz,
-        jlong ptr,
         jint port
 ) {
     (void)env;
     (void)clazz;
-    if (ptr == 0 || port <= 0) {
+    if (port <= 0) {
         return -1;
     }
     return go_start_local_proxy(port);
@@ -99,13 +93,12 @@ JNIEXPORT jint JNICALL
 Java_com_myAllVideoBrowser_util_proxy_1utils_proxy_1manager_ProxyChainNative_go_1start_1local_1proxy_1auth(
         JNIEnv* env,
         jclass clazz,
-        jlong ptr,
         jint port,
         jstring user,
         jstring pass
 ) {
     (void)clazz;
-    if (ptr == 0 || port <= 0 || !user || !pass) {
+    if (port <= 0 || !user || !pass) {
         return -1;
     }
     char* u = jstring_to_utf8(env, user);
@@ -128,33 +121,11 @@ Java_com_myAllVideoBrowser_util_proxy_1utils_proxy_1manager_ProxyChainNative_go_
 JNIEXPORT void JNICALL
 Java_com_myAllVideoBrowser_util_proxy_1utils_proxy_1manager_ProxyChainNative_go_1stop_1local_1proxy(
         JNIEnv* env,
-        jclass clazz,
-        jlong ptr
+        jclass clazz
 ) {
     (void)env;
     (void)clazz;
-    if (ptr != 0) {
-        go_stop_local_proxy((uintptr_t)ptr);
-    }
+    go_stop_local_proxy();
 }
 
-JNIEXPORT jint JNICALL
-Java_com_myAllVideoBrowser_util_proxy_1utils_proxy_1manager_ProxyChainNative_go_1create_1socket(
-        JNIEnv* env,
-        jclass clazz,
-        jlong ptr,
-        jstring uri
-) {
-    (void)clazz;
-    if (ptr == 0 || !uri) {
-        return -1;
-    }
-    char* u = jstring_to_utf8(env, uri);
-    if (!u) {
-        return -2;
-    }
-    int fd = go_create_socket(u);
-    free(u);
-    return fd;
-}
 

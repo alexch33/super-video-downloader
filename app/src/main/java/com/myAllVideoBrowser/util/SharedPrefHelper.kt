@@ -103,7 +103,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsProxyOn(): Boolean {
-        return sharedPreferences.getBoolean(IS_PROXY_TURN_ON, false)
+        return sharedPreferences.getBoolean(IS_PROXY_TURN_ON, true)
     }
 
     fun setIsProxyOn(isTurnedOn: Boolean) {
@@ -395,7 +395,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsDohOn(): Boolean {
-        return sharedPreferences.getBoolean(IS_DOH_ON, true)
+        return sharedPreferences.getBoolean(IS_DOH_ON, false)
     }
 
     fun setIsDohOn(isOn: Boolean) {

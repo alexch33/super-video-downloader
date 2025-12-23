@@ -1,15 +1,15 @@
 module proxychain
 
-go 1.24.0
-
-toolchain go1.24.11
-
-require github.com/miekg/dns v1.1.69
+go 1.25
 
 require (
-	golang.org/x/mod v0.30.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
+	github.com/miekg/dns v1.1.69 // indirect
+	github.com/xtls/xray-core v1.251208.0
+	google.golang.org/protobuf v1.36.11 // indirect
+)
+
+require (
+	github.com/pires/go-proxyproto v0.8.1 // indirect
+	github.com/sagernet/sing v0.5.1 // indirect
 	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/tools v0.39.0 // indirect
 )

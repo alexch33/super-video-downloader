@@ -3,7 +3,10 @@ package com.myAllVideoBrowser.util.proxy_utils.proxy_manager
 import android.util.Base64
 import java.io.Closeable
 
-// This object directly maps to the JNI functions
+/**
+ * This object directly maps to the JNI functions. The function signatures have been updated
+ * to remove the unnecessary 'ptr' argument, matching the Go and C layers.
+ */
 object ProxyChainNative {
     init {
         // Must load the Go .so first
@@ -12,75 +15,94 @@ object ProxyChainNative {
         System.loadLibrary("proxychain_jni")
     }
 
-    // These now match the C signatures EXACTLY (excluding the env and clazz params)
+
+    /**
+     * Initializes the Go runtime and returns a dummy pointer (always 1) for legacy
+     * compatibility.
+     */
     external fun go_init_chain(): Long
+
+    /**
+     * Stops the Go proxy instance and cleans up resources. This is the only function
+     * that still accepts the dummy pointer to maintain a consistent close() pattern.
+     */
     external fun go_destroy_chain(ptr: Long)
 
-    // All the functions that were missing the 'ptr' argument are now corrected
-    external fun go_update_chain(ptr: Long, configB64: String): Int
+    /**
+     * Updates the proxy chain configuration.
+     * The pointer argument has been removed.
+     */
+    external fun go_update_chain(configB64: String): Int
 
-    external fun go_start_local_proxy(ptr: Long, port: Int): Int
+    /**
+     * Starts the local proxy on a given port without authentication.
+     * The pointer argument has been removed.
+     */
+    external fun go_start_local_proxy(port: Int): Int
+
+    /**
+     * Starts the local proxy on a given port with username/password authentication.
+     * The pointer argument has been removed.
+     */
     external fun go_start_local_proxy_auth(
-        ptr: Long, port: Int, user: String, pass: String
+        port: Int, user: String, pass: String
     ): Int
 
-    external fun go_stop_local_proxy(ptr: Long)
+    /**
+     * Stops the local proxy service.
+     * The pointer argument has been removed.
+     */
+    external fun go_stop_local_proxy()
 
-    external fun go_create_socket(ptr: Long, uri: String): Int
+    // The deprecated go_create_socket function has been removed entirely.
 }
 
+/**
+ * Manages the lifecycle of the Go-based proxy. The internal 'chainPtr' is kept
+ * to manage the initialized state but is no longer passed to most native functions.
+ */
 object ProxyManager : Closeable {
 
     private var chainPtr: Long = 0
 
     fun init(): Boolean {
-        if (chainPtr != 0L) return true
+        if (isInitialized()) return true
         chainPtr = ProxyChainNative.go_init_chain()
-        return chainPtr != 0L
+        return isInitialized()
     }
 
     override fun close() {
         stopLocalProxy()
-        if (chainPtr != 0L) {
+        if (isInitialized()) {
             ProxyChainNative.go_destroy_chain(chainPtr)
             chainPtr = 0
         }
     }
 
     fun updateChain(configLines: List<String>): Boolean {
-        if (chainPtr == 0L) return false
+        if (!isInitialized()) return false
         val configText = configLines.joinToString("\n")
         val configB64 = Base64.encodeToString(configText.toByteArray(), Base64.NO_WRAP)
-        // Pass the pointer
-        val res = ProxyChainNative.go_update_chain(chainPtr, configB64)
+        val res = ProxyChainNative.go_update_chain(configB64)
         return res == 0
     }
 
     fun startLocalProxy(port: Int): Boolean {
-        if (chainPtr == 0L) return false
-        // Pass the pointer
-        val res = ProxyChainNative.go_start_local_proxy(chainPtr, port)
+        if (!isInitialized()) return false
+        val res = ProxyChainNative.go_start_local_proxy(port)
         return res == 0
     }
 
     fun startLocalProxyAuth(port: Int, user: String, pass: String): Boolean {
-        if (chainPtr == 0L) return false
-        // Pass the pointer
-        val res = ProxyChainNative.go_start_local_proxy_auth(chainPtr, port, user, pass)
+        if (!isInitialized()) return false
+        val res = ProxyChainNative.go_start_local_proxy_auth(port, user, pass)
         return res == 0
     }
 
     fun stopLocalProxy() {
-        if (chainPtr != 0L) {
-            // Pass the pointer
-            ProxyChainNative.go_stop_local_proxy(chainPtr)
+        if (isInitialized()) {
+            ProxyChainNative.go_stop_local_proxy()
         }
-    }
-
-    fun createSocket(uri: String): Int {
-        if (chainPtr == 0L) return -1
-        // Pass the pointer
-        return ProxyChainNative.go_create_socket(chainPtr, uri)
     }
 
     fun isInitialized(): Boolean = chainPtr != 0L

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import com.google.gson.Gson
+import com.myAllVideoBrowser.data.local.GeneratedProxyCreds
 import com.myAllVideoBrowser.data.local.model.Proxy
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -34,7 +35,7 @@ class SharedPrefHelper @Inject constructor(
         private const val M3U8_THREAD_COUNT = "M3U8_THREAD_COUNT"
         private const val VIDEO_DETECTION_TRESHOLD = "VIDEO_DETECTION_TRESHOLD"
         private const val IS_LOCK_PORTRAIT = "IS_LOCK_PORTRAIT"
-        private const val USER_PROXY = "USER_PROXY"
+        private const val USER_PROXY_CHAIN = "USER_PROXY_CHAIN"
         private const val IS_CHECK_EVERY_ON_M3U8 = "IS_CHECK_EVERY_ON_M3U8"
         private const val IS_AUTO_THEME = "IS_AUTO_THEME"
         private const val IS_CHECK_ON_AUDIO = "IS_CHECK_ON_AUDIO"
@@ -47,6 +48,9 @@ class SharedPrefHelper @Inject constructor(
             "IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG"
         private const val IS_INTERRUPT_INTERCEPTED_RESOURCES =
             "IS_INTERRUPT_INTERCEPTED_RESOURCES"
+        private const val GENERATED_CREDENTIALS = "GENERATED_CREDENTIALS"
+        private const val IS_DOH_ON = "IS_DOH_ON"
+        private const val SELECTED_DOH_PROVIDER = "SELECTED_DOH_PROVIDER"
     }
 
     private val gson = Gson()
@@ -98,21 +102,8 @@ class SharedPrefHelper @Inject constructor(
         return sharedPreferences.getBoolean(IS_AD_BLOCKER, true)
     }
 
-    fun setCurrentProxy(proxy: Proxy) {
-        sharedPreferences.edit().let {
-            it.putString(PROXY_IP_PORT, gson.toJson(proxy.toMap()))
-            it.apply()
-        }
-    }
-
-    fun getCurrentProxy(): Proxy {
-        val value = sharedPreferences.getString(PROXY_IP_PORT, "{}") ?: "{}"
-        val tmp = gson.fromJson(value, Map::class.java)
-        return Proxy.fromMap(tmp)
-    }
-
     fun getIsProxyOn(): Boolean {
-        return sharedPreferences.getBoolean(IS_PROXY_TURN_ON, false)
+        return sharedPreferences.getBoolean(IS_PROXY_TURN_ON, true)
     }
 
     fun setIsProxyOn(isTurnedOn: Boolean) {
@@ -288,22 +279,27 @@ class SharedPrefHelper @Inject constructor(
         }
     }
 
-    fun getUserProxy(): Proxy? {
-        val proxyString = sharedPreferences.getString(USER_PROXY, "")
-        if (proxyString?.isNotEmpty() == true) {
-            return gson.fromJson(proxyString, Proxy::class.java)
+    fun getUserProxyChain(): Array<Proxy> {
+        val proxyString = sharedPreferences.getString(USER_PROXY_CHAIN, null)
+        if (proxyString != null) {
+            try {
+                val proxies = gson.fromJson(proxyString, Array<Proxy>::class.java)
+                return proxies
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
         }
-
-        return Proxy.noProxy()
+        return arrayOf(Proxy.noProxy())
     }
 
-    fun saveUserProxy(proxy: Proxy) {
-        val proxyString = gson.toJson(proxy)
+    fun saveUserProxyChain(proxies: Array<Proxy>) {
+        val proxyString = gson.toJson(proxies)
         sharedPreferences.edit().let {
-            it.putString(USER_PROXY, proxyString)
+            it.putString(USER_PROXY_CHAIN, proxyString)
             it.apply()
         }
     }
+
 
     fun getIsCheckEveryOnM3u8(): Boolean {
         return sharedPreferences.getBoolean(IS_CHECK_EVERY_ON_M3U8, true)
@@ -380,5 +376,43 @@ class SharedPrefHelper @Inject constructor(
 
     fun getIsInterruptInterceptedResources(): Boolean {
         return sharedPreferences.getBoolean(IS_INTERRUPT_INTERCEPTED_RESOURCES, false)
+    }
+
+    fun setGeneratedCreds(creds: GeneratedProxyCreds) {
+        sharedPreferences.edit().let {
+            it.putString(GENERATED_CREDENTIALS, creds.toJson())
+            it.apply()
+        }
+    }
+
+    fun getGeneratedCreds(): GeneratedProxyCreds {
+        val creds = sharedPreferences.getString(GENERATED_CREDENTIALS, null)
+        return if (creds != null) {
+            GeneratedProxyCreds.fromJson(creds)
+        } else {
+            GeneratedProxyCreds.generateProxyCredentials()
+        }
+    }
+
+    fun getIsDohOn(): Boolean {
+        return sharedPreferences.getBoolean(IS_DOH_ON, false)
+    }
+
+    fun setIsDohOn(isOn: Boolean) {
+        sharedPreferences.edit().let {
+            it.putBoolean(IS_DOH_ON, isOn)
+            it.apply()
+        }
+    }
+
+    fun saveSelectedDohProvider(providerName: String) {
+        sharedPreferences.edit().let {
+            it.putString(SELECTED_DOH_PROVIDER, providerName)
+            it.apply()
+        }
+    }
+
+    fun getSelectedDohProvider(): String? {
+        return sharedPreferences.getString(SELECTED_DOH_PROVIDER, null)
     }
 }

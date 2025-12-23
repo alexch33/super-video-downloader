@@ -3,12 +3,14 @@ package com.myAllVideoBrowser
 import android.content.Context
 import androidx.work.Configuration
 import androidx.work.WorkManager
+import com.myAllVideoBrowser.data.local.GeneratedProxyCreds
 import com.myAllVideoBrowser.di.component.DaggerAppComponent
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
+import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLException
@@ -74,6 +76,25 @@ open class DLApplication : DaggerApplication() {
             initializeYoutubeDl()
             updateYoutubeDL()
         }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val generatedCreds = GeneratedProxyCreds.generateProxyCredentials()
+            sharedPrefHelper.setGeneratedCreds(generatedCreds)
+            AppLogger.i("New local creds generated")
+
+            val success = ProxyManager.startProxyChain(
+                localPort = 8888,
+                localUser = generatedCreds.localUser,
+                localPass = generatedCreds.localPassword,
+                hops = emptyList()
+            )
+
+            if (success) {
+                AppLogger.i("Local Proxy process started successfully.")
+            } else {
+                AppLogger.e("Failed to start Local Proxy process. Check ProxyManager logs for details.")
+            }
+        }
     }
 
     private fun initializeFileUtils() {
@@ -104,4 +125,3 @@ open class DLApplication : DaggerApplication() {
         }
     }
 }
-

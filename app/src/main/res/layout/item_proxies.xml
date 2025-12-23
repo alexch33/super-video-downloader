@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-
-        <import type="android.view.View" />
 
         <variable
             name="proxy"
@@ -12,57 +12,77 @@
         <variable
             name="proxiesListener"
             type="com.myAllVideoBrowser.ui.component.adapter.ProxiesListener" />
-
-        <variable
-            name="viewModel"
-            type="com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel" />
-
-        <variable
-            name="isChecked"
-            type="Boolean" />
-
     </data>
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="8dp"
-        android:onClick="@{(view) -> proxiesListener.onProxyClicked(view, proxy) }">
+        android:layout_marginTop="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             android:padding="16dp">
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-                <com.google.android.material.radiobutton.MaterialRadioButton
-                    android:id="@+id/itemCheckbox"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:checked="@{isChecked}"
-                    android:clickable="false"
-                    android:text="@{proxy.host}" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.chip.Chip
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="@{proxy.type.name()}"
+                        app:chipMinHeight="24dp"
+                        tools:text="SOCKS5" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/item_host"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{proxy.host + ':' + proxy.port}"
+                        android:textStyle="bold"
+                        tools:text="192.168.1.1:8080" />
+
+                </LinearLayout>
+
 
                 <com.google.android.material.textview.MaterialTextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@{proxy.countryCode}"
-                    android:textAlignment="center" />
-
-                <com.google.android.material.textview.MaterialTextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@{proxy.port}" />
+                    android:layout_marginTop="4dp"
+                    android:text='@{proxy.user.empty ? "No Authentication" : "Auth: " + proxy.user}'
+                    android:textSize="12sp"
+                    tools:text="Auth: user" />
 
             </LinearLayout>
+
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:text="@{proxy.countryCode}"
+                tools:text="US" />
+
+            <ImageButton
+                android:id="@+id/removeProxyButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:onClick="@{() -> proxiesListener.onProxyRemoveClicked(proxy)}"
+                android:src="@drawable/delete_forever_24px"
+                app:tint="?attr/colorError" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 </layout>

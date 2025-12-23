@@ -2,15 +2,10 @@ import com.android.build.api.variant.FilterConfiguration
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-
 apply plugin: 'com.google.devtools.ksp'
-
 apply plugin: 'kotlin-kapt'
-
 apply plugin: 'kotlin-allopen'
-
 apply plugin: 'jacoco'
-
 apply plugin: 'com.github.kt3k.coveralls'
 
 jacoco {
@@ -64,8 +59,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 75
-        versionName "0.6.7"
+        versionCode 81
+        versionName "0.7.0"
 
         if (splitApks) {
             splits {
@@ -130,7 +125,7 @@ android {
     }
     sourceSets {
         main {
-            jniLibs.srcDirs = ['libs']
+            jniLibs.srcDirs = ['src/main/jniLibs']
         }
     }
 }
@@ -140,6 +135,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(files("libs/libv2ray.aar"))
     // Android support
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.13.0'
@@ -284,3 +280,117 @@ tasks.coveralls {
     dependsOn 'check'
     onlyIf { System.getenv("COVERALLS_REPO_TOKEN") }
 }
+
+// =========================================================================
+// Tasks to build libv2ray.aar from source for F-Droid compliance
+// =========================================================================
+
+ext {
+    v2rayRepo = 'https://github.com/2dust/AndroidLibXrayLite.git'
+    v2rayCommit = 'v25.12.8'
+    buildDirV2ray = "${project.rootDir}/build/v2ray"
+    goMobilePath = "${buildDirV2ray}/gomobile"
+    goPath = "${buildDirV2ray}/gopath"
+    aarOutputFile = file("libs/libv2ray.aar")
+
+    goExecutable = '/usr/local/go/bin/go'
+    gitExecutable = '/usr/bin/git'
+    goMobileExecutable = "${goMobilePath}/gomobile"
+}
+
+tasks.register('installGoMobile', Exec) {
+    outputs.file(goMobileExecutable)
+
+    doFirst {
+        println "Installing gomobile tool..."
+        file(goMobilePath).mkdirs()
+
+        environment 'GOPATH', goPath
+        environment 'GOBIN', goMobilePath
+
+        commandLine goExecutable, 'install', 'golang.org/x/mobile/cmd/gomobile@latest'
+    }
+
+    doLast {
+        if (!file(goMobileExecutable).exists()) {
+            throw new GradleException("Failed to install gomobile. Please check Go installation and network.")
+        } else {
+            println "Gomobile tool installed successfully at ${goMobileExecutable}"
+        }
+    }
+}
+
+tasks.register('initGoMobile', Exec) {
+    dependsOn installGoMobile
+
+    outputs.file("${goPath}/bin/gobind")
+
+    doFirst {
+        println "Running 'gomobile init' to build toolchain..."
+        def goBinPath = file(goExecutable).parent
+        def originalPath = System.getenv("PATH")
+
+        environment 'PATH', "${goBinPath}:${originalPath}"
+        environment 'GOPATH', goPath
+        environment 'GOROOT', file(goExecutable).parentFile.parent
+
+        commandLine goMobileExecutable, 'init'
+    }
+}
+
+tasks.register('cloneV2raySource', Exec) {
+    dependsOn initGoMobile
+
+    def srcDir = file("${buildDirV2ray}/src")
+    outputs.dir(srcDir)
+    workingDir project.rootDir
+
+    onlyIf { !srcDir.exists() }
+
+    commandLine gitExecutable, 'clone', '--depth=1', '--branch', v2rayCommit, v2rayRepo, srcDir.absolutePath
+}
+
+tasks.register('buildAarFromSource', Exec) {
+    dependsOn cloneV2raySource
+
+    def srcDir = file("${buildDirV2ray}/src")
+    workingDir srcDir
+    inputs.dir(srcDir)
+    outputs.file(aarOutputFile)
+
+    doFirst {
+        println "Building libv2ray.aar from source..."
+        def goBinPath = file(goExecutable).parent
+        def originalPath = System.getenv("PATH")
+
+        environment 'PATH', "${goBinPath}:${goPath}/bin:${originalPath}"
+        println "Using PATH for bind: ${environment.get('PATH')}"
+
+        environment 'GOPATH', goPath
+        environment 'GOROOT', file(goExecutable).parentFile.parent
+
+        commandLine goMobileExecutable, 'bind',
+                '-v',
+                '-target=android',
+                '-androidapi=21',
+                '-o', aarOutputFile.absolutePath,
+                './'
+    }
+}
+
+preBuild.dependsOn buildAarFromSource
+
+// =========================================================================
+// Custom clean task to handle read-only Go module files
+// =========================================================================
+
+tasks.register('forceClean', Exec) {
+    onlyIf { file(buildDirV2ray).exists() }
+
+    doFirst {
+        println "Forcibly cleaning Go build artifacts with read-only permissions..."
+        commandLine 'sh', '-c', "chmod -R +w ${buildDirV2ray}"
+    }
+}
+
+clean.dependsOn forceClean

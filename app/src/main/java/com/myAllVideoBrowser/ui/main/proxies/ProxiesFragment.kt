@@ -6,12 +6,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.lifecycle.lifecycleScope
 import com.myAllVideoBrowser.data.local.model.Proxy
+import com.myAllVideoBrowser.data.local.model.ProxyType
 import com.myAllVideoBrowser.databinding.FragmentProxiesBinding
+import com.myAllVideoBrowser.ui.component.adapter.ProxiesAdapter
 import com.myAllVideoBrowser.ui.component.adapter.ProxiesListener
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ProxiesFragment : BaseFragment() {
@@ -30,39 +35,75 @@ class ProxiesFragment : BaseFragment() {
 
     private lateinit var proxiesViewModel: ProxiesViewModel
 
+    private lateinit var proxiesAdapter: ProxiesAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         proxiesViewModel = mainActivity.proxiesViewModel
 
+        proxiesAdapter = ProxiesAdapter(mutableListOf(), proxiesListener)
+
         dataBinding = FragmentProxiesBinding.inflate(inflater, container, false).apply {
-            this.saveProxyButton.setOnClickListener {
+            this.viewModel = proxiesViewModel
+            this.listener = proxiesListener
+            this.proxiesRecyclerView.adapter = proxiesAdapter
+            proxiesAdapter.setData(proxiesViewModel.proxiesList.get()?.toList() ?: emptyList())
+
+            this.addProxyButton.setOnClickListener {
                 val host = this.hostEditText.text.toString()
-                val port = this.portEditText.text.toString().toIntOrNull()
+                val port = this.portEditText.text.toString()
                 val user = this.loginEditText.text.toString()
                 val password = this.passwordEditText.text.toString()
 
-                if (isValidHost(host) && isValidPort(port.toString())) {
+                val selectedType = if (this.httpRadioButton.isChecked) {
+                    ProxyType.HTTP
+                } else {
+                    ProxyType.SOCKS5
+                }
+
+                if (isValidHost(host) && isValidPort(port)) {
                     val newProxy = Proxy(
-                        id = host.hashCode().toString(),
+                        id = System.currentTimeMillis().toString(),
                         host = host,
-                        port = port.toString(),
+                        port = port,
                         user = user,
-                        password = password
+                        password = password,
+                        type = selectedType
                     )
-                    setProxy(newProxy)
+
+                    proxiesViewModel.addProxy(newProxy)
+
+                    this.hostEditText.text?.clear()
+                    this.portEditText.text?.clear()
+                    this.loginEditText.text?.clear()
+                    this.passwordEditText.text?.clear()
+                    this.httpRadioButton.isChecked = true
+
                 } else {
                     Toast.makeText(
                         this@ProxiesFragment.context, "Invalid host or port", Toast.LENGTH_SHORT
                     ).show()
                 }
             }
-            this.listener = proxiesListener
-            this.viewModel = proxiesViewModel
 
             val color = getThemeBackgroundColor()
             this.proxiesContainer.setBackgroundColor(color)
         }
+
+        proxiesViewModel.proxiesList.addOnPropertyChangedCallback(object :
+            androidx.databinding.Observable.OnPropertyChangedCallback() {
+            override fun onPropertyChanged(
+                sender: androidx.databinding.Observable?,
+                propertyId: Int
+            ) {
+                proxiesViewModel.proxiesList.get()?.let {
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        proxiesAdapter.setData(it)
+                    }
+                }
+            }
+        })
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             parentFragmentManager.popBackStack()
@@ -72,8 +113,8 @@ class ProxiesFragment : BaseFragment() {
     }
 
     private val proxiesListener = object : ProxiesListener {
-        override fun onProxyClicked(view: View, proxy: Proxy) {
-            setProxy(proxy)
+        override fun onProxyRemoveClicked(proxy: Proxy) {
+            proxiesViewModel.removeProxy(proxy)
         }
 
         override fun onProxyToggle(isChecked: Boolean) {
@@ -83,11 +124,6 @@ class ProxiesFragment : BaseFragment() {
                 proxiesViewModel.turnOffProxy()
             }
         }
-    }
-
-    private fun setProxy(proxy: Proxy) {
-        proxiesViewModel.setUserProxy(proxy)
-        proxiesViewModel.setProxy(proxy)
     }
 
     private fun isValidPort(port: String): Boolean {

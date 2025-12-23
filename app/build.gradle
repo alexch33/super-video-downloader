@@ -293,8 +293,9 @@ ext {
     goPath = "${buildDirV2ray}/gopath"
     aarOutputFile = file("libs/libv2ray.aar")
 
-    goExecutable = '/usr/local/go/bin/go'
-    gitExecutable = '/usr/bin/git'
+    goExecutable = file('/usr/local/go/bin/go').exists() ? '/usr/local/go/bin/go' : 'go'
+    gitExecutable = file('/usr/bin/git').exists() ? '/usr/bin/git' : 'git'
+
     goMobileExecutable = "${goMobilePath}/gomobile"
 }
 

@@ -1,109 +1,173 @@
 package com.myAllVideoBrowser.util.proxy_utils.proxy_manager
 
-import android.util.Base64
-import java.io.Closeable
+import android.util.Log
+import libv2ray.CoreController
+import libv2ray.CoreCallbackHandler
 
-/**
- * This object directly maps to the JNI functions. The function signatures have been updated
- * to remove the unnecessary 'ptr' argument, matching the Go and C layers.
- */
-object ProxyChainNative {
-    init {
-        // Must load the Go .so first
-        System.loadLibrary("proxychain")
-        // Then load the JNI glue .so
-        System.loadLibrary("proxychain_jni")
+class XrayCallback : CoreCallbackHandler {
+    companion object {
+        private const val TAG = "XrayCallback"
     }
 
+    override fun onEmitStatus(l: Long, s: String): Long {
+        Log.d(TAG, "onEmitStatus: l=$l, s='$s'")
+        return 0
+    }
 
-    /**
-     * Initializes the Go runtime and returns a dummy pointer (always 1) for legacy
-     * compatibility.
-     */
-    external fun go_init_chain(): Long
+    override fun shutdown(): Long {
+        Log.d(TAG, "shutdown() called from core.")
+        return 0
+    }
 
-    /**
-     * Stops the Go proxy instance and cleans up resources. This is the only function
-     * that still accepts the dummy pointer to maintain a consistent close() pattern.
-     */
-    external fun go_destroy_chain(ptr: Long)
-
-    /**
-     * Updates the proxy chain configuration.
-     * The pointer argument has been removed.
-     */
-    external fun go_update_chain(configB64: String): Int
-
-    /**
-     * Starts the local proxy on a given port without authentication.
-     * The pointer argument has been removed.
-     */
-    external fun go_start_local_proxy(port: Int): Int
-
-    /**
-     * Starts the local proxy on a given port with username/password authentication.
-     * The pointer argument has been removed.
-     */
-    external fun go_start_local_proxy_auth(
-        port: Int, user: String, pass: String
-    ): Int
-
-    /**
-     * Stops the local proxy service.
-     * The pointer argument has been removed.
-     */
-    external fun go_stop_local_proxy()
-
-    // The deprecated go_create_socket function has been removed entirely.
+    override fun startup(): Long {
+        Log.d(TAG, "startup() called from core.")
+        return 0
+    }
 }
 
 /**
- * Manages the lifecycle of the Go-based proxy. The internal 'chainPtr' is kept
- * to manage the initialized state but is no longer passed to most native functions.
+ * Represents a single proxy server in a chain.
+ * Based on the provided template.
  */
-object ProxyManager : Closeable {
+data class ProxyHop(
+    val type: String,
+    val address: String,
+    val port: Int,
+    val username: String? = null,
+    val password: String? = null
+)
 
-    private var chainPtr: Long = 0
+/**
+ * Manages the Xray proxy lifecycle using the libv2ray.CoreController API.
+ * Now with full support for proxy chaining.
+ */
+object ProxyManager {
+    private const val TAG = "ProxyManager"
+    private var coreController: CoreController? = null
 
-    fun init(): Boolean {
-        if (isInitialized()) return true
-        chainPtr = ProxyChainNative.go_init_chain()
-        return isInitialized()
-    }
+    /**
+     * Starts a local proxy that can chain through a series of other proxies.
+     * This is the main function that implements the logic from your template.
+     */
+    fun startProxyChain(
+        localPort: Int,
+        localUser: String,
+        localPass: String,
+        hops: List<ProxyHop>,
+        dohUrl: String? = null
+    ): Boolean {
+        if (isProxyRunning()) {
+            Log.w(TAG, "Proxy is already running. Stopping first.")
+            stopLocalProxy()
+        }
 
-    override fun close() {
-        stopLocalProxy()
-        if (isInitialized()) {
-            ProxyChainNative.go_destroy_chain(chainPtr)
-            chainPtr = 0
+        val localProxyTag = "local_in"
+        val directTag = "direct"
+
+        // Build the outbounds section safely.
+        val hopsJson = hops.mapIndexed { index, hop ->
+            val tag = "hop_${index}"
+            // The password can contain special JSON characters, so it must be escaped.
+            val escapedPassword = hop.password?.replace("\"", "\\\"")
+            val userPassJson = if (hop.username != null && escapedPassword != null) {
+                """, "users": [ { "user": "${hop.username}", "pass": "$escapedPassword" } ] """
+            } else ""
+
+            // Xray's protocol name for SOCKS5 is just "socks".
+            val protocolName = if (hop.type.equals("socks5", ignoreCase = true) || hop.type.equals(
+                    "socks4",
+                    ignoreCase = true
+                )
+            ) "socks" else hop.type
+
+            """
+            {
+              "tag": "$tag",
+              "protocol": "$protocolName",
+              "settings": { "servers": [ { "address": "${hop.address}", "port": ${hop.port} $userPassJson } ] }
+            }
+            """
+        }
+
+        val freedomOutbound = """{ "tag": "$directTag", "protocol": "freedom", "settings": {} }"""
+
+        // Join the hops and the final freedom outbound, ensuring no leading comma if hops are empty.
+        val outboundsJson = (hopsJson + freedomOutbound).joinToString(",\n")
+
+        // Determine the final tag for the routing rule.
+        // If there are hops, the final tag is the last hop. Otherwise, it's 'direct'.
+        val finalOutboundTag = if (hops.isNotEmpty()) "hop_${hops.size - 1}" else directTag
+
+        // Build the "routing" JSON object
+        val routingJson = """
+          "routing": { "rules": [ { "type": "field", "inboundTag": ["$localProxyTag"], "outboundTag": "$finalOutboundTag" } ] }
+        """.trimIndent()
+
+        // Build the optional "dns" JSON object
+        val dnsJson = if (dohUrl != null) {
+            """, "dns": { "servers": [ { "address": "$dohUrl", "protocol": "https" } ] }"""
+        } else ""
+
+        // Escape the local password just in case it contains special characters
+        val escapedLocalPass = localPass.replace("\"", "\\\"")
+
+        // Assemble the complete JSON configuration
+        val xrayJsonConfig = """
+        {
+          "log": { "loglevel": "debug" },
+          "inbounds": [
+            {
+              "tag": "$localProxyTag",
+              "port": $localPort,
+              "listen": "0.0.0.0",
+              "protocol": "http",
+              "settings": {
+                "accounts": [ { "user": "$localUser", "pass": "$escapedLocalPass" } ],
+                "allowTransparent": false
+              }
+            }
+          ],
+          "outbounds": [
+            $outboundsJson
+          ],
+          $routingJson
+          $dnsJson
+        }
+        """.trimIndent()
+
+        val redactedConfig = xrayJsonConfig
+            .replace(Regex(""""pass":\s*".*?""""), """"pass": "[REDACTED]"""")
+
+
+        Log.d(TAG, "Starting Libv2ray with generated chain config: $redactedConfig")
+
+        try {
+            coreController = CoreController(XrayCallback())
+            coreController?.startLoop(xrayJsonConfig)
+
+            Log.i(TAG, "Libv2ray proxy chain started successfully on port $localPort")
+            return true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start Libv2ray proxy chain", e)
+            coreController = null
+            return false
         }
     }
 
-    fun updateChain(configLines: List<String>): Boolean {
-        if (!isInitialized()) return false
-        val configText = configLines.joinToString("\n")
-        val configB64 = Base64.encodeToString(configText.toByteArray(), Base64.NO_WRAP)
-        val res = ProxyChainNative.go_update_chain(configB64)
-        return res == 0
-    }
-
-    fun startLocalProxy(port: Int): Boolean {
-        if (!isInitialized()) return false
-        val res = ProxyChainNative.go_start_local_proxy(port)
-        return res == 0
-    }
-
-    fun startLocalProxyAuth(port: Int, user: String, pass: String): Boolean {
-        if (!isInitialized()) return false
-        val res = ProxyChainNative.go_start_local_proxy_auth(port, user, pass)
-        return res == 0
-    }
 
     fun stopLocalProxy() {
-        if (isInitialized()) {
-            ProxyChainNative.go_stop_local_proxy()
+        if (!isProxyRunning()) return
+        try {
+            coreController?.stopLoop()
+            Log.i(TAG, "Libv2ray proxy stop command issued.")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error stopping Libv2ray proxy", e)
+        } finally {
+            coreController = null
         }
     }
 
-    fun isInitialized(): Boolean = chainPtr != 0L
+    fun isProxyRunning(): Boolean {
+        return coreController?.isRunning ?: false
+    }
 }

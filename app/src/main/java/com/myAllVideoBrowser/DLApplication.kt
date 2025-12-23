@@ -78,16 +78,22 @@ open class DLApplication : DaggerApplication() {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            ProxyManager.init()
             val generatedCreds = GeneratedProxyCreds.generateProxyCredentials()
             sharedPrefHelper.setGeneratedCreds(generatedCreds)
             AppLogger.i("New local creds generated")
-            ProxyManager.startLocalProxyAuth(
-                8888,
-                generatedCreds.localUser,
-                generatedCreds.localPassword
+
+            val success = ProxyManager.startProxyChain(
+                localPort = 8888,
+                localUser = generatedCreds.localUser,
+                localPass = generatedCreds.localPassword,
+                hops = emptyList()
             )
-            AppLogger.i("Local Proxy Started on port 8888")
+
+            if (success) {
+                AppLogger.i("Local Proxy process started successfully.")
+            } else {
+                AppLogger.e("Failed to start Local Proxy process. Check ProxyManager logs for details.")
+            }
         }
     }
 
@@ -119,7 +125,3 @@ open class DLApplication : DaggerApplication() {
         }
     }
 }
-
-//            // GeckoView socket usage
-//            val fd = ProxyManager.createSocket("https://example.com:443")
-//            // pass fd to GeckoView SocketProvider

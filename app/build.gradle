@@ -133,11 +133,6 @@ android {
             jniLibs.srcDirs = ['src/main/jniLibs']
         }
     }
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-        }
-    }
 }
 
 kotlin {
@@ -145,6 +140,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(files("libs/libv2ray.aar"))
     // Android support
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.13.0'

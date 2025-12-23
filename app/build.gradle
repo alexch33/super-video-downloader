@@ -307,6 +307,7 @@ tasks.register('installGoMobile', Exec) {
         file(goMobilePath).mkdirs()
         
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
+        environment 'GOSUMDB', 'sum.golang.org'
         environment 'GOPATH', goPath
         environment 'GOBIN', goMobilePath
 
@@ -333,6 +334,7 @@ tasks.register('initGoMobile', Exec) {
         def originalPath = System.getenv("PATH")
 
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
+        environment 'GOSUMDB', 'sum.golang.org'
         environment 'PATH', "${goBinPath}:${originalPath}"
         environment 'GOPATH', goPath
         environment 'GOROOT', file(goExecutable).parentFile.parent
@@ -365,6 +367,9 @@ tasks.register('buildAarFromSource', Exec) {
         println "Building libv2ray.aar from source..."
         def goBinPath = file(goExecutable).parent
         def originalPath = System.getenv("PATH")
+
+        environment 'GOPROXY', 'https://proxy.golang.org,direct'
+        environment 'GOSUMDB', 'sum.golang.org'
 
         environment 'PATH', "${goBinPath}:${goPath}/bin:${originalPath}"
         println "Using PATH for bind: ${environment.get('PATH')}"

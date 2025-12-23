@@ -305,7 +305,8 @@ tasks.register('installGoMobile', Exec) {
     doFirst {
         println "Installing gomobile tool..."
         file(goMobilePath).mkdirs()
-
+        
+        environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOPATH', goPath
         environment 'GOBIN', goMobilePath
 
@@ -331,6 +332,7 @@ tasks.register('initGoMobile', Exec) {
         def goBinPath = file(goExecutable).parent
         def originalPath = System.getenv("PATH")
 
+        environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'PATH', "${goBinPath}:${originalPath}"
         environment 'GOPATH', goPath
         environment 'GOROOT', file(goExecutable).parentFile.parent
@@ -390,7 +392,7 @@ tasks.register('forceClean', Exec) {
 
     doFirst {
         println "Forcibly cleaning Go build artifacts with read-only permissions..."
-        commandLine 'sh', '-c', "chmod -R +w ${buildDirV2ray}"
+        commandLine 'sh', '-c', "chmod -R +w ${file(buildDirV2ray).absolutePath}"
     }
 }
 

@@ -7,3 +7,4 @@ build/
 release/
 captures/*
 .externalNativeBuild
+/app/libs/libv2ray*

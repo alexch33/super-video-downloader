@@ -379,3 +379,18 @@ tasks.register('buildAarFromSource', Exec) {
 }
 
 preBuild.dependsOn buildAarFromSource
+
+// =========================================================================
+// Custom clean task to handle read-only Go module files
+// =========================================================================
+
+tasks.register('forceClean', Exec) {
+    onlyIf { file(buildDirV2ray).exists() }
+
+    doFirst {
+        println "Forcibly cleaning Go build artifacts with read-only permissions..."
+        commandLine 'sh', '-c', "chmod -R +w ${buildDirV2ray}"
+    }
+}
+
+clean.dependsOn forceClean

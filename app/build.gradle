@@ -325,14 +325,14 @@ tasks.register('installGoMobile', Exec) {
 
 tasks.register('initGoMobile', Exec) {
     dependsOn installGoMobile
-
     outputs.file("${goPath}/bin/gobind")
 
     doFirst {
         println "Running 'gomobile init' to build toolchain..."
         def goExecPath = goExecutable
-        def goBinPath = file(goExecutable).parent
+        def goBinPath = file(goExecPath).isAbsolute() ? file(goExecPath).parent : "go".directory
         def originalPath = System.getenv("PATH")
+        environment 'PATH', "${goBinPath}:${originalPath}"
 
         if (file(goExecPath).isAbsolute()) {
             environment 'GOROOT', file(goExecPath).parentFile.parent
@@ -340,7 +340,6 @@ tasks.register('initGoMobile', Exec) {
 
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'
-        environment 'PATH', "${goBinPath}:${originalPath}"
         environment 'GOPATH', goPath
 
         commandLine goMobileExecutable, 'init'
@@ -370,8 +369,11 @@ tasks.register('buildAarFromSource', Exec) {
     doFirst {
         println "Building libv2ray.aar from source..."
         def goExecPath = goExecutable
-        def goBinPath = file(goExecutable).parent
         def originalPath = System.getenv("PATH")
+
+        def goBinPath = file(goExecPath).isAbsolute() ? file(goExecPath).parent : "go".directory
+        environment 'PATH', "${goBinPath}:${goPath}/bin:${originalPath}"
+        println "Using PATH for bind: ${environment.get('PATH')}"
 
         if (file(goExecPath).isAbsolute()) {
             environment 'GOROOT', file(goExecPath).parentFile.parent
@@ -379,10 +381,6 @@ tasks.register('buildAarFromSource', Exec) {
 
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'
-
-        environment 'PATH', "${goBinPath}:${goPath}/bin:${originalPath}"
-        println "Using PATH for bind: ${environment.get('PATH')}"
-
         environment 'GOPATH', goPath
 
         commandLine goMobileExecutable, 'bind',

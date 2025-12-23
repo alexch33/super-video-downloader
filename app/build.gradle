@@ -330,14 +330,18 @@ tasks.register('initGoMobile', Exec) {
 
     doFirst {
         println "Running 'gomobile init' to build toolchain..."
+        def goExecPath = goExecutable
         def goBinPath = file(goExecutable).parent
         def originalPath = System.getenv("PATH")
+
+        if (file(goExecPath).isAbsolute()) {
+            environment 'GOROOT', file(goExecPath).parentFile.parent
+        }
 
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'
         environment 'PATH', "${goBinPath}:${originalPath}"
         environment 'GOPATH', goPath
-        environment 'GOROOT', file(goExecutable).parentFile.parent
 
         commandLine goMobileExecutable, 'init'
     }
@@ -365,8 +369,13 @@ tasks.register('buildAarFromSource', Exec) {
 
     doFirst {
         println "Building libv2ray.aar from source..."
+        def goExecPath = goExecutable
         def goBinPath = file(goExecutable).parent
         def originalPath = System.getenv("PATH")
+
+        if (file(goExecPath).isAbsolute()) {
+            environment 'GOROOT', file(goExecPath).parentFile.parent
+        }
 
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'
@@ -375,7 +384,6 @@ tasks.register('buildAarFromSource', Exec) {
         println "Using PATH for bind: ${environment.get('PATH')}"
 
         environment 'GOPATH', goPath
-        environment 'GOROOT', file(goExecutable).parentFile.parent
 
         commandLine goMobileExecutable, 'bind',
                 '-v',

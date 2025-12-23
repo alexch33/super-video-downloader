@@ -6,6 +6,7 @@ import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
+import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyHop
 import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -102,20 +103,38 @@ class ProxiesViewModel @Inject constructor(
     }
 
     private fun updateChain(proxies: List<Proxy>) {
-        val proxyChain = mutableListOf<String>()
-        val realProxies = proxies.filter { it != Proxy.noProxy() }
-
-        if (realProxies.isNotEmpty()) {
-            proxyChain.addAll(realProxies.map { it.toString() })
+        if (isProxyOn.get() == false) {
+            ProxyManager.stopLocalProxy()
+            return
         }
 
-        if (isDohOn.get() == true) {
-            selectedDohProvider.get()?.let { provider ->
-                proxyChain.add(provider.url)
+        val proxyHops = proxies
+            .filter { it != Proxy.noProxy() }
+            .map { proxy ->
+                ProxyHop(
+                    type = proxy.type.name.lowercase(),
+                    address = proxy.host,
+                    port = proxy.port.toInt(),
+                    username = proxy.user.takeIf { it.isNotBlank() },
+                    password = proxy.password.takeIf { it.isNotBlank() }
+                )
             }
+
+        val dohUrl: String? = if (isDohOn.get() == true) {
+            selectedDohProvider.get()?.url?.substringAfter("doh=strict:")
+        } else {
+            null
         }
 
-        ProxyManager.updateChain(proxyChain)
+        val localCreds = sharedPrefHelper.getGeneratedCreds()
+
+        ProxyManager.startProxyChain(
+            localPort = 8888,
+            localUser = localCreds.localUser,
+            localPass = localCreds.localPassword,
+            hops = proxyHops,
+            dohUrl = dohUrl
+        )
     }
 
     private fun saveAndUpdateProxies(updatedList: List<Proxy>) {

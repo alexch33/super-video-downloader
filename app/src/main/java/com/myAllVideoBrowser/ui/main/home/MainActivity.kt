@@ -219,7 +219,6 @@ class MainActivity : BaseActivity() {
     override fun onDestroy() {
         AppLogger.i("Local Proxy Stopping....")
         ProxyManager.stopLocalProxy()
-        ProxyManager.close()
         AppLogger.i("Local Proxy Stooped.")
         mainViewModel.stop()
         super.onDestroy()

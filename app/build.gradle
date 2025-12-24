@@ -20,6 +20,16 @@ def abiFilterList = (properties["ABI_FILTERS"] as String).split(';')
 def abiCodes = ["armeabi-v7a": 1, "arm64-v8a": 2, "x86": 3, "x86_64": 4]
 
 android {
+    testOptions {
+        unitTests.all {
+            exclude '**/*'
+        }
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
+        }
+    }
+
     dependenciesInfo {
         // Disables dependency metadata when building APKs.
         includeInApk = false
@@ -45,6 +55,8 @@ android {
         jniLibs {
             useLegacyPackaging = true
         }
+        doNotStrip "**/libffmpeg.zip.so"
+        doNotStrip "**/libpython.zip.so"
     }
     compileSdkVersion build_versions.target_sdk
     signingConfigs {
@@ -388,10 +400,4 @@ tasks.register('forceClean', Exec) {
 
 tasks.named('clean') {
     dependsOn tasks.named('forceClean')
-}
-
-tasks.configureEach { task ->
-    if (task.name.toLowerCase().contains("test")) {
-        task.enabled = false
-    }
 }

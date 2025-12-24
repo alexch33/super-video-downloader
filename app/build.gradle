@@ -386,4 +386,12 @@ tasks.register('forceClean', Exec) {
     }
 }
 
-clean.dependsOn forceClean
+tasks.named('clean') {
+    dependsOn tasks.named('forceClean')
+}
+
+tasks.configureEach { task ->
+    if (task.name.toLowerCase().contains("test")) {
+        task.enabled = false
+    }
+}

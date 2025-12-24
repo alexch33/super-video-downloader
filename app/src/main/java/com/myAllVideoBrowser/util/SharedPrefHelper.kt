@@ -395,7 +395,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsDohOn(): Boolean {
-        return sharedPreferences.getBoolean(IS_DOH_ON, false)
+        return sharedPreferences.getBoolean(IS_DOH_ON, true)
     }
 
     fun setIsDohOn(isOn: Boolean) {

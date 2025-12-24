@@ -37,7 +37,7 @@ class ProxiesViewModel @Inject constructor(
             isDohOn.set(sharedPrefHelper.getIsDohOn())
             val savedProviderName = sharedPrefHelper.getSelectedDohProvider()
             val provider =
-                DohProvider.entries.find { it.name == savedProviderName } ?: DohProvider.CLOUDFLARE
+                DohProvider.entries.find { it.name == savedProviderName } ?: DohProvider.ADGUARD
             selectedDohProvider.set(provider)
 
             val usersProxy = sharedPrefHelper.getUserProxyChain()

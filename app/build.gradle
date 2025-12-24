@@ -289,58 +289,40 @@ ext {
     v2rayRepo = 'https://github.com/2dust/AndroidLibXrayLite.git'
     v2rayCommit = 'v25.12.8'
     buildDirV2ray = "${project.rootDir}/build/v2ray"
-    goMobilePath = "${buildDirV2ray}/gomobile"
-    goPath = "${buildDirV2ray}/gopath"
     aarOutputFile = file("libs/libv2ray.aar")
 
     goExecutable = file('/usr/local/go/bin/go').exists() ? '/usr/local/go/bin/go' : 'go'
     gitExecutable = file('/usr/bin/git').exists() ? '/usr/bin/git' : 'git'
 
-    goMobileExecutable = "${goMobilePath}/gomobile"
+    def userGoBin = System.getProperty("user.home") + "/go/bin"
+    goMobileExecutable = "${userGoBin}/gomobile"
 }
 
 tasks.register('installGoMobile', Exec) {
     outputs.file(goMobileExecutable)
 
     doFirst {
-        println "Installing gomobile tool..."
-        file(goMobilePath).mkdirs()
-        
-        environment 'GOPROXY', 'https://proxy.golang.org,direct'
-        environment 'GOSUMDB', 'sum.golang.org'
-        environment 'GOPATH', goPath
-        environment 'GOBIN', goMobilePath
-
+        println "Installing gomobile tool to default location: ${goMobileExecutable}"
+        file(goMobileExecutable).parentFile.mkdirs()
         commandLine goExecutable, 'install', 'golang.org/x/mobile/cmd/gomobile@latest'
-    }
-
-    doLast {
-        if (!file(goMobileExecutable).exists()) {
-            throw new GradleException("Failed to install gomobile. Please check Go installation and network.")
-        } else {
-            println "Gomobile tool installed successfully at ${goMobileExecutable}"
-        }
     }
 }
 
 tasks.register('initGoMobile', Exec) {
     dependsOn installGoMobile
-    outputs.file("${goPath}/bin/gobind")
+
+    inputs.file(goMobileExecutable)
 
     doFirst {
-        println "Running 'gomobile init' to build toolchain..."
-        def goExecPath = goExecutable
-        def goBinPath = file(goExecPath).isAbsolute() ? file(goExecPath).parent : "go".directory
+        println "Running 'gomobile init'..."
         def originalPath = System.getenv("PATH")
-        environment 'PATH', "${goBinPath}:${originalPath}"
+        def userGoBin = System.getProperty("user.home") + "/go/bin"
 
-        if (file(goExecPath).isAbsolute()) {
-            environment 'GOROOT', file(goExecPath).parentFile.parent
-        }
+        def goBinPath = file(goExecutable).isAbsolute() ? file(goExecutable).parent : ""
+        environment 'PATH', "${goBinPath}:${userGoBin}:${originalPath}"
 
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'
-        environment 'GOPATH', goPath
 
         commandLine goMobileExecutable, 'init'
     }
@@ -368,25 +350,22 @@ tasks.register('buildAarFromSource', Exec) {
 
     doFirst {
         println "Building libv2ray.aar from source..."
-        def goExecPath = goExecutable
         def originalPath = System.getenv("PATH")
+        def userGoBin = System.getProperty("user.home") + "/go/bin"
 
-        def goBinPath = file(goExecPath).isAbsolute() ? file(goExecPath).parent : "go".directory
-        environment 'PATH', "${goBinPath}:${goPath}/bin:${originalPath}"
-        println "Using PATH for bind: ${environment.get('PATH')}"
-
-        if (file(goExecPath).isAbsolute()) {
-            environment 'GOROOT', file(goExecPath).parentFile.parent
-        }
+        def goBinPath = file(goExecutable).isAbsolute() ? file(goExecutable).parent : ""
+        environment 'PATH', "${goBinPath}:${userGoBin}:${originalPath}"
 
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'
-        environment 'GOPATH', goPath
 
         commandLine goMobileExecutable, 'bind',
                 '-v',
                 '-target=android',
                 '-androidapi=21',
+                '-trimpath',
+                '-ldflags',
+                '-s -w -buildid=',
                 '-o', aarOutputFile.absolutePath,
                 './'
     }

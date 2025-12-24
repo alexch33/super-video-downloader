@@ -103,7 +103,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsProxyOn(): Boolean {
-        return sharedPreferences.getBoolean(IS_PROXY_TURN_ON, true)
+        return sharedPreferences.getBoolean(IS_PROXY_TURN_ON, false)
     }
 
     fun setIsProxyOn(isTurnedOn: Boolean) {

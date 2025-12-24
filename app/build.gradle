@@ -27,6 +27,8 @@ android {
         includeInBundle = false
     }
 
+    ndkVersion "27.3.13750724"
+
     packagingOptions {
         resources {
             excludes += ['mozilla/public-suffix-list.txt',
@@ -44,9 +46,16 @@ android {
         }
         jniLibs {
             useLegacyPackaging = true
+            keepDebugSymbols += [
+                    '**/libffmpeg.zip.so',
+                    '**/libpython.zip.so',
+                    '**/libffmpeg.so',
+                    '**/libffprobe.so',
+                    '**/libgojni.so',
+                    '**/libpython.so',
+                    '**/libqjs.so'
+            ]
         }
-        doNotStrip "**/libffmpeg.zip.so"
-        doNotStrip "**/libpython.zip.so"
     }
     compileSdkVersion build_versions.target_sdk
     signingConfigs {
@@ -303,39 +312,6 @@ ext {
     goMobileExecutable = "${userGoBin}/gomobile"
 }
 
-def findNdkPath() {
-    def ndkHome = System.getenv("ANDROID_NDK_HOME")
-    if (ndkHome != null && !ndkHome.isEmpty()) {
-        println "Using NDK from ANDROID_NDK_HOME: $ndkHome"
-        return ndkHome
-    }
-
-    def localProperties = new Properties()
-    def localPropertiesFile = project.rootProject.file('local.properties')
-    if (localPropertiesFile.exists()) {
-        localPropertiesFile.withInputStream { stream ->
-            localProperties.load(stream)
-        }
-        def sdkDir = localProperties.getProperty('sdk.dir')
-        if (sdkDir != null) {
-            def ndkDir = new File(sdkDir, "ndk/${android.ndkVersion}")
-            if (ndkDir.exists()) {
-                println "Using NDK from local properties: $ndkDir"
-                return ndkDir.absolutePath
-            }
-            ndkDir = new File(sdkDir, "ndk-bundle")
-            if (ndkDir.exists()){
-                println "Using NDK from local properties (ndk-bundle): $ndkDir"
-                return ndkDir.absolutePath
-            }
-        }
-    }
-
-    def fdroidNdkPath = "/opt/android-sdk/ndk"
-    println "Falling back to default F-Droid NDK path: $fdroidNdkPath"
-    return fdroidNdkPath
-}
-
 tasks.register('installGoMobile', Exec) {
     outputs.file(goMobileExecutable)
 
@@ -359,7 +335,6 @@ tasks.register('initGoMobile', Exec) {
         def goBinPath = file(goExecutable).isAbsolute() ? file(goExecutable).parent : ""
         environment 'PATH', "${goBinPath}:${userGoBin}:${originalPath}"
 
-        environment 'ANDROID_NDK_HOME', findNdkPath()
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'
 
@@ -394,8 +369,6 @@ tasks.register('buildAarFromSource', Exec) {
 
         def goBinPath = file(goExecutable).isAbsolute() ? file(goExecutable).parent : ""
         environment 'PATH', "${goBinPath}:${userGoBin}:${originalPath}"
-
-        environment 'ANDROID_NDK_HOME', findNdkPath()
 
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'

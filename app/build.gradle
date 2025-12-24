@@ -303,6 +303,39 @@ ext {
     goMobileExecutable = "${userGoBin}/gomobile"
 }
 
+def findNdkPath() {
+    def ndkHome = System.getenv("ANDROID_NDK_HOME")
+    if (ndkHome != null && !ndkHome.isEmpty()) {
+        println "Using NDK from ANDROID_NDK_HOME: $ndkHome"
+        return ndkHome
+    }
+
+    def localProperties = new Properties()
+    def localPropertiesFile = project.rootProject.file('local.properties')
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.withInputStream { stream ->
+            localProperties.load(stream)
+        }
+        def sdkDir = localProperties.getProperty('sdk.dir')
+        if (sdkDir != null) {
+            def ndkDir = new File(sdkDir, "ndk/${android.ndkVersion}")
+            if (ndkDir.exists()) {
+                println "Using NDK from local properties: $ndkDir"
+                return ndkDir.absolutePath
+            }
+            ndkDir = new File(sdkDir, "ndk-bundle")
+            if (ndkDir.exists()){
+                println "Using NDK from local properties (ndk-bundle): $ndkDir"
+                return ndkDir.absolutePath
+            }
+        }
+    }
+
+    def fdroidNdkPath = "/opt/android-sdk/ndk"
+    println "Falling back to default F-Droid NDK path: $fdroidNdkPath"
+    return fdroidNdkPath
+}
+
 tasks.register('installGoMobile', Exec) {
     outputs.file(goMobileExecutable)
 
@@ -326,6 +359,7 @@ tasks.register('initGoMobile', Exec) {
         def goBinPath = file(goExecutable).isAbsolute() ? file(goExecutable).parent : ""
         environment 'PATH', "${goBinPath}:${userGoBin}:${originalPath}"
 
+        environment 'ANDROID_NDK_HOME', findNdkPath()
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'
 
@@ -361,8 +395,12 @@ tasks.register('buildAarFromSource', Exec) {
         def goBinPath = file(goExecutable).isAbsolute() ? file(goExecutable).parent : ""
         environment 'PATH', "${goBinPath}:${userGoBin}:${originalPath}"
 
+        environment 'ANDROID_NDK_HOME', findNdkPath()
+
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'
+
+        environment 'CGO_LDFLAGS', "-Wl,-z,max-page-size=16384"
 
         commandLine goMobileExecutable, 'bind',
                 '-v',
@@ -377,20 +415,3 @@ tasks.register('buildAarFromSource', Exec) {
 }
 
 preBuild.dependsOn buildAarFromSource
-
-// =========================================================================
-// Custom clean task to handle read-only Go module files
-// =========================================================================
-
-tasks.register('forceClean', Exec) {
-    onlyIf { file(buildDirV2ray).exists() }
-
-    doFirst {
-        println "Forcibly cleaning Go build artifacts with read-only permissions..."
-        commandLine 'sh', '-c', "chmod -R +w ${file(buildDirV2ray).absolutePath}"
-    }
-}
-
-tasks.named('clean') {
-    dependsOn tasks.named('forceClean')
-}

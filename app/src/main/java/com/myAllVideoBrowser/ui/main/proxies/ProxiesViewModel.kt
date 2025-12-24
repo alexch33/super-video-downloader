@@ -103,7 +103,7 @@ class ProxiesViewModel @Inject constructor(
     }
 
     private fun updateChain(proxies: List<Proxy>) {
-        if (isProxyOn.get() == false) {
+        if (isProxyOn.get() == false && isDohOn.get() == false) {
             ProxyManager.stopLocalProxy()
             return
         }

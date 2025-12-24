@@ -15,9 +15,6 @@ jacoco {
 allOpen {
     annotation 'com.allVideoBrowserXmaster.OpenForTesting'
 }
-def splitApks = System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: true
-def abiFilterList = (properties["ABI_FILTERS"] as String).split(';')
-def abiCodes = ["armeabi-v7a": 1, "arm64-v8a": 2, "x86": 3, "x86_64": 4]
 
 android {
     dependenciesInfo {
@@ -61,22 +58,35 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 81
-        versionName "0.7.0"
+        versionCode 85
+        versionName "0.7.1"
+    }
 
-        if (splitApks) {
-            splits {
-                abi {
-                    enable true
-                    reset()
-                    include 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
-                    universalApk true
-                }
-            }
-        } else {
-            ndk { abiFilters.addAll(abiFilterList) }
+    flavorDimensions += "abi"
+    productFlavors {
+        create("armeabi-v7a") {
+            dimension = "abi"
+            ndk { abiFilters.add("armeabi-v7a") }
+            // Assigns a version code offset, F-Droid can use this
+            versionCode = defaultConfig.versionCode + 1
+        }
+        create("arm64-v8a") {
+            dimension = "abi"
+            ndk { abiFilters.add("arm64-v8a") }
+            versionCode = defaultConfig.versionCode + 2
+        }
+        create("x86") {
+            dimension = "abi"
+            ndk { abiFilters.add("x86") }
+            versionCode = defaultConfig.versionCode + 3
+        }
+        create("x86_64") {
+            dimension = "abi"
+            ndk { abiFilters.add("x86_64") }
+            versionCode = defaultConfig.versionCode + 4
         }
     }
+
     buildTypes {
         debug {
             minifyEnabled false
@@ -106,24 +116,6 @@ android {
         }
     }
 
-    androidComponents {
-        onVariants(selector().all()) { variant ->
-            variant.outputs.forEach { output ->
-                def name
-                if (splitApks) {
-                    name = output.filters.find { it.filterType == FilterConfiguration.FilterType.ABI }?.identifier
-                } else {
-                    name = abiFilterList[0]
-                }
-
-                def baseAbiCode = abiCodes[name]
-
-                if (baseAbiCode != null) {
-                    output.versionCode.set(baseAbiCode + (output.versionCode.get() ?: 0))
-                }
-            }
-        }
-    }
     namespace 'com.myAllVideoBrowser'
     lint {
         abortOnError false

@@ -134,7 +134,7 @@ object ProxyManager {
             {
               "tag": "$localProxyTag",
               "port": $localPort,
-              "listen": "0.0.0.0",
+              "listen": "127.0.0.1",
               "protocol": "http",
               "settings": {
                 "accounts": [ { "user": "$localUser", "pass": "$escapedLocalPass" } ],

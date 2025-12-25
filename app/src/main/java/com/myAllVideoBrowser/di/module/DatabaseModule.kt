@@ -5,7 +5,6 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.myAllVideoBrowser.DLApplication
 import com.myAllVideoBrowser.data.local.room.AppDatabase
-import com.myAllVideoBrowser.data.local.room.dao.AdHostDao
 import com.myAllVideoBrowser.data.local.room.dao.ConfigDao
 import com.myAllVideoBrowser.data.local.room.dao.HistoryDao
 import com.myAllVideoBrowser.data.local.room.dao.PageDao
@@ -43,6 +42,12 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP TABLE IF EXISTS AdHost")
+    }
+}
+
 @Module
 class DatabaseModule {
 
@@ -53,7 +58,8 @@ class DatabaseModule {
             MIGRATION_1_2,
             MIGRATION_2_3,
             MIGRATION_3_4,
-            MIGRATION_4_5
+            MIGRATION_4_5,
+            MIGRATION_5_6
         ).build()
     }
 
@@ -76,8 +82,4 @@ class DatabaseModule {
     @Singleton
     @Provides
     fun providePageDao(database: AppDatabase): PageDao = database.pageDao()
-
-    @Singleton
-    @Provides
-    fun provideAdHostDao(database: AppDatabase): AdHostDao = database.adHostDao()
 }

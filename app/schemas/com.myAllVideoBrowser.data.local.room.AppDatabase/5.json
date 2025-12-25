@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "4581fbe39c79237b1f8fdd6697a0eae6",
+    "identityHash": "6d6132c93e882b77eb300b9b54fbf202",
     "entities": [
       {
         "tableName": "PageInfo",
@@ -41,8 +41,7 @@
           {
             "fieldPath": "favicon",
             "columnName": "favicon",
-            "affinity": "BLOB",
-            "notNull": false
+            "affinity": "BLOB"
           },
           {
             "fieldPath": "order",
@@ -56,9 +55,7 @@
           "columnNames": [
             "link"
           ]
-        },
-        "indices": [],
-        "foreignKeys": []
+        }
       },
       {
         "tableName": "SupportedPage",
@@ -88,9 +85,7 @@
           "columnNames": [
             "id"
           ]
-        },
-        "indices": [],
-        "foreignKeys": []
+        }
       },
       {
         "tableName": "VideoInfo",
@@ -156,9 +151,7 @@
           "columnNames": [
             "id"
           ]
-        },
-        "indices": [],
-        "foreignKeys": []
+        }
       },
       {
         "tableName": "ProgressInfo",
@@ -268,9 +261,7 @@
           "columnNames": [
             "id"
           ]
-        },
-        "indices": [],
-        "foreignKeys": []
+        }
       },
       {
         "tableName": "HistoryItem",
@@ -285,8 +276,7 @@
           {
             "fieldPath": "title",
             "columnName": "title",
-            "affinity": "TEXT",
-            "notNull": false
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "url",
@@ -303,8 +293,7 @@
           {
             "fieldPath": "favicon",
             "columnName": "favicon",
-            "affinity": "BLOB",
-            "notNull": false
+            "affinity": "BLOB"
           }
         ],
         "primaryKey": {
@@ -312,35 +301,12 @@
           "columnNames": [
             "id"
           ]
-        },
-        "indices": [],
-        "foreignKeys": []
-      },
-      {
-        "tableName": "AdHost",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`host` TEXT NOT NULL, PRIMARY KEY(`host`))",
-        "fields": [
-          {
-            "fieldPath": "host",
-            "columnName": "host",
-            "affinity": "TEXT",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "host"
-          ]
-        },
-        "indices": [],
-        "foreignKeys": []
+        }
       }
     ],
-    "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4581fbe39c79237b1f8fdd6697a0eae6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6d6132c93e882b77eb300b9b54fbf202')"
     ]
   }
 }

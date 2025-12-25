@@ -12,7 +12,6 @@ import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
 import com.myAllVideoBrowser.ui.main.history.HistoryViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
-import com.myAllVideoBrowser.util.AdBlockerHelper
 import com.myAllVideoBrowser.util.FaviconUtils
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
@@ -26,6 +25,7 @@ import com.myAllVideoBrowser.util.VideoUtils
 import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
+import java.io.ByteArrayInputStream
 
 enum class ContentType {
     M3U8,
@@ -50,6 +50,16 @@ class CustomWebViewClient(
     private var lastSavedTitleHistory: String = ""
     private var lastRegularCheckUrl = ""
     private val regularJobsStorage: MutableMap<String, List<Disposable>> = mutableMapOf()
+
+    companion object {
+        fun emptyResponse(): WebResourceResponse {
+            return WebResourceResponse(
+                "text/plain",
+                "utf-8",
+                ByteArrayInputStream("".toByteArray())
+            )
+        }
+    }
 
     override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
         val viewTitle = view?.title
@@ -98,14 +108,7 @@ class CustomWebViewClient(
     override fun shouldInterceptRequest(
         view: WebView?, request: WebResourceRequest?
     ): WebResourceResponse? {
-        val isAdBlockerOn = settingsModel.isAdBlocker.get()
         val url = request?.url.toString()
-
-        val isUrlAd: Boolean = isAdBlockerOn && tabViewModel.isAd(url)
-
-        if (isUrlAd) {
-            return AdBlockerHelper.createEmptyResource()
-        }
 
         val isCheckM3u8 = settingsModel.isCheckIfEveryRequestOnM3u8.get()
         val isCheckOnMp4 = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
@@ -124,7 +127,8 @@ class CustomWebViewClient(
 
             val contentType =
                 VideoUtils.getContentTypeByUrl(url, requestWithCookies?.headers, okHttpProxyClient)
-            val isInterruptIntreceptedResources = settingsModel.isInterruptIntreceptedResources.get()
+            val isInterruptIntreceptedResources =
+                settingsModel.isInterruptIntreceptedResources.get()
             when {
 
                 contentType == ContentType.M3U8 || contentType == ContentType.MPD || url.contains(".m3u8") || url.contains(
@@ -136,7 +140,7 @@ class CustomWebViewClient(
                         )
                     }
                     if (isInterruptIntreceptedResources) {
-                        return AdBlockerHelper.createEmptyResource()
+                        return emptyResponse()
                     }
                 }
 
@@ -163,7 +167,7 @@ class CustomWebViewClient(
                             regularJobsStorage[currentUrl] = overall
                         }
                         if (isInterruptIntreceptedResources) {
-                            return AdBlockerHelper.createEmptyResource()
+                            return emptyResponse()
                         }
                     }
                 }
@@ -195,9 +199,7 @@ class CustomWebViewClient(
     }
 
     override fun shouldOverrideUrlLoading(view: WebView, url: WebResourceRequest): Boolean {
-        val isAdBlockerOn = settingsModel.isAdBlocker.get()
-        val isAd = if (isAdBlockerOn) tabViewModel.isAd(url.url.toString()) else false
-        return if (url.url.toString().startsWith("http") && url.isForMainFrame && !isAd) {
+        return if (url.url.toString().startsWith("http") && url.isForMainFrame) {
             if (!tabViewModel.isTabInputFocused.get()) {
                 tabViewModel.setTabTextInput(url.url.toString())
             }

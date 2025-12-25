@@ -45,13 +45,7 @@ class CustomWebChromeClient(
         }
         AppLogger.d("ON_CREATE_WINDOW: URL from HitTestResult: $url")
 
-        // Now perform your ad-blocking and scheme checks
-        val isAd = if (settingsViewModel.isAdBlocker.get()) {
-            tabViewModel.isAd(url)
-        } else {
-            false
-        }
-        if (isAd || !url.startsWith("http")) {
+        if (!url.startsWith("http")) {
             AppLogger.d("ON_CREATE_WINDOW: Blocking ad or non-http scheme: $url")
             return false // Blocked
         }

@@ -16,16 +16,13 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import com.myAllVideoBrowser.R
-import com.myAllVideoBrowser.data.repository.AdBlockHostsRepository
 import com.myAllVideoBrowser.databinding.ActivityMainBinding
 import com.myAllVideoBrowser.ui.component.adapter.MainAdapter
 import com.myAllVideoBrowser.ui.main.base.BaseActivity
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
-import com.myAllVideoBrowser.util.AdsInitializerHelper
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker
@@ -47,9 +44,6 @@ class MainActivity : BaseActivity() {
     lateinit var baseSchedulers: BaseSchedulers
 
     @Inject
-    lateinit var adBlockHostsRepository: AdBlockHostsRepository
-
-    @Inject
     lateinit var sharedPrefHelper: SharedPrefHelper
 
     lateinit var mainViewModel: MainViewModel
@@ -69,12 +63,6 @@ class MainActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
 
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-
-        AdsInitializerHelper.initializeAdBlocker(
-            adBlockHostsRepository,
-            sharedPrefHelper,
-            lifecycleScope
-        )
 
         mainViewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
         proxiesViewModel = ViewModelProvider(this, viewModelFactory)[ProxiesViewModel::class.java]

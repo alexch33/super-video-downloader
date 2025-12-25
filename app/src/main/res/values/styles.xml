@@ -17,12 +17,15 @@
 
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.Material3.DayNight">
-        <!-- Customize your theme here. -->
+    <style name="Base.AppTheme" parent="Theme.Material3.DayNight">
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="AppTheme" parent="Base.AppTheme">
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <!--Splash screen theme. You should use it in your manifest file for your Splash Activity-->

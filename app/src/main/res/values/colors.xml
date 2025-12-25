@@ -28,5 +28,5 @@
     <color name="white_55">#8Cffffff</color>
     <color name="white_85">#D9ffffff</color>
     <color name="white">#FFFFFF</color>
-
+    <color name="colorOnPrimary">#000000</color>
 </resources>

@@ -1,0 +1,1 @@
+libv2ray generated artifacts folder

@@ -8,7 +8,6 @@ import androidx.databinding.ObservableInt
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
-import com.myAllVideoBrowser.data.repository.AdBlockHostsRepository
 import com.myAllVideoBrowser.data.repository.HistoryRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.SingleLiveEvent
@@ -26,7 +25,6 @@ import javax.inject.Inject
 class WebTabViewModel @Inject constructor(
     private val historyRepository: HistoryRepository,
     private val baseSchedulers: BaseSchedulers,
-    private val adBlockHostsRepository: AdBlockHostsRepository,
 ) : BaseViewModel() {
     val isTabInputFocused = ObservableBoolean(false)
     val changeTabFocusEvent = SingleLiveEvent<Boolean>()
@@ -67,10 +65,6 @@ class WebTabViewModel @Inject constructor(
     }
 
     override fun stop() {
-    }
-
-    fun isAd(url: String): Boolean {
-        return adBlockHostsRepository.isAds(url)
     }
 
     fun finishPage(url: String) {

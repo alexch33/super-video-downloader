@@ -1,94 +1,228 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
         <import type="android.view.View" />
 
-        <import type="com.myAllVideoBrowser.data.local.model.Proxy" />
+        <import type="com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel.SecureDnsProvider" />
 
         <variable
             name="viewModel"
             type="com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel" />
 
         <variable
-            name="adapter"
-            type="com.myAllVideoBrowser.ui.component.adapter.ProxiesAdapter" />
-
-        <variable
             name="listener"
             type="com.myAllVideoBrowser.ui.component.adapter.ProxiesListener" />
-
     </data>
 
-
-    <LinearLayout xmlns:tools="http://schemas.android.com/tools"
+    <LinearLayout
         android:id="@+id/proxies_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="75dp"
+        android:layout_marginBottom="88dp"
+        android:orientation="vertical"
         tools:context=".ui.main.proxies.ProxiesFragment">
 
-        <ScrollView
+        <LinearLayout
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clickable="true">
+            android:layout_height="65dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1.2"
+                android:text="@string/proxy"
+                android:textSize="24sp" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:layout_weight="2"
+                android:text="@{viewModel.realProxyCount > 0 ? viewModel.realProxyCount + ` proxies in chain` : `No proxy set`}"
+                tools:text="2 proxies in chain" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/turn_proxy"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:layout_weight="1"
+                android:checked="@{viewModel.isProxyOn}"
+                android:onCheckedChanged="@{(view, isChecked) -> listener.onProxyToggle(isChecked)}"
+                app:thumbTint="@color/colorAccent"
+                app:trackDecorationTint="@color/colorAccentDark"
+                app:trackTint="@color/color_gray" />
+        </LinearLayout>
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <LinearLayout
-                    android:id="@+id/toolbar"
+                <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"
-                    android:layout_height="65dp"
-                    android:gravity="center"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="8dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    app:layout_constraintTop_toTopOf="parent">
+                    android:paddingHorizontal="16dp">
 
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1.2"
-                        android:text="@string/proxy"
-                        android:textSize="24sp" />
-
-                    <com.google.android.material.textview.MaterialTextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        android:layout_weight="2"
-                        android:text="@{viewModel.currentProxy.host.toString()}" />
+                        android:layout_weight="1"
+                        android:text="@string/secure_dns"
+                        android:textSize="18sp" />
 
                     <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/turn_proxy"
-                        android:layout_width="0dp"
+                        android:id="@+id/turn_secure_dns"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="16dp"
-                        android:layout_weight="1"
-                        android:checked="@{viewModel.isProxyOn}"
-                        android:onCheckedChanged="@{(view, isChecked) -> listener.onProxyToggle(isChecked)}"
+                        android:checked="@{viewModel.isSecureDnsOn}"
+                        android:onCheckedChanged="@{(view, isChecked) -> viewModel.setSecureDnsState(isChecked)}"
                         app:thumbTint="@color/colorAccent"
                         app:trackDecorationTint="@color/colorAccentDark"
                         app:trackTint="@color/color_gray" />
                 </LinearLayout>
+
+                <RadioGroup
+                    android:id="@+id/secureDnsProviderRadioGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical"
+                    android:visibility="@{viewModel.isSecureDnsOn ? View.VISIBLE : View.GONE}">
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/cloudflareRadioButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="@{viewModel.selectedDnsProvider == SecureDnsProvider.CLOUDFLARE}"
+                        android:onClick="@{() -> viewModel.setSecureDnsProvider(SecureDnsProvider.CLOUDFLARE)}"
+                        android:text="@string/doh_cloudflare" />
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/quad9RadioButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="@{viewModel.selectedDnsProvider == SecureDnsProvider.QUAD9}"
+                        android:onClick="@{() -> viewModel.setSecureDnsProvider(SecureDnsProvider.QUAD9)}"
+                        android:text="@string/doh_quad9" />
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/adguardRadioButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="@{viewModel.selectedDnsProvider == SecureDnsProvider.ADGUARD}"
+                        android:onClick="@{() -> viewModel.setSecureDnsProvider(SecureDnsProvider.ADGUARD)}"
+                        android:text="@string/doh_ad_guard" />
+
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/customDnsRadioButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="@{viewModel.selectedDnsProvider == SecureDnsProvider.CUSTOM}"
+                        android:onClick="@{() -> viewModel.setSecureDnsProvider(SecureDnsProvider.CUSTOM)}"
+                        android:text="@string/dns_custom" />
+
+                </RadioGroup>
+
+                <LinearLayout
+                    android:id="@+id/customDnsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="@{viewModel.selectedDnsProvider == SecureDnsProvider.CUSTOM &amp;&amp; viewModel.isSecureDnsOn ? View.VISIBLE : View.GONE}">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/customDnsInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/dns_custom_url_hint"
+                        app:errorEnabled="true">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/customDnsEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textUri"
+                            android:text="@={viewModel.customDnsUrl}" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/saveCustomDnsButton"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/save_proxy" />
+
+                </LinearLayout>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp" />
 
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:padding="16dp"
-                    android:text="@string/http_proxy"
+                    android:text="@string/add_http_proxy"
                     android:textSize="24sp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="16dp">
+
+                    <RadioGroup
+                        android:id="@+id/proxyTypeRadioGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/httpRadioButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:checked="true"
+                            android:text="@string/http" />
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/socks5RadioButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/socks5" />
+
+                    </RadioGroup>
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
@@ -100,9 +234,7 @@
                             android:id="@+id/hostEditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:text="@{viewModel.userProxy.host}" />
-
+                            android:inputType="text" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -115,9 +247,7 @@
                             android:id="@+id/portEditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="number"
-                            android:text="@{viewModel.userProxy.port}" />
-
+                            android:inputType="number" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -129,9 +259,7 @@
                             android:id="@+id/loginEditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:text="@{viewModel.userProxy.user}" />
-
+                            android:inputType="text" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -144,23 +272,34 @@
                             android:id="@+id/passwordEditText"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="textPassword"
-                            android:text="@{viewModel.userProxy.password}" />
-
+                            android:inputType="textPassword" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/saveProxyButton"
+                        android:id="@+id/addProxyButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
-                        android:text="@string/save_proxy" />
-
+                        android:text="@string/add_proxy" />
                 </LinearLayout>
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="16dp"
+                    android:text="@string/current_proxy_chain"
+                    android:textSize="20sp"
+                    android:visibility="@{viewModel.realProxyCount > 0 ? View.VISIBLE : View.GONE}" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/proxiesRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_proxies" />
             </LinearLayout>
-        </ScrollView>
-
+        </androidx.core.widget.NestedScrollView>
     </LinearLayout>
-
-
 </layout>

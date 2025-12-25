@@ -8,7 +8,6 @@ import androidx.core.app.ShareCompat
 import androidx.databinding.Observable
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentTransaction
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
@@ -18,12 +17,12 @@ import com.myAllVideoBrowser.ui.main.history.HistoryFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesFragment
 import com.myAllVideoBrowser.ui.main.settings.SettingsFragment
-import com.myAllVideoBrowser.util.AdsInitializerHelper
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.core.view.get
 
 
 abstract class BaseWebTabFragment : BaseFragment() {
@@ -43,25 +42,18 @@ abstract class BaseWebTabFragment : BaseFragment() {
         if (popupMenu == null) {
             popupMenu =
                 buildPopupMenu(browserMenu)
-            val bookmarkMenuItem = popupMenu!!.menu.getItem(2)
-            val shareMenuItem = popupMenu!!.menu.getItem(3)
-            val desktopMenuItem = popupMenu!!.menu.getItem(4)
-            val proxyItem = popupMenu!!.menu.getItem(7)
+            val bookmarkMenuItem = popupMenu!!.menu[2]
+            val shareMenuItem = popupMenu!!.menu[3]
+            val desktopMenuItem = popupMenu!!.menu[4]
+            val proxyItem = popupMenu!!.menu[7]
             val isProxyOn = mainActivity.proxiesViewModel.isProxyOn
-
-            val isAdblockMenuItem = popupMenu!!.menu.getItem(8)
-
-            val isDarkModeItem = popupMenu!!.menu.getItem(9)
+            val isDarkModeItem = popupMenu!!.menu[8]
             val isDark = mainActivity.settingsViewModel.isDarkMode.get()
             isDarkModeItem.isChecked = isDark
             isDarkModeItem.isEnabled = !mainActivity.settingsViewModel.isAutoDarkMode.get()
 
-            val isAdBlocker = mainActivity.settingsViewModel.isAdBlocker
-
             desktopMenuItem.isChecked = mainActivity.settingsViewModel.isDesktopMode.get() == true
             proxyItem.isChecked = isProxyOn.get() == true
-
-            isAdblockMenuItem.isChecked = isAdBlocker.get() == true
 
             popupMenu!!.setForceShowIcon(true)
 
@@ -98,15 +90,6 @@ abstract class BaseWebTabFragment : BaseFragment() {
                 override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
                     proxyItem.isChecked = isProxyOn.get() == true
                     sharedPrefHelper.setIsProxyOn(isProxyOn.get() == true)
-                }
-            })
-
-            isAdBlocker.addOnPropertyChangedCallback(object :
-                Observable.OnPropertyChangedCallback() {
-                override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        isAdblockMenuItem.isChecked = isAdBlocker.get() == true
-                    }
                 }
             })
 
@@ -182,18 +165,6 @@ abstract class BaseWebTabFragment : BaseFragment() {
                     true
                 }
 
-                R.id.ad_blocker -> {
-                    val isAdBlockerOn = !menuItem.isChecked
-                    menuItem.isChecked = isAdBlockerOn
-
-                    mainActivity.settingsViewModel.setIsAdBlockerOn(isAdBlockerOn)
-
-                    if (isAdBlockerOn) {
-                        initializeAdBlocker()
-                    }
-                    true
-                }
-
                 R.id.is_dark -> {
                     mainActivity.settingsViewModel.setIsDarkMode(!mainActivity.settingsViewModel.isDarkMode.get())
                     true
@@ -204,14 +175,6 @@ abstract class BaseWebTabFragment : BaseFragment() {
         }
 
         return popupMenu
-    }
-
-    private fun initializeAdBlocker() {
-        AdsInitializerHelper.initializeAdBlocker(
-            mainActivity.adBlockHostsRepository,
-            mainActivity.sharedPrefHelper,
-            lifecycle.coroutineScope
-        )
     }
 
     private fun navigateToHistory() {

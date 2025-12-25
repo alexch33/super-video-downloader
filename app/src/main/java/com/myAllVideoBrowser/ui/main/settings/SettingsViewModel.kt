@@ -33,7 +33,6 @@ class SettingsViewModel @Inject constructor(
     val clearCookiesEvent = SingleLiveEvent<Void?>()
     val openVideoFolderEvent = SingleLiveEvent<Void?>()
     val isDesktopMode = ObservableBoolean(false)
-    val isAdBlocker = ObservableBoolean(true)
     val isDarkMode = ObservableBoolean(false)
     val isAutoDarkMode = ObservableBoolean(true)
     val isLockPortrait = ObservableBoolean(false)
@@ -58,7 +57,6 @@ class SettingsViewModel @Inject constructor(
             isInterruptIntreceptedResources.set(sharedPrefHelper.getIsInterruptInterceptedResources())
             isCheckIfEveryRequestOnM3u8.set(sharedPrefHelper.getIsCheckEveryOnM3u8())
             isDesktopMode.set(sharedPrefHelper.getIsDesktop())
-            isAdBlocker.set(sharedPrefHelper.getIsAdBlocker())
             isShowVideoAlert.set(sharedPrefHelper.isShowVideoAlert())
             isShowVideoActionButton.set(sharedPrefHelper.isShowActionButton())
             isCheckEveryRequestOnVideo.set(sharedPrefHelper.isCheckEveryRequestOnVideo())
@@ -244,13 +242,6 @@ class SettingsViewModel @Inject constructor(
     fun setIsFirstStart(isFirstStart: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             sharedPrefHelper.setIsFirstStart(isFirstStart)
-        }
-    }
-
-    fun setIsAdBlockerOn(isAdblockOn: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            isAdBlocker.set(isAdblockOn)
-            sharedPrefHelper.saveIsAdBlocker(isAdblockOn)
         }
     }
 

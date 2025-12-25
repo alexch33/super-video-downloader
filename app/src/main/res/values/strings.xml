@@ -115,4 +115,17 @@
     <string name="is_always_remux_regular_downloads">Always remux all regular downloads</string>
     <string name="is_remux_only_live_regular_downloads">Remux only live regular downloads</string>
     <string name="is_interrupt_intrecepted_resources">Interrupt intrecepted media content for browser</string>
+    <string name="add_proxy">Add Proxy</string>
+    <string name="current_proxy_chain">Current proxy chain</string>
+    <string name="add_http_proxy">Add http proxy</string>
+    <string name="http" translatable="false">HTTP</string>
+    <string name="socks5" translatable="false">SOCKS5</string>
+    <string name="secure_dns">Secure DNS</string>
+    <string name="dns_custom">Custom</string>
+    <string name="dns_custom_url_hint">Enter DoH or DoT URL</string>
+    <string name="doh_cloudflare">Cloudflare DOH</string>
+    <string name="doh_quad9">Quad9 DOH</string>
+    <string name="doh_ad_guard">Adguard DOH</string>
+    <string name="custom_dns_saved_message">Custom DNS saved</string>
+    <string name="proxy_service_channel_name" translatable="false">proxy channel</string>
 </resources>

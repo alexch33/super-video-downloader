@@ -2,15 +2,10 @@ import com.android.build.api.variant.FilterConfiguration
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-
 apply plugin: 'com.google.devtools.ksp'
-
 apply plugin: 'kotlin-kapt'
-
 apply plugin: 'kotlin-allopen'
-
 apply plugin: 'jacoco'
-
 apply plugin: 'com.github.kt3k.coveralls'
 
 jacoco {
@@ -32,6 +27,8 @@ android {
         includeInBundle = false
     }
 
+    ndkVersion "27.3.13750724"
+
     packagingOptions {
         resources {
             excludes += ['mozilla/public-suffix-list.txt',
@@ -49,6 +46,15 @@ android {
         }
         jniLibs {
             useLegacyPackaging = true
+            keepDebugSymbols += [
+                    '**/libffmpeg.zip.so',
+                    '**/libpython.zip.so',
+                    '**/libffmpeg.so',
+                    '**/libffprobe.so',
+                    '**/libgojni.so',
+                    '**/libpython.so',
+                    '**/libqjs.so'
+            ]
         }
     }
     compileSdkVersion build_versions.target_sdk
@@ -64,8 +70,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 75
-        versionName "0.6.7"
+        versionCode 85
+        versionName "0.7.0"
 
         if (splitApks) {
             splits {
@@ -100,6 +106,9 @@ android {
         buildConfig true
     }
     testOptions {
+        unitTests.all {
+            exclude '**/*'
+        }
         unitTests {
             includeAndroidResources = true
             returnDefaultValues = true
@@ -130,7 +139,7 @@ android {
     }
     sourceSets {
         main {
-            jniLibs.srcDirs = ['libs']
+            jniLibs.srcDirs = ['src/main/jniLibs']
         }
     }
 }
@@ -140,6 +149,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(files("libs/libv2ray.aar"))
     // Android support
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.13.0'
@@ -229,6 +239,7 @@ dependencies {
 
     implementation 'com.github.bumptech.glide:glide:5.0.5'
 
+    // Another Webview versions has random crashes
     implementation('androidx.webkit:webkit:1.12.1')
 
     implementation 'androidx.core:core-ktx:1.17.0'
@@ -239,7 +250,7 @@ dependencies {
 
     implementation 'com.github.marlonlom:timeago:4.1.0'
 
-    var media3_version = '1.8.0'
+    var media3_version = '1.9.0'
 
     // For media playback using ExoPlayer
     implementation "androidx.media3:media3-exoplayer:$media3_version"
@@ -284,3 +295,97 @@ tasks.coveralls {
     dependsOn 'check'
     onlyIf { System.getenv("COVERALLS_REPO_TOKEN") }
 }
+
+// =========================================================================
+// Tasks to build libv2ray.aar from source for F-Droid compliance
+// =========================================================================
+
+ext {
+    v2rayRepo = 'https://github.com/2dust/AndroidLibXrayLite.git'
+    v2rayCommit = 'v25.12.8'
+    buildDirV2ray = "${project.rootDir}/build/v2ray"
+    aarOutputFile = file("libs/libv2ray.aar")
+
+    goExecutable = file('/usr/local/go/bin/go').exists() ? '/usr/local/go/bin/go' : 'go'
+    gitExecutable = file('/usr/bin/git').exists() ? '/usr/bin/git' : 'git'
+
+    def userGoBin = System.getProperty("user.home") + "/go/bin"
+    goMobileExecutable = "${userGoBin}/gomobile"
+}
+
+tasks.register('installGoMobile', Exec) {
+    outputs.file(goMobileExecutable)
+
+    doFirst {
+        println "Installing gomobile tool to default location: ${goMobileExecutable}"
+        file(goMobileExecutable).parentFile.mkdirs()
+        commandLine goExecutable, 'install', 'golang.org/x/mobile/cmd/gomobile@latest'
+    }
+}
+
+tasks.register('initGoMobile', Exec) {
+    dependsOn installGoMobile
+
+    inputs.file(goMobileExecutable)
+
+    doFirst {
+        println "Running 'gomobile init'..."
+        def originalPath = System.getenv("PATH")
+        def userGoBin = System.getProperty("user.home") + "/go/bin"
+
+        def goBinPath = file(goExecutable).isAbsolute() ? file(goExecutable).parent : ""
+        environment 'PATH', "${goBinPath}:${userGoBin}:${originalPath}"
+
+        environment 'GOPROXY', 'https://proxy.golang.org,direct'
+        environment 'GOSUMDB', 'sum.golang.org'
+
+        commandLine goMobileExecutable, 'init'
+    }
+}
+
+tasks.register('cloneV2raySource', Exec) {
+    dependsOn initGoMobile
+
+    def srcDir = file("${buildDirV2ray}/src")
+    outputs.dir(srcDir)
+    workingDir project.rootDir
+
+    onlyIf { !srcDir.exists() }
+
+    commandLine gitExecutable, 'clone', '--depth=1', '--branch', v2rayCommit, v2rayRepo, srcDir.absolutePath
+}
+
+tasks.register('buildAarFromSource', Exec) {
+    dependsOn cloneV2raySource
+
+    def srcDir = file("${buildDirV2ray}/src")
+    workingDir srcDir
+    inputs.dir(srcDir)
+    outputs.file(aarOutputFile)
+
+    doFirst {
+        println "Building libv2ray.aar from source..."
+        def originalPath = System.getenv("PATH")
+        def userGoBin = System.getProperty("user.home") + "/go/bin"
+
+        def goBinPath = file(goExecutable).isAbsolute() ? file(goExecutable).parent : ""
+        environment 'PATH', "${goBinPath}:${userGoBin}:${originalPath}"
+
+        environment 'GOPROXY', 'https://proxy.golang.org,direct'
+        environment 'GOSUMDB', 'sum.golang.org'
+
+        environment 'CGO_LDFLAGS', "-Wl,-z,max-page-size=16384"
+
+        commandLine goMobileExecutable, 'bind',
+                '-v',
+                '-target=android',
+                '-androidapi=21',
+                '-trimpath',
+                '-ldflags',
+                '-s -w -buildid=',
+                '-o', aarOutputFile.absolutePath,
+                './'
+    }
+}
+
+preBuild.dependsOn buildAarFromSource

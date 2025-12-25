@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.data.repository
 
+import com.myAllVideoBrowser.data.local.room.dao.ProgressDao
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.di.qualifier.LocalData
 import io.reactivex.rxjava3.core.Flowable

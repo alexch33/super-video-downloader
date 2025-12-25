@@ -120,7 +120,9 @@
     <string name="add_http_proxy">Add http proxy</string>
     <string name="http" translatable="false">HTTP</string>
     <string name="socks5" translatable="false">SOCKS5</string>
-    <string name="dns_over_https">DNS over https</string>
+    <string name="secure_dns">Secure DNS</string>
+    <string name="dns_custom">Custom</string>
+    <string name="dns_custom_url_hint">Enter DoH or DoT URL</string>
     <string name="doh_cloudflare">Cloudflare DOH</string>
     <string name="doh_quad9">Quad9 DOH</string>
     <string name="doh_ad_guard">Adguard DOH</string>

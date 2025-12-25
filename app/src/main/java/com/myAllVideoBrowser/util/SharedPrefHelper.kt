@@ -8,6 +8,7 @@ import com.myAllVideoBrowser.data.local.GeneratedProxyCreds
 import com.myAllVideoBrowser.data.local.model.Proxy
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.core.content.edit
 
 @Singleton
 class SharedPrefHelper @Inject constructor(
@@ -19,15 +20,10 @@ class SharedPrefHelper @Inject constructor(
         private const val IS_DESKTOP = "IS_DESKTOP"
         private const val IS_FIND_BY_URL = "IS_FIND_BY_URL"
         private const val IS_CHECK_EVERY_REQUEST = "IS_CHECK_EVERY_REQUEST"
-        private const val IS_AD_BLOCKER = "IS_AD_BLOCKER"
-        private const val PROXY_IP_PORT = "PROXY_IP_PORT"
         private const val IS_PROXY_TURN_ON = "IS_PROXY_TURN_ON"
         private const val IS_FIRST_START = "IS_FIRST_START"
         private const val IS_SHOW_VIDEO_ALERT = "IS_SHOW_VIDEO_ALERT"
         private const val IS_SHOW_VIDEO_ACTION_BUTTON = "IS_SHOW_VIDEO_ACTION_BUTTON"
-        private const val IS_PRESENT = "IS_PRESENT"
-        private const val HOSTS_UPDATE = "HOSTS_UPDATE"
-        private const val HOSTS_POPULATED = "HOSTS_POPULATED"
         private const val IS_EXTERNAL_USE = "IS_EXTERNAL_USE"
         private const val IS_APP_DIR_USE = "IS_APP_DIR_USE"
         private const val IS_DARK_MODE = "IS_DARK_MODE"
@@ -50,7 +46,8 @@ class SharedPrefHelper @Inject constructor(
             "IS_INTERRUPT_INTERCEPTED_RESOURCES"
         private const val GENERATED_CREDENTIALS = "GENERATED_CREDENTIALS"
         private const val IS_DOH_ON = "IS_DOH_ON"
-        private const val SELECTED_DOH_PROVIDER = "SELECTED_DOH_PROVIDER"
+        private const val SELECTED_DNS_PROVIDER = "SELECTED_DNS_PROVIDER"
+        private const val CUSTOM_DNS_URL = "CUSTOM_DNS_URL"
     }
 
     private val gson = Gson()
@@ -59,9 +56,8 @@ class SharedPrefHelper @Inject constructor(
         context.getSharedPreferences(PREF_KEY, Context.MODE_PRIVATE)
 
     fun saveIsDesktop(isDesktop: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_DESKTOP, isDesktop)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_DESKTOP, isDesktop)
         }
     }
 
@@ -70,9 +66,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun saveIsFindByUrl(isFind: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_FIND_BY_URL, isFind)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_FIND_BY_URL, isFind)
         }
     }
 
@@ -81,9 +76,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun saveIsCheck(isCheck: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_CHECK_EVERY_REQUEST, isCheck)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_CHECK_EVERY_REQUEST, isCheck)
         }
     }
 
@@ -96,9 +90,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsProxyOn(isTurnedOn: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_PROXY_TURN_ON, isTurnedOn)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_PROXY_TURN_ON, isTurnedOn)
         }
     }
 
@@ -107,9 +100,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsFirstStart(isFirstStart: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_FIRST_START, isFirstStart)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_FIRST_START, isFirstStart)
         }
     }
 
@@ -118,9 +110,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsShowVideoAlert(isShow: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_SHOW_VIDEO_ALERT, isShow)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_SHOW_VIDEO_ALERT, isShow)
         }
     }
 
@@ -129,42 +120,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsShowActionButton(isShow: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_SHOW_VIDEO_ACTION_BUTTON, isShow)
-            it.apply()
-        }
-    }
-
-    fun getIsPresent(): Boolean {
-        return sharedPreferences.getBoolean(IS_PRESENT, true)
-    }
-
-    fun setIsPresent(isPresent: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_PRESENT, isPresent)
-            it.apply()
-        }
-    }
-
-    fun setIsAdHostsUpdateTime(time: Long) {
-        sharedPreferences.edit().let {
-            it.putLong(HOSTS_UPDATE, time)
-            it.apply()
-        }
-    }
-
-    fun getAdHostsUpdateTime(): Long {
-        return sharedPreferences.getLong(HOSTS_UPDATE, 0)
-    }
-
-    fun getIsPopulated(): Boolean {
-        return sharedPreferences.getBoolean(HOSTS_POPULATED, false)
-    }
-
-    fun setIsPopulated(isPopulated: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(HOSTS_POPULATED, isPopulated)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_SHOW_VIDEO_ACTION_BUTTON, isShow)
         }
     }
 
@@ -175,9 +132,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsExternalUse(isExternalUse: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_EXTERNAL_USE, isExternalUse)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_EXTERNAL_USE, isExternalUse)
         }
     }
 
@@ -186,9 +142,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsAppDirUse(isAppDirUse: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_APP_DIR_USE, isAppDirUse)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_APP_DIR_USE, isAppDirUse)
         }
     }
 
@@ -211,16 +166,14 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsAutoTheme(isAuto: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_AUTO_THEME, isAuto)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_AUTO_THEME, isAuto)
         }
     }
 
     fun setIsDarkMode(isDarkMode: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_DARK_MODE, isDarkMode)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_DARK_MODE, isDarkMode)
         }
     }
 
@@ -229,9 +182,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setRegularDownloaderThreadCount(count: Int) {
-        sharedPreferences.edit().let {
-            it.putInt(REGULAR_THREAD_COUNT, count)
-            it.apply()
+        sharedPreferences.edit {
+            putInt(REGULAR_THREAD_COUNT, count)
         }
     }
 
@@ -240,9 +192,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setM3u8DownloaderThreadCount(count: Int) {
-        sharedPreferences.edit().let {
-            it.putInt(M3U8_THREAD_COUNT, count)
-            it.apply()
+        sharedPreferences.edit {
+            putInt(M3U8_THREAD_COUNT, count)
         }
     }
 
@@ -251,9 +202,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setVideoDetectionTreshold(count: Int) {
-        sharedPreferences.edit().let {
-            it.putInt(VIDEO_DETECTION_TRESHOLD, count)
-            it.apply()
+        sharedPreferences.edit {
+            putInt(VIDEO_DETECTION_TRESHOLD, count)
         }
     }
 
@@ -262,9 +212,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsLockPortrait(isLock: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_LOCK_PORTRAIT, isLock)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_LOCK_PORTRAIT, isLock)
         }
     }
 
@@ -283,9 +232,8 @@ class SharedPrefHelper @Inject constructor(
 
     fun saveUserProxyChain(proxies: Array<Proxy>) {
         val proxyString = gson.toJson(proxies)
-        sharedPreferences.edit().let {
-            it.putString(USER_PROXY_CHAIN, proxyString)
-            it.apply()
+        sharedPreferences.edit {
+            putString(USER_PROXY_CHAIN, proxyString)
         }
     }
 
@@ -295,9 +243,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun saveIsCheckEveryOnM3u8(isCheck: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_CHECK_EVERY_ON_M3U8, isCheck)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_CHECK_EVERY_ON_M3U8, isCheck)
         }
     }
 
@@ -306,9 +253,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun saveIsCheckOnAudio(isCheck: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_CHECK_ON_AUDIO, isCheck)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_CHECK_ON_AUDIO, isCheck)
         }
     }
 
@@ -317,9 +263,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsForceStreamDownload(isForce: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_FORCE_STREAM_DOWNLOAD, isForce)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_FORCE_STREAM_DOWNLOAD, isForce)
         }
     }
 
@@ -328,9 +273,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsForceStreamDetection(isForce: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_FORCE_STREAM_DETECTION, isForce)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_FORCE_STREAM_DETECTION, isForce)
         }
     }
 
@@ -339,9 +283,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsProcessDownloadFfmpeg(isProcessFfmpeg: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_PROCESS_DOWNLOAD_FFMPEG, isProcessFfmpeg)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_PROCESS_DOWNLOAD_FFMPEG, isProcessFfmpeg)
         }
     }
 
@@ -350,16 +293,14 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsProcessOnlyLiveDownloadFfmpeg(isProcessFfmpeg: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG, isProcessFfmpeg)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG, isProcessFfmpeg)
         }
     }
 
     fun setIsInterruptInterceptedResources(isTurnedOn: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_INTERRUPT_INTERCEPTED_RESOURCES, isTurnedOn)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_INTERRUPT_INTERCEPTED_RESOURCES, isTurnedOn)
         }
     }
 
@@ -368,9 +309,8 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setGeneratedCreds(creds: GeneratedProxyCreds) {
-        sharedPreferences.edit().let {
-            it.putString(GENERATED_CREDENTIALS, creds.toJson())
-            it.apply()
+        sharedPreferences.edit {
+            putString(GENERATED_CREDENTIALS, creds.toJson())
         }
     }
 
@@ -388,20 +328,28 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun setIsDohOn(isOn: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_DOH_ON, isOn)
-            it.apply()
+        sharedPreferences.edit {
+            putBoolean(IS_DOH_ON, isOn)
         }
     }
 
-    fun saveSelectedDohProvider(providerName: String) {
-        sharedPreferences.edit().let {
-            it.putString(SELECTED_DOH_PROVIDER, providerName)
-            it.apply()
+    fun saveSelectedDnsProvider(providerName: String) {
+        sharedPreferences.edit {
+            putString(SELECTED_DNS_PROVIDER, providerName)
         }
     }
 
-    fun getSelectedDohProvider(): String? {
-        return sharedPreferences.getString(SELECTED_DOH_PROVIDER, null)
+    fun getSelectedDnsProvider(): String? {
+        return sharedPreferences.getString(SELECTED_DNS_PROVIDER, null)
+    }
+
+    fun saveCustomDnsUrl(url: String) {
+        sharedPreferences.edit {
+            putString(CUSTOM_DNS_URL, url)
+        }
+    }
+
+    fun getCustomDnsUrl(): String {
+        return sharedPreferences.getString(CUSTOM_DNS_URL, "") ?: ""
     }
 }

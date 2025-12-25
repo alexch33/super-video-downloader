@@ -4,6 +4,7 @@ import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
+import com.myAllVideoBrowser.util.DnsStampHelper
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyHop
@@ -22,23 +23,45 @@ class ProxiesViewModel @Inject constructor(
 
     val isProxyOn = ObservableField(false)
 
-    enum class DohProvider(val url: String) {
-        CLOUDFLARE("doh=strict:https://cloudflare-dns.com/dns-query"), QUAD9("doh=strict:https://dns.quad9.net/dns-query"), ADGUARD(
-            "doh=strict:https://dns.adguard-dns.com/dns-query"
-        )
+    enum class SecureDnsProvider(val url: String) {
+        CLOUDFLARE("https://cloudflare-dns.com/dns-query"),
+        QUAD9("https://dns.quad9.net/dns-query"),
+        ADGUARD("https://dns.adguard-dns.com/dns-query"),
+        CUSTOM("");
+
+        fun getCleanUrl(customUrlForProvider: String? = null): String? {
+            val urlToParse = if (this == CUSTOM) {
+                customUrlForProvider ?: return null
+            } else {
+                this.url
+            }
+
+            if (urlToParse.isBlank()) return null
+
+            // Check if it's a DNS Stamp and decode it
+            return if (urlToParse.startsWith("sdns://")) {
+                DnsStampHelper.decodeDnsStamp(urlToParse)?.toString()
+            } else {
+                // It's already a clean URL, so return it directly
+                urlToParse
+            }
+        }
     }
 
-    val isDohOn = ObservableField(true)
+    val isSecureDnsOn = ObservableField(true)
 
-    val selectedDohProvider = ObservableField(DohProvider.CLOUDFLARE)
+    val selectedDnsProvider = ObservableField(SecureDnsProvider.CLOUDFLARE)
+
+    val customDnsUrl = ObservableField("")
 
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
-            isDohOn.set(sharedPrefHelper.getIsDohOn())
-            val savedProviderName = sharedPrefHelper.getSelectedDohProvider()
-            val provider =
-                DohProvider.entries.find { it.name == savedProviderName } ?: DohProvider.ADGUARD
-            selectedDohProvider.set(provider)
+            isSecureDnsOn.set(sharedPrefHelper.getIsDohOn())
+            val savedProviderName = sharedPrefHelper.getSelectedDnsProvider()
+            val provider = SecureDnsProvider.entries.find { it.name == savedProviderName }
+                ?: SecureDnsProvider.ADGUARD
+            selectedDnsProvider.set(provider)
+            customDnsUrl.set(sharedPrefHelper.getCustomDnsUrl())
 
             val usersProxy = sharedPrefHelper.getUserProxyChain()
             proxiesList.set(usersProxy.toMutableList())
@@ -48,21 +71,34 @@ class ProxiesViewModel @Inject constructor(
         }
     }
 
-    fun setDohState(isOn: Boolean) {
+    fun setSecureDnsState(isOn: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            isDohOn.set(isOn)
+            isSecureDnsOn.set(isOn)
             sharedPrefHelper.setIsDohOn(isOn)
             proxyController.updateProxyState()
             updateChain(proxiesList.get() ?: emptyList())
         }
     }
 
-    fun setDohProvider(provider: DohProvider) {
+    fun setSecureDnsProvider(provider: SecureDnsProvider) {
         viewModelScope.launch(Dispatchers.IO) {
-            selectedDohProvider.set(provider)
-            sharedPrefHelper.saveSelectedDohProvider(provider.name)
+            selectedDnsProvider.set(provider)
+            sharedPrefHelper.saveSelectedDnsProvider(provider.name)
+            if (provider == SecureDnsProvider.CUSTOM) {
+                saveCustomDns()
+            }
             proxyController.updateProxyState()
-            if (isDohOn.get() == true) {
+            if (isSecureDnsOn.get() == true) {
+                updateChain(proxiesList.get() ?: emptyList())
+            }
+        }
+    }
+
+    fun saveCustomDns() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val url = customDnsUrl.get() ?: ""
+            sharedPrefHelper.saveCustomDnsUrl(url)
+            if (isSecureDnsOn.get() == true && selectedDnsProvider.get() == SecureDnsProvider.CUSTOM) {
                 updateChain(proxiesList.get() ?: emptyList())
             }
         }
@@ -103,25 +139,29 @@ class ProxiesViewModel @Inject constructor(
     }
 
     private fun updateChain(proxies: List<Proxy>) {
-        if (isProxyOn.get() == false && isDohOn.get() == false) {
+        if (isProxyOn.get() == false && isSecureDnsOn.get() == false) {
             ProxyManager.stopLocalProxy()
             return
         }
 
-        val proxyHops = proxies
-            .filter { it != Proxy.noProxy() }
-            .map { proxy ->
-                ProxyHop(
-                    type = proxy.type.name.lowercase(),
-                    address = proxy.host,
-                    port = proxy.port.toInt(),
-                    username = proxy.user.takeIf { it.isNotBlank() },
-                    password = proxy.password.takeIf { it.isNotBlank() }
-                )
-            }
+        val proxyHops = proxies.filter { it != Proxy.noProxy() }.map { proxy ->
+            ProxyHop(
+                type = proxy.type.name.lowercase(),
+                address = proxy.host,
+                port = proxy.port.toInt(),
+                username = proxy.user.takeIf { it.isNotBlank() },
+                password = proxy.password.takeIf { it.isNotBlank() })
+        }
 
-        val dohUrl: String? = if (isDohOn.get() == true) {
-            selectedDohProvider.get()?.url?.substringAfter("doh=strict:")
+
+        val dnsUrl: String? = if (isSecureDnsOn.get() == true) {
+            val provider = selectedDnsProvider.get()
+
+            if (provider == SecureDnsProvider.CUSTOM) {
+                provider.getCleanUrl(customDnsUrl.get())
+            } else {
+                provider?.getCleanUrl()
+            }
         } else {
             null
         }
@@ -133,7 +173,7 @@ class ProxiesViewModel @Inject constructor(
             localUser = localCreds.localUser,
             localPass = localCreds.localPassword,
             hops = proxyHops,
-            dohUrl = dohUrl
+            dnsUrl = dnsUrl
         )
     }
 

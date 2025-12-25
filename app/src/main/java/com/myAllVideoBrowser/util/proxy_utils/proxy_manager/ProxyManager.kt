@@ -1,12 +1,13 @@
 package com.myAllVideoBrowser.util.proxy_utils.proxy_manager
 
 import android.util.Log
+import com.myAllVideoBrowser.DLApplication.Companion.DEBUG_TAG
 import libv2ray.CoreController
 import libv2ray.CoreCallbackHandler
 
 class XrayCallback : CoreCallbackHandler {
     companion object {
-        private const val TAG = "XrayCallback"
+        private const val TAG = "$DEBUG_TAG XrayCallback"
     }
 
     override fun onEmitStatus(l: Long, s: String): Long {
@@ -42,7 +43,7 @@ data class ProxyHop(
  * Now with full support for proxy chaining.
  */
 object ProxyManager {
-    private const val TAG = "ProxyManager"
+    private const val TAG = "$DEBUG_TAG ProxyManager"
     private var coreController: CoreController? = null
 
     /**
@@ -54,7 +55,7 @@ object ProxyManager {
         localUser: String,
         localPass: String,
         hops: List<ProxyHop>,
-        dohUrl: String? = null
+        dnsUrl: String? = null
     ): Boolean {
         if (isProxyRunning()) {
             Log.w(TAG, "Proxy is already running. Stopping first.")
@@ -103,9 +104,22 @@ object ProxyManager {
           "routing": { "rules": [ { "type": "field", "inboundTag": ["$localProxyTag"], "outboundTag": "$finalOutboundTag" } ] }
         """.trimIndent()
 
-        // Build the optional "dns" JSON object
-        val dnsJson = if (dohUrl != null) {
-            """, "dns": { "servers": [ { "address": "$dohUrl", "protocol": "https" } ] }"""
+        val dnsJson = if (dnsUrl != null) {
+            when {
+                // Handle DNS-over-HTTPS (e.g., https://dns.google/dns-query)
+                dnsUrl.startsWith("https://") -> {
+                    """, "dns": { "servers": [ { "address": "$dnsUrl", "protocol": "https" } ] }"""
+                }
+                // Handle DNS-over-TLS (e.g., dot://dns.google:853 or just dns.google)
+                dnsUrl.startsWith("dot://") -> {
+                    val dotAddress = dnsUrl.substringAfter("dot://")
+                    """, "dns": { "servers": [ { "address": "$dotAddress", "protocol": "tls" } ] }"""
+                }
+                // Default case for plain domain or IP which can be used for DoT
+                else -> {
+                    """, "dns": { "servers": [ { "address": "$dnsUrl", "protocol": "tls" } ] }"""
+                }
+            }
         } else ""
 
         // Escape the local password just in case it contains special characters

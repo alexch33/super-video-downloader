@@ -7,7 +7,7 @@
 
         <import type="android.view.View" />
 
-        <import type="com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel.DohProvider" />
+        <import type="com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel.SecureDnsProvider" />
 
         <variable
             name="viewModel"
@@ -88,54 +88,99 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/dns_over_https"
+                        android:text="@string/secure_dns"
                         android:textSize="18sp" />
 
                     <com.google.android.material.materialswitch.MaterialSwitch
-                        android:id="@+id/turn_doh"
+                        android:id="@+id/turn_secure_dns"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:checked="@{viewModel.isDohOn}"
-                        android:onCheckedChanged="@{(view, isChecked) -> viewModel.setDohState(isChecked)}"
+                        android:checked="@{viewModel.isSecureDnsOn}"
+                        android:onCheckedChanged="@{(view, isChecked) -> viewModel.setSecureDnsState(isChecked)}"
                         app:thumbTint="@color/colorAccent"
                         app:trackDecorationTint="@color/colorAccentDark"
                         app:trackTint="@color/color_gray" />
                 </LinearLayout>
 
                 <RadioGroup
-                    android:id="@+id/dohProviderRadioGroup"
+                    android:id="@+id/secureDnsProviderRadioGroup"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="16dp"
                     android:layout_marginTop="8dp"
                     android:orientation="vertical"
-                    android:visibility="@{viewModel.isDohOn ? View.VISIBLE : View.GONE}">
+                    android:visibility="@{viewModel.isSecureDnsOn ? View.VISIBLE : View.GONE}">
 
                     <com.google.android.material.radiobutton.MaterialRadioButton
                         android:id="@+id/cloudflareRadioButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:checked="@{viewModel.selectedDohProvider == DohProvider.CLOUDFLARE}"
-                        android:onClick="@{() -> viewModel.setDohProvider(DohProvider.CLOUDFLARE)}"
+                        android:checked="@{viewModel.selectedDnsProvider == SecureDnsProvider.CLOUDFLARE}"
+                        android:onClick="@{() -> viewModel.setSecureDnsProvider(SecureDnsProvider.CLOUDFLARE)}"
                         android:text="@string/doh_cloudflare" />
 
                     <com.google.android.material.radiobutton.MaterialRadioButton
                         android:id="@+id/quad9RadioButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:checked="@{viewModel.selectedDohProvider == DohProvider.QUAD9}"
-                        android:onClick="@{() -> viewModel.setDohProvider(DohProvider.QUAD9)}"
+                        android:checked="@{viewModel.selectedDnsProvider == SecureDnsProvider.QUAD9}"
+                        android:onClick="@{() -> viewModel.setSecureDnsProvider(SecureDnsProvider.QUAD9)}"
                         android:text="@string/doh_quad9" />
 
                     <com.google.android.material.radiobutton.MaterialRadioButton
                         android:id="@+id/adguardRadioButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:checked="@{viewModel.selectedDohProvider == DohProvider.ADGUARD}"
-                        android:onClick="@{() -> viewModel.setDohProvider(DohProvider.ADGUARD)}"
+                        android:checked="@{viewModel.selectedDnsProvider == SecureDnsProvider.ADGUARD}"
+                        android:onClick="@{() -> viewModel.setSecureDnsProvider(SecureDnsProvider.ADGUARD)}"
                         android:text="@string/doh_ad_guard" />
 
+                    <com.google.android.material.radiobutton.MaterialRadioButton
+                        android:id="@+id/customDnsRadioButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="@{viewModel.selectedDnsProvider == SecureDnsProvider.CUSTOM}"
+                        android:onClick="@{() -> viewModel.setSecureDnsProvider(SecureDnsProvider.CUSTOM)}"
+                        android:text="@string/dns_custom" />
+
                 </RadioGroup>
+
+                <LinearLayout
+                    android:id="@+id/customDnsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="@{viewModel.selectedDnsProvider == SecureDnsProvider.CUSTOM &amp;&amp; viewModel.isSecureDnsOn ? View.VISIBLE : View.GONE}">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/customDnsInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="@string/dns_custom_url_hint"
+                        app:errorEnabled="true">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/customDnsEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textUri"
+                            android:text="@={viewModel.customDnsUrl}" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/saveCustomDnsButton"
+                        style="?attr/materialButtonOutlinedStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:onClick="@{() -> viewModel.saveCustomDns()}"
+                        android:text="@string/save_proxy" />
+
+                </LinearLayout>
 
                 <com.google.android.material.divider.MaterialDivider
                     android:layout_width="match_parent"

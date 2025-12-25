@@ -2,24 +2,19 @@
 
 [![F-Droid](https://img.shields.io/f-droid/v/com.myAllVideoBrowser?color=b4eb12&label=F-Droid&logo=fdroid&logoColor=1f78d2)](https://f-droid.org/packages/com.myAllVideoBrowser)
 
-<a href="https://f-droid.org/packages/com.myAllVideoBrowser"><img src="https://f-droid.org/badge/get-it-on.png"></a>
+<a href="https://f-droid.org/packages/com.myAllVideoBrowser"><img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid"></a>
 
 ## Features
 
-- Download videos from Youtube, Facebook, Twitter, Instagram, Dailymotion, Vimeo and more
-  than [other 1000 sites](http://rg3.github.io/youtube-dl/supportedsites.html), also inrecept all
-  streams data in browser like m3u8 or mpd links and download them, also intrecepts mp4 streaming
-  video data
-- Browse videos and audio with the built-in browser
-- Download videos and audio with the built-in download manager
-- Play videos and audio offline with the built-in player
-- Save your favorite videos and audio online and watch them later without downloading them
-- Save history as a real browser
-- Bookmarks support
-- Live streams download support
-- Live MP3 streams support
-- Cokies support
-- HTTP proxy support
+- **Extensive Site Support**: Download videos from YouTube, Facebook, Twitter, Instagram, Dailymotion, Vimeo, and over [1000 other sites](http://rg3.github.io/youtube-dl/supportedsites.html).
+- **Advanced Stream Interception**: Intercepts and downloads complex stream types like HLS (`.m3u8`) and DASH (`.mpd`), in addition to standard `.mp4` video streams.
+- **Live Stream Downloader**: Capture and save live video streams and live audio (e.g., radio) broadcasts as they happen.
+- **Full-Featured Browser**: A built-in browser to easily find content, with support for history, bookmarks, and cookies.
+- **Powerful Download Manager**: Manages all your download tasks in the background.
+- **Offline Playback**: Play downloaded videos and audio offline with the integrated player.
+- **Advanced Networking**:
+  - **Proxy Chaining**: Route your traffic through multiple proxies (`HTTP`, `SOCKS`) for enhanced privacy.
+  - **Encrypted DNS**: Secure your DNS queries with **DNS-over-HTTPS (DoH)** and **DNS-over-TLS (DoT)**, supporting standard and encrypted `sdns://` URLs.
 
 Thanks
 to [@cuongpm](https://github.com/cuongpm), [@yausername](https://github.com/yausername) and [@JunkFood02](https://github.com/JunkFood02)
@@ -33,7 +28,7 @@ Inspired from [cuongpm/youtube-dl-android](https://github.com/cuongpm/youtube-dl
 
 ## Translations
 
-Please help with translations using the [Weblate](https://toolate.othing.xyz/projects/super-video-downloader/).
+Please help with translations using [Weblate](https://toolate.othing.xyz/projects/super-video-downloader/).
 
 <a href="https://toolate.othing.xyz/projects/super-video-downloader/">
 <img alt="Translation status" src="https://toolate.othing.xyz/widget/super-video-downloader/multi-auto.svg"/>
@@ -41,19 +36,21 @@ Please help with translations using the [Weblate](https://toolate.othing.xyz/pro
 
 ## Major technologies
 
-- Language: Kotlin
-- Architecture: MVVM
-- Android architecture components: ViewModel, LiveData, Room
-- Dependency injection: Dagger2
-- Network: Okhttp
-- Data layer with repository pattern and Coroutines and RxJava
+- **Language**: Kotlin first
+- **Architecture**: MVVM (ViewModel, LiveData) with Repository Pattern
+- **UI**: Android Views with DataBinding
+- **Dependency Injection**: Dagger 2
+- **Concurrency**: Coroutines & RxJava
+- **Database**: Room
+- **Networking**: OkHttp, libv2ray
 
 ## License
 
 This package is licensed under the [LICENSE](./LICENSE) for details.
 
 ## Donate
-You can support the project by donating to below address.
-| Type  | Address |
-| ------------- | ------------- |
-| <img src="https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" alt="Bitcoin" width="50"/>  | bc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fj  |
+You can support the project by donating to the address below.
+
+| Type | Address |
+| :--- | :--- |
+| <img src="https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" alt="Bitcoin" width="50"/> | `bc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fj` |

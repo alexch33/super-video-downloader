@@ -319,7 +319,9 @@ class SharedPrefHelper @Inject constructor(
         return if (creds != null) {
             GeneratedProxyCreds.fromJson(creds)
         } else {
-            GeneratedProxyCreds.generateProxyCredentials()
+            val initialCreds = GeneratedProxyCreds.generateProxyCredentials()
+            setGeneratedCreds(initialCreds)
+            initialCreds
         }
     }
 

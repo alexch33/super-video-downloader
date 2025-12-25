@@ -1,7 +1,6 @@
 package com.myAllVideoBrowser.di.module
 
 import com.myAllVideoBrowser.data.local.*
-import com.myAllVideoBrowser.data.remote.AdBlockHostsRemoteDataSource
 import com.myAllVideoBrowser.data.remote.ConfigRemoteDataSource
 import com.myAllVideoBrowser.data.remote.TopPagesRemoteDataSource
 import com.myAllVideoBrowser.data.remote.VideoRemoteDataSource
@@ -75,18 +74,4 @@ abstract class RepositoryModule {
     @Singleton
     @Binds
     abstract fun bindHistoryRepositoryImpl(historyRepository: HistoryRepositoryImpl): HistoryRepository
-
-    @Singleton
-    @Binds
-    @LocalData
-    abstract fun bindAdBlockHostsLocalDataSource(adBlockHostsLocalDataSource: AdBlockHostsLocalDataSource): AdBlockHostsRepository
-
-    @Singleton
-    @Binds
-    @RemoteData
-    abstract fun bindAdBlockHostsRemoteDataSource(adBlockHostsRemoteDataSource: AdBlockHostsRemoteDataSource): AdBlockHostsRepository
-    @Singleton
-    @Binds
-    abstract fun bindAdBlockHostsRepositoryImpl(adBlockHostsRepository: AdBlockHostsRepositoryImpl): AdBlockHostsRepository
-
 }

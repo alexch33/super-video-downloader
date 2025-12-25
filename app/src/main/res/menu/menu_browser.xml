@@ -56,14 +56,6 @@
         app:showAsAction="ifRoom|collapseActionView" />
 
     <item
-        android:id="@+id/ad_blocker"
-        android:checkable="true"
-        android:checked="false"
-        android:icon="@drawable/shield_24px"
-        android:title="@string/ad_blocker"
-        app:showAsAction="ifRoom|collapseActionView" />
-
-    <item
         android:id="@+id/is_dark"
         android:checkable="true"
         android:checked="false"

@@ -91,17 +91,6 @@ class SharedPrefHelper @Inject constructor(
         return sharedPreferences.getBoolean(IS_CHECK_EVERY_REQUEST, true)
     }
 
-    fun saveIsAdBlocker(isAdBlocker: Boolean) {
-        sharedPreferences.edit().let {
-            it.putBoolean(IS_AD_BLOCKER, isAdBlocker)
-            it.apply()
-        }
-    }
-
-    fun getIsAdBlocker(): Boolean {
-        return sharedPreferences.getBoolean(IS_AD_BLOCKER, true)
-    }
-
     fun getIsProxyOn(): Boolean {
         return sharedPreferences.getBoolean(IS_PROXY_TURN_ON, false)
     }

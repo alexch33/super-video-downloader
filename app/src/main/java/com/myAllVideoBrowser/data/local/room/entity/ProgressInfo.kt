@@ -17,7 +17,7 @@ data class ProgressInfo(
 
     var downloadId: Long = 0,
 
-    @param:TypeConverters(RoomConverter::class)
+    @TypeConverters(RoomConverter::class)
     var videoInfo: VideoInfo,
 
     @Deprecated("bytesDownloaded deprecated use progressDownloaded instead")

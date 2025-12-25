@@ -10,7 +10,7 @@ buildscript {
         classpath deps.kotlin.plugin
         classpath deps.kotlin.allopen
         classpath deps.coveralls.plugin
-        classpath "com.google.devtools.ksp:symbol-processing-gradle-plugin:2.3.4"
+        classpath "com.google.devtools.ksp:symbol-processing-gradle-plugin:2.2.10-2.0.2"
     }
 }
 

@@ -26,7 +26,7 @@ interface TopPagesRepository {
 
 @Singleton
 class TopPagesRepositoryImpl @Inject constructor(
-    @param:LocalData private val localDataSource: TopPagesRepository,
+    @LocalData private val localDataSource: TopPagesRepository,
     private val okHttpClient: OkHttpProxyClient
 ) : TopPagesRepository {
 

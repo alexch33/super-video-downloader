@@ -50,6 +50,16 @@ class ProxiesFragment : BaseFragment() {
             this.proxiesRecyclerView.adapter = proxiesAdapter
             proxiesAdapter.setData(proxiesViewModel.proxiesList.get()?.toList() ?: emptyList())
 
+            this.saveCustomDnsButton.setOnClickListener {
+                proxiesViewModel.saveCustomDns()
+                Toast.makeText(
+                    this@ProxiesFragment.context,
+                    getString(com.myAllVideoBrowser.R.string.custom_dns_saved_message),
+                    Toast.LENGTH_SHORT
+                ).show()
+
+            }
+
             this.addProxyButton.setOnClickListener {
                 val host = this.hostEditText.text.toString()
                 val port = this.portEditText.text.toString()

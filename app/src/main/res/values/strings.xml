@@ -126,4 +126,5 @@
     <string name="doh_cloudflare">Cloudflare DOH</string>
     <string name="doh_quad9">Quad9 DOH</string>
     <string name="doh_ad_guard">Adguard DOH</string>
+    <string name="custom_dns_saved_message">Custom DNS saved</string>
 </resources>

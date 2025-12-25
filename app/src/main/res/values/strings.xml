@@ -127,4 +127,5 @@
     <string name="doh_quad9">Quad9 DOH</string>
     <string name="doh_ad_guard">Adguard DOH</string>
     <string name="custom_dns_saved_message">Custom DNS saved</string>
+    <string name="proxy_service_channel_name" translatable="false">proxy channel</string>
 </resources>

@@ -4,6 +4,7 @@ import android.util.Log
 import com.myAllVideoBrowser.DLApplication.Companion.DEBUG_TAG
 import libv2ray.CoreController
 import libv2ray.CoreCallbackHandler
+import java.io.Serializable
 
 class XrayCallback : CoreCallbackHandler {
     companion object {
@@ -36,7 +37,7 @@ data class ProxyHop(
     val port: Int,
     val username: String? = null,
     val password: String? = null
-)
+) : Serializable
 
 /**
  * Manages the Xray proxy lifecycle using the libv2ray.CoreController API.

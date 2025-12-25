@@ -1,14 +1,17 @@
 package com.myAllVideoBrowser.ui.main.proxies
 
+import android.content.Intent
+import android.os.Build
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
+import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.DnsStampHelper
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
+import com.myAllVideoBrowser.util.proxy_utils.ProxyService
 import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyHop
-import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -139,24 +142,34 @@ class ProxiesViewModel @Inject constructor(
     }
 
     private fun updateChain(proxies: List<Proxy>) {
-        if (isProxyOn.get() == false && isSecureDnsOn.get() == false) {
-            ProxyManager.stopLocalProxy()
+        val useProxy = isProxyOn.get() == true
+        val useDns = isSecureDnsOn.get() == true
+
+        if (!useProxy && !useDns) {
+            val intent =
+                Intent(ContextUtils.getApplicationContext(), ProxyService::class.java).apply {
+                    action = ProxyService.ACTION_STOP
+                }
+            ContextUtils.getApplicationContext().startService(intent)
             return
         }
 
-        val proxyHops = proxies.filter { it != Proxy.noProxy() }.map { proxy ->
-            ProxyHop(
-                type = proxy.type.name.lowercase(),
-                address = proxy.host,
-                port = proxy.port.toInt(),
-                username = proxy.user.takeIf { it.isNotBlank() },
-                password = proxy.password.takeIf { it.isNotBlank() })
+        val proxyHops = if (useProxy) {
+            proxies.filter { it != Proxy.noProxy() }.map { proxy ->
+                ProxyHop(
+                    type = proxy.type.name.lowercase(),
+                    address = proxy.host,
+                    port = proxy.port.toInt(),
+                    username = proxy.user.takeIf { it.isNotBlank() },
+                    password = proxy.password.takeIf { it.isNotBlank() }
+                )
+            }
+        } else {
+            emptyList()
         }
 
-
-        val dnsUrl: String? = if (isSecureDnsOn.get() == true) {
+        val dnsUrl: String? = if (useDns) {
             val provider = selectedDnsProvider.get()
-
             if (provider == SecureDnsProvider.CUSTOM) {
                 provider.getCleanUrl(customDnsUrl.get())
             } else {
@@ -166,16 +179,19 @@ class ProxiesViewModel @Inject constructor(
             null
         }
 
-        val localCreds = sharedPrefHelper.getGeneratedCreds()
+        val intent = Intent(ContextUtils.getApplicationContext(), ProxyService::class.java).apply {
+            action = ProxyService.ACTION_START_OR_UPDATE
+            putExtra(ProxyService.EXTRA_PROXY_HOPS, ArrayList(proxyHops))
+            putExtra(ProxyService.EXTRA_DNS_URL, dnsUrl)
+        }
 
-        ProxyManager.startProxyChain(
-            localPort = 8888,
-            localUser = localCreds.localUser,
-            localPass = localCreds.localPassword,
-            hops = proxyHops,
-            dnsUrl = dnsUrl
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            ContextUtils.getApplicationContext().startForegroundService(intent)
+        } else {
+            ContextUtils.getApplicationContext().startService(intent)
+        }
     }
+
 
     private fun saveAndUpdateProxies(updatedList: List<Proxy>) {
         viewModelScope.launch(Dispatchers.IO) {

@@ -70,8 +70,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 85
-        versionName "0.7.0"
+        versionCode 91
+        versionName "0.7.1"
 
         if (splitApks) {
             splits {
@@ -359,25 +359,104 @@ tasks.register('cloneV2raySource', Exec) {
 }
 
 tasks.register('buildAarFromSource', Exec) {
-    dependsOn cloneV2raySource
+    dependsOn tasks.named('cloneV2raySource')
 
     def srcDir = file("${buildDirV2ray}/src")
+    def buildPath = "/tmp/build"
+
+    def fakeJavacDir = file("${project.getLayout().getBuildDirectory()}/fake_javac")
+
     workingDir srcDir
     inputs.dir(srcDir)
     outputs.file(aarOutputFile)
 
+    // This part is still needed to find the real JDK path
+    def javaToolchainService = project.getServices().get(JavaToolchainService)
+
     doFirst {
-        println "Building libv2ray.aar from source..."
+        def launcher = javaToolchainService.launcherFor(project.java.toolchain)
+        def jdk21Path = launcher.get().getMetadata().getInstallationPath().getAsFile().absolutePath
+        def realJavacPath = new File(jdk21Path, "bin/javac").absolutePath
+
+        println "Building libv2ray.aar using JDK at ${jdk21Path}"
+
+        fakeJavacDir.mkdirs()
+        def fakeJavacScript = new File(fakeJavacDir, "javac")
+
+        fakeJavacScript.text = """#!/bin/sh
+# This script is a fake javac that intercepts and modifies arguments from gomobile.
+# It is written in POSIX sh to be compatible with all systems.
+# 1. It REMOVES the hardcoded '-source 1.8' and '-target 1.8' arguments.
+# 2. It REPLACES the '-bootclasspath' argument and its value with the modern '--patch-module' equivalent.
+# 3. It ADDS the required '--add-exports' flags for the Java Module System.
+# 4. It ADDS the '-source 21' and '-target 21' arguments.
+
+echo "Wrapper javac received original args: \$@"
+
+new_args=""
+skip_next=0
+
+# Loop through all arguments passed to the script
+for arg in "\$@"; do
+  if [ \$skip_next -eq 1 ]; then
+    # This is the value for a flag we're replacing or removing (e.g., the path to android.jar).
+    if [ ! -z "\$patch_module_next" ]; then
+      # The previous argument was -bootclasspath. Append the value to the patch-module flag with an equals sign.
+      new_args="\$new_args=\$arg"
+      patch_module_next="" # Reset the flag
+    fi
+    skip_next=0
+    continue
+  fi
+
+  # Check for arguments to modify or remove
+  case "\$arg" in
+    -bootclasspath)
+      # This is the flag we want to replace.
+      # Set a flag so the *next* argument (the path) is handled correctly.
+      patch_module_next=1
+      new_args="\$new_args --patch-module=java.base"
+      skip_next=1 # Tell the loop to process the next argument in the 'skip_next' block
+      continue
+      ;;
+    -source|-target)
+      # This is a flag we want to remove entirely. Tell the loop to also skip its value.
+      skip_next=1
+      continue
+      ;;
+    *)
+      # If we got here, the argument is not one we are modifying, so we append it to our string.
+      new_args="\$new_args \\"\$arg\\""
+      ;;
+  esac
+done
+
+# Define the exports needed by the Go-generated Java code.
+# The format is <source-module>/<package>=<target-module>
+# ALL-UNNAMED means export to our code which doesn't have a module name.
+exports="--add-exports=java.base/android.content=ALL-UNNAMED --add-exports=java.base/android.util=ALL-UNNAMED"
+
+echo "Wrapper javac calling real javac with MODIFIED args: \$new_args \$exports -source 21 -target 21"
+
+# Use Groovy's GString interpolation to embed the real javac path directly into the script.
+eval exec "\\"${realJavacPath}\\"" \$new_args \$exports -source 21 -target 21
+"""
+        fakeJavacScript.setExecutable(true)
+
+        println "Created fake javac wrapper at ${fakeJavacScript.absolutePath}"
+
         def originalPath = System.getenv("PATH")
         def userGoBin = System.getProperty("user.home") + "/go/bin"
-
         def goBinPath = file(goExecutable).isAbsolute() ? file(goExecutable).parent : ""
-        environment 'PATH', "${goBinPath}:${userGoBin}:${originalPath}"
+
+        // The fakeJavacDir MUST come first in the PATH
+        environment 'PATH', "${fakeJavacDir.absolutePath}:${jdk21Path}/bin:${goBinPath}:${userGoBin}:${originalPath}"
+        environment 'JAVA_HOME', jdk21Path
 
         environment 'GOPROXY', 'https://proxy.golang.org,direct'
         environment 'GOSUMDB', 'sum.golang.org'
-
-        environment 'CGO_LDFLAGS', "-Wl,-z,max-page-size=16384"
+        environment 'GOPATH', "${buildPath}/go"
+        environment 'GOCACHE', "${buildPath}/go-cache"
 
         commandLine goMobileExecutable, 'bind',
                 '-v',
@@ -385,7 +464,7 @@ tasks.register('buildAarFromSource', Exec) {
                 '-androidapi=21',
                 '-trimpath',
                 '-ldflags',
-                '-s -w -buildid=',
+                '-s -w',
                 '-o', aarOutputFile.absolutePath,
                 './'
     }

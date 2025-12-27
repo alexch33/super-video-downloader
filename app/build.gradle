@@ -299,64 +299,50 @@ tasks.coveralls {
 }
 
 // =========================================================================
-// GUARANTEED REPRODUCIBLE BUILD (Multi-Architecture)
+// GO REPRODUCIBLE BUILD SETUP (Multi-Architecture)
 // =========================================================================
-
-// Helper function to read a property from a properties file
-static def getPropertyFromFile(String propertyName, File propertiesFile) {
-    if (!propertiesFile.exists()) {
-        return null
-    }
-    Properties properties = new Properties()
-    propertiesFile.withInputStream {
-        properties.load(it)
-    }
-    return properties.getProperty(propertyName)
-}
-
-def ndkPath = System.getenv("ANDROID_NDK_HOME") ?: System.getenv("ANDROID_NDK_ROOT")
-if (ndkPath == null || ndkPath.trim().isEmpty()) {
-    println "NDK path not found in environment variables (ANDROID_NDK_HOME/ROOT). Checking local.properties..."
-    def localPropertiesFile = project.rootProject.file('local.properties')
-    ndkPath = getPropertyFromFile('ndk.dir', localPropertiesFile)
-} else {
-    println "Found NDK path in environment variable: ${ndkPath}"
-}
-
-if (ndkPath == null || ndkPath.trim().isEmpty()) {
-    throw new GradleException("NDK path not found in local.properties. Please make sure the NDK is installed and your project is synced with Android Studio.")
-}
-
-println "Found NDK path in local.properties: ${ndkPath}"
 
 ext {
     v2rayRepo = 'https://github.com/2dust/AndroidLibXrayLite.git'
     v2rayCommit = 'v25.12.8'
-    buildDirV2ray = "${project.rootDir}/build/v2ray"
+    buildDirV2ray = file("${project.rootDir}/build/v2ray")
     goExecutable = file('/usr/local/go/bin/go').exists() ? '/usr/local/go/bin/go' : 'go'
     gitExecutable = file('/usr/bin/git').exists() ? '/usr/bin/git' : 'git'
 }
 
+// Helper function to find the NDK path reliably
+static def findNdkPath(Project project) {
+    def envVar = System.getenv("ANDROID_NDK_HOME") ?: System.getenv("ANDROID_NDK_ROOT")
+    if (envVar) {
+        println "Found NDK path in environment variable: ${envVar}"
+        return envVar
+    }
+    def localPropertiesFile = project.rootProject.file('local.properties')
+    if (localPropertiesFile.exists()) {
+        Properties properties = new Properties()
+        localPropertiesFile.withInputStream { properties.load(it) }
+        def propVar = properties.getProperty('ndk.dir')
+        if (propVar) {
+            println "Found NDK path in local.properties: ${propVar}"
+            return propVar
+        }
+    }
+    throw new GradleException("NDK path not found. Please define ANDROID_NDK_HOME, ANDROID_NDK_ROOT, or ndk.dir in local.properties.")
+}
+
+def ndkPath = findNdkPath(project)
+
 def archConfigs = [
-        'arm64-v8a'  : [
-                goArch: 'arm64',
-                target: 'aarch64-linux-android'
-        ],
-        'armeabi-v7a': [
-                goArch: 'arm',
-                target: 'armv7a-linux-androideabi'
-        ],
-        'x86_64'     : [
-                goArch: 'amd64',
-                target: 'x86_64-linux-android'
-        ],
-        'x86'        : [
-                goArch: '386',
-                target: 'i686-linux-android'
-        ]
+        'arm64-v8a'  : [goArch: 'arm64', target: 'aarch64-linux-android'],
+        'armeabi-v7a': [goArch: 'arm', target: 'armv7a-linux-androideabi'],
+        'x86_64'     : [goArch: 'amd64', target: 'x86_64-linux-android'],
+        'x86'        : [goArch: '386', target: 'i686-linux-android']
 ]
 
+// 1. Clones the V2Ray source code.
 tasks.register('cloneV2raySource', Exec) {
+    group = "Go Setup"
+    description = "Clones the upstream V2Ray source code."
     def srcDir = file("${buildDirV2ray}/src")
     outputs.dir(srcDir)
     onlyIf { !srcDir.exists() }
@@ -364,80 +350,90 @@ tasks.register('cloneV2raySource', Exec) {
     commandLine gitExecutable, 'clone', '--depth=1', '--branch', v2rayCommit, v2rayRepo, srcDir.absolutePath
 }
 
-tasks.register('createGoModule', Exec) {
+// 2. Prepares the MAIN Go module and creates the vendor directory.
+tasks.register('vendorGoDependencies') {
+    group = "Go Setup"
+    description = "Initializes main go.mod and creates a vendor directory."
+
+    def builderDir = file("src/main/go/builder")
+    def vendorDir = file("${builderDir}/vendor")
+
+    // This task depends on the original, UNPATCHED source code.
     dependsOn tasks.named('cloneV2raySource')
-    def builderDir = file("src/main/go/builder")
-    def v2raySrcDir = file("${buildDirV2ray}/src")
-    workingDir builderDir
-    inputs.dir(v2raySrcDir)
-    outputs.file(file("${builderDir}/go.mod"))
-    outputs.file(file("${builderDir}/go.sum"))
 
-    doFirst {
-        println "--- Creating or resetting go.mod ---"
-        file("${builderDir}/go.mod").text = """
-module builder
-go 1.25.0
-require github.com/2dust/AndroidLibXrayLite v0.0.0-20251209012117-1655d531cb8a
-// This replace directive is intentionally incorrect to match the upstream library.
-replace gvisor.dev/gvisor => gvisor.dev/gvisor v0.0.0-20250606001031-fa4c4dd86b43
-"""
-    }
-
-    commandLine goExecutable, 'mod', 'edit', "-replace=github.com/2dust/AndroidLibXrayLite=${v2raySrcDir.absolutePath}"
-}
-
-import javax.inject.Inject
-abstract class TidyGoDependenciesTask extends Exec {
-    @Inject
-    abstract ExecOperations getExecOperations()
-}
-
-tasks.register('tidyGoDependencies', TidyGoDependenciesTask) {
-    dependsOn tasks.named('createGoModule')
-    def builderDir = file("src/main/go/builder")
-    workingDir builderDir
-    inputs.files(file("${builderDir}/go.mod"))
-    outputs.files(file("${builderDir}/go.mod"), file("${builderDir}/go.sum"))
-    environment 'GOPROXY', 'https://proxy.golang.org,direct'
-    environment 'GOPRIVATE', '*'
-    commandLine goExecutable, 'get', '-u', './...'
+    inputs.file("${builderDir}/builder.go")
+    outputs.dir(vendorDir)
 
     doLast {
-        execOperations.exec {
+        println "--- Initializing main Go module and vendoring dependencies ---"
+
+        def goModFile = file("${builderDir}/go.mod")
+
+        goModFile.text = """
+module builder
+go 1.25.0
+
+// This rule is copied from the AndroidLibXrayLite go.mod file.
+// It forces the entire build to use the one, correct version of gvisor.
+replace gvisor.dev/gvisor => gvisor.dev/gvisor v0.0.0-20250606001031-fa4c4dd86b43
+"""
+        file("${builderDir}/go.sum").delete()
+
+        def goEnv = ['GOPROXY': 'https://proxy.golang.org,direct']
+
+        // Step 1: Add the replace directive for our local clone.
+        exec {
             workingDir builderDir
-            environment 'GOPROXY', 'https://proxy.golang.org,direct'
-            environment 'GOPRIVATE', '*'
+            environment goEnv
+            commandLine goExecutable, 'mod', 'edit', '-replace=github.com/2dust/AndroidLibXrayLite=../../../../../build/v2ray/src'
+        }
+
+        // Step 2: Tidy the module. Go will now be forced to respect the top-level gvisor rule.
+        exec {
+            workingDir builderDir
+            environment goEnv
             commandLine goExecutable, 'mod', 'tidy'
+        }
+
+        // Step 3: Create the vendor directory with the now-correct set of dependencies.
+        exec {
+            workingDir builderDir
+            environment goEnv
+            commandLine goExecutable, 'mod', 'vendor'
         }
     }
 }
 
-// Create a placeholder task that all arch-specific builds will depend on.
+
+// 3. Update prepareGoBuild to depend on the final vendoring task
 def prepareGoBuild = tasks.register("prepareGoBuild") {
-    dependsOn tasks.named('tidyGoDependencies')
+    dependsOn tasks.named('vendorGoDependencies')
 }
 
-// Create a placeholder task that the final preBuild will depend on.
-def copyAllGoSharedLibs = tasks.register("copyAllGoSharedLibs")
+// 4. A placeholder task that the final Android preBuild will depend on.
+def copyAllGoSharedLibs = tasks.register("copyAllGoSharedLibs") {
+    group = "Go Build"
+    description = "A placeholder task that aggregates all architecture-specific copy tasks."
+}
 
+// 5. Loop through each architecture to create build and copy tasks dynamically.
 archConfigs.each { abi, config ->
     def goArch = config.goArch
     def target = config.target
 
-    // 1. Create a build task for each architecture
     def buildTask = tasks.register("buildGoSharedLib_${abi}", Exec) {
         dependsOn prepareGoBuild
         group = "Go Build"
         description = "Builds the Go shared library for ${abi}."
 
         def builderDir = file("src/main/go/builder")
-        def outputDir = new File(project.buildDir, "generated/go_build/${abi}")
-        def outputSO = new File(outputDir, "libgojni.so")
+        def outputDir = file("${project.buildDir}/generated/go_build/${abi}")
+        def outputSO = file("${outputDir}/libgojni.so")
 
-        workingDir builderDir
         inputs.dir(builderDir)
         outputs.file(outputSO)
+
+        workingDir builderDir
 
         def apiLevel = 21
         def toolchainPath = "${ndkPath}/toolchains/llvm/prebuilt/linux-x86_64"
@@ -454,11 +450,13 @@ archConfigs.each { abi, config ->
         doFirst {
             println "--- (BUILD) Executing Go build for ${abi} ---"
             if (!file(compiler).exists()) {
-                throw new GradleException("C compiler for ${abi} not found at path: ${compiler}.")
+                throw new GradleException("C compiler for ${abi} not found at path: ${compiler}. Check NDK installation and path.")
             }
         }
 
+        // Use '-mod=vendor' to force the compiler to use the local vendor directory.
         commandLine goExecutable, 'build',
+                '-mod=vendor',
                 '-buildmode=c-shared',
                 '-trimpath',
                 '-ldflags', "-s -w -buildid=",
@@ -466,31 +464,30 @@ archConfigs.each { abi, config ->
                 '.'
     }
 
-    // 2. Create a copy task for each architecture
     def copyTask = tasks.register("copyGoSharedLib_${abi}", Copy) {
         dependsOn buildTask
         group = "Go Build"
-        description = "Copies the Go shared library for ${abi}."
+        description = "Copies the Go shared library for ${abi} to jniLibs."
 
-        from(buildTask) // Automatically uses the output of the build task
+        from { buildTask.get().outputs.files }
         into "src/main/jniLibs/${abi}"
 
         doFirst {
             def sourceFile = buildTask.get().outputs.files.singleFile
             if (!sourceFile.exists()) {
-                throw new InvalidUserDataException("libgojni.so for ${abi} was not created. Check compilation errors.")
+                throw new InvalidUserDataException("Go build failed: ${sourceFile.path} was not created for ABI ${abi}.")
             }
             println "--- (COPY) Copying libgojni.so for ${abi} ---"
         }
     }
 
-    // 3. Add the copy task as a dependency for the final aggregate task
+    // Add each copy task as a dependency for the final aggregate task.
     copyAllGoSharedLibs.configure {
         dependsOn copyTask
     }
 }
 
-// --- Hook into the main Android build process ---
+// 6. Hook the final Go copy task into the Android build lifecycle.
 project.afterEvaluate {
     tasks.named('preBuild').configure {
         dependsOn copyAllGoSharedLibs

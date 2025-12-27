@@ -2,30 +2,8 @@ package com.myAllVideoBrowser.util.proxy_utils.proxy_manager
 
 import android.util.Log
 import com.myAllVideoBrowser.DLApplication.Companion.DEBUG_TAG
-import libv2ray.CoreController
-import libv2ray.CoreCallbackHandler
+import com.myAllVideoBrowser.v2ray.V2Ray
 import java.io.Serializable
-
-class XrayCallback : CoreCallbackHandler {
-    companion object {
-        private const val TAG = "$DEBUG_TAG XrayCallback"
-    }
-
-    override fun onEmitStatus(l: Long, s: String): Long {
-        Log.d(TAG, "onEmitStatus: l=$l, s='$s'")
-        return 0
-    }
-
-    override fun shutdown(): Long {
-        Log.d(TAG, "shutdown() called from core.")
-        return 0
-    }
-
-    override fun startup(): Long {
-        Log.d(TAG, "startup() called from core.")
-        return 0
-    }
-}
 
 /**
  * Represents a single proxy server in a chain.
@@ -40,12 +18,11 @@ data class ProxyHop(
 ) : Serializable
 
 /**
- * Manages the Xray proxy lifecycle using the libv2ray.CoreController API.
- * Now with full support for proxy chaining.
+ * Manages the Xray proxy lifecycle using the V2Ray JNI wrapper.
+ * Full support for proxy chaining.
  */
 object ProxyManager {
     private const val TAG = "$DEBUG_TAG ProxyManager"
-    private var coreController: CoreController? = null
 
     /**
      * Starts a local proxy that can chain through a series of other proxies.
@@ -157,32 +134,36 @@ object ProxyManager {
         Log.d(TAG, "Starting Libv2ray with generated chain config: $redactedConfig")
 
         try {
-            coreController = CoreController(XrayCallback())
-            coreController?.startLoop(xrayJsonConfig)
-
-            Log.i(TAG, "Libv2ray proxy chain started successfully on port $localPort")
-            return true
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to start Libv2ray proxy chain", e)
-            coreController = null
+            val result = V2Ray.XrayRun(xrayJsonConfig)
+            if (result == 0L) {
+                Log.i(TAG, "V2Ray proxy chain started successfully on port $localPort")
+                return true
+            } else {
+                Log.e(TAG, "V2Ray.XrayRun returned a non-zero error code: $result")
+                return false
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "Failed to start V2Ray proxy chain", e)
             return false
         }
     }
 
-
     fun stopLocalProxy() {
         if (!isProxyRunning()) return
         try {
-            coreController?.stopLoop()
-            Log.i(TAG, "Libv2ray proxy stop command issued.")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error stopping Libv2ray proxy", e)
-        } finally {
-            coreController = null
+            V2Ray.XrayStop()
+            Log.i(TAG, "V2Ray proxy stop command issued.")
+        } catch (e: Throwable) {
+            Log.e(TAG, "Error stopping V2Ray proxy", e)
         }
     }
 
     fun isProxyRunning(): Boolean {
-        return coreController?.isRunning ?: false
+        return try {
+            V2Ray.XrayIsRunning() != 0L
+        } catch (e: Throwable) {
+            Log.w(TAG, "Could not check V2Ray status, assuming not running.", e)
+            false
+        }
     }
 }

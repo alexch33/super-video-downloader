@@ -27,8 +27,12 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          android-ndk-version: r27d
           cache: gradle
+
+      - name: Set up Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27d
 
       - name: Set up Go
         uses: actions/setup-go@v5

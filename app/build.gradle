@@ -387,16 +387,30 @@ replace gvisor.dev/gvisor => gvisor.dev/gvisor v0.0.0-20250606001031-fa4c4dd86b4
     commandLine goExecutable, 'mod', 'edit', "-replace=github.com/2dust/AndroidLibXrayLite=${v2raySrcDir.absolutePath}"
 }
 
-tasks.register('tidyGoDependencies', Exec) {
+import javax.inject.Inject
+abstract class TidyGoDependenciesTask extends Exec {
+    @Inject
+    abstract ExecOperations getExecOperations()
+}
+
+tasks.register('tidyGoDependencies', TidyGoDependenciesTask) {
     dependsOn tasks.named('createGoModule')
     def builderDir = file("src/main/go/builder")
     workingDir builderDir
     inputs.files(file("${builderDir}/go.mod"))
     outputs.files(file("${builderDir}/go.mod"), file("${builderDir}/go.sum"))
     environment 'GOPROXY', 'https://proxy.golang.org,direct'
-    environment 'GOSUMDB', 'off'
     environment 'GOPRIVATE', '*'
-    commandLine goExecutable, 'mod', 'tidy'
+    commandLine goExecutable, 'get', '-u', './...'
+
+    doLast {
+        execOperations.exec {
+            workingDir builderDir
+            environment 'GOPROXY', 'https://proxy.golang.org,direct'
+            environment 'GOPRIVATE', '*'
+            commandLine goExecutable, 'mod', 'tidy'
+        }
+    }
 }
 
 // Create a placeholder task that all arch-specific builds will depend on.

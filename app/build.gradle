@@ -1,6 +1,7 @@
 import com.android.build.api.variant.FilterConfiguration
 
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-parcelize'
 apply plugin: 'kotlin-android'
 apply plugin: 'com.google.devtools.ksp'
 apply plugin: 'kotlin-kapt'
@@ -243,6 +244,11 @@ dependencies {
 
     // Another Webview versions has random crashes
     implementation('androidx.webkit:webkit:1.12.1')
+
+    // https://mvnrepository.com/artifact/org.mozilla.geckoview/geckoview
+    implementation("org.mozilla.geckoview:geckoview:145.0.20251106194447")
+
+    implementation("androidx.preference:preference-ktx:1.2.1")
 
     implementation 'androidx.core:core-ktx:1.17.0'
 

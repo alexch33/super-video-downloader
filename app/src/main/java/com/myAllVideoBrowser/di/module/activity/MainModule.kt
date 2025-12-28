@@ -5,6 +5,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.myAllVideoBrowser.di.ActivityScoped
 import com.myAllVideoBrowser.di.FragmentScoped
+import com.myAllVideoBrowser.geckoview_example.GeckoViewFragment
 import com.myAllVideoBrowser.ui.main.bookmarks.BookmarksFragment
 import com.myAllVideoBrowser.ui.main.help.HelpFragment
 import com.myAllVideoBrowser.ui.main.history.HistoryFragment
@@ -70,6 +71,10 @@ abstract class MainModule {
     @FragmentScoped
     @ContributesAndroidInjector
     abstract fun bindBookmarksFragment(): BookmarksFragment
+
+    @FragmentScoped
+    @ContributesAndroidInjector
+    abstract fun bindGeckoViewFragment(): GeckoViewFragment
 
     @ActivityScoped
     @Binds

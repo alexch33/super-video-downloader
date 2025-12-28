@@ -11,6 +11,9 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven(url = "https://jitpack.io")
+        maven(
+            url = "https://maven.mozilla.org/maven2/"
+        )
     }
 }
 

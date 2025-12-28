@@ -25,11 +25,13 @@ class CustomProxyController @Inject constructor(
     }
 
     fun getCurrentRunningProxy(): Proxy {
-        return if (isProxyOn()) {
-            return getLocalProxy()
-        } else {
-            Proxy.noProxy()
-        }
+        return  Proxy.noProxy()
+        // TODO revert
+//        return if (isProxyOn()) {
+//            return getLocalProxy()
+//        } else {
+//            Proxy.noProxy()
+//        }
     }
 
     fun getProxyCredentials(): Pair<String, String> {
@@ -43,6 +45,7 @@ class CustomProxyController @Inject constructor(
 
     @Synchronized
     private fun setCurrentProxy(proxy: Proxy) {
+        val proxy = Proxy.noProxy()
         val isDohEnabled = sharedPrefHelper.getIsDohOn()
         val newConfig = LastConfig(proxy, isDohEnabled)
 
@@ -104,9 +107,10 @@ class CustomProxyController @Inject constructor(
 
             Authenticator.setDefault(null)
 
-            if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
-                ProxyController.getInstance().clearProxyOverride({ }) {}
-            }
+            // TODO uncomment
+//            if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+//                ProxyController.getInstance().clearProxyOverride({ }) {}
+//            }
         }
 
         lastAppliedConfig = newConfig

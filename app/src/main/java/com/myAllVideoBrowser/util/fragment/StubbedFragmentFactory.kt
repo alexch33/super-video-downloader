@@ -17,4 +17,5 @@ class StubbedFragmentFactory : FragmentFactory {
 
     override fun createWebTabFragment() = Fragment()
     override fun createDetectedVideosTabFragment() = Fragment()
+    override fun createGeckoViewFragment() = Fragment()
 }

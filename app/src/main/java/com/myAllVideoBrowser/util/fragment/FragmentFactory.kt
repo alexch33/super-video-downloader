@@ -1,6 +1,7 @@
 package com.myAllVideoBrowser.util.fragment
 
 import androidx.fragment.app.Fragment
+import com.myAllVideoBrowser.geckoview_example.GeckoViewFragment
 import com.myAllVideoBrowser.ui.main.history.HistoryFragment
 import com.myAllVideoBrowser.ui.main.home.browser.BrowserFragment
 import com.myAllVideoBrowser.ui.main.home.browser.homeTab.BrowserHomeFragment
@@ -23,6 +24,8 @@ interface FragmentFactory {
     fun createWebTabFragment(): Fragment
 
     fun createDetectedVideosTabFragment(): Fragment
+
+    fun createGeckoViewFragment(): Fragment
 }
 
 class FragmentFactoryImpl @Inject constructor() : FragmentFactory {
@@ -41,4 +44,6 @@ class FragmentFactoryImpl @Inject constructor() : FragmentFactory {
     override fun createWebTabFragment() = WebTabFragment.newInstance()
 
     override fun createDetectedVideosTabFragment() = DetectedVideosTabFragment.newInstance()
+
+    override fun createGeckoViewFragment() = GeckoViewFragment.newInstance(null);
 }

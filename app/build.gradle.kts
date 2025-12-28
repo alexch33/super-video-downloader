@@ -224,6 +224,9 @@ dependencies {
     implementation(libs.coreSplashscreen)
     implementation(libs.legacySupportV4)
 
+    implementation(libs.geckoview)
+    implementation(libs.preference)
+
     // Kotlin
     implementation(libs.kotlin.stdlib)
 

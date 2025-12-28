@@ -74,7 +74,8 @@ class MainActivity : BaseActivity() {
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE)
         super.onCreate(savedInstanceState)
 
-        (applicationContext as? DLApplication)?.startProxyService()
+        // TODO: revert
+//        (applicationContext as? DLApplication)?.startProxyService()
 
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 

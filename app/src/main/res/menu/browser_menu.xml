@@ -1,0 +1,29 @@
+<!-- res/menu/browser_menu.xml -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_back"
+        android:icon="@drawable/arrow_back24px"
+        android:title="Back"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_forward"
+        android:icon="@drawable/arrow_forward24px"
+        android:title="Forward"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_share"
+        android:icon="@drawable/share_24px"
+        android:title="Share"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_desktop"
+        android:title="Desktop Mode"
+        android:checkable="true"
+        app:showAsAction="never" />
+
+</menu>

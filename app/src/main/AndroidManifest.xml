@@ -83,6 +83,11 @@
         <receiver
             android:name="com.myAllVideoBrowser.util.downloaders.NotificationReceiver"
             android:enabled="true" />
+
+        <service
+            android:name=".geckoview_example.ExampleCrashHandler"
+            android:exported="false"
+            android:process=":gecko" />
     </application>
 
     <queries>

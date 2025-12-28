@@ -1,0 +1,21 @@
+{
+  "manifest_version": 2,
+  "name": "SuperVideoDownloader Interceptor",
+  "version": "1.0.0",
+  "description": "Intercepts network requests to detect and download videos.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "supervideodownloader@example.com",
+      "strict_min_version": "57.0"
+    }
+  },
+  "permissions": [
+    "webRequest",
+    "nativeMessaging",
+    "geckoViewAddons",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  }
+}

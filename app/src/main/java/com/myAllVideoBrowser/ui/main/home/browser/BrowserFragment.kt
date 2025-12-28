@@ -34,6 +34,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentBrowserBinding
+import com.myAllVideoBrowser.geckoview_example.GeckoViewFragment
 import com.myAllVideoBrowser.ui.component.adapter.WebTabsAdapter
 import com.myAllVideoBrowser.ui.component.adapter.WebTabsListener
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
@@ -276,14 +277,19 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     }
 
     private fun createTabFragment(index: Int): Fragment {
-        val fragment = WebTabFragment.newInstance().apply {
-            val args = Bundle().apply {
-                putInt(TAB_INDEX_KEY, index)
+        if (false) {
+            val fragment = WebTabFragment.newInstance().apply {
+                val args = Bundle().apply {
+                    putInt(TAB_INDEX_KEY, index)
+                }
+                arguments = args
             }
-            arguments = args
+
         }
 
-        return fragment
+//        val fragment =  GeckoViewFragment.newInstance("https://animego.online/")
+
+        return GeckoViewFragment.newInstance("https://animego.me/")
     }
 
     override fun onCreateView(
@@ -294,7 +300,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         swController.serviceWorkerWebSettings.allowContentAccess = true
 
         mainViewModel = mainActivity.mainViewModel
-        browserViewModel = ViewModelProvider(this, viewModelFactory)[BrowserViewModel::class.java]
+        browserViewModel = ViewModelProvider(mainActivity, viewModelFactory)[BrowserViewModel::class.java]
         historyModel = ViewModelProvider(this, viewModelFactory)[HistoryViewModel::class.java]
         videoDetectionModel =
             ViewModelProvider(this, viewModelFactory)[GlobalVideoDetectionModel::class.java]

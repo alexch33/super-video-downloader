@@ -11,6 +11,7 @@ activity = "1.13.0"
 appcompat = "1.7.1"
 material = "1.14.0"
 constraintlayout = "2.2.1"
+preferenceKtx = "1.2.1"
 recyclerview = "1.4.0"
 
 webkit = "1.16.0-rc01"
@@ -95,12 +96,15 @@ desugarJdk = "2.1.5"
 ndk = "27.3.13750724"
 
 # Build SDK versions
-minSdk = "24"
+minSdk = "26"
 targetSdk = "36"
 jvmToolchain = "21"
 
 # Go
 goVersion = "1.25.0"
+
+# GeckoView
+geckoview = "150.0.20260511200624"
 
 [libraries]
 # Android and Gradle
@@ -119,6 +123,7 @@ appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat"
 material = { module = "com.google.android.material:material", version.ref = "material" }
 constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
+preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 coreKtx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -212,6 +217,9 @@ espressoIntents = { module = "androidx.test.espresso:espresso-intents", version.
 # Code Coverage
 desugarJdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugarJdk" }
 coverallsPlugin = { module = "org.kt3k.gradle.plugin:coveralls-gradle-plugin", version.ref = "coveralls" }
+
+# GeckoView
+geckoview = { module = "org.mozilla.geckoview:geckoview", version.ref = "geckoview" }
 
 [bundles]
 room = ["roomRuntime", "roomKtx", "roomRxjava3", "roomGuava"]

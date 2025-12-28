@@ -1,0 +1,126 @@
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Data binding variables can be added here if needed in the future -->
+    <data/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- This is a good place for custom views like a video player in fullscreen -->
+        <FrameLayout
+            android:id="@+id/customView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <com.google.android.material.appbar.AppBarLayout
+                android:id="@+id/app_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- The main toolbar that contains the search bar and buttons -->
+                <com.google.android.material.appbar.MaterialToolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    app:contentInsetStart="0dp"
+                    app:layout_scrollFlags="scroll|enterAlways|snap"
+                    app:menu="@menu/browser_menu"
+                    app:navigationIcon="?attr/homeAsUpIndicator"
+                    app:titleTextColor="@android:color/white">
+
+                    <!-- This layout replaces the simple title with a complex search bar and icon layout -->
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <!-- This is where your back/forward buttons would go.
+                             For now, they are hidden, as the menu items handle this. -->
+                        <LinearLayout
+                            android:id="@+id/buttons_block"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:visibility="gone"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
+                            <!-- Back/Forward Icons could be added here later -->
+                        </LinearLayout>
+
+                        <!-- A simple TextView to act as the Title/URL bar -->
+                        <TextView
+                            android:id="@+id/url_bar"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:gravity="center_vertical"
+                            android:maxLines="1"
+                            android:paddingHorizontal="8dp"
+                            android:text="Web Browser"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            android:textColor="@color/black"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toEndOf="@+id/buttons_block"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                </com.google.android.material.appbar.MaterialToolbar>
+
+            </com.google.android.material.appbar.AppBarLayout>
+
+            <!-- This ConstraintLayout holds the browser and the progress bar -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+                <!-- Main browser container where GeckoView will be attached -->
+                <FrameLayout
+                    android:id="@+id/containerBrowser"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#FFFFFF" />
+
+                <!-- The progress bar, constrained to the top of this layout -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="4dp"
+                    android:background="@android:color/transparent"
+                    android:max="100"
+                    android:progress="0"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:visibility="visible" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Floating Action Button for reloading -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabReload"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="16dp"
+                android:contentDescription="Reload Page"
+                android:src="@drawable/refresh_24px"
+                app:backgroundTint="?attr/colorPrimary"
+                app:tint="@android:color/white" />
+
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+    </FrameLayout>
+</layout>

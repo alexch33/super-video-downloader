@@ -214,6 +214,9 @@ android {
 dependencies {
     println("\n📦 Resolving Dependencies...")
 
+    implementation(libs.geckoview)
+    implementation(libs.preference.ktx)
+
     // Core Android Libraries
     implementation(libs.activity)
     implementation(libs.appcompat)

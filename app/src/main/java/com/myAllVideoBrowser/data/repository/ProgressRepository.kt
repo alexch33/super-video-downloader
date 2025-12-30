@@ -18,7 +18,7 @@ interface ProgressRepository {
 
 @Singleton
 class ProgressRepositoryImpl @Inject constructor(
-    @LocalData private val localDataSource: ProgressRepository
+    @param:LocalData private val localDataSource: ProgressRepository
 ) : ProgressRepository {
     private var lastSavedInfo: ProgressInfo? = null
 

@@ -18,7 +18,7 @@ interface HistoryRepository {
 
 @Singleton
 class HistoryRepositoryImpl @Inject constructor(
-    @LocalData private val localDataSource: HistoryRepository
+    @param:LocalData private val localDataSource: HistoryRepository
 ) : HistoryRepository {
     override fun getAllHistory(): Flowable<List<HistoryItem>> {
         return localDataSource.getAllHistory()

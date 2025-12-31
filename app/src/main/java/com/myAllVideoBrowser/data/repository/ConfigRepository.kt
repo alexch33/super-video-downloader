@@ -17,8 +17,8 @@ interface ConfigRepository {
 
 @Singleton
 class ConfigRepositoryImpl @Inject constructor(
-    @LocalData private val localDataSource: ConfigRepository,
-    @RemoteData private val remoteDataSource: ConfigRepository
+    @param:LocalData private val localDataSource: ConfigRepository,
+    @param:RemoteData private val remoteDataSource: ConfigRepository
 ) : ConfigRepository {
 
     @VisibleForTesting

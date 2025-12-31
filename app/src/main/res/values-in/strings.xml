@@ -106,4 +106,14 @@
     <string name="is_always_remux_regular_downloads">Selalu konversi ulang semua unduhan reguler</string>
     <string name="is_remux_only_live_regular_downloads">Konversi ulang hanya untuk unduhan siaran langsung reguler</string>
     <string name="is_interrupt_intrecepted_resources">Menyela konten media yang diterima oleh browser</string>
+    <string name="add_proxy">Tambah Proksi</string>
+    <string name="current_proxy_chain">Alur proksi saat ini</string>
+    <string name="add_http_proxy">Tambah proksi HTTP</string>
+    <string name="secure_dns">DNS Aman</string>
+    <string name="dns_custom">Khusus</string>
+    <string name="dns_custom_url_hint">Masukkan URL DoH atau DoT</string>
+    <string name="doh_cloudflare">DOH Cloudflare</string>
+    <string name="doh_quad9">DOH Quad9</string>
+    <string name="doh_ad_guard">DOH Adguard</string>
+    <string name="custom_dns_saved_message">DNS khusus telah disimpan</string>
 </resources>

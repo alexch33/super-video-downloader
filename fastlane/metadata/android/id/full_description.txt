@@ -3,6 +3,6 @@ Aplikasi pengunduh video gratis memungkinkan Anda mengunduh video dari situs web
 Semua dikerjakan pada klien
 Mendukung daftar M3U8 dan MPD, streaming mp4, dan siaran langsung
 Semua video disimpan sebagai video mp4
-Cookie didukung
-Dukungan proxy HTTP
-Aplikasi ini menggunakan layanan jaringan untuk mengambil daftar pemblokir iklan dan daftar situs yang didukung (deteksi dengan URL) untuk optimisasi
+Mendukung Cookie
+Dukungan proksi HTTP
+Dukungan proksi SOCKS

@@ -347,6 +347,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
         val isAudioOnly = vFormat.vcodec == "none" && vFormat.acodec != "none"
 
+        request.addOption("--force-ipv4")
+        request.addOption("--source-address", "0.0.0.0")
         if (isAudioOnly) {
             request.addOption("--audio-quality", "0")
             request.addOption("--extract-audio")

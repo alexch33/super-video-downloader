@@ -1,62 +1,40 @@
 package com.myAllVideoBrowser.ui.main.player
 
 import android.app.Activity
+import android.content.ComponentName
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.res.Configuration
-import android.media.session.PlaybackState
-import android.net.Uri
+import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModelProvider
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.DefaultRenderersFactory
-import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.RenderersFactory
-import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView.SHOW_BUFFERING_ALWAYS
 import com.myAllVideoBrowser.databinding.FragmentPlayerBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.util.AppUtil
+import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
-import java.net.CookieHandler
-import java.net.CookiePolicy
-import java.net.HttpCookie
-import java.net.URI
 import javax.inject.Inject
-import androidx.core.net.toUri
-
 
 @UnstableApi
 class VideoPlayerFragment : BaseFragment() {
 
     companion object {
-        var DEFAULT_COOKIE_MANAGER: java.net.CookieManager? = null
-
         const val VIDEO_URL = "video_url"
         const val VIDEO_HEADERS = "video_headers"
         const val VIDEO_NAME = "video_name"
-    }
-
-    init {
-        DEFAULT_COOKIE_MANAGER = java.net.CookieManager()
-        DEFAULT_COOKIE_MANAGER?.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
     }
 
     @Inject
@@ -65,10 +43,8 @@ class VideoPlayerFragment : BaseFragment() {
     @Inject
     lateinit var appUtil: AppUtil
 
-    private lateinit var player: ExoPlayer
-
+    private var mediaController: MediaController? = null
     private lateinit var videoPlayerViewModel: VideoPlayerViewModel
-
     private lateinit var dataBinding: FragmentPlayerBinding
     private var isStretched = false
 
@@ -79,97 +55,83 @@ class VideoPlayerFragment : BaseFragment() {
     ): View {
         videoPlayerViewModel =
             ViewModelProvider(this, viewModelFactory)[VideoPlayerViewModel::class.java]
-        arguments?.getString(VIDEO_HEADERS)?.let { rawHeaders ->
-            val headers =
-                Json.parseToJsonElement(rawHeaders).jsonObject.toMap()
-                    .map { it.key to it.value.toString() }
-                    .toMap()
-            videoPlayerViewModel.videoHeaders.set(headers)
+
+        val rawHeaders = arguments?.getString(VIDEO_HEADERS)
+        if (rawHeaders != null) {
+            val headersMap = Json.parseToJsonElement(rawHeaders).jsonObject
+                .mapValues { it.value.toString().removeSurrounding("\"") }
+            videoPlayerViewModel.videoHeaders.set(headersMap)
         }
         arguments?.getString(VIDEO_NAME)?.let { videoPlayerViewModel.videoName.set(it) }
-
-        val iUrl = arguments?.getString(VIDEO_URL)?.toUri()
-
-        if (iUrl != null) {
-            videoPlayerViewModel.videoUrl.set(iUrl)
-        }
-
-        val url = videoPlayerViewModel.videoUrl.get() ?: Uri.EMPTY
-        val headers = videoPlayerViewModel.videoHeaders.get() ?: emptyMap()
-
-        val mediaItem: MediaItem = MediaItem.fromUri(url)
-        val mediaFactory = createMediaFactory(headers, url.toString().startsWith("http"))
-
-        val cookiesStrArr = headers["Cookie"]?.split(";")
-        if (!cookiesStrArr.isNullOrEmpty()) {
-            for (cookiePair in cookiesStrArr) {
-                val tmp = cookiePair.split("=")
-                val key = tmp.firstOrNull()
-                val value = tmp.lastOrNull()
-
-                if (key != null && value != null) {
-                    DEFAULT_COOKIE_MANAGER?.cookieStore?.add(
-                        URI(url.toString()),
-                        HttpCookie(key, value)
-                    )
-                }
-            }
-        }
-
-        player = ExoPlayer.Builder(requireContext())
-            .setRenderersFactory(createRenderFactory())
-            .build()
+        arguments?.getString(VIDEO_URL)?.toUri()?.let { videoPlayerViewModel.videoUrl.set(it) }
 
         dataBinding = FragmentPlayerBinding.inflate(inflater, container, false).apply {
-            val currentBinding = this
-
-            currentBinding.viewModel = videoPlayerViewModel
-            currentBinding.toolbar.setNavigationOnClickListener(navigationIconClickListener)
-            currentBinding.videoView.player = player
-            currentBinding.videoView.setShowBuffering(SHOW_BUFFERING_ALWAYS)
-            currentBinding.videoView.setFullscreenButtonClickListener {
-                toggleStretchMode()
-            }
-
-            player.addListener(object : Player.Listener {
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (playbackState == PlaybackState.STATE_PLAYING) {
-                        currentBinding.loadingBar.visibility = View.GONE
-                    } else {
-                        currentBinding.loadingBar.visibility = View.VISIBLE
-                    }
-                }
-
-                override fun onPlayerError(error: PlaybackException) {
-                    if (viewModel?.videoUrl?.get().toString().startsWith("http")) {
-                        AlertDialog.Builder(requireContext())
-                            .setTitle("Download Only")
-                            .setMessage("This video supports only download.")
-                            .setPositiveButton("OK") { dialog, _ ->
-                                dialog.dismiss()
-                            }
-                            .show()
-                    }
-                    Toast.makeText(context, error.message, Toast.LENGTH_LONG).show()
-                }
-            })
-
-            player.setMediaSource(mediaFactory.createMediaSource(mediaItem))
-            player.prepare()
-            player.playWhenReady = true
+            viewModel = videoPlayerViewModel
+            toolbar.setNavigationOnClickListener(navigationIconClickListener)
+            videoView.setFullscreenButtonClickListener { toggleStretchMode() }
         }
+        startPlaybackService()
 
         return dataBinding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        if (CookieHandler.getDefault() != DEFAULT_COOKIE_MANAGER) {
-            CookieHandler.setDefault(DEFAULT_COOKIE_MANAGER)
+    private fun startPlaybackService() {
+        val serviceIntent = Intent(requireContext(), PlaybackService::class.java).apply {
+            putExtra(VIDEO_URL, videoPlayerViewModel.videoUrl.get().toString())
+            putExtra(VIDEO_HEADERS, arguments?.getString(VIDEO_HEADERS))
+        }
+        ContextCompat.startForegroundService(requireContext(), serviceIntent)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        initializeController()
+    }
+
+    private fun initializeController() {
+        val sessionToken = SessionToken(
+            requireContext(),
+            ComponentName(requireContext(), PlaybackService::class.java)
+        )
+        val controllerFuture = MediaController.Builder(requireContext(), sessionToken).buildAsync()
+
+        controllerFuture.addListener({
+            mediaController = controllerFuture.get()
+            dataBinding.videoView.player = mediaController
+            mediaController?.addListener(playerListener)
+        }, MoreExecutors.directExecutor())
+    }
+
+    private val playerListener = object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_READY || playbackState == Player.STATE_ENDED) {
+                dataBinding.loadingBar.visibility = View.GONE
+            } else {
+                dataBinding.loadingBar.visibility = View.VISIBLE
+            }
         }
 
+        override fun onPlayerError(error: PlaybackException) {
+            Toast.makeText(context, "Playback Error: ${error.message}", Toast.LENGTH_LONG).show()
+            activity?.finish()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        mediaController?.release()
+        mediaController = null
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        videoPlayerViewModel.stop()
+        mediaController?.removeListener(playerListener)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         handleBackPressed()
-        handlePlayerEvents()
         videoPlayerViewModel.start()
         getActivity(context)?.let { appUtil.hideSystemUI(it.window, dataBinding.root) }
     }
@@ -178,80 +140,13 @@ class VideoPlayerFragment : BaseFragment() {
         if (context == null) {
             return null
         } else if (context is ContextWrapper) {
-            return if (context is Activity) {
-                context
-            } else {
-                getActivity(context.baseContext)
-            }
+            return context as? Activity ?: getActivity(context.baseContext)
         }
         return null
     }
 
-    override fun onDestroyView() {
-        getActivity(context)?.let { appUtil.showSystemUI(it.window, dataBinding.root) }
-        videoPlayerViewModel.stop()
-        player.release()
-        super.onDestroyView()
-    }
-
     private val navigationIconClickListener = View.OnClickListener {
         handleClose()
-    }
-
-    private fun handlePlayerEvents() {
-        videoPlayerViewModel.stopPlayerEvent.observe(viewLifecycleOwner) {
-            player.stop()
-        }
-    }
-
-    private fun createRenderFactory(): RenderersFactory {
-        return DefaultRenderersFactory(requireContext().applicationContext)
-            .setExtensionRendererMode(EXTENSION_RENDERER_MODE_PREFER)
-            .setMediaCodecSelector { mimeType, requiresSecureDecoder, requiresTunnelingDecoder ->
-                var decoderInfos =
-                    MediaCodecSelector.DEFAULT
-                        .getDecoderInfos(mimeType, requiresSecureDecoder, requiresTunnelingDecoder)
-                if (MimeTypes.VIDEO_H264 == mimeType) {
-                    // copy the list because MediaCodecSelector.DEFAULT returns an unmodifiable list
-                    decoderInfos = ArrayList(decoderInfos)
-                    decoderInfos.reverse()
-                }
-                decoderInfos
-            }
-    }
-
-    private fun createMediaFactory(
-        headers: Map<String, String>,
-        isUrl: Boolean
-    ): DefaultMediaSourceFactory {
-        if (isUrl) {
-            if (headers.isEmpty()) {
-                val factory = DefaultHttpDataSource.Factory()
-                    .setAllowCrossProtocolRedirects(true)
-                    .setKeepPostFor302Redirects(true)
-                return DefaultMediaSourceFactory(requireContext()).setDataSourceFactory(
-                    factory
-                )
-            }
-            val fixedHeaders = headers.toMutableMap()
-
-            val dataSourceFactory: DataSource.Factory = DefaultHttpDataSource.Factory()
-                .setAllowCrossProtocolRedirects(true)
-                .setKeepPostFor302Redirects(true)
-                .setUserAgent(headers["User-Agent"])
-                .setDefaultRequestProperties(fixedHeaders)
-
-            return DefaultMediaSourceFactory(requireContext()).setDataSourceFactory(
-                dataSourceFactory
-            )
-        } else {
-            val dataSourceFactory = DefaultDataSource.Factory(requireContext())
-
-            return DefaultMediaSourceFactory(requireContext()).setDataSourceFactory(
-                dataSourceFactory
-            )
-        }
-
     }
 
     private fun handleBackPressed() {
@@ -266,26 +161,17 @@ class VideoPlayerFragment : BaseFragment() {
     }
 
     private fun handleClose() {
-        videoPlayerViewModel.stop()
+        mediaController?.stop()
         activity?.finish()
     }
 
     private fun toggleStretchMode() {
         isStretched = !isStretched
-
         if (isStretched) {
-            val orientation = resources.configuration.orientation
-            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-                dataBinding.videoView.resizeMode =
-                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-            } else {
-                dataBinding.videoView.resizeMode =
-                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-            }
+            dataBinding.videoView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
             dataBinding.toolbar.visibility = View.GONE
         } else {
-            dataBinding.videoView.resizeMode =
-                AspectRatioFrameLayout.RESIZE_MODE_FIT
+            dataBinding.videoView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             dataBinding.toolbar.visibility = View.VISIBLE
         }
     }

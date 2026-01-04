@@ -131,4 +131,5 @@
     <string name="settings_detection">Detection Settings</string>
     <string name="settings_downloading">Downloading Settings</string>
     <string name="use_legacy_m3u8_detection">Use legacy m3u8/mpd detection(by youtube-dlp)</string>
+    <string name="playback_channel_name">Playback</string>
 </resources>

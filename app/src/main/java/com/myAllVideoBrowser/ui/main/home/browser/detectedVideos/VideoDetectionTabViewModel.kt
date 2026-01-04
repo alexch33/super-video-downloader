@@ -211,8 +211,9 @@ open class VideoDetectionTabViewModel @Inject constructor(
         verifyVideoLinkJobStorage[taskUrlCleaned] =
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 val info = try {
-                    if (isM3u8 || isMpd) {
-                        videoRepository.getVideoInfoByFfmpeg(
+                    val isUseLegacyDetection = settingsModel.isUseLegacyM3u8Detection.get()
+                    if (isUseLegacyDetection && isM3u8 || isMpd) {
+                        videoRepository.getVideoInfoBySuperXDetector(
                             resourceRequest,
                             isM3u8,
                             isMpd,

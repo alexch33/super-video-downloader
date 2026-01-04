@@ -17,7 +17,7 @@ import java.time.Duration
  * to discover available video and audio streams. It uses efficient, in-app
  * parsers instead of FFprobe for speed and reliability.
  */
-class VideoServiceFfmpeg(
+class VideoServiceSuperX(
     private val client: OkHttpProxyClient
 ) : VideoService {
 
@@ -73,7 +73,7 @@ class VideoServiceFfmpeg(
         }
     }
 
-// In VideoServiceFfmpeg.kt
+// In VideoServiceSuperX.kt
 
     private fun parseHlsManifest(
         manifest: HlsPlaylistParser.HlsPlaylist, headers: Map<String, String>
@@ -199,6 +199,7 @@ class VideoServiceFfmpeg(
                 this.isRegularDownload = false
                 this.duration = duration
                 this.isLive = isLive
+                this.isDetectedBySuperX = true
             }
         )
     }

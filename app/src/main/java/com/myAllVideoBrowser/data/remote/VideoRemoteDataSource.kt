@@ -2,7 +2,7 @@ package com.myAllVideoBrowser.data.remote
 
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.remote.service.VideoService
-import com.myAllVideoBrowser.data.remote.service.VideoServiceFfmpeg
+import com.myAllVideoBrowser.data.remote.service.VideoServiceSuperX
 import com.myAllVideoBrowser.data.repository.VideoRepository
 import okhttp3.Request
 import javax.inject.Inject
@@ -11,16 +11,16 @@ import javax.inject.Singleton
 @Singleton
 class VideoRemoteDataSource @Inject constructor(
     private val videoService: VideoService,
-    private val videoServiceFfmpeg: VideoServiceFfmpeg
+    private val videoServiceSuperX: VideoServiceSuperX
 ) : VideoRepository {
 
-    override fun getVideoInfoByFfmpeg(
+    override fun getVideoInfoBySuperXDetector(
         url: Request,
         isM3u8: Boolean,
         isMpd: Boolean,
         isAudioCheck: Boolean
     ): VideoInfo? {
-        return videoServiceFfmpeg.getVideoInfo(url, isM3u8, isMpd, isAudioCheck)?.videoInfo
+        return videoServiceSuperX.getVideoInfo(url, isM3u8, isMpd, isAudioCheck)?.videoInfo
     }
 
     override fun getVideoInfo(

@@ -11,7 +11,7 @@ import javax.inject.Singleton
 class VideoLocalDataSource @Inject constructor(
     private val videoDao: VideoDao
 ) : VideoRepository {
-    override fun getVideoInfoByFfmpeg(
+    override fun getVideoInfoBySuperXDetector(
         url: Request,
         isM3u8: Boolean,
         isMpd: Boolean,

@@ -101,7 +101,7 @@ class GlobalVideoDetectionModel @Inject constructor(
                 downloadButtonState.set(DownloadButtonStateLoading())
                 val info = try {
                     if (isM3u8 || isMpd) {
-                        videoRepository.getVideoInfoByFfmpeg(
+                        videoRepository.getVideoInfoBySuperXDetector(
                             resourceRequest,
                             isM3u8,
                             isMpd,

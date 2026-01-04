@@ -8,7 +8,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 interface VideoRepository {
-    fun getVideoInfoByFfmpeg(
+    fun getVideoInfoBySuperXDetector(
         url: Request,
         isM3u8: Boolean = false,
         isMpd: Boolean = false,
@@ -29,7 +29,7 @@ class VideoRepositoryImpl @Inject constructor(
     internal var cachedVideos: MutableMap<String, VideoInfo> = mutableMapOf()
     internal var cachedVideosFfmpeg: MutableMap<String, VideoInfo> = mutableMapOf()
 
-    override fun getVideoInfoByFfmpeg(
+    override fun getVideoInfoBySuperXDetector(
         url: Request,
         isM3u8: Boolean,
         isMpd: Boolean,
@@ -60,7 +60,7 @@ class VideoRepositoryImpl @Inject constructor(
         isMpd: Boolean,
         isAudioCheck: Boolean
     ): VideoInfo? {
-        val videoInfo = remoteDataSource.getVideoInfoByFfmpeg(url, isM3u8, isMpd, isAudioCheck)
+        val videoInfo = remoteDataSource.getVideoInfoBySuperXDetector(url, isM3u8, isMpd, isAudioCheck)
         if (videoInfo != null) {
             videoInfo.originalUrl = url.url.toString()
             cachedVideosFfmpeg[videoInfo.originalUrl] = videoInfo

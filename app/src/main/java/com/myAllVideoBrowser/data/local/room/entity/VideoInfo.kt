@@ -59,7 +59,12 @@ data class VideoInfo(
     @ColumnInfo(name = "isLive", defaultValue = "0")
     @SerializedName("isLive")
     @Expose
-    var isLive: Boolean = false
+    var isLive: Boolean = false,
+
+    @ColumnInfo(name = "isDetectedBySuperX", defaultValue = "0")
+    @SerializedName("isDetectedBySuperX")
+    @Expose
+    var isDetectedBySuperX: Boolean = false
 ) {
 
     val firstUrlToString: String

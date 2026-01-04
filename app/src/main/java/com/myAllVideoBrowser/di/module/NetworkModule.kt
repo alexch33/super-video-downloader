@@ -3,7 +3,7 @@ package com.myAllVideoBrowser.di.module
 import android.app.Application
 import com.myAllVideoBrowser.data.remote.service.ConfigService
 import com.myAllVideoBrowser.data.remote.service.VideoService
-import com.myAllVideoBrowser.data.remote.service.VideoServiceFfmpeg
+import com.myAllVideoBrowser.data.remote.service.VideoServiceSuperX
 import com.myAllVideoBrowser.data.remote.service.VideoServiceLocal
 import com.myAllVideoBrowser.util.Memory
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
@@ -63,8 +63,8 @@ class NetworkModule {
 
     @Provides
     @Singleton
-    fun provideFfmpegVideoService(httpClient: OkHttpProxyClient): VideoServiceFfmpeg =
-        VideoServiceFfmpeg(
+    fun provideFfmpegVideoService(httpClient: OkHttpProxyClient): VideoServiceSuperX =
+        VideoServiceSuperX(
             httpClient
         )
 }

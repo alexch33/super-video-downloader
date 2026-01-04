@@ -48,6 +48,7 @@ class SharedPrefHelper @Inject constructor(
         private const val IS_DOH_ON = "IS_DOH_ON"
         private const val SELECTED_DNS_PROVIDER = "SELECTED_DNS_PROVIDER"
         private const val CUSTOM_DNS_URL = "CUSTOM_DNS_URL"
+        private const val IS_USE_LEGACY_M3U8_DETECTION = "IS_USE_LEGACY_M3U8_DETECTION"
     }
 
     private val gson = Gson()
@@ -353,5 +354,15 @@ class SharedPrefHelper @Inject constructor(
 
     fun getCustomDnsUrl(): String {
         return sharedPreferences.getString(CUSTOM_DNS_URL, "") ?: ""
+    }
+
+    fun getIsUseLegacyM3u8Detection(): Boolean {
+        return sharedPreferences.getBoolean(IS_USE_LEGACY_M3U8_DETECTION, false)
+    }
+
+    fun setIsUseLegacyM3u8Detection(isUse: Boolean) {
+        sharedPreferences.edit {
+            putBoolean(IS_USE_LEGACY_M3U8_DETECTION, isUse)
+        }
     }
 }

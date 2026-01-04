@@ -55,7 +55,7 @@ class GlobalVideoDetectionModel @Inject constructor(
     }
 
     override fun verifyLinkStatus(
-        resourceRequest: Request, hlsTitle: String?, isM3u8: Boolean
+        resourceRequest: Request, hlsTitle: String?, isM3u8: Boolean, isMpd: Boolean
     ) {
         if (resourceRequest.url.toString().contains("tiktok.")) {
             return
@@ -66,11 +66,11 @@ class GlobalVideoDetectionModel @Inject constructor(
         if (lastVerifiedLink != urlToVerify) {
             val currentPageUrl = "${resourceRequest.url}"
 
-            if (isM3u8) {
+            if (isM3u8 || isMpd) {
                 if ((currentPageUrl == lastVerifiedM3u8PointUrl.first && lastVerifiedM3u8PointUrl.second != urlToVerify) || currentPageUrl != lastVerifiedM3u8PointUrl.first) {
                     lastVerifiedM3u8PointUrl = Pair(currentPageUrl, urlToVerify)
 
-                    startVerifyProcess(resourceRequest, true, hlsTitle)
+                    startVerifyProcess(resourceRequest, isM3u8, isMpd, hlsTitle)
                 }
             } else {
                 if (urlToVerify.contains(
@@ -82,14 +82,14 @@ class GlobalVideoDetectionModel @Inject constructor(
                 lastVerifiedLink = urlToVerify
 
                 if (settingsModel.getIsFindVideoByUrl().get()) {
-                    startVerifyProcess(resourceRequest, false)
+                    startVerifyProcess(resourceRequest, isM3u8 = false, isMpd = false)
                 }
             }
         }
     }
 
     override fun startVerifyProcess(
-        resourceRequest: Request, isM3u8: Boolean, hlsTitle: String?
+        resourceRequest: Request, isM3u8: Boolean, isMpd: Boolean, hlsTitle: String?
     ) {
         val job = verifyVideoLinkJobStorage[resourceRequest.url.toString()]
         if (job != null && !job.isDisposed) {
@@ -100,11 +100,20 @@ class GlobalVideoDetectionModel @Inject constructor(
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 downloadButtonState.set(DownloadButtonStateLoading())
                 val info = try {
-                    videoRepository.getVideoInfo(
-                        resourceRequest,
-                        isM3u8,
-                        settingsModel.isCheckOnAudio.get()
-                    )
+                    if (isM3u8 || isMpd) {
+                        videoRepository.getVideoInfoBySuperXDetector(
+                            resourceRequest,
+                            isM3u8,
+                            isMpd,
+                            settingsModel.isCheckOnAudio.get()
+                        )
+                    } else {
+                        videoRepository.getVideoInfo(
+                            resourceRequest,
+                            false,
+                            settingsModel.isCheckOnAudio.get()
+                        )
+                    }
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     null

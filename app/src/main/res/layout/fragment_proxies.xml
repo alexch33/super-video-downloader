@@ -23,6 +23,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="88dp"
+        android:background="?android:attr/colorBackground"
+        android:clickable="true"
+        android:focusable="true"
         android:orientation="vertical"
         tools:context=".ui.main.proxies.ProxiesFragment">
 

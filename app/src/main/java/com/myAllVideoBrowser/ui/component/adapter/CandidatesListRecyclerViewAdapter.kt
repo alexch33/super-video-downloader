@@ -17,31 +17,21 @@ import com.myAllVideoBrowser.util.FileUtil
 
 interface DownloadVideoListener {
     fun onPreviewVideo(
-        videoInfo: VideoInfo,
-        dialog: BottomSheetDialog?,
-        format: String,
-        isForce: Boolean
+        videoInfo: VideoInfo, dialog: BottomSheetDialog?, format: String, isForce: Boolean
     )
 
     fun onDownloadVideo(
-        videoInfo: VideoInfo,
-        dialog: BottomSheetDialog?,
-        format: String,
-        videoTitle: String
+        videoInfo: VideoInfo, dialog: BottomSheetDialog?, format: String, videoTitle: String
     )
 }
 
 interface DownloadTabVideoListener {
     fun onPreviewVideo(
-        videoInfo: VideoInfo,
-        format: String,
-        isForce: Boolean
+        videoInfo: VideoInfo, format: String, isForce: Boolean
     )
 
     fun onDownloadVideo(
-        videoInfo: VideoInfo,
-        format: String,
-        videoTitle: String
+        videoInfo: VideoInfo, format: String, videoTitle: String
     )
 }
 
@@ -83,25 +73,14 @@ class CandidatesListRecyclerViewAdapter(
 
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: CandidatesViewHolder, position: Int) {
+        val formatEntity = formats[position]
+        val candidate = formatEntity.format ?: "error"
+
         with(holder.binding) {
-            val candidate = formats[position].format ?: "error"
-
-            listener = object : CandidateFormatListener {
-                override fun onSelectFormat(videoInfo: VideoInfo, format: String) {
-                    downloadDialogListener.onSelectFormat(videoInfo, format)
-                    notifyDataSetChanged()
-                }
-
-                override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
-                    return downloadDialogListener.onFormatUrlShare(videoInfo, format)
-                }
-            }
             val selected = selectedFormat.get()?.get(downloadCandidates.id)
 
             val color = MaterialColors.getColor(
-                this.root.context,
-                R.attr.colorSurfaceVariant,
-                Color.YELLOW
+                this.root.context, R.attr.colorSurfaceVariant, Color.YELLOW
             )
             this.cardItem.setCardBackgroundColor(color)
 
@@ -109,17 +88,45 @@ class CandidatesListRecyclerViewAdapter(
             this.downloadCandidate = candidate
             this.isCandidateSelected = candidate == selected
             this.tvTitle.text = getShortOfFormat(candidate)
-            val frmt = formats[position]
-            val formatSize = if (frmt.fileSizeApproximate > 0) {
-                FileUtil.getFileSizeReadable(frmt.fileSizeApproximate.toDouble())
-            } else if (frmt.fileSize > 0) {
-                FileUtil.getFileSizeReadable(frmt.fileSize.toDouble())
+
+            this.listener = object : CandidateFormatListener {
+                override fun onSelectFormat(videoInfo: VideoInfo, format: String) {
+                    val currentPosition = holder.bindingAdapterPosition
+                    if (currentPosition != RecyclerView.NO_POSITION) {
+                        downloadDialogListener.onSelectFormat(videoInfo, format)
+                        notifyDataSetChanged()
+                    }
+                }
+
+                override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
+                    val currentPosition = holder.bindingAdapterPosition
+                    return if (currentPosition != RecyclerView.NO_POSITION) {
+                        downloadDialogListener.onFormatUrlShare(videoInfo, format)
+                    } else {
+                        false
+                    }
+                }
+            }
+
+            val formatSize = if (formatEntity.fileSizeApproximate > 0) {
+                FileUtil.getFileSizeReadable(formatEntity.fileSizeApproximate.toDouble())
+            } else if (formatEntity.fileSize > 0) {
+                FileUtil.getFileSizeReadable(formatEntity.fileSize.toDouble())
             } else {
                 "Unknown"
             }
             val fileSizeLine = "File size: $formatSize"
-            this.tvData.text =
-                "vcodec: ${frmt.vcodec ?: "unknown"} \nacodec: ${frmt.acodec ?: "unknown"} \n $fileSizeLine \n${frmt.formatNote ?: ""}"
+
+            val durationLine = formatDuration(formatEntity.duration ?: 0)
+            val details = listOf(
+                "vcodec: ${formatEntity.vcodec ?: "unknown"}",
+                "acodec: ${formatEntity.acodec ?: "unknown"}",
+                fileSizeLine,
+                formatEntity.formatNote,
+                if (durationLine.isNotEmpty()) "Duration: $durationLine" else ""
+            ).filter { it != null && it.isNotBlank() }.joinToString("\n")
+
+            this.tvData.text = details
 
             this.executePendingBindings()
         }
@@ -133,7 +140,25 @@ class CandidatesListRecyclerViewAdapter(
     }
 
     private fun makeVideoFormatHumanReadable(input: String): String {
-        return input.replace(Regex("-\\w+"), "")
+        val lowercasedInput = input.lowercase()
+        return when {
+            lowercasedInput.startsWith("mpd-") || lowercasedInput.startsWith("hls-") -> {
+                val parts = lowercasedInput.split('-')
+                if (parts.size >= 2) {
+                    val type = parts[0].uppercase() // "MPD" or "HLS"
+                    val resolution = parts[1] // "1080p" or "audio"
+                    if (resolution.contains("p")) {
+                        "$type ${resolution.uppercase()}" // "MPD 1080P"
+                    } else {
+                        "$type Audio" // "HLS Audio"
+                    }
+                } else {
+                    input
+                }
+            }
+
+            else -> input.replace(Regex("-\\w+"), "")
+        }
     }
 
     private fun getShortenFormats(allFormats: List<VideoFormatEntity>): List<VideoFormatEntity> {
@@ -154,8 +179,9 @@ class CandidatesListRecyclerViewAdapter(
         if (formattedFormat != "error") {
             return if (formattedFormat.contains("x")) {
                 "${parseHeight(formattedFormat)}P"
-            } else if (!formattedFormat.contains("x") && !formattedFormat.contains("audio only")
-                && formattedFormat.contains("-")
+            } else if (!formattedFormat.contains("x") && !formattedFormat.contains("audio only") && formattedFormat.contains(
+                    "-"
+                )
             ) {
                 val leftSide = formattedFormat.split("-").first()
                 if (leftSide.lowercase().contains("hd") || leftSide.contains("sd")) {
@@ -181,6 +207,23 @@ class CandidatesListRecyclerViewAdapter(
             matchResult.groupValues[1].toIntOrNull()
         } else {
             null
+        }
+    }
+
+    private fun formatDuration(milliseconds: Long): String {
+        if (milliseconds <= 0) {
+            return ""
+        }
+
+        val totalSeconds = milliseconds / 1000
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+
+        return if (hours > 0) {
+            String.format(java.util.Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            String.format(java.util.Locale.US, "%02d:%02d", minutes, seconds)
         }
     }
 }

@@ -11,7 +11,10 @@ interface IVideoDetector {
     fun showVideoInfo()
 
     fun verifyLinkStatus(
-        resourceRequest: Request, hlsTitle: String? = null, isM3u8: Boolean = false
+        resourceRequest: Request,
+        hlsTitle: String? = null,
+        isM3u8: Boolean = false,
+        isMpd: Boolean = false
     )
 
     fun getDownloadBtnIcon(): ObservableInt

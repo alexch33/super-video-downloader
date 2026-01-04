@@ -167,14 +167,19 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
-    override fun verifyLinkStatus(resourceRequest: Request, hlsTitle: String?, isM3u8: Boolean) {
+    override fun verifyLinkStatus(
+        resourceRequest: Request,
+        hlsTitle: String?,
+        isM3u8: Boolean,
+        isMpd: Boolean
+    ) {
         if (resourceRequest.url.toString().contains("tiktok.")) {
             return
         }
 
         val urlToVerify = resourceRequest.url.toString()
-        if (isM3u8) {
-            startVerifyProcess(resourceRequest, true, hlsTitle)
+        if (isM3u8 || isMpd) {
+            startVerifyProcess(resourceRequest, isM3u8, isMpd, hlsTitle)
         } else {
             if (urlToVerify.contains(
                     ".txt"
@@ -183,13 +188,13 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 return
             }
             if (settingsModel.getIsFindVideoByUrl().get()) {
-                startVerifyProcess(resourceRequest, false)
+                startVerifyProcess(resourceRequest, isM3u8 = false, isMpd = false)
             }
         }
     }
 
     open fun startVerifyProcess(
-        resourceRequest: Request, isM3u8: Boolean, hlsTitle: String? = null
+        resourceRequest: Request, isM3u8: Boolean, isMpd: Boolean, hlsTitle: String? = null
     ) {
         val taskUrlCleaned = resourceRequest.url.toString().split("?").firstOrNull()?.trim() ?: ""
 
@@ -206,11 +211,21 @@ open class VideoDetectionTabViewModel @Inject constructor(
         verifyVideoLinkJobStorage[taskUrlCleaned] =
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 val info = try {
-                    videoRepository.getVideoInfo(
-                        resourceRequest,
-                        isM3u8,
-                        settingsModel.isCheckOnAudio.get()
-                    )
+                    val isUseLegacyDetection = settingsModel.isUseLegacyM3u8Detection.get()
+                    if (isUseLegacyDetection && isM3u8 || isMpd) {
+                        videoRepository.getVideoInfoBySuperXDetector(
+                            resourceRequest,
+                            isM3u8,
+                            isMpd,
+                            settingsModel.isCheckOnAudio.get()
+                        )
+                    } else {
+                        videoRepository.getVideoInfo(
+                            resourceRequest,
+                            false,
+                            settingsModel.isCheckOnAudio.get()
+                        )
+                    }
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     null

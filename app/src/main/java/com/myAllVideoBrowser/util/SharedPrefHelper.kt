@@ -48,6 +48,7 @@ class SharedPrefHelper @Inject constructor(
         private const val IS_DOH_ON = "IS_DOH_ON"
         private const val SELECTED_DNS_PROVIDER = "SELECTED_DNS_PROVIDER"
         private const val CUSTOM_DNS_URL = "CUSTOM_DNS_URL"
+        private const val IS_USE_LEGACY_M3U8_DETECTION = "IS_USE_LEGACY_M3U8_DETECTION"
     }
 
     private val gson = Gson()
@@ -178,7 +179,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getRegularDownloaderThreadCount(): Int {
-        return sharedPreferences.getInt(REGULAR_THREAD_COUNT, 1)
+        return maxOf(1, sharedPreferences.getInt(REGULAR_THREAD_COUNT, 1))
     }
 
     fun setRegularDownloaderThreadCount(count: Int) {
@@ -188,7 +189,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getM3u8DownloaderThreadCount(): Int {
-        return sharedPreferences.getInt(M3U8_THREAD_COUNT, 3) // means 4
+        return maxOf(1, sharedPreferences.getInt(M3U8_THREAD_COUNT, 3)) // means 4
     }
 
     fun setM3u8DownloaderThreadCount(count: Int) {
@@ -353,5 +354,15 @@ class SharedPrefHelper @Inject constructor(
 
     fun getCustomDnsUrl(): String {
         return sharedPreferences.getString(CUSTOM_DNS_URL, "") ?: ""
+    }
+
+    fun getIsUseLegacyM3u8Detection(): Boolean {
+        return sharedPreferences.getBoolean(IS_USE_LEGACY_M3U8_DETECTION, false)
+    }
+
+    fun setIsUseLegacyM3u8Detection(isUse: Boolean) {
+        sharedPreferences.edit {
+            putBoolean(IS_USE_LEGACY_M3U8_DETECTION, isUse)
+        }
     }
 }

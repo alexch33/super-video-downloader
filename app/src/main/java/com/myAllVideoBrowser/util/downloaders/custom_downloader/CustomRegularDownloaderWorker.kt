@@ -13,7 +13,6 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
-import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker.Companion.STOP_SAVE_ACTION
 import java.io.File
 import java.net.URL
 import java.util.Date
@@ -64,7 +63,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 startDownload(task, headers)
             }
 
-            STOP_SAVE_ACTION -> {
+            GenericDownloader.DownloaderActions.STOP_SAVE_ACTION -> {
                 isCanceled = false
                 isStoppedAndSaved = true
                 stopAndSave(task)

@@ -12,6 +12,7 @@ import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.CustomRegularDownloader
+import com.myAllVideoBrowser.util.downloaders.super_x_downloader.SuperXDownloader
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloader
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Observable
@@ -42,15 +43,22 @@ class ProgressViewModel @Inject constructor(
         compositeDisposable.clear()
     }
 
+    // wtf??? fix what?
     // TODO: strange, should fix
     fun stopAndSaveDownload(id: Long) {
         val inf = progressInfos.get()?.find { it.downloadId == id }
 
         if (inf?.videoInfo?.isRegularDownload == false) {
             inf.let {
-                YoutubeDlDownloader.stopAndSaveDownload(
-                    ContextUtils.getApplicationContext(), it
-                )
+                if (inf.videoInfo.isDetectedBySuperX) {
+                    SuperXDownloader.stopAndSaveDownload(
+                        ContextUtils.getApplicationContext(), it
+                    )
+                } else {
+                    YoutubeDlDownloader.stopAndSaveDownload(
+                        ContextUtils.getApplicationContext(), it
+                    )
+                }
             }
         } else {
             inf?.let {
@@ -73,9 +81,15 @@ class ProgressViewModel @Inject constructor(
                     )
                 } else {
                     info.let {
-                        YoutubeDlDownloader.cancelDownload(
-                            ContextUtils.getApplicationContext(), it, removeFile
-                        )
+                        if (inf.videoInfo.isDetectedBySuperX) {
+                            SuperXDownloader.cancelDownload(
+                                ContextUtils.getApplicationContext(), it, removeFile
+                            )
+                        } else {
+                            YoutubeDlDownloader.cancelDownload(
+                                ContextUtils.getApplicationContext(), it, removeFile
+                            )
+                        }
                     }
                 }
                 val newList = progressInfos.get()?.filter { it.id != info.id }
@@ -93,7 +107,14 @@ class ProgressViewModel @Inject constructor(
             val updated = inf?.copy(downloadStatus = VideoTaskState.PAUSE)
             if (updated != null) {
                 saveProgressInfo(updated) { info ->
-                    YoutubeDlDownloader.pauseDownload(ContextUtils.getApplicationContext(), info)
+                    if (inf.videoInfo.isDetectedBySuperX) {
+                        SuperXDownloader.pauseDownload(ContextUtils.getApplicationContext(), info)
+                    } else {
+                        YoutubeDlDownloader.pauseDownload(
+                            ContextUtils.getApplicationContext(),
+                            info
+                        )
+                    }
                 }
             }
         }
@@ -109,10 +130,17 @@ class ProgressViewModel @Inject constructor(
                 val updated = inf.copy(downloadStatus = VideoTaskState.PREPARE)
 
                 saveProgressInfo(updated) { info ->
-                    YoutubeDlDownloader.resumeDownload(
-                        ContextUtils.getApplicationContext(),
-                        info
-                    )
+                    if (inf.videoInfo.isDetectedBySuperX) {
+                        SuperXDownloader.resumeDownload(
+                            ContextUtils.getApplicationContext(),
+                            info
+                        )
+                    } else {
+                        YoutubeDlDownloader.resumeDownload(
+                            ContextUtils.getApplicationContext(),
+                            info
+                        )
+                    }
                 }
             }
         }
@@ -138,7 +166,11 @@ class ProgressViewModel @Inject constructor(
                 if (info.videoInfo.isRegularDownload) {
                     CustomRegularDownloader.startDownload(context, info.videoInfo)
                 } else {
-                    YoutubeDlDownloader.startDownload(context, info.videoInfo)
+                    if (info.videoInfo.isDetectedBySuperX) {
+                        SuperXDownloader.startDownload(context, info.videoInfo)
+                    } else {
+                        YoutubeDlDownloader.startDownload(context, info.videoInfo)
+                    }
                 }
             }
         }

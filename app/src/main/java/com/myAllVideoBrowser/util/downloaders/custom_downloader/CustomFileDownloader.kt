@@ -57,6 +57,28 @@ class CustomFileDownloader(
             File(fileToStop.parentFile, Helper.STOP_FILE_NAME).createNewFile()
         }
 
+        fun directStop(fileToStop: File) {
+            val stopFolder = if (fileToStop.isDirectory) {
+                fileToStop
+            } else {
+                fileToStop.parentFile
+            }
+            File(stopFolder, Helper.STOP_FILE_NAME).createNewFile()
+        }
+
+        fun directCancel(fileToStop: File) {
+            try {
+                val stopFolder = if (fileToStop.isDirectory) {
+                    fileToStop
+                } else {
+                    fileToStop.parentFile
+                }
+                stopFolder?.deleteRecursively()
+            } catch (e: Throwable) {
+                AppLogger.e(e.message + e.printStackTrace())
+            }
+        }
+
         fun cancel(fileToStop: File) {
             fileToStop.parentFile?.deleteRecursively()
         }

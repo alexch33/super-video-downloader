@@ -34,7 +34,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         var isCanceled = false
 
         const val IS_FINISHED_DOWNLOAD_ACTION_ERROR_KEY = "IS_FINISHED_DOWNLOAD_ACTION_ERROR_KEY"
-        const val STOP_SAVE_ACTION = "STOP_AND_SAVE"
         const val DOWNLOAD_FILENAME_KEY = "download_filename"
         const val IS_FINISHED_DOWNLOAD_ACTION_KEY = "action"
         private const val UPDATE_INTERVAL = 1000
@@ -81,7 +80,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                 resumeDownload(task)
             }
 
-            STOP_SAVE_ACTION -> {
+            GenericDownloader.DownloaderActions.STOP_SAVE_ACTION -> {
                 stopAndSave(task)
             }
         }
@@ -348,6 +347,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
         val isAudioOnly = vFormat.vcodec == "none" && vFormat.acodec != "none"
 
+        request.addOption("--force-ipv4")
+        request.addOption("--source-address", "0.0.0.0")
         if (isAudioOnly) {
             request.addOption("--audio-quality", "0")
             request.addOption("--extract-audio")

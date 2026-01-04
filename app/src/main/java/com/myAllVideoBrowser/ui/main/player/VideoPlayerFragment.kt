@@ -40,6 +40,7 @@ import java.net.CookiePolicy
 import java.net.HttpCookie
 import java.net.URI
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 
 @UnstableApi
@@ -87,7 +88,7 @@ class VideoPlayerFragment : BaseFragment() {
         }
         arguments?.getString(VIDEO_NAME)?.let { videoPlayerViewModel.videoName.set(it) }
 
-        val iUrl = Uri.parse(arguments?.getString(VIDEO_URL))
+        val iUrl = arguments?.getString(VIDEO_URL)?.toUri()
 
         if (iUrl != null) {
             videoPlayerViewModel.videoUrl.set(iUrl)

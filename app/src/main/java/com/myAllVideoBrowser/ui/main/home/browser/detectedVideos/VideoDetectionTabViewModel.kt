@@ -212,7 +212,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 val info = try {
                     val isUseLegacyDetection = settingsModel.isUseLegacyM3u8Detection.get()
-                    if (isUseLegacyDetection && isM3u8 || isMpd) {
+                    if (!isUseLegacyDetection && (isM3u8 || isMpd)) {
                         videoRepository.getVideoInfoBySuperXDetector(
                             resourceRequest,
                             isM3u8,

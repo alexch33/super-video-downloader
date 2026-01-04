@@ -97,6 +97,8 @@ android {
             enableAndroidTestCoverage false
         }
         release {
+            enableUnitTestCoverage false
+            enableAndroidTestCoverage false
             signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

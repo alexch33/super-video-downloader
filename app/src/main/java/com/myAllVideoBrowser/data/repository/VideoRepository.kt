@@ -22,7 +22,7 @@ interface VideoRepository {
 
 @Singleton
 class VideoRepositoryImpl @Inject constructor(
-    @RemoteData private val remoteDataSource: VideoRepository
+    @param:RemoteData private val remoteDataSource: VideoRepository
 ) : VideoRepository {
 
     @VisibleForTesting

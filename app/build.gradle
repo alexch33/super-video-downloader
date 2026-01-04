@@ -155,7 +155,7 @@ kotlin {
 
 dependencies {
     constraints {
-        implementation(deps.kotlin.stdlib) {
+        add("implementation", deps.kotlin.stdlib) {
             because 'ensures all Kotlin dependencies use the same version'
         }
     }

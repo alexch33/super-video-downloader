@@ -5,6 +5,7 @@ import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -12,6 +13,7 @@ import android.os.StatFs
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.net.toFile
@@ -166,18 +168,30 @@ class FileUtil @Inject constructor() {
         if (isFileApiSupportedByUri(context, to)) {
             AppLogger.d("IS_FILE_API: TRUE -- from $from to $to")
             val newFile = to.toFile()
+            var success: Boolean
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 Files.move(from.toFile().toPath(), newFile.toPath())
-                return true
+                success = true
+            } else {
+                success = renameWithLock(from.toFile(), newFile)
             }
-            return renameWithLock(from.toFile(), newFile)
+
+            if (success) {
+                AppLogger.d("File move success, triggering media scan for: ${newFile.absolutePath}")
+                scanFile(context, newFile)
+            }
+            return success
         } else {
             AppLogger.d("IS_FILE_API: FALSE -- from $from to $to")
             return if (Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
-                moveFileToDownloadsFolder(
+                val result = moveFileToDownloadsFolder(
                     context.contentResolver, from.toFile(), to.toFile().name
                 )
+                if (result) {
+                    scanFile(context, to.toFile())
+                }
+                result
             } else {
                 throw Exception("File API support ERROR!!!")
             }
@@ -591,6 +605,22 @@ class FileUtil @Inject constructor() {
         cursor?.close()
 
         return exists
+    }
+
+    private fun scanFile(context: Context, file: File) {
+        try {
+            val mimeType =
+                MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)
+
+            MediaScannerConnection.scanFile(
+                context.applicationContext,
+                arrayOf(file.absolutePath),
+                arrayOf(mimeType),
+                null
+            )
+        } catch (e: Exception) {
+            AppLogger.e("Error triggering media scan ${e.message}")
+        }
     }
 }
 

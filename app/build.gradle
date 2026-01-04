@@ -8,6 +8,12 @@ apply plugin: 'kotlin-allopen'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
 
+configurations.all {
+    resolutionStrategy {
+        force deps.kotlin.stdlib
+    }
+}
+
 jacoco {
     version = '0.8.1'
 }
@@ -154,11 +160,6 @@ kotlin {
 }
 
 dependencies {
-    constraints {
-        add("implementation", deps.kotlin.stdlib) {
-            because 'ensures all Kotlin dependencies use the same version'
-        }
-    }
     // Android support
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.13.0'
@@ -173,7 +174,6 @@ dependencies {
     // optional - GCMNetworkManager support
     implementation 'androidx.fragment:fragment-ktx:1.8.9'
     // optional - Test helpers
-    androidTestImplementation('androidx.work:work-testing:2.11.0')
 
     // optional - Multiprocess support
     implementation 'androidx.work:work-multiprocess:2.11.0'
@@ -181,16 +181,6 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
     implementation('androidx.concurrent:concurrent-futures-ktx:1.3.0')
-
-    // Testing
-    testImplementation deps.testing.junit
-    testImplementation deps.testing.mockito_core
-    testImplementation deps.testing.mockito_kotlin
-    androidTestImplementation deps.testing.mockito_android
-    androidTestImplementation deps.testing.mockito_kotlin
-    androidTestImplementation 'androidx.test.ext:junit:1.3.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-intents:3.7.0'
 
     // Kotlin
     implementation deps.kotlin.stdlib
@@ -200,9 +190,6 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.10.0'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.10.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0'
-    testImplementation 'androidx.arch.core:core-testing:2.2.0'
-    androidTestImplementation 'androidx.arch.core:core-testing:2.2.0'
-
     // Room
 
     implementation('androidx.room:room-runtime:2.8.4')
@@ -217,9 +204,6 @@ dependencies {
 
     // optional - Guava support for Room, including Optional and ListenableFuture
     implementation('androidx.room:room-guava:2.8.4')
-
-    // optional - Test helpers
-    testImplementation('androidx.room:room-testing:2.8.4')
 
     // Dagger2
     implementation deps.dagger.runtime
@@ -257,7 +241,7 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0"
 
-    implementation 'org.jsoup:jsoup:1.21.2'
+    implementation 'org.jsoup:jsoup:1.21.1'
 
     implementation 'com.github.marlonlom:timeago:4.1.0'
 

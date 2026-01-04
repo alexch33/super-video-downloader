@@ -207,6 +207,7 @@ class CustomWebViewClient(
             if (!tabViewModel.isTabInputFocused.get()) {
                 tabViewModel.setTabTextInput(url.url.toString())
             }
+            // TODO implement ask for redirection dialog based on settings or disable at all
             false
         } else {
             true

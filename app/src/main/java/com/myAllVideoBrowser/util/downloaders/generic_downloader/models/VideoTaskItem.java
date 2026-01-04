@@ -35,6 +35,8 @@ public class VideoTaskItem implements Cloneable {
 
     private String lineInfo;
 
+    private Long accumulatedDuration = 0L;
+
     public float getPercentFromBytes() {
         if (getTotalSize() == 0) return 0;
 
@@ -363,5 +365,13 @@ public class VideoTaskItem implements Cloneable {
                 ", Title=" + mTitle +
                 ", isLive=" + mIsLive +
                 "]";
+    }
+
+    public Long getAccumulatedDuration() {
+        return accumulatedDuration;
+    }
+
+    public void setAccumulatedDuration(Long accumulatedDuration) {
+        this.accumulatedDuration = accumulatedDuration;
     }
 }

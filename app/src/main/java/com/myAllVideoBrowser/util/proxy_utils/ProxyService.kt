@@ -32,6 +32,10 @@ class ProxyService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     companion object {
+        @Volatile
+        var isRunning = false
+            private set
+
         const val NOTIFICATION_ID = 1
         const val CHANNEL_ID = "ProxyServiceChannel"
 
@@ -45,6 +49,7 @@ class ProxyService : Service() {
     override fun onCreate() {
         AndroidInjection.inject(this)
         super.onCreate()
+        isRunning = true
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -187,6 +192,7 @@ class ProxyService : Service() {
         AppLogger.i("Local Proxy Stooped.")
         proxyJob?.cancel()
         super.onDestroy()
+        isRunning = false
         AppLogger.i("ProxyService destroyed.")
     }
 

@@ -178,7 +178,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getRegularDownloaderThreadCount(): Int {
-        return sharedPreferences.getInt(REGULAR_THREAD_COUNT, 1)
+        return maxOf(1, sharedPreferences.getInt(REGULAR_THREAD_COUNT, 1))
     }
 
     fun setRegularDownloaderThreadCount(count: Int) {
@@ -188,7 +188,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getM3u8DownloaderThreadCount(): Int {
-        return sharedPreferences.getInt(M3U8_THREAD_COUNT, 3) // means 4
+        return maxOf(1, sharedPreferences.getInt(M3U8_THREAD_COUNT, 3)) // means 4
     }
 
     fun setM3u8DownloaderThreadCount(count: Int) {

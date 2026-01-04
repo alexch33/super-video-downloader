@@ -12,7 +12,7 @@ import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.CustomRegularDownloader
-import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloader
+import com.myAllVideoBrowser.util.downloaders.super_x_downloader.SuperXDownloader
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -41,14 +41,15 @@ class ProgressViewModel @Inject constructor(
     override fun stop() {
         compositeDisposable.clear()
     }
-
+    // wtf??? fix what?
     // TODO: strange, should fix
     fun stopAndSaveDownload(id: Long) {
         val inf = progressInfos.get()?.find { it.downloadId == id }
 
         if (inf?.videoInfo?.isRegularDownload == false) {
             inf.let {
-                YoutubeDlDownloader.stopAndSaveDownload(
+                // TODO: ADD select setting for SuperX/YoutubeDlp
+                SuperXDownloader.stopAndSaveDownload(
                     ContextUtils.getApplicationContext(), it
                 )
             }
@@ -73,7 +74,8 @@ class ProgressViewModel @Inject constructor(
                     )
                 } else {
                     info.let {
-                        YoutubeDlDownloader.cancelDownload(
+                        // TODO: ADD select setting for SuperX/YoutubeDlp
+                        SuperXDownloader.cancelDownload(
                             ContextUtils.getApplicationContext(), it, removeFile
                         )
                     }
@@ -93,7 +95,8 @@ class ProgressViewModel @Inject constructor(
             val updated = inf?.copy(downloadStatus = VideoTaskState.PAUSE)
             if (updated != null) {
                 saveProgressInfo(updated) { info ->
-                    YoutubeDlDownloader.pauseDownload(ContextUtils.getApplicationContext(), info)
+                    // TODO: ADD select setting for SuperX/YoutubeDlp
+                    SuperXDownloader.pauseDownload(ContextUtils.getApplicationContext(), info)
                 }
             }
         }
@@ -109,7 +112,8 @@ class ProgressViewModel @Inject constructor(
                 val updated = inf.copy(downloadStatus = VideoTaskState.PREPARE)
 
                 saveProgressInfo(updated) { info ->
-                    YoutubeDlDownloader.resumeDownload(
+                    // TODO: ADD select setting for SuperX/YoutubeDlp
+                    SuperXDownloader.resumeDownload(
                         ContextUtils.getApplicationContext(),
                         info
                     )
@@ -138,7 +142,9 @@ class ProgressViewModel @Inject constructor(
                 if (info.videoInfo.isRegularDownload) {
                     CustomRegularDownloader.startDownload(context, info.videoInfo)
                 } else {
-                    YoutubeDlDownloader.startDownload(context, info.videoInfo)
+                    // TODO: ADD select setting for SuperX/YoutubeDlp
+                    SuperXDownloader.startDownload(context, info.videoInfo)
+//                    YoutubeDlDownloader.startDownload(context, info.videoInfo)
                 }
             }
         }

@@ -9,6 +9,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
+import com.myAllVideoBrowser.util.proxy_utils.ProxyService
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
@@ -69,6 +70,12 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
         return suspendCoroutine { continuation ->
             setWorkContinuation(continuation)
             try {
+                if (!ProxyService.isRunning) {
+                    AppLogger.d("ProxyService is not running.")
+                } else {
+                    AppLogger.d("ProxyService is running.")
+                }
+
                 val task = getTaskFromInput()
                 val action = inputData.getString(GenericDownloader.Constants.ACTION_KEY)
                 val isFileRemove =
@@ -99,11 +106,17 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
 
     private fun loadHeaders(taskId: String): Map<String, String> {
         val inpHeaders =
-            GenericDownloader.getInstance().loadHeadersStringFromSharedPreferences(applicationContext, taskId)
+            GenericDownloader.getInstance()
+                .loadHeadersStringFromSharedPreferences(applicationContext, taskId)
         return inpHeaders?.let {
             try {
                 val decodedHeaders =
-                    String(Base64.decode(GenericDownloader.getInstance().decompressString(it), Base64.DEFAULT))
+                    String(
+                        Base64.decode(
+                            GenericDownloader.getInstance().decompressString(it),
+                            Base64.DEFAULT
+                        )
+                    )
 
                 Gson().fromJson(decodedHeaders, Map::class.java) as Map<String, String>
             } catch (e: Exception) {

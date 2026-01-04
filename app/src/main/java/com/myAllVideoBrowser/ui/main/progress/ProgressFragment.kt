@@ -23,6 +23,7 @@ import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.home.MainViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import javax.inject.Inject
+import androidx.core.view.get
 
 //@OpenForTesting
 class ProgressFragment : BaseFragment() {
@@ -108,7 +109,7 @@ class ProgressFragment : BaseFragment() {
         val popupMenu = PopupMenu(myView.context, myView)
         popupMenu.menuInflater.inflate(R.menu.menu_progress, popupMenu.menu)
 
-        popupMenu.menu.getItem(3).isVisible = menuCandidate?.isLive == true
+        popupMenu.menu[3].isVisible = menuCandidate?.isLive == true
 
         popupMenu.setForceShowIcon(true)
         popupMenu.show()

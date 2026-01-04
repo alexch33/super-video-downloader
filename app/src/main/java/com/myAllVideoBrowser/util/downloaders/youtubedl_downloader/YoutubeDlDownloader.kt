@@ -8,7 +8,6 @@ import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
-import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker.Companion.STOP_SAVE_ACTION
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import java.util.concurrent.TimeUnit
 
@@ -18,7 +17,7 @@ object YoutubeDlDownloader : GenericDownloader() {
     fun stopAndSaveDownload(context: Context, progressInfo: ProgressInfo) {
         val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
         val downloaderData = getDownloadDataFromVideoInfo(progressInfo.videoInfo)
-        downloaderData.putString(Constants.ACTION_KEY, STOP_SAVE_ACTION)
+        downloaderData.putString(Constants.ACTION_KEY, GenericDownloader.DownloaderActions.STOP_SAVE_ACTION)
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(

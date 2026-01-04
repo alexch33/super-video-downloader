@@ -6,7 +6,7 @@ import androidx.room.TypeConverters
 import com.myAllVideoBrowser.data.local.room.dao.*
 import com.myAllVideoBrowser.data.local.room.entity.*
 
-const val DB_VERSION = 6
+const val DB_VERSION = 7
 
 @Database(
     entities = [PageInfo::class, SupportedPage::class, VideoInfo::class, ProgressInfo::class, HistoryItem::class],

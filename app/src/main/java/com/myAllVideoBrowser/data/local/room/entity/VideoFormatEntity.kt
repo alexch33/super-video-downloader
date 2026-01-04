@@ -101,8 +101,38 @@ data class VideoFormatEntity(
     @ColumnInfo(name = "httpHeaders")
     @SerializedName("httpHeaders")
     @Expose
-    val httpHeaders: Map<String, String>? = null
-)
+    val httpHeaders: Map<String, String>? = null,
+
+    @ColumnInfo(name = "bitrate")
+    @SerializedName("bitrate")
+    @Expose
+    val bitrate: Long? = null,
+
+    @ColumnInfo(name = "duration")
+    @SerializedName("duration")
+    @Expose
+    val duration: Long? = null,
+
+    @ColumnInfo(name = "videoOnlyUrl")
+    @SerializedName("videoOnlyUrl")
+    @Expose
+    val videoOnlyUrl: String? = null,
+
+    @ColumnInfo(name = "audioOnlyUrl")
+    @SerializedName("audioOnlyUrl")
+    @Expose
+    val audioOnlyUrl: String? = null
+) {
+    val isM3u8: Boolean
+        get() {
+            return formatId?.startsWith("hls") == true
+        }
+
+    val isMpd: Boolean
+        get() {
+            return formatId?.startsWith("mpd") == true
+        }
+}
 
 data class VideFormatEntityList(
     val formats: List<VideoFormatEntity>

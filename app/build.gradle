@@ -20,6 +20,9 @@ def abiFilterList = (properties["ABI_FILTERS"] as String).split(';')
 def abiCodes = ["armeabi-v7a": 1, "arm64-v8a": 2, "x86": 3, "x86_64": 4]
 
 android {
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+    }
     dependenciesInfo {
         // Disables dependency metadata when building APKs.
         includeInApk = false
@@ -70,8 +73,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 91
-        versionName "0.7.1"
+        versionCode 97
+        versionName "0.8.0"
 
         if (splitApks) {
             splits {
@@ -233,6 +236,7 @@ dependencies {
 
     implementation('io.github.junkfood02.youtubedl-android:library:0.18.1')
     implementation('io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1')
+    implementation("com.antonkarpenko:ffmpeg-kit-full-gpl:2.1.0")
 
     implementation 'com.github.bumptech.glide:glide:5.0.5'
 
@@ -282,6 +286,8 @@ dependencies {
     // https://firebase.google.com/docs/android/setup#available-libraries
 
     implementation 'androidx.core:core-splashscreen:1.2.0'
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
 
 ksp {

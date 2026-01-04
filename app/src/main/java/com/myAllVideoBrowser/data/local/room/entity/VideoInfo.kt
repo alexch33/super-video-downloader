@@ -54,7 +54,12 @@ data class VideoInfo(
     @ColumnInfo(name = "isRegular")
     @SerializedName("isRegular")
     @Expose
-    var isRegularDownload: Boolean = false
+    var isRegularDownload: Boolean = false,
+
+    @ColumnInfo(name = "isLive", defaultValue = "0")
+    @SerializedName("isLive")
+    @Expose
+    var isLive: Boolean = false
 ) {
 
     val firstUrlToString: String
@@ -68,15 +73,18 @@ data class VideoInfo(
     val name
         get() = "$title.$ext"
 
-    val isM3u8
-        get() = originalUrl.contains(".m3u8") || originalUrl.contains(".mpd") || formats.formats.any { url ->
-            url.url.toString().contains(".m3u8") || url.url.toString()
-                .contains(".mpd") || originalUrl.contains(".txt")
+    val isM3u8: Boolean
+        get() {
+            return formats.formats.any { format -> format.isM3u8 }
         }
 
+    val isMpd: Boolean
+        get() {
+            return formats.formats.any { format -> format.isMpd }
+        }
     val isMaster get() = isM3u8 && formats.formats.size > 1
 
-    fun isTikTokVideo() : Boolean {
+    fun isTikTokVideo(): Boolean {
         return originalUrl.contains("tiktok.com")
     }
 

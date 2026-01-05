@@ -257,6 +257,7 @@ class VideoServiceSuperX(
                 this.isRegularDownload = false
                 this.duration = durationInMillis
                 this.isLive = isLive
+                isDetectedBySuperX = true
             })
     }
 

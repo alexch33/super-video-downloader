@@ -5,6 +5,8 @@ import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
+import android.content.Intent.ACTION_MEDIA_SCANNER_SCAN_FILE
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -608,6 +610,15 @@ class FileUtil @Inject constructor() {
     }
 
     private fun scanFile(context: Context, file: File) {
+        try {
+            val fileUri = Uri.fromFile(file)
+            val mediaScanIntent = Intent(ACTION_MEDIA_SCANNER_SCAN_FILE).apply {
+                data = fileUri
+            }
+            context.applicationContext.sendBroadcast(mediaScanIntent)
+        } catch (error: Exception) {
+            error.printStackTrace()
+        }
         try {
             val mimeType =
                 MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)

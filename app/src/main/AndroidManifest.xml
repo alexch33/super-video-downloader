@@ -68,7 +68,7 @@
             tools:node="merge" />
 
         <service
-            android:name="com.myAllVideoBrowser.ui.main.player.PlaybackService"
+            android:name="com.myAllVideoBrowser.service.MediaPlaybackService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
             android:permission="androidx.media3.session.BIND_MEDIA_SESSION_SERVICE">

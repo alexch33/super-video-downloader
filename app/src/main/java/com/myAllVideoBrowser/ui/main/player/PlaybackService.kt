@@ -1,292 +1,370 @@
-package com.myAllVideoBrowser.ui.main.player
+package com.myAllVideoBrowser.service
 
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
+import android.os.Binder
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
+import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import androidx.core.content.edit
-import androidx.media3.common.AudioAttributes
-import androidx.media3.common.C
+import androidx.media.MediaBrowserServiceCompat
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.okhttp.OkHttpDataSource
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
-import androidx.media3.session.DefaultMediaNotificationProvider
-import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
-import com.franmontiel.persistentcookiejar.PersistentCookieJar
-import com.franmontiel.persistentcookiejar.cache.SetCookieCache
-import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.common.util.UnstableApi
 import com.myAllVideoBrowser.R
+import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
 import com.myAllVideoBrowser.util.AppLogger
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.Json.Default.encodeToString
-import kotlinx.serialization.json.jsonObject
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
-
-@kotlinx.serialization.Serializable
-data class PlaybackStateSnapshot(
-    val url: String,
-    val headers: String?,
-    val positionMs: Long,
-    val playWhenReady: Boolean
-)
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 @UnstableApi
-class PlaybackService : MediaSessionService() {
+class MediaPlaybackService : MediaBrowserServiceCompat() {
 
     companion object {
-        const val NOTIFICATION_CHANNEL_ID = "playback_channel"
-        const val NOTIFICATION_ID = 999
-        const val HEADERS_CUSTOM_KEY = "raw_headers"
+        const val NOTIFICATION_ID = 1001
+        const val NOTIFICATION_CHANNEL_ID = "media_playback_channel"
+        const val NOTIFICATION_CHANNEL_NAME = "Media Playback"
+        const val ROOT_ID = "media_root_id"
+        const val ACTION_PLAY_PAUSE = "com.myAllVideoBrowser.ACTION_PLAY_PAUSE"
+        const val ACTION_STOP = "com.myAllVideoBrowser.ACTION_STOP"
     }
 
-    private var player: ExoPlayer? = null
-    private var mediaSession: MediaSession? = null
-
-    private val cookieJar by lazy {
-        PersistentCookieJar(
-            SetCookieCache(),
-            SharedPrefsCookiePersistor(applicationContext)
-        )
+    inner class MediaPlaybackBinder : Binder() {
+        fun getService(): MediaPlaybackService = this@MediaPlaybackService
     }
 
-    // TODO: inject proxy client
-    private val okHttpClient by lazy {
-        OkHttpClient.Builder()
-            .cookieJar(cookieJar)
-            .build()
-    }
+    private val binder = MediaPlaybackBinder()
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private lateinit var mediaSession: MediaSessionCompat
+    private lateinit var stateBuilder: PlaybackStateCompat.Builder
+    private lateinit var notificationManager: NotificationManager
+    private lateinit var audioManager: AudioManager
+    private lateinit var exoPlayer: ExoPlayer
 
-    private val prefs by lazy {
-        getSharedPreferences("playback_state", MODE_PRIVATE)
-    }
+    private var isForegroundService = false
+    private var currentMediaItem: MediaItem? = null
 
     override fun onCreate() {
         super.onCreate()
+        AppLogger.d("MediaPlaybackService onCreate")
 
-        createNotificationChannel()
-        startForeground(NOTIFICATION_ID, buildInitialNotification())
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-        val notificationProvider = DefaultMediaNotificationProvider.Builder(this)
-            .setNotificationId(NOTIFICATION_ID)
-            .setChannelId(NOTIFICATION_CHANNEL_ID)
+        // Create notification channel for Android O+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel()
+        }
+
+        // Initialize MediaSession
+        mediaSession = MediaSessionCompat(baseContext, "MediaPlaybackService").apply {
+            setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
+                    MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS)
+            setCallback(mediaSessionCallback)
+            isActive = true
+        }
+
+        stateBuilder = PlaybackStateCompat.Builder()
+            .setActions(PlaybackStateCompat.ACTION_PLAY or
+                    PlaybackStateCompat.ACTION_PAUSE or
+                    PlaybackStateCompat.ACTION_STOP or
+                    PlaybackStateCompat.ACTION_PLAY_PAUSE)
+
+        // Initialize ExoPlayer
+        exoPlayer = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(this))
             .build()
-        setMediaNotificationProvider(notificationProvider)
-
-        val renderersFactory = DefaultRenderersFactory(this).apply {
-            setEnableAudioOutputPlaybackParameters(true)
-        }
-
-        val player = ExoPlayer.Builder(this, renderersFactory).build().apply {
-            configureAudio(this)
-            setWakeMode(C.WAKE_MODE_NETWORK)
-            observePlayer(this)
-        }
-
-        this.player = player
-        this.mediaSession = MediaSession.Builder(this, player).build()
-    }
-
-
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
-        return mediaSession
-    }
-
-    override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
-        super.onUpdateNotification(session, false)
-    }
-
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        player?.let {
-            if (it.playWhenReady) {
-                it.stop()
+            .apply {
+                addListener(playerListener)
+                playWhenReady = false
             }
-        }
-        stopSelf()
+
+        sessionToken = mediaSession.sessionToken
     }
 
     override fun onDestroy() {
-        mediaSession?.release()
-        mediaSession = null
-        player = null
         super.onDestroy()
+        AppLogger.d("MediaPlaybackService onDestroy")
+        notificationManager.cancel(NOTIFICATION_ID)
+        mediaSession.isActive = false
+        mediaSession.release()
+        exoPlayer.removeListener(playerListener)
+        exoPlayer.release()
+        serviceScope.cancel()
+    }
+
+    override fun onGetRoot(
+        clientPackageName: String,
+        clientUid: Int,
+        rootHints: Bundle?
+    ): BrowserRoot? {
+        return BrowserRoot(ROOT_ID, null)
+    }
+
+    override fun onLoadChildren(
+        parentId: String,
+        result: Result<MutableList<MediaBrowserCompat.MediaItem>>
+    ) {
+        // Return empty list for now - we don't need media browsing for video playback
+        result.sendResult(mutableListOf())
+    }
+
+    override fun onBind(intent: Intent?): IBinder? {
+        return binder
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
-        if (intent?.hasExtra(VideoPlayerFragment.VIDEO_URL) == true) {
-            handlePlaybackIntent(intent)
-        } else {
-            restorePlaybackIfNeeded()
+        when (intent?.action) {
+            ACTION_PLAY_PAUSE -> {
+                val wasPlaying = exoPlayer.isPlaying
+                if (wasPlaying) {
+                    pause()
+                } else {
+                    play()
+                }
+                // Update notification immediately with the new state
+                if (isForegroundService) {
+                    val newIsPlaying = !wasPlaying
+                    val notification = createNotification(newIsPlaying)
+                    notificationManager.notify(NOTIFICATION_ID, notification)
+                }
+            }
+            ACTION_STOP -> {
+                stop()
+                stopForegroundService()
+                stopSelf()
+            }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
-    private fun handlePlaybackIntent(intent: Intent) {
-        val player = this.player ?: return
-        val url = intent.getStringExtra(VideoPlayerFragment.VIDEO_URL) ?: return
-        val headers = intent.getStringExtra(VideoPlayerFragment.VIDEO_HEADERS)
-
-        val mediaItem = buildMediaItem(url, headers)
-        val mediaSource = if (url.startsWith("file://")) {
-            buildFileMediaSource(mediaItem)
-        } else {
-            buildHttpMediaSource(mediaItem, headers)
+    private val mediaSessionCallback = object : MediaSessionCompat.Callback() {
+        override fun onPlay() {
+            AppLogger.d("MediaSession onPlay")
+            play()
         }
 
-        player.setMediaSource(mediaSource)
-        player.prepare()
-        player.play()
+        override fun onPause() {
+            AppLogger.d("MediaSession onPause")
+            pause()
+        }
+
+        override fun onStop() {
+            AppLogger.d("MediaSession onStop")
+            stop()
+            stopForegroundService()
+        }
+
+        override fun onSeekTo(pos: Long) {
+            AppLogger.d("MediaSession onSeekTo: $pos")
+            seekTo(pos)
+        }
     }
 
-    private fun buildMediaItem(url: String, headers: String?): MediaItem {
-        val customData = Bundle().apply {
-            putString(HEADERS_CUSTOM_KEY, headers)
+    private fun updatePlaybackState(state: Int) {
+        val position = if (exoPlayer.currentPosition >= 0) exoPlayer.currentPosition else PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN
+        stateBuilder.setState(state, position, 1.0f)
+        mediaSession.setPlaybackState(stateBuilder.build())
+
+        if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
+            startForegroundService()
+        } else if (state == PlaybackStateCompat.STATE_STOPPED) {
+            stopForegroundService()
         }
-        return MediaItem.Builder()
-            .setUri(url)
-            .setCustomCacheKey(url)
-            .setTag(customData)
+
+        // Update notification if foreground
+        if (isForegroundService) {
+            val notification = createNotification()
+            notificationManager.notify(NOTIFICATION_ID, notification)
+        }
+    }
+
+    private fun startForegroundService() {
+        if (!isForegroundService) {
+            val notification = createNotification()
+            startForeground(NOTIFICATION_ID, notification)
+            isForegroundService = true
+        }
+    }
+
+    private fun stopForegroundService() {
+        if (isForegroundService) {
+            stopForeground(false)
+            isForegroundService = false
+        }
+    }
+
+    private fun createNotification(overrideIsPlaying: Boolean? = null): Notification {
+        val playbackState = mediaSession.controller?.playbackState?.state ?: PlaybackStateCompat.STATE_STOPPED
+        val isPlaying = overrideIsPlaying ?: (playbackState == PlaybackStateCompat.STATE_PLAYING)
+
+        val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
+        val playPauseText = if (isPlaying) "Pause" else "Play"
+
+        val playPauseIntent = Intent(this, MediaPlaybackService::class.java).apply {
+            action = ACTION_PLAY_PAUSE
+        }
+        val playPausePendingIntent = PendingIntent.getService(
+            this,
+            0,
+            playPauseIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val playPauseAction = NotificationCompat.Action(
+            playPauseIcon,
+            playPauseText,
+            playPausePendingIntent
+        )
+
+        val stopIntent = Intent(this, MediaPlaybackService::class.java).apply {
+            action = ACTION_STOP
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this,
+            1,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val stopAction = NotificationCompat.Action(
+            android.R.drawable.ic_menu_close_clear_cancel,
+            "Stop",
+            stopPendingIntent
+        )
+
+        val contentText = if (isPlaying) "Playing video" else "Paused"
+
+        val intent = Intent(this, VideoPlayerActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle("Video Player")
+            .setContentText(contentText)
+            .setSmallIcon(R.drawable.ic_video_24dp)
+            .setContentIntent(pendingIntent)
+            .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
+                .setMediaSession(mediaSession.sessionToken)
+                .setShowActionsInCompactView(0, 1))
+            .addAction(playPauseAction)
+            .addAction(stopAction)
+            .setOngoing(true)
             .build()
     }
 
-    private fun buildFileMediaSource(mediaItem: MediaItem) =
-        ProgressiveMediaSource.Factory(
-            DefaultDataSource.Factory(applicationContext)
-        ).createMediaSource(mediaItem)
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createNotificationChannel() {
+        val channel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID,
+            NOTIFICATION_CHANNEL_NAME,
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Media playback controls"
+            setShowBadge(false)
+        }
+        notificationManager.createNotificationChannel(channel)
+    }
 
-    private fun buildHttpMediaSource(mediaItem: MediaItem, rawHeaders: String?) =
-        ProgressiveMediaSource.Factory(
-            buildHttpDataSource(mediaItem.requestMetadata.mediaUri.toString(), rawHeaders)
-        ).createMediaSource(mediaItem)
-
-    private fun buildHttpDataSource(
-        videoUrl: String,
-        rawHeaders: String?
-    ): OkHttpDataSource.Factory {
-        cookieJar.clear()
-        val factory = OkHttpDataSource.Factory(okHttpClient)
-        rawHeaders?.let {
-            try {
-                val headers = Json.parseToJsonElement(it)
-                    .jsonObject
-                    .mapValues { v -> v.value.toString().removeSurrounding("\"") }
-                    .toMutableMap()
-
-                headers.remove("Cookie")?.split(";")?.forEach { cookieString ->
-                    okhttp3.Cookie.parse(videoUrl.toHttpUrl(), cookieString)?.let { cookie ->
-                        cookieJar.saveFromResponse(videoUrl.toHttpUrl(), listOf(cookie))
+    private val playerListener = object : Player.Listener {
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            when (playbackState) {
+                Player.STATE_READY -> {
+                    if (exoPlayer.playWhenReady) {
+                        updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
+                    } else {
+                        updatePlaybackState(PlaybackStateCompat.STATE_PAUSED)
                     }
                 }
-                if (headers.isNotEmpty()) {
-                    factory.setDefaultRequestProperties(headers)
+                Player.STATE_ENDED -> {
+                    updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
                 }
-            } catch (e: Exception) {
-                AppLogger.e("Failed to parse headers: $rawHeaders, ${e.message}")
+                Player.STATE_IDLE -> {
+                    updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
+                }
+                Player.STATE_BUFFERING -> {
+                    updatePlaybackState(PlaybackStateCompat.STATE_BUFFERING)
+                }
             }
         }
-        return factory
-    }
 
-    private fun observePlayer(player: ExoPlayer) {
-        player.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_READY) savePlaybackState()
-                if (state == Player.STATE_ENDED) prefs.edit { clear() }
-            }
-
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                if (player.playbackState == Player.STATE_READY) savePlaybackState()
-            }
-        })
-    }
-
-    private fun savePlaybackState() {
-        val player = this.player ?: return
-        val item = player.currentMediaItem ?: return
-        val position = player.currentPosition
-        if (position <= 0) return
-
-        val customData = item.localConfiguration?.tag as? Bundle
-        val headers = customData?.getString(HEADERS_CUSTOM_KEY)
-
-        prefs.edit {
-            putString(
-                "snapshot",
-                encodeToString<PlaybackStateSnapshot>(
-                    PlaybackStateSnapshot(
-                        url = item.localConfiguration?.uri.toString(),
-                        headers = headers,
-                        positionMs = position,
-                        playWhenReady = player.playWhenReady
-                    )
-                )
-            )
+        override fun onPlayerError(error: PlaybackException) {
+            AppLogger.e("ExoPlayer error: ${error.message}")
+            updatePlaybackState(PlaybackStateCompat.STATE_ERROR)
         }
     }
 
-    private fun restorePlaybackIfNeeded() {
-        val player = this.player ?: return
-        val json = prefs.getString("snapshot", null) ?: return
-        val snapshot: PlaybackStateSnapshot
+    // Public methods for controlling playback
+    fun play() {
+        exoPlayer.playWhenReady = true
+        exoPlayer.play()
+    }
+
+    fun pause() {
+        exoPlayer.pause()
+    }
+
+    fun stop() {
+        exoPlayer.stop()
+        exoPlayer.clearMediaItems()
+        currentMediaItem = null
+    }
+
+    fun seekTo(position: Long) {
+        exoPlayer.seekTo(position)
+    }
+
+    fun setMediaItem(mediaItem: MediaItem) {
+        currentMediaItem = mediaItem
+        exoPlayer.setMediaItem(mediaItem)
+        exoPlayer.prepare()
+    }
+
+    fun getCurrentPosition(): Long {
+        return exoPlayer.currentPosition
+    }
+
+    fun getDuration(): Long {
+        return exoPlayer.duration
+    }
+
+    fun isPlaying(): Boolean {
+        return exoPlayer.isPlaying
+    }
+
+    fun getPlayer(): ExoPlayer {
+        return exoPlayer
+    }
+
+    @UnstableApi
+    fun setMediaSource(source: MediaSource) {
         try {
-            snapshot = Json.decodeFromString(json)
+            AppLogger.d("Setting media source in service")
+            exoPlayer.setMediaSource(source)
+            exoPlayer.prepare()
+            AppLogger.d("Media source prepared successfully")
         } catch (e: Exception) {
-            prefs.edit { clear() }
-            return
+            AppLogger.e("Error setting media source: ${e.message}")
+            updatePlaybackState(PlaybackStateCompat.STATE_ERROR)
         }
-
-        val mediaItem = buildMediaItem(snapshot.url, snapshot.headers)
-        val mediaSource = if (snapshot.url.startsWith("file://")) {
-            buildFileMediaSource(mediaItem)
-        } else {
-            buildHttpMediaSource(mediaItem, snapshot.headers)
-        }
-
-        player.setMediaSource(mediaSource)
-        player.prepare()
-        player.seekTo(snapshot.positionMs)
-        player.playWhenReady = snapshot.playWhenReady
-    }
-
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
-                getString(R.string.playback_channel_name),
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val notificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-    }
-
-    private fun buildInitialNotification(): Notification {
-        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.media3_notification_small_icon)
-            .setContentTitle(getString(R.string.playback_channel_name))
-            .setContentText("Initializing...")
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
-    }
-
-    private fun configureAudio(player: ExoPlayer) {
-        val audioAttributes = AudioAttributes.Builder()
-            .setUsage(C.USAGE_MEDIA)
-            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-            .build()
-        player.setAudioAttributes(audioAttributes, true)
-        player.setHandleAudioBecomingNoisy(true)
     }
 }

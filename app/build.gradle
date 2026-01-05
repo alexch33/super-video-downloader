@@ -7,8 +7,9 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-allopen'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
+apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy {
         force deps.kotlin.stdlib
     }
@@ -240,7 +241,7 @@ dependencies {
 
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0"
-
+    // version change can break build
     implementation 'org.jsoup:jsoup:1.21.1'
 
     implementation 'com.github.marlonlom:timeago:4.1.0'
@@ -274,6 +275,9 @@ dependencies {
     implementation "androidx.media3:media3-datasource:$media3_version"
     // Common functionality used across multiple media libraries
     implementation "androidx.media3:media3-common:$media3_version"
+    implementation("androidx.media3:media3-datasource-okhttp:$media3_version")
+
+    implementation "com.github.franmontiel:PersistentCookieJar:v1.0.1"
 
     // https://firebase.google.com/docs/android/setup#available-libraries
 

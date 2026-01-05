@@ -1,8 +1,16 @@
-<b>Features</b>
-Free video downloader app lets you download videos from any website or social media platform like Facebook, Instagram, Twitch and more.
-All work on the client
-Supports M3U8 and MPD lists, mp4 streams and live streams
-All video save as mp4 video
-Cookies supported
-HTTP proxy support
-SOCKS proxy support
+SuperX is a powerful and private video downloader for Android, built with freedom and flexibility in mind. It allows you to save videos from a wide variety of websites and platforms directly to your device for offline viewing. As a fully open-source application, it contains no trackers, no advertisements, and all processing is done locally on your device to protect your privacy.
+
+<b>Core Features:</b>
+
+*   <b>Wide Compatibility:</b> Download videos from many websites and social media platforms.
+*   <b>Advanced Stream Support:</b> Fully supports modern streaming protocols, including HLS (.m3u8) and DASH (.mpd) manifests, as well as standard MP4 streams and live broadcasts.
+*   <b>Standard Format:</b> All downloaded videos are saved in the universal .mp4 container for maximum compatibility with any player.
+*   <b>Client-Side Processing:</b> All operations happen on your device. No data is sent to external servers, ensuring your activity remains private.
+
+<b>Advanced Privacy & Networking:</b>
+
+*   <b>Cookie Support:</b> Allows you to use your browser's cookies to access and download videos from private or login-protected areas.
+*   <b>Full Proxy Integration:</b> Enhance your privacy and bypass network restrictions with built-in support for HTTP and SOCKS proxies.
+*   <b>Proxy Chaining & DNS Security:</b> For ultimate privacy, the app supports proxy chains and can be configured with encrypted DNS (DoH/DoT) and custom servers.
+
+SuperX is the ideal tool for users who demand control over their media and their privacy. By providing direct access to download streams and robust networking tools, it ensures a free and open way to access online video content.

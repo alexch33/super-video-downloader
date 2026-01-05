@@ -1,0 +1,8 @@
+<b>Recursos</b>
+Aplicativo gratuito para baixar videos de qualquer website ou plataforma de mídia social como Facebook, Instagram, Twitch and mais.
+Todo o trabalho é feito pelo cliente
+Suporta M3U8 e list MPD, transmissão mp4 e transmissão aovivo
+Todos os videos baixados são codificados em .mp4
+Suporte para Cookies
+Suporte para proxy HTTP
+Suporte para proxy SOCKS

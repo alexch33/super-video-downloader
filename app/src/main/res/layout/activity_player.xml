@@ -6,7 +6,7 @@
             android:layout_height="match_parent">
 
         <FrameLayout
-                android:id="@+id/content_frame"
+                android:id="@+id/player_content_frame"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>

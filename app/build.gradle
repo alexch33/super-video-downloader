@@ -7,6 +7,7 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-allopen'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
+apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
 
 configurations.configureEach {
     resolutionStrategy {
@@ -245,7 +246,7 @@ dependencies {
 
     implementation 'com.github.marlonlom:timeago:4.1.0'
 
-    var media3_version = '1.5.1'
+    var media3_version = '1.9.0'
 
     // For media playback using ExoPlayer
     implementation "androidx.media3:media3-exoplayer:$media3_version"
@@ -274,6 +275,9 @@ dependencies {
     implementation "androidx.media3:media3-datasource:$media3_version"
     // Common functionality used across multiple media libraries
     implementation "androidx.media3:media3-common:$media3_version"
+    implementation("androidx.media3:media3-datasource-okhttp:$media3_version")
+
+    implementation "com.github.franmontiel:PersistentCookieJar:v1.0.1"
 
     // https://firebase.google.com/docs/android/setup#available-libraries
 

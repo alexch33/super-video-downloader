@@ -8,7 +8,7 @@ apply plugin: 'kotlin-allopen'
 apply plugin: 'jacoco'
 apply plugin: 'com.github.kt3k.coveralls'
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy {
         force deps.kotlin.stdlib
     }
@@ -240,12 +240,12 @@ dependencies {
 
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0"
-
+    // version change can break build
     implementation 'org.jsoup:jsoup:1.21.1'
 
     implementation 'com.github.marlonlom:timeago:4.1.0'
 
-    var media3_version = '1.9.0'
+    var media3_version = '1.5.1'
 
     // For media playback using ExoPlayer
     implementation "androidx.media3:media3-exoplayer:$media3_version"

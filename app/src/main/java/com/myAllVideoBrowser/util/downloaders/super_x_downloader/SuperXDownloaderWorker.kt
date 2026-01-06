@@ -10,6 +10,7 @@ import com.antonkarpenko.ffmpegkit.FFmpegSession
 import com.antonkarpenko.ffmpegkit.FFprobeKit
 import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.CustomFileDownloader
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.DownloadListener
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
@@ -197,7 +198,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
                     if (newVideoSegments.isNotEmpty() || newAudioSegments.isNotEmpty()) {
                         AppLogger.d("HLS (Live): Found ${newVideoSegments.size} new video and ${newAudioSegments.size} new audio segments.")
-
+                        task.apply { this.setIsLive(true) }
                         // Update total recorded duration for progress reporting
                         val newDuration =
                             (newVideoSegments.sumOf { it.duration.toDouble() } + newAudioSegments.sumOf { it.duration.toDouble() }).toLong()
@@ -1820,11 +1821,16 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             }
 
             VideoTaskState.SUCCESS -> {
-                val targetPath = fixFileName(File(fileUtil.folderDir, sourcePath.name).path)
+                val targetPath = fixFileName(File(fileUtil.folderDir, item.fileName).path)
                 val from = sourcePath.toUri()
                 val to = File(targetPath).toUri()
                 AppLogger.d("MOVING FILE $from to -> $to")
-                saveProgress(item.mId, finalProgress, VideoTaskState.PREPARE, "Downloaded, moving...")
+                saveProgress(
+                    item.mId,
+                    finalProgress,
+                    VideoTaskState.PREPARE,
+                    "Downloaded, moving..."
+                )
                 val fileMoved = fileUtil.moveMedia(applicationContext, from, to)
                 saveProgress(
                     item.mId,
@@ -1944,6 +1950,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         progress: Progress, task: VideoTaskItem, isSizeEstimated: Boolean, isLIve: Boolean = false
     ) {
         if (getDone()) return
+        val isLIve = isLIve || task.isLive
         showProgress(task, progress)
         if (isSizeEstimated || isLIve) {
             saveProgress(

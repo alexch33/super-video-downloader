@@ -67,16 +67,6 @@
             android:foregroundServiceType="dataSync"
             tools:node="merge" />
 
-        <service
-            android:name="com.myAllVideoBrowser.ui.main.player.MediaPlaybackService"
-            android:exported="false"
-            android:foregroundServiceType="mediaPlayback"
-            android:permission="androidx.media3.session.BIND_MEDIA_SESSION_SERVICE">
-            <intent-filter>
-                <action android:name="android.media.browse.MediaBrowserService" />
-            </intent-filter>
-        </service>
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

@@ -1,15 +1,12 @@
 package com.myAllVideoBrowser.ui.main.player
 
 import android.app.Activity
-import android.content.ComponentName
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.Intent
-import android.content.ServiceConnection
 import android.content.res.Configuration
+import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.Bundle
-import android.os.IBinder
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -18,6 +15,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -25,13 +23,16 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.RenderersFactory
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
+import androidx.media3.ui.PlayerView.SHOW_BUFFERING_ALWAYS
 import com.myAllVideoBrowser.databinding.FragmentPlayerBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.util.AppUtil
-import com.myAllVideoBrowser.util.ContextUtils
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import java.net.CookieHandler
@@ -50,11 +51,6 @@ class VideoPlayerFragment : BaseFragment() {
         const val VIDEO_URL = "video_url"
         const val VIDEO_HEADERS = "video_headers"
         const val VIDEO_NAME = "video_name"
-
-        // Media3 constants
-        const val SHOW_BUFFERING_ALWAYS = PlayerView.SHOW_BUFFERING_ALWAYS
-        const val EXTENSION_RENDERER_MODE_PREFER =
-            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
     }
 
     init {
@@ -68,74 +64,12 @@ class VideoPlayerFragment : BaseFragment() {
     @Inject
     lateinit var appUtil: AppUtil
 
+    private lateinit var player: ExoPlayer
+
     private lateinit var videoPlayerViewModel: VideoPlayerViewModel
+
     private lateinit var dataBinding: FragmentPlayerBinding
     private var isStretched = false
-    private var mediaSource: androidx.media3.exoplayer.source.MediaSource? = null
-
-    // Service connection
-    private var mediaPlaybackService: MediaPlaybackService? = null
-    private var serviceBound = false
-
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            android.util.Log.d("VideoPlayerFragment", "Service connected")
-            val binder = service as MediaPlaybackService.MediaPlaybackBinder
-            mediaPlaybackService = binder.getService()
-            serviceBound = true
-            videoPlayerViewModel.setServiceRunning(true)
-            // Set player to view and add listener
-            dataBinding.videoView.player = mediaPlaybackService?.getPlayer()
-            mediaPlaybackService?.getPlayer()?.addListener(playerListener)
-            // Set up media session callback to update UI
-            setupMediaSessionCallback()
-            // Set media source if ready and not already set
-            if (mediaPlaybackService?.getPlayer()?.currentMediaItem == null) {
-                mediaSource?.let { source ->
-                    android.util.Log.d("VideoPlayerFragment", "Setting media source and playing")
-                    mediaPlaybackService?.setMediaSource(source)
-                    mediaPlaybackService?.play()
-                }
-            } else {
-                android.util.Log.d(
-                    "VideoPlayerFragment",
-                    "Media source already set, resuming playback"
-                )
-            }
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            android.util.Log.d("VideoPlayerFragment", "Service disconnected")
-            serviceBound = false
-            videoPlayerViewModel.setServiceRunning(false)
-            dataBinding.videoView.player = null
-        }
-    }
-
-    private val playerListener = object : Player.Listener {
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            if (playbackState == Player.STATE_READY) {
-                dataBinding.loadingBar.visibility = View.GONE
-            } else {
-                dataBinding.loadingBar.visibility = View.VISIBLE
-            }
-        }
-
-        override fun onPlayerError(error: PlaybackException) {
-            if (videoPlayerViewModel.videoUrl.get().toString().startsWith("http")) {
-                AlertDialog.Builder(requireContext())
-                    .setTitle("Download Only")
-                    .setMessage("This video supports only download.")
-                    .setPositiveButton("OK") { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    .show()
-            }
-
-            Toast.makeText(ContextUtils.getApplicationContext(), error.message, Toast.LENGTH_LONG)
-                .show()
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -162,48 +96,66 @@ class VideoPlayerFragment : BaseFragment() {
         val url = videoPlayerViewModel.videoUrl.get() ?: Uri.EMPTY
         val headers = videoPlayerViewModel.videoHeaders.get() ?: emptyMap()
 
-        try {
-            val mediaItem: MediaItem = MediaItem.fromUri(url)
-            val mediaFactory = createMediaFactory(headers, url.toString().startsWith("http"))
+        val mediaItem: MediaItem = MediaItem.fromUri(url)
+        val mediaFactory = createMediaFactory(headers, url.toString().startsWith("http"))
 
-            val cookiesStrArr = headers["Cookie"]?.split(";")
-            if (!cookiesStrArr.isNullOrEmpty()) {
-                for (cookiePair in cookiesStrArr) {
-                    val tmp = cookiePair.split("=")
-                    val key = tmp.firstOrNull()
-                    val value = tmp.lastOrNull()
+        val cookiesStrArr = headers["Cookie"]?.split(";")
+        if (!cookiesStrArr.isNullOrEmpty()) {
+            for (cookiePair in cookiesStrArr) {
+                val tmp = cookiePair.split("=")
+                val key = tmp.firstOrNull()
+                val value = tmp.lastOrNull()
 
-                    if (key != null && value != null) {
-                        DEFAULT_COOKIE_MANAGER?.cookieStore?.add(
-                            URI(url.toString()),
-                            HttpCookie(key, value)
-                        )
-                    }
+                if (key != null && value != null) {
+                    DEFAULT_COOKIE_MANAGER?.cookieStore?.add(
+                        URI(url.toString()),
+                        HttpCookie(key, value)
+                    )
                 }
             }
-
-            mediaSource = mediaFactory.createMediaSource(mediaItem)
-            android.util.Log.d("VideoPlayerFragment", "Media source created successfully")
-        } catch (e: Exception) {
-            android.util.Log.e(
-                "VideoPlayerFragment",
-                "Error creating media source: ${e.message}",
-                e
-            )
-            Toast.makeText(context, "Error loading video: ${e.message}", Toast.LENGTH_LONG).show()
-            activity?.finish()
-            return dataBinding.root
         }
+
+        player = ExoPlayer.Builder(requireContext())
+            .setRenderersFactory(createRenderFactory())
+            .build()
 
         dataBinding = FragmentPlayerBinding.inflate(inflater, container, false).apply {
             val currentBinding = this
 
             currentBinding.viewModel = videoPlayerViewModel
             currentBinding.toolbar.setNavigationOnClickListener(navigationIconClickListener)
+            currentBinding.videoView.player = player
             currentBinding.videoView.setShowBuffering(SHOW_BUFFERING_ALWAYS)
             currentBinding.videoView.setFullscreenButtonClickListener {
                 toggleStretchMode()
             }
+
+            player.addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (playbackState == PlaybackState.STATE_PLAYING) {
+                        currentBinding.loadingBar.visibility = View.GONE
+                    } else {
+                        currentBinding.loadingBar.visibility = View.VISIBLE
+                    }
+                }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    if (viewModel?.videoUrl?.get().toString().startsWith("http")) {
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("Download Only")
+                            .setMessage("This video supports only download.")
+                            .setPositiveButton("OK") { dialog, _ ->
+                                dialog.dismiss()
+                            }
+                            .show()
+                    }
+                    Toast.makeText(context, error.message, Toast.LENGTH_LONG).show()
+                }
+            })
+
+            player.setMediaSource(mediaFactory.createMediaSource(mediaItem))
+            player.prepare()
+            player.playWhenReady = true
         }
 
         return dataBinding.root
@@ -219,9 +171,6 @@ class VideoPlayerFragment : BaseFragment() {
         handlePlayerEvents()
         videoPlayerViewModel.start()
         getActivity(context)?.let { appUtil.hideSystemUI(it.window, dataBinding.root) }
-
-        // Bind to the media playback service
-        bindToService()
     }
 
     private fun getActivity(context: Context?): Activity? {
@@ -237,24 +186,10 @@ class VideoPlayerFragment : BaseFragment() {
         return null
     }
 
-    override fun onStart() {
-        super.onStart()
-        bindToService()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        if (serviceBound) {
-            requireContext().unbindService(serviceConnection)
-            serviceBound = false
-        }
-    }
-
     override fun onDestroyView() {
-        // Detach player from view to prevent surface issues
-        dataBinding.videoView.player = null
         getActivity(context)?.let { appUtil.showSystemUI(it.window, dataBinding.root) }
         videoPlayerViewModel.stop()
+        player.release()
         super.onDestroyView()
     }
 
@@ -264,10 +199,25 @@ class VideoPlayerFragment : BaseFragment() {
 
     private fun handlePlayerEvents() {
         videoPlayerViewModel.stopPlayerEvent.observe(viewLifecycleOwner) {
-            mediaPlaybackService?.stop()
+            player.stop()
         }
     }
 
+    private fun createRenderFactory(): RenderersFactory {
+        return DefaultRenderersFactory(requireContext().applicationContext)
+            .setExtensionRendererMode(EXTENSION_RENDERER_MODE_PREFER)
+            .setMediaCodecSelector { mimeType, requiresSecureDecoder, requiresTunnelingDecoder ->
+                var decoderInfos =
+                    MediaCodecSelector.DEFAULT
+                        .getDecoderInfos(mimeType, requiresSecureDecoder, requiresTunnelingDecoder)
+                if (MimeTypes.VIDEO_H264 == mimeType) {
+                    // copy the list because MediaCodecSelector.DEFAULT returns an unmodifiable list
+                    decoderInfos = ArrayList(decoderInfos)
+                    decoderInfos.reverse()
+                }
+                decoderInfos
+            }
+    }
 
     private fun createMediaFactory(
         headers: Map<String, String>,
@@ -316,7 +266,6 @@ class VideoPlayerFragment : BaseFragment() {
 
     private fun handleClose() {
         videoPlayerViewModel.stop()
-        mediaPlaybackService?.stop()
         activity?.finish()
     }
 
@@ -324,35 +273,19 @@ class VideoPlayerFragment : BaseFragment() {
         isStretched = !isStretched
 
         if (isStretched) {
-            // Apply stretch based on orientation
             val orientation = resources.configuration.orientation
             if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-                // Stretch to fill vertically in portrait
-                dataBinding.videoView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                dataBinding.videoView.resizeMode =
+                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
             } else {
-                // Stretch to fill horizontally in landscape
-                dataBinding.videoView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                dataBinding.videoView.resizeMode =
+                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
             }
-            // Hide toolbar in stretched mode
             dataBinding.toolbar.visibility = View.GONE
         } else {
-            // Return to original size
-            dataBinding.videoView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-            // Show toolbar
+            dataBinding.videoView.resizeMode =
+                AspectRatioFrameLayout.RESIZE_MODE_FIT
             dataBinding.toolbar.visibility = View.VISIBLE
         }
-    }
-
-    private fun bindToService() {
-        if (!serviceBound) {
-            android.util.Log.d("VideoPlayerFragment", "Starting and binding to service")
-            val intent = Intent(requireContext(), MediaPlaybackService::class.java)
-            requireContext().startService(intent)
-            requireContext().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-        }
-    }
-
-    private fun setupMediaSessionCallback() {
-        // Media session is handled in the service, no additional setup needed here
     }
 }

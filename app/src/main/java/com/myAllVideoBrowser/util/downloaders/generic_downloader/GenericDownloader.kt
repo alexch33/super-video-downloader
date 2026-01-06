@@ -194,7 +194,7 @@ abstract class GenericDownloader {
         return String(byteArrayOutputStream.toByteArray())
     }
 
-    fun runWorkerTask(context: Context, info: VideoInfo, taskData: OneTimeWorkRequest) {
+    open fun runWorkerTask(context: Context, info: VideoInfo, taskData: OneTimeWorkRequest) {
         val op = WorkManager.getInstance(ContextUtils.getApplicationContext())
             .cancelAllWorkByTag(info.id)
         try {

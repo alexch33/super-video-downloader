@@ -269,7 +269,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsForceStreamDetection(): Boolean {
-        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DOWNLOAD, false)
+        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DETECTION, false)
     }
 
     fun setIsForceStreamDetection(isForce: Boolean) {

@@ -166,6 +166,7 @@ class FileUtil @Inject constructor() {
         }
     }
 
+    @Synchronized
     fun moveMedia(context: Context, from: Uri, to: Uri): Boolean {
         if (isFileApiSupportedByUri(context, to)) {
             AppLogger.d("IS_FILE_API: TRUE -- from $from to $to")

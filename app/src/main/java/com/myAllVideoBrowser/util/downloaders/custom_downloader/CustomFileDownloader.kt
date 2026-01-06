@@ -57,6 +57,18 @@ class CustomFileDownloader(
             File(fileToStop.parentFile, Helper.STOP_FILE_NAME).createNewFile()
         }
 
+        fun stopAndSave(fileToStop: File) {
+            File(fileToStop.parentFile, Helper.STOP_FILE_NAME).createNewFile()
+            File(fileToStop.parentFile, Helper.SAVE_FILE_NAME).createNewFile()
+        }
+
+        fun isStoppedAndSave(fileToStop: File): Boolean {
+            return File(
+                fileToStop.parentFile,
+                Helper.STOP_FILE_NAME
+            ).exists() && File(fileToStop.parentFile, Helper.SAVE_FILE_NAME).createNewFile()
+        }
+
         fun directStop(fileToStop: File) {
             val stopFolder = if (fileToStop.isDirectory) {
                 fileToStop
@@ -397,6 +409,9 @@ class CustomFileDownloader(
 
     private object Helper {
         const val STOP_FILE_NAME = "stop"
+
+        const val SAVE_FILE_NAME = "save"
+
         const val DOWNLOAD_BUFFER_SIZE = 1024
 
         fun unStop(fileToUnStop: File) {

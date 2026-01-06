@@ -19,6 +19,7 @@ import java.net.URL
 import java.util.Date
 import kotlin.coroutines.resume
 
+// TODO: REFACTORING
 class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerParameters) :
     GenericDownloadWorkerWrapper(appContext, workerParams) {
     private var fileMovedSuccess = false
@@ -73,7 +74,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             ?: return finishWorkWithFailureTaskId(task)
         val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(task.fileName).name)
         outputFileName = tmpFile.path
-        CustomFileDownloader.stop(tmpFile)
+        CustomFileDownloader.stopAndSave(tmpFile)
         handleSuccessfulDownload(task.also {
             it.mId = taskId
             it.filePath = outputFileName
@@ -81,6 +82,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         }, tmpFile)
     }
 
+    @Synchronized
     override fun finishWork(item: VideoTaskItem?) {
         AppLogger.d("FINISHING... ${item?.filePath} $item")
 
@@ -98,6 +100,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             }
             return
         }
+        setDone()
 
         CustomRegularDownloader.deleteHeadersStringFromSharedPreferences(applicationContext, taskId)
 
@@ -117,10 +120,10 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
             saveProgress(item.mId, progressCached, item.taskState, progressInfo)
 
-            setDone()
             getContinuation().resume(result)
         } catch (e: Throwable) {
-            AppLogger.e("FINISHING UNEXPECTED ERROR $item ${e.message} ${e.printStackTrace()}")
+            AppLogger.e("FINISHING UNEXPECTED ERROR $item ${e.message}")
+            e.printStackTrace()
             if (!getDone()) {
                 setDone()
                 try {
@@ -132,7 +135,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         }
     }
 
-    private fun handleSuccessfulDownload(item: VideoTaskItem, sourcePath: File) {
+    @Synchronized
+    private fun handleSuccessfulDownload(item: VideoTaskItem, srcPath: File) {
         if (outputFileName == null) {
             AppLogger.d("Output file name is NULL")
             return
@@ -141,12 +145,31 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         AppLogger.d("handleSuccessfulDownload started for item: ${item.mId}")
         val target = fixFileName(File(fileUtil.folderDir, File(outputFileName!!).name).path)
 
-        if (!sourcePath.exists()) {
-            AppLogger.w("Source file not exists in handleSuccessfulDownload: $sourcePath")
-            return finishWork(item.also {
-                it.taskState = VideoTaskState.ERROR
-                it.errorMessage = "Downloaded file disappeared"
-            })
+        var isPreprocessed = false
+
+        val sourcePath: File
+        if (!srcPath.exists()) {
+            AppLogger.w("Source file not exists in handleSuccessfulDownload: $srcPath")
+            sourcePath = File(
+                "${
+                    File(
+                        srcPath.parentFile,
+                        "${srcPath.nameWithoutExtension}_processed"
+                    )
+                }.${srcPath.extension}"
+            )
+
+            AppLogger.w("Try preprocessed name ${sourcePath.exists()} $sourcePath")
+
+            if (!sourcePath.exists()) {
+                return finishWork(item.also {
+                    it.taskState = VideoTaskState.ERROR
+                    it.errorMessage = "Downloaded file disappeared"
+                })
+            }
+            isPreprocessed = true
+        } else {
+            sourcePath = srcPath
         }
 
         try {
@@ -159,7 +182,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             var processedUri: Uri? = null
 
             val isFlv = item.isLive && item.url.contains(".flv", ignoreCase = true)
-            if (isProcessFfmpeg || isFlv) {
+            if ((isProcessFfmpeg || isFlv) && !isPreprocessed) {
                 val startProgress = Progress(0, sourcePath.length())
                 showProgressProcessing(item, startProgress)
                 saveProgress(
@@ -199,16 +222,33 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             }
 
             val finalSource = processedUri ?: sourcePath.toUri()
+            if (!finalSource.toFile().exists() && target.toUri().toFile().exists()) {
+                val finalSize = File(target).length()
+                val finalItem = item.apply {
+                    taskState = VideoTaskState.SUCCESS
+                    filePath = target
+                    lineInfo = "Download Success"
+                    totalSize = finalSize
+                    downloadSize = finalSize
+                }
+                finishWork(finalItem)
+
+                return
+            }
             AppLogger.d("START MOVING... $finalSource -> $target")
             fileMovedSuccess =
                 fileUtil.moveMedia(applicationContext, finalSource, File(target).toUri())
             AppLogger.d("END MOVING... fileMovedSuccess: $fileMovedSuccess")
 
+            if (fileMovedSuccess) {
+                finalSource.toFile().parentFile?.deleteRecursively()
+            }
+            val finalItem: VideoTaskItem?
             if (!fileMovedSuccess) {
                 throw Error("File Move error")
             } else {
                 val finalSize = File(target).length()
-                item.apply {
+                finalItem = item.apply {
                     taskState = VideoTaskState.SUCCESS
                     filePath = target
                     lineInfo = "Download Success"
@@ -217,14 +257,22 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 }
                 finalSource.toFile().parentFile?.deleteRecursively()
             }
-            finishWork(item)
+
+            finishWork(finalItem)
 
         } catch (e: Throwable) {
-            AppLogger.e("Error during post-processing ${e.printStackTrace()}")
-            finishWork(item.also {
-                it.taskState = VideoTaskState.ERROR
-                it.errorMessage = e.message
-            })
+            val targetFl = File(target)
+            if (targetFl.exists()) {
+                sourcePath.parentFile?.deleteRecursively()
+                AppLogger.d("Target file exists $targetFl  marking success ${item.mId}")
+                finishWork(item.also { it.taskState = VideoTaskState.SUCCESS })
+            } else {
+                AppLogger.e("Error during post-processing ${e.printStackTrace()}")
+                finishWork(item.also {
+                    it.taskState = VideoTaskState.ERROR
+                    it.errorMessage = e.message
+                })
+            }
         }
     }
 
@@ -241,7 +289,9 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)!!
         val url = taskItem.url
         showProgress(taskItem.also { it.mId = taskId }, progressCached)
-        val tmpDir = fileUtil.tmpDir.resolve(taskId).apply { mkdirs() }
+        val preTmp = fileUtil.tmpDir.resolve(taskId)
+        preTmp.deleteRecursively()
+        val tmpDir = preTmp.apply { mkdirs() }
         outputFileName = tmpDir.resolve(taskItem.fileName).toString()
         val fixedHeaders = decodeCookieHeader(headers)
         updateProgressInfoAndStartDownload(taskItem, taskId, url, fixedHeaders)
@@ -278,16 +328,34 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             }
 
             override fun onFailure(e: Throwable) {
-                AppLogger.e("${isStoppedAndSaved.get()}  ${e.message} Download Failed for $outputFileName")
+                val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(taskItem.fileName).name)
+                val isStoppedAndSaved = CustomFileDownloader.isStoppedAndSave(tmpFile)
+
+                AppLogger.e("$isStoppedAndSaved  ${e.message} Download Failed for $outputFileName")
                 e.printStackTrace()
+
                 val taskState = when {
-                    e.message == CustomFileDownloader.STOPPED && isStoppedAndSaved.get() -> VideoTaskState.SUCCESS // Special case
+                    e.message == CustomFileDownloader.STOPPED && isStoppedAndSaved -> VideoTaskState.ERROR // Special case
                     e.message == CustomFileDownloader.STOPPED -> VideoTaskState.PAUSE
                     e.message == CustomFileDownloader.CANCELED -> VideoTaskState.CANCELED
                     else -> if (taskItem.isLive) VideoTaskState.SUCCESS else VideoTaskState.ERROR
                 }
+                if (isStoppedAndSaved) {
+                    AppLogger.d("STOP AND SAVE INTERRUPT")
+                    getContinuation().resume(Result.failure())
+                    return
+                }
+                if (taskState == VideoTaskState.CANCELED) {
+                    // CANCEL
+                    AppLogger.d("CUSTOM REGULAR CANCEL INTERRUPT")
+                    finishWork(taskItem.also {
+                        it.mId = taskId
+                        it.taskState = taskState
+                    })
+                    return
+                }
 
-                if (taskState == VideoTaskState.SUCCESS) {
+                if (taskState == VideoTaskState.SUCCESS || taskState == VideoTaskState.ERROR && taskItem.isLive) {
                     handleSuccessfulDownload(taskItem.also {
                         it.taskState = VideoTaskState.SUCCESS
                         it.mId = taskId

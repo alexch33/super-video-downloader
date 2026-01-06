@@ -9,13 +9,14 @@ import android.media.AudioManager
 import android.os.Binder
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.os.IBinder
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
+import android.os.Looper
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.media.MediaBrowserServiceCompat
+import androidx.media.app.NotificationCompat as MediaNotificationCompat
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -23,6 +24,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.common.util.UnstableApi
+import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.util.AppLogger
 import kotlinx.coroutines.CoroutineScope
@@ -48,14 +53,27 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
 
     private val binder = MediaPlaybackBinder()
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
     private lateinit var mediaSession: MediaSessionCompat
     private lateinit var stateBuilder: PlaybackStateCompat.Builder
+    private lateinit var metadataBuilder: MediaMetadataCompat.Builder
     private lateinit var notificationManager: NotificationManager
     private lateinit var audioManager: AudioManager
     private lateinit var exoPlayer: ExoPlayer
 
     private var isForegroundService = false
     private var currentMediaItem: MediaItem? = null
+
+    // For periodic notification updates (smooth seekbar progress)
+    private val notificationUpdateHandler = Handler(Looper.getMainLooper())
+    private val notificationUpdateRunnable = object : Runnable {
+        override fun run() {
+            if (exoPlayer.isPlaying && isForegroundService) {
+                updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
+                notificationUpdateHandler.postDelayed(this, 1000) // Update every 1 second
+            }
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -70,7 +88,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
         }
 
         // Initialize MediaSession
-        mediaSession = MediaSessionCompat(baseContext, "MediaPlaybackService").apply {
+        mediaSession = MediaSessionCompat(this, "MediaPlaybackService").apply {
             setFlags(
                 MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
                         MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
@@ -83,9 +101,13 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
             .setActions(
                 PlaybackStateCompat.ACTION_PLAY or
                         PlaybackStateCompat.ACTION_PAUSE or
+                        PlaybackStateCompat.ACTION_PLAY_PAUSE or
                         PlaybackStateCompat.ACTION_STOP or
-                        PlaybackStateCompat.ACTION_PLAY_PAUSE
+                        PlaybackStateCompat.ACTION_SEEK_TO
             )
+
+        // Metadata builder for duration (required for seekbar to show progress range)
+        metadataBuilder = MediaMetadataCompat.Builder()
 
         // Initialize ExoPlayer
         exoPlayer = ExoPlayer.Builder(this)
@@ -102,9 +124,15 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
     override fun onDestroy() {
         super.onDestroy()
         AppLogger.d("MediaPlaybackService onDestroy")
+
         notificationManager.cancel(NOTIFICATION_ID)
-        mediaSession.isActive = false
-        mediaSession.release()
+        notificationUpdateHandler.removeCallbacks(notificationUpdateRunnable)
+
+        mediaSession.apply {
+            isActive = false
+            release()
+        }
+
         exoPlayer.removeListener(playerListener)
         exoPlayer.release()
         serviceScope.cancel()
@@ -122,8 +150,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
         parentId: String,
         result: Result<MutableList<MediaBrowserCompat.MediaItem>>
     ) {
-        // Return empty list for now - we don't need media browsing for video playback
-        result.sendResult(mutableListOf())
+        result.sendResult(mutableListOf()) // No browsing needed
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -131,26 +158,21 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_PLAY_PAUSE -> {
-                val wasPlaying = exoPlayer.isPlaying
-                if (wasPlaying) {
-                    pause()
-                } else {
-                    play()
+        intent?.action?.let { action ->
+            when (action) {
+                ACTION_PLAY_PAUSE -> {
+                    if (exoPlayer.isPlaying) pause() else play()
+                    // Refresh notification with updated play/pause icon
+                    if (isForegroundService) {
+                        notificationManager.notify(NOTIFICATION_ID, createNotification())
+                    }
                 }
-                // Update notification immediately with the new state
-                if (isForegroundService) {
-                    val newIsPlaying = !wasPlaying
-                    val notification = createNotification(newIsPlaying)
-                    notificationManager.notify(NOTIFICATION_ID, notification)
-                }
-            }
 
-            ACTION_STOP -> {
-                stop()
-                stopForegroundService()
-                stopSelf()
+                ACTION_STOP -> {
+                    stop()
+                    stopForegroundService()
+                    stopSelf()
+                }
             }
         }
         return START_NOT_STICKY
@@ -164,7 +186,6 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
 
         override fun onPause() {
             AppLogger.d("MediaSession onPause")
-            AppLogger.d("PLAYER IS PLAYING: ${exoPlayer.isPlaying}")
             pause()
         }
 
@@ -177,6 +198,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
         override fun onSeekTo(pos: Long) {
             AppLogger.d("MediaSession onSeekTo: $pos")
             seekTo(pos)
+            updatePlaybackState(if (exoPlayer.isPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED)
         }
     }
 
@@ -186,23 +208,22 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
         stateBuilder.setState(state, position, 1.0f)
         mediaSession.setPlaybackState(stateBuilder.build())
 
-        if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
-            startForegroundService()
-        } else if (state == PlaybackStateCompat.STATE_STOPPED) {
-            stopForegroundService()
+        when (state) {
+            PlaybackStateCompat.STATE_PLAYING,
+            PlaybackStateCompat.STATE_PAUSED,
+            PlaybackStateCompat.STATE_BUFFERING -> startForegroundService()
+
+            PlaybackStateCompat.STATE_STOPPED -> stopForegroundService()
         }
 
-        // Update notification if foreground
         if (isForegroundService) {
-            val notification = createNotification()
-            notificationManager.notify(NOTIFICATION_ID, notification)
+            notificationManager.notify(NOTIFICATION_ID, createNotification())
         }
     }
 
     private fun startForegroundService() {
         if (!isForegroundService) {
-            val notification = createNotification()
-            startForeground(NOTIFICATION_ID, notification)
+            startForeground(NOTIFICATION_ID, createNotification())
             isForegroundService = true
         }
     }
@@ -216,7 +237,7 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
 
     private fun createNotification(overrideIsPlaying: Boolean? = null): Notification {
         val playbackState =
-            mediaSession.controller?.playbackState?.state ?: PlaybackStateCompat.STATE_STOPPED
+            mediaSession.controller.playbackState?.state ?: PlaybackStateCompat.STATE_STOPPED
         val isPlaying = overrideIsPlaying ?: (playbackState == PlaybackStateCompat.STATE_PLAYING)
 
         val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
@@ -226,57 +247,43 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
             action = ACTION_PLAY_PAUSE
         }
         val playPausePendingIntent = PendingIntent.getService(
-            this,
-            0,
-            playPauseIntent,
+            this, 0, playPauseIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
-        val playPauseAction = NotificationCompat.Action(
-            playPauseIcon,
-            playPauseText,
-            playPausePendingIntent
-        )
+        val playPauseAction =
+            NotificationCompat.Action(playPauseIcon, playPauseText, playPausePendingIntent)
 
         val stopIntent = Intent(this, MediaPlaybackService::class.java).apply {
             action = ACTION_STOP
         }
         val stopPendingIntent = PendingIntent.getService(
-            this,
-            1,
-            stopIntent,
+            this, 1, stopIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
         val stopAction = NotificationCompat.Action(
-            android.R.drawable.ic_menu_close_clear_cancel,
-            "Stop",
-            stopPendingIntent
+            android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPendingIntent
         )
 
-        val contentText = if (isPlaying) "Playing video" else "Paused"
-
-        val intent = Intent(this, VideoPlayerActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
+        val contentIntent = Intent(this, VideoPlayerActivity::class.java)
+        val contentPendingIntent = PendingIntent.getActivity(
+            this, 0, contentIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Video Player")
-            .setContentText(contentText)
+            .setContentText(if (isPlaying) "Playing video" else "Paused")
             .setSmallIcon(R.drawable.ic_video_24dp)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(contentPendingIntent)
             .setStyle(
-                androidx.media.app.NotificationCompat.MediaStyle()
+                MediaNotificationCompat.MediaStyle()
                     .setMediaSession(mediaSession.sessionToken)
-                    .setShowActionsInCompactView(0, 1)
+                    .setShowActionsInCompactView(0, 1) // Show play/pause and stop in compact
             )
             .addAction(playPauseAction)
             .addAction(stopAction)
             .setOngoing(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build()
     }
 
@@ -297,24 +304,24 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
         override fun onPlaybackStateChanged(playbackState: Int) {
             when (playbackState) {
                 Player.STATE_READY -> {
-                    if (exoPlayer.playWhenReady) {
-                        updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
+                    val state = if (exoPlayer.playWhenReady) {
+                        PlaybackStateCompat.STATE_PLAYING
                     } else {
-                        updatePlaybackState(PlaybackStateCompat.STATE_PAUSED)
+                        PlaybackStateCompat.STATE_PAUSED
+                    }
+                    updatePlaybackState(state)
+
+                    // Update duration metadata when ready (for seekbar max value)
+                    val duration = exoPlayer.duration
+                    if (duration != C.TIME_UNSET && duration > 0) {
+                        metadataBuilder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
+                        mediaSession.setMetadata(metadataBuilder.build())
                     }
                 }
 
-                Player.STATE_ENDED -> {
-                    updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
-                }
-
-                Player.STATE_IDLE -> {
-                    updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
-                }
-
-                Player.STATE_BUFFERING -> {
-                    updatePlaybackState(PlaybackStateCompat.STATE_BUFFERING)
-                }
+                Player.STATE_ENDED -> updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
+                Player.STATE_IDLE -> updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
+                Player.STATE_BUFFERING -> updatePlaybackState(PlaybackStateCompat.STATE_BUFFERING)
             }
         }
 
@@ -329,22 +336,21 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
         exoPlayer.playWhenReady = true
         exoPlayer.play()
         updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
+        notificationUpdateHandler.post(notificationUpdateRunnable)
     }
 
     fun pause() {
-        if (exoPlayer.isPlaying) {
-            exoPlayer.pause()
-            updatePlaybackState(PlaybackStateCompat.STATE_PAUSED)
-        } else {
-            exoPlayer.play()
-            updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
-        }
+        exoPlayer.pause()
+        updatePlaybackState(PlaybackStateCompat.STATE_PAUSED)
+        notificationUpdateHandler.removeCallbacks(notificationUpdateRunnable)
     }
 
     fun stop() {
         exoPlayer.stop()
         exoPlayer.clearMediaItems()
         currentMediaItem = null
+        updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
+        notificationUpdateHandler.removeCallbacks(notificationUpdateRunnable)
     }
 
     fun seekTo(position: Long) {
@@ -355,6 +361,11 @@ class MediaPlaybackService : MediaBrowserServiceCompat() {
         currentMediaItem = mediaItem
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()
+
+        mediaItem.mediaMetadata.title?.let {
+            metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, it.toString())
+            mediaSession.setMetadata(metadataBuilder.build())
+        }
     }
 
     fun getCurrentPosition(): Long {

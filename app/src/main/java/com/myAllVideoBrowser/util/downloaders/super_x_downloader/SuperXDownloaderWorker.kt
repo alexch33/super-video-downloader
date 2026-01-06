@@ -282,7 +282,13 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 // 6. Merge all downloaded segments into a final file
                 val finalOutputFile = hlsTmpDir.resolve("merged_output.mp4").absolutePath
                 val mergeSession =
-                    mergeSegments(hlsTmpDir, allVideoSegments, allAudioSegments, finalOutputFile)
+                    mergeSegments(
+                        hlsTmpDir,
+                        allVideoSegments,
+                        allAudioSegments,
+                        finalOutputFile,
+                        task
+                    )
 
                 if (ReturnCode.isSuccess(mergeSession.returnCode)) {
                     AppLogger.d("HLS (Live): Merge completed successfully.")
@@ -317,12 +323,31 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     AppLogger.d("HLS (Live): Task $taskId was canceled via flag.")
                     finishWork(task.apply { taskState = VideoTaskState.CANCELED })
                 } else {
-                    AppLogger.e("HLS (Live): Download failed for task $taskId: ${e.message} ${e.printStackTrace()}")
-                    finishWork(task.also {
-                        it.mId = taskId
-                        it.taskState = VideoTaskState.ERROR
-                        it.errorMessage = "HLS live download failed: ${e.message}"
-                    })
+                    // ELSE DOWNLOAD FAILED MOVE TO FOLDER
+                    val finalOutputFile = hlsTmpDir.resolve("merged_output.mp4").absolutePath
+                    val mergeSession =
+                        mergeSegments(
+                            hlsTmpDir,
+                            allVideoSegments,
+                            allAudioSegments,
+                            finalOutputFile,
+                            task
+                        )
+                    if (ReturnCode.isSuccess(mergeSession.returnCode)) {
+                        AppLogger.d("HLS (Live): Merge completed successfully.")
+                        val completedTask = task.also {
+                            it.mId = taskId
+                            it.taskState = VideoTaskState.SUCCESS
+                            it.filePath = finalOutputFile
+                            it.totalSize = File(finalOutputFile).length()
+                            it.downloadSize = it.totalSize
+                            it.errorMessage = null
+                        }
+                        finishWork(completedTask)
+                    } else {
+                        AppLogger.e("HLS (Live): Merge failed with return code:- ${mergeSession.returnCode}. Logs: ${mergeSession.allLogsAsString}")
+                        getContinuation().resume(Result.failure())
+                    }
                 }
             }
         }
@@ -1213,7 +1238,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
             // 4. Call the mergeSegments function (which is now correct)
             val mergeSession =
-                mergeSegments(hlsTmpDir, videoSegments, audioSegments, finalOutputFile)
+                mergeSegments(hlsTmpDir, videoSegments, audioSegments, finalOutputFile, task)
             val returnCode = mergeSession.returnCode
 
             if (ReturnCode.isSuccess(returnCode)) {
@@ -1257,7 +1282,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         hlsTmpDir: File,
         videoSegments: List<HlsPlaylistParser.MediaSegment>?,
         audioSegments: List<HlsPlaylistParser.MediaSegment>?,
-        finalOutputPath: String
+        finalOutputPath: String,
+        task: VideoTaskItem
     ): FFmpegSession {
         val arguments = mutableListOf<String>()
 
@@ -1369,6 +1395,16 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             add("-y") // Overwrite output file if it exists
             add(finalOutputPath)
         }
+
+        onProgress(
+            Progress(hlsTotalBytesDownloaded.get(), hlsTotalBytesDownloaded.get()),
+            task.also {
+                it.taskState = VideoTaskState.PREPARE
+                it.lineInfo = "Merging segments..."
+            },
+            isSizeEstimated = true,
+            isLIve = false
+        )
 
         AppLogger.d("SuperX: Executing HLS merge with arguments: $arguments")
         return FFmpegKit.executeWithArguments(arguments.toTypedArray())

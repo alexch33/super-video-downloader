@@ -31,6 +31,7 @@ import androidx.media3.ui.PlayerView
 import com.myAllVideoBrowser.databinding.FragmentPlayerBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.util.AppUtil
+import com.myAllVideoBrowser.util.ContextUtils
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import java.net.CookieHandler
@@ -52,7 +53,8 @@ class VideoPlayerFragment : BaseFragment() {
 
         // Media3 constants
         const val SHOW_BUFFERING_ALWAYS = PlayerView.SHOW_BUFFERING_ALWAYS
-        const val EXTENSION_RENDERER_MODE_PREFER = DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+        const val EXTENSION_RENDERER_MODE_PREFER =
+            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
     }
 
     init {
@@ -70,6 +72,7 @@ class VideoPlayerFragment : BaseFragment() {
     private lateinit var dataBinding: FragmentPlayerBinding
     private var isStretched = false
     private var mediaSource: androidx.media3.exoplayer.source.MediaSource? = null
+
     // Service connection
     private var mediaPlaybackService: MediaPlaybackService? = null
     private var serviceBound = false
@@ -94,7 +97,10 @@ class VideoPlayerFragment : BaseFragment() {
                     mediaPlaybackService?.play()
                 }
             } else {
-                android.util.Log.d("VideoPlayerFragment", "Media source already set, resuming playback")
+                android.util.Log.d(
+                    "VideoPlayerFragment",
+                    "Media source already set, resuming playback"
+                )
             }
         }
 
@@ -125,7 +131,9 @@ class VideoPlayerFragment : BaseFragment() {
                     }
                     .show()
             }
-            Toast.makeText(context, error.message, Toast.LENGTH_LONG).show()
+
+            Toast.makeText(ContextUtils.getApplicationContext(), error.message, Toast.LENGTH_LONG)
+                .show()
         }
     }
 
@@ -177,7 +185,11 @@ class VideoPlayerFragment : BaseFragment() {
             mediaSource = mediaFactory.createMediaSource(mediaItem)
             android.util.Log.d("VideoPlayerFragment", "Media source created successfully")
         } catch (e: Exception) {
-            android.util.Log.e("VideoPlayerFragment", "Error creating media source: ${e.message}", e)
+            android.util.Log.e(
+                "VideoPlayerFragment",
+                "Error creating media source: ${e.message}",
+                e
+            )
             Toast.makeText(context, "Error loading video: ${e.message}", Toast.LENGTH_LONG).show()
             activity?.finish()
             return dataBinding.root
@@ -255,7 +267,6 @@ class VideoPlayerFragment : BaseFragment() {
             mediaPlaybackService?.stop()
         }
     }
-
 
 
     private fun createMediaFactory(

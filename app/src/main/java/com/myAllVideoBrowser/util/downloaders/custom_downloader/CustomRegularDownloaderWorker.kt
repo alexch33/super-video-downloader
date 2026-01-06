@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Base64
 import androidx.core.net.toFile
 import androidx.core.net.toUri
+import androidx.room.concurrent.AtomicBoolean
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FfmpegProcessor
@@ -27,9 +28,11 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     @Volatile
     private var lastSavedTime = 0L
 
+    var isCanceled = AtomicBoolean(false)
+
+    var isStoppedAndSaved = AtomicBoolean(false)
+
     companion object {
-        var isCanceled: Boolean = false
-        var isStoppedAndSaved = false
         private const val PROGRESS_UPDATE_INTERVAL = 1000
     }
 
@@ -38,28 +41,28 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     ) {
         when (action) {
             GenericDownloader.DownloaderActions.DOWNLOAD -> {
-                isCanceled = false
+                isCanceled.set(false)
                 startDownload(task, headers)
             }
 
             GenericDownloader.DownloaderActions.CANCEL -> {
-                isCanceled = true
+                isCanceled.set(true)
                 cancelTask(task)
             }
 
             GenericDownloader.DownloaderActions.PAUSE -> {
-                isCanceled = false
+                isCanceled.set(false)
                 pauseTask(task)
             }
 
             GenericDownloader.DownloaderActions.RESUME -> {
-                isCanceled = false
+                isCanceled.set(false)
                 startDownload(task, headers)
             }
 
             GenericDownloader.DownloaderActions.STOP_SAVE_ACTION -> {
-                isCanceled = false
-                isStoppedAndSaved = true
+                isCanceled.set(false)
+                isStoppedAndSaved.set(true)
                 stopAndSave(task)
             }
         }
@@ -275,9 +278,10 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             }
 
             override fun onFailure(e: Throwable) {
-                AppLogger.e("Download Failed for $outputFileName ${e.message} ${e.printStackTrace()}")
+                AppLogger.e("${isStoppedAndSaved.get()}  ${e.message} Download Failed for $outputFileName")
+                e.printStackTrace()
                 val taskState = when {
-                    e.message == CustomFileDownloader.STOPPED && isStoppedAndSaved -> VideoTaskState.SUCCESS // Special case
+                    e.message == CustomFileDownloader.STOPPED && isStoppedAndSaved.get() -> VideoTaskState.SUCCESS // Special case
                     e.message == CustomFileDownloader.STOPPED -> VideoTaskState.PAUSE
                     e.message == CustomFileDownloader.CANCELED -> VideoTaskState.CANCELED
                     else -> VideoTaskState.ERROR

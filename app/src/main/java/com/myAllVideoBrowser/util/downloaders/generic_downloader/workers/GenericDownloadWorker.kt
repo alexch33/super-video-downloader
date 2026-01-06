@@ -14,6 +14,7 @@ import java.io.File
 import java.io.IOException
 import java.io.Serializable
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
@@ -91,13 +92,13 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
                 handleAction(action, task, headers, isFileRemove)
             } catch (e: IllegalArgumentException) {
                 AppLogger.e("Invalid input: $e")
-                Result.failure()
+                continuation.resume(Result.failure())
             } catch (e: IOException) {
-                AppLogger.e("Download error: $e")
-                Result.retry()
+                AppLogger.e("Download error:- $e")
+                continuation.resume(Result.failure())
             } catch (e: Exception) {
                 AppLogger.e("Unexpected error: $e")
-                Result.failure()
+                continuation.resume(Result.failure())
             }
         }.also {
             afterDone()

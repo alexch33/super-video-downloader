@@ -157,13 +157,12 @@ class SharedPrefHelper @Inject constructor(
 
         return sharedPreferences.getBoolean(
             IS_DARK_MODE,
-            isNightMode
+            true
         )
     }
 
     fun isAutoTheme(): Boolean {
-        val isAuto = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-        return sharedPreferences.getBoolean(IS_AUTO_THEME, isAuto)
+        return sharedPreferences.getBoolean(IS_AUTO_THEME, false)
     }
 
     fun setIsAutoTheme(isAuto: Boolean) {
@@ -270,7 +269,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsForceStreamDetection(): Boolean {
-        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DOWNLOAD, true)
+        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DOWNLOAD, false)
     }
 
     fun setIsForceStreamDetection(isForce: Boolean) {

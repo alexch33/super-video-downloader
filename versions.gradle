@@ -22,7 +22,6 @@ versions.coveralls = "2.8.1"
 def deps = [:]
 
 def android = [:]
-android.multidex = 'androidx.multidex:multidex:2.0.1'
 android.gradle_plugin = "com.android.tools.build:gradle:$versions.gradle_plugin"
 deps.android = android
 

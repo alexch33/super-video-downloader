@@ -17,7 +17,8 @@ import java.util.*
 interface VideoService {
     fun getVideoInfo(
         url: Request,
-        isM3u8OrMpd: Boolean = false,
+        isM3u8: Boolean = false,
+        isMpd: Boolean = false,
         isAudioCheck: Boolean
     ): VideoInfoWrapper?
 }
@@ -33,7 +34,8 @@ open class VideoServiceLocal(
 
     override fun getVideoInfo(
         url: Request,
-        isM3u8OrMpd: Boolean,
+        isM3u8: Boolean,
+        isMpd: Boolean,
         isAudioCheck: Boolean
     ): VideoInfoWrapper? {
         AppLogger.d("Getting info url...:  $url  ${url.headers["Cookie"]}")
@@ -41,7 +43,7 @@ open class VideoServiceLocal(
         var result: VideoInfoWrapper? = null
 
         try {
-            result = handleYoutubeDlUrl(url, isM3u8OrMpd, isAudioCheck)
+            result = handleYoutubeDlUrl(url, isM3u8 || isMpd, isAudioCheck)
         } catch (e: Throwable) {
             AppLogger.d("YoutubeDL Error: $e")
         }

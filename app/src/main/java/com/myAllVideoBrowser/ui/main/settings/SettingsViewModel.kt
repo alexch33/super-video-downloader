@@ -43,6 +43,7 @@ class SettingsViewModel @Inject constructor(
     val isAlwaysRemuxRegularDownloads = ObservableBoolean(false)
     val isRemuxOnlyLiveRegularDownloads = ObservableBoolean(false)
     val isInterruptIntreceptedResources = ObservableBoolean(false)
+    val isUseLegacyM3u8Detection = ObservableBoolean(false)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
     private val isCheckEveryRequestOnVideo = ObservableBoolean(true)
@@ -50,6 +51,8 @@ class SettingsViewModel @Inject constructor(
 
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
+            // 2. INITIALIZE ITS VALUE FROM SHARED PREFERENCES
+            isUseLegacyM3u8Detection.set(sharedPrefHelper.getIsUseLegacyM3u8Detection())
             isAlwaysRemuxRegularDownloads.set(sharedPrefHelper.getIsProcessDownloadFfmpeg())
             isRemuxOnlyLiveRegularDownloads.set(sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg())
             isForceStreamDownloading.set(sharedPrefHelper.getIsForceStreamDownload())
@@ -82,6 +85,13 @@ class SettingsViewModel @Inject constructor(
     }
 
     override fun stop() {
+    }
+
+    fun setUseLegacyM3u8Detection(isTurnedOn: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            isUseLegacyM3u8Detection.set(isTurnedOn)
+            sharedPrefHelper.setIsUseLegacyM3u8Detection(isTurnedOn)
+        }
     }
 
     fun setIsRemuxOnlyLiveRegularDownloads(isTurnedOn: Boolean) {

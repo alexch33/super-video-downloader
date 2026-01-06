@@ -134,9 +134,13 @@ class CustomWebViewClient(
                 contentType == ContentType.M3U8 || contentType == ContentType.MPD || url.contains(".m3u8") || url.contains(
                     ".mpd"
                 ) || (url.contains(".txt") && url.contains("hentaihaven")) -> {
+                    val isM3u8 =
+                        ContentType.M3U8 == contentType || (url.contains(".txt")) || url.contains(".m3u8")
+                    val isMpd = ContentType.MPD == contentType || url.contains(".mpd")
+
                     if (requestWithCookies != null && isCheckM3u8) {
                         videoDetectionModel.verifyLinkStatus(
-                            requestWithCookies, tabViewModel.currentTitle.get(), true
+                            requestWithCookies, tabViewModel.currentTitle.get(), isM3u8, isMpd
                         )
                     }
                     if (isInterruptIntreceptedResources) {
@@ -203,6 +207,7 @@ class CustomWebViewClient(
             if (!tabViewModel.isTabInputFocused.get()) {
                 tabViewModel.setTabTextInput(url.url.toString())
             }
+            // TODO implement ask for redirection dialog based on settings or disable at all
             false
         } else {
             true

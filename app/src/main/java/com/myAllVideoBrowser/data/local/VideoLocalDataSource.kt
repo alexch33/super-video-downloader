@@ -11,6 +11,14 @@ import javax.inject.Singleton
 class VideoLocalDataSource @Inject constructor(
     private val videoDao: VideoDao
 ) : VideoRepository {
+    override fun getVideoInfoBySuperXDetector(
+        url: Request,
+        isM3u8: Boolean,
+        isMpd: Boolean,
+        isAudioCheck: Boolean
+    ): VideoInfo? {
+        return videoDao.getVideoById(url.url.toString()).toSingle().blockingGet()
+    }
 
     override fun getVideoInfo(
         url: Request,

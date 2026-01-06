@@ -414,9 +414,6 @@ class WebTabFragment : BaseWebTabFragment() {
         webView?.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         webView?.isScrollbarFadingEnabled = true
 
-        // TODO: turn on third-party from settings
-//        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
-
         webSettings?.apply {
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setSupportZoom(true)

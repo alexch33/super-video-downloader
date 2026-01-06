@@ -8,7 +8,7 @@ import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
-import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker.Companion.STOP_SAVE_ACTION
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader.DownloaderActions.Companion.STOP_SAVE_ACTION
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 

@@ -9,10 +9,12 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
+import com.myAllVideoBrowser.util.proxy_utils.ProxyService
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
@@ -69,6 +71,12 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
         return suspendCoroutine { continuation ->
             setWorkContinuation(continuation)
             try {
+                if (!ProxyService.isRunning) {
+                    AppLogger.d("ProxyService is not running.")
+                } else {
+                    AppLogger.d("ProxyService is running.")
+                }
+
                 val task = getTaskFromInput()
                 val action = inputData.getString(GenericDownloader.Constants.ACTION_KEY)
                 val isFileRemove =
@@ -84,13 +92,13 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
                 handleAction(action, task, headers, isFileRemove)
             } catch (e: IllegalArgumentException) {
                 AppLogger.e("Invalid input: $e")
-                Result.failure()
+                continuation.resume(Result.failure())
             } catch (e: IOException) {
-                AppLogger.e("Download error: $e")
-                Result.retry()
+                AppLogger.e("Download error:- $e")
+                continuation.resume(Result.failure())
             } catch (e: Exception) {
                 AppLogger.e("Unexpected error: $e")
-                Result.failure()
+                continuation.resume(Result.failure())
             }
         }.also {
             afterDone()
@@ -99,11 +107,17 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
 
     private fun loadHeaders(taskId: String): Map<String, String> {
         val inpHeaders =
-            GenericDownloader.getInstance().loadHeadersStringFromSharedPreferences(applicationContext, taskId)
+            GenericDownloader.getInstance()
+                .loadHeadersStringFromSharedPreferences(applicationContext, taskId)
         return inpHeaders?.let {
             try {
                 val decodedHeaders =
-                    String(Base64.decode(GenericDownloader.getInstance().decompressString(it), Base64.DEFAULT))
+                    String(
+                        Base64.decode(
+                            GenericDownloader.getInstance().decompressString(it),
+                            Base64.DEFAULT
+                        )
+                    )
 
                 Gson().fromJson(decodedHeaders, Map::class.java) as Map<String, String>
             } catch (e: Exception) {

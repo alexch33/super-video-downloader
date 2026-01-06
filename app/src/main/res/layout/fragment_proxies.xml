@@ -23,6 +23,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="88dp"
+        android:background="?android:attr/colorBackground"
+        android:clickable="true"
+        android:focusable="true"
         android:orientation="vertical"
         tools:context=".ui.main.proxies.ProxiesFragment">
 
@@ -58,7 +61,7 @@
                 android:layout_weight="1"
                 android:checked="@{viewModel.isProxyOn}"
                 android:onCheckedChanged="@{(view, isChecked) -> listener.onProxyToggle(isChecked)}"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
         </LinearLayout>
@@ -97,7 +100,7 @@
                         android:layout_height="wrap_content"
                         android:checked="@{viewModel.isSecureDnsOn}"
                         android:onCheckedChanged="@{(view, isChecked) -> viewModel.setSecureDnsState(isChecked)}"
-                        app:thumbTint="@color/colorAccent"
+                        app:thumbTint="@color/switch_thumb_selector"
                         app:trackDecorationTint="@color/colorAccentDark"
                         app:trackTint="@color/color_gray" />
                 </LinearLayout>

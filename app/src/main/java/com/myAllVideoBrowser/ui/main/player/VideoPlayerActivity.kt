@@ -15,6 +15,6 @@ class VideoPlayerActivity : BaseActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContentView(R.layout.activity_player)
 
-        intent.extras?.let { addFragment(R.id.content_frame, it, ::VideoPlayerFragment) }
+        intent.extras?.let { addFragment(R.id.player_content_frame, it, ::VideoPlayerFragment) }
     }
 }

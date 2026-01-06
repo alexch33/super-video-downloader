@@ -48,6 +48,7 @@ class SharedPrefHelper @Inject constructor(
         private const val IS_DOH_ON = "IS_DOH_ON"
         private const val SELECTED_DNS_PROVIDER = "SELECTED_DNS_PROVIDER"
         private const val CUSTOM_DNS_URL = "CUSTOM_DNS_URL"
+        private const val IS_USE_LEGACY_M3U8_DETECTION = "IS_USE_LEGACY_M3U8_DETECTION"
     }
 
     private val gson = Gson()
@@ -156,13 +157,12 @@ class SharedPrefHelper @Inject constructor(
 
         return sharedPreferences.getBoolean(
             IS_DARK_MODE,
-            isNightMode
+            true
         )
     }
 
     fun isAutoTheme(): Boolean {
-        val isAuto = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-        return sharedPreferences.getBoolean(IS_AUTO_THEME, isAuto)
+        return sharedPreferences.getBoolean(IS_AUTO_THEME, false)
     }
 
     fun setIsAutoTheme(isAuto: Boolean) {
@@ -178,7 +178,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getRegularDownloaderThreadCount(): Int {
-        return sharedPreferences.getInt(REGULAR_THREAD_COUNT, 1)
+        return maxOf(1, sharedPreferences.getInt(REGULAR_THREAD_COUNT, 1))
     }
 
     fun setRegularDownloaderThreadCount(count: Int) {
@@ -188,7 +188,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getM3u8DownloaderThreadCount(): Int {
-        return sharedPreferences.getInt(M3U8_THREAD_COUNT, 3) // means 4
+        return maxOf(1, sharedPreferences.getInt(M3U8_THREAD_COUNT, 3)) // means 4
     }
 
     fun setM3u8DownloaderThreadCount(count: Int) {
@@ -208,7 +208,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsLockPortrait(): Boolean {
-        return sharedPreferences.getBoolean(IS_LOCK_PORTRAIT, false)
+        return sharedPreferences.getBoolean(IS_LOCK_PORTRAIT, true)
     }
 
     fun setIsLockPortrait(isLock: Boolean) {
@@ -269,7 +269,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsForceStreamDetection(): Boolean {
-        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DOWNLOAD, false)
+        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DETECTION, false)
     }
 
     fun setIsForceStreamDetection(isForce: Boolean) {
@@ -289,7 +289,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsProcessOnlyLiveDownloadFfmpeg(): Boolean {
-        return sharedPreferences.getBoolean(IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG, false)
+        return sharedPreferences.getBoolean(IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG, true)
     }
 
     fun setIsProcessOnlyLiveDownloadFfmpeg(isProcessFfmpeg: Boolean) {
@@ -353,5 +353,15 @@ class SharedPrefHelper @Inject constructor(
 
     fun getCustomDnsUrl(): String {
         return sharedPreferences.getString(CUSTOM_DNS_URL, "") ?: ""
+    }
+
+    fun getIsUseLegacyM3u8Detection(): Boolean {
+        return sharedPreferences.getBoolean(IS_USE_LEGACY_M3U8_DETECTION, false)
+    }
+
+    fun setIsUseLegacyM3u8Detection(isUse: Boolean) {
+        sharedPreferences.edit {
+            putBoolean(IS_USE_LEGACY_M3U8_DETECTION, isUse)
+        }
     }
 }

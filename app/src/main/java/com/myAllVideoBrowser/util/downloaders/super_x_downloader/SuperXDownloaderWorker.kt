@@ -107,7 +107,9 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     }
                     // Create the flag file that the running worker will detect
                     File(downloadDir, STOP_AND_SAVE_FLAG_FILENAME).createNewFile()
+                    getContinuation().resume(Result.success())
                 } catch (e: IOException) {
+                    finishWorkWithFailureTaskId(task)
                     AppLogger.e("FFmpeg: Failed to create stop_and_save flag file. $e")
                 }
             }
@@ -1602,6 +1604,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
         if (sessionIdString.isEmpty()) {
             AppLogger.e("SuperX: Cannot cancel/pause task. Task ID is missing.")
+            finishWorkWithFailureTaskId(task)
             return
         }
 
@@ -1619,8 +1622,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         downloadDir.mkdirs()
                     }
                     File(downloadDir, PAUSE_FLAG_FILENAME).createNewFile()
+                    getContinuation().resume(Result.success())
                 } catch (e: IOException) {
                     AppLogger.e("SuperX: Failed to create pause flag file. $e")
+                    finishWorkWithFailureTaskId(task)
                 }
             } else {
                 CustomFileDownloader.directCancel(downloadDir)
@@ -1630,7 +1635,9 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         downloadDir.mkdirs()
                     }
                     File(downloadDir, CANCEL_FLAG_FILENAME).createNewFile()
+                    getContinuation().resume(Result.success())
                 } catch (e: IOException) {
+                    finishWorkWithFailureTaskId(task)
                     AppLogger.e("FFmpeg: Failed to create cancel flag file. $e")
                 }
             }
@@ -1640,7 +1647,9 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 val sessionIdLong = sessionIdString.toLong()
                 AppLogger.d("FFmpeg: Cancelling legacy task using session ID: $sessionIdLong")
                 FFmpegKit.cancel(sessionIdLong)
+                getContinuation().resume(Result.success())
             } catch (e: NumberFormatException) {
+                finishWorkWithFailureTaskId(task)
                 AppLogger.e("FFmpeg: Failed to cancel task. The session ID '$sessionIdString' is not a valid number.")
             }
         }
@@ -1928,6 +1937,15 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 isLive = isLIve,
                 infoLine = if (isLIve) "Live Recording" else "Downloading..."
             )
+        }
+    }
+
+    private fun finishWorkWithFailureTaskId(task: VideoTaskItem) {
+        AppLogger.d("SMTH WRONG, taskId is NULL  $task")
+        try {
+            getContinuation().resume(Result.failure())
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
     }
 }

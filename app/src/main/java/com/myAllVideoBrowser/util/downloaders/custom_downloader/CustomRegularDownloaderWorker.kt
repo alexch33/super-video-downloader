@@ -335,27 +335,24 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 e.printStackTrace()
 
                 val taskState = when {
-                    e.message == CustomFileDownloader.STOPPED && isStoppedAndSaved -> VideoTaskState.ERROR // Special case
+                    e.message == CustomFileDownloader.STOPPED && isStoppedAndSaved -> VideoTaskState.SUCCESS // Special case
                     e.message == CustomFileDownloader.STOPPED -> VideoTaskState.PAUSE
                     e.message == CustomFileDownloader.CANCELED -> VideoTaskState.CANCELED
                     else -> if (taskItem.isLive) VideoTaskState.SUCCESS else VideoTaskState.ERROR
                 }
                 if (isStoppedAndSaved) {
                     AppLogger.d("STOP AND SAVE INTERRUPT")
-                    getContinuation().resume(Result.failure())
+                    getContinuation().resume(Result.success())
                     return
                 }
-                if (taskState == VideoTaskState.CANCELED) {
+                if (taskState == VideoTaskState.CANCELED || taskState == VideoTaskState.SUCCESS) {
                     // CANCEL
                     AppLogger.d("CUSTOM REGULAR CANCEL INTERRUPT")
-                    finishWork(taskItem.also {
-                        it.mId = taskId
-                        it.taskState = taskState
-                    })
+                    getContinuation().resume(Result.success())
                     return
                 }
 
-                if (taskState == VideoTaskState.SUCCESS || taskState == VideoTaskState.ERROR && taskItem.isLive) {
+                if (taskState == VideoTaskState.ERROR && taskItem.isLive) {
                     handleSuccessfulDownload(taskItem.also {
                         it.taskState = VideoTaskState.SUCCESS
                         it.mId = taskId

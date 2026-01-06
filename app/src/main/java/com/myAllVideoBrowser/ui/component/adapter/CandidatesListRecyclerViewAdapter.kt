@@ -87,7 +87,7 @@ class CandidatesListRecyclerViewAdapter(
             this.videoInfo = downloadCandidates
             this.downloadCandidate = candidate
             this.isCandidateSelected = candidate == selected
-            this.tvTitle.text = getShortOfFormat(candidate)
+            this.tvTitle.text = getShortOfFormat(candidate, downloadCandidates.isDetectedBySuperX)
 
             this.listener = object : CandidateFormatListener {
                 override fun onSelectFormat(videoInfo: VideoInfo, format: String) {
@@ -139,10 +139,12 @@ class CandidatesListRecyclerViewAdapter(
         notifyDataSetChanged()
     }
 
-    private fun makeVideoFormatHumanReadable(input: String): String {
+    private fun makeVideoFormatHumanReadable(input: String, isDetectedBySuperX: Boolean): String {
         val lowercasedInput = input.lowercase()
         return when {
-            lowercasedInput.startsWith("mpd-") || lowercasedInput.startsWith("hls-") -> {
+            isDetectedBySuperX && (lowercasedInput.startsWith("mpd-") || lowercasedInput.startsWith(
+                "hls-"
+            )) -> {
                 val parts = lowercasedInput.split('-')
                 if (parts.size >= 2) {
                     val type = parts[0].uppercase() // "MPD" or "HLS"
@@ -174,8 +176,8 @@ class CandidatesListRecyclerViewAdapter(
         return formatsMap.toSortedMap().values.toList().sortedBy { it.formatNote }
     }
 
-    private fun getShortOfFormat(format: String?): String {
-        val formattedFormat = makeVideoFormatHumanReadable(format ?: "error")
+    private fun getShortOfFormat(format: String?, detectedBySuperX: Boolean): String {
+        val formattedFormat = makeVideoFormatHumanReadable(format ?: "error", detectedBySuperX)
         if (formattedFormat != "error") {
             return if (formattedFormat.contains("x")) {
                 "${parseHeight(formattedFormat)}P"

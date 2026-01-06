@@ -87,7 +87,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isAutoDarkMode}"
                 android:text="@string/is_auto_dark"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -97,7 +97,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isLockPortrait}"
                 android:text="@string/lock_screen_orientation_portrait"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -116,7 +116,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getVideoAlertState()}"
                 android:text="@string/show_video_found_alert"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -126,7 +126,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getVideoButtonState()}"
                 android:text="@string/show_action_button"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -136,7 +136,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getIsFindVideoByUrl()}"
                 android:text="@string/find_videos_by_url"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -146,7 +146,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getIsCheckEveryRequestOnMp4Video()}"
                 android:text="@string/check_every_request_on_video_mp4"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -156,7 +156,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isCheckIfEveryRequestOnM3u8}"
                 android:text="@string/check_every_request_on_video_m3u8"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -166,7 +166,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isCheckOnAudio}"
                 android:text="@string/check_every_request_on_audio"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -176,7 +176,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isForceStreamDetection}"
                 android:text="@string/force_stream_detection"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -186,7 +186,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isUseLegacyM3u8Detection}"
                 android:text="@string/use_legacy_m3u8_detection"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -205,7 +205,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isForceStreamDownloading}"
                 android:text="@string/force_stream_downloading"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -215,7 +215,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isAlwaysRemuxRegularDownloads}"
                 android:text="@string/is_always_remux_regular_downloads"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -225,7 +225,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isRemuxOnlyLiveRegularDownloads}"
                 android:text="@string/is_remux_only_live_regular_downloads"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
@@ -235,7 +235,7 @@
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isInterruptIntreceptedResources}"
                 android:text="@string/is_interrupt_intrecepted_resources"
-                app:thumbTint="@color/colorAccent"
+                app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 

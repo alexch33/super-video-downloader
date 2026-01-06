@@ -90,6 +90,9 @@ class ProxiesFragment : BaseFragment() {
                     this.passwordEditText.text?.clear()
                     this.httpRadioButton.isChecked = true
 
+                    if (proxiesViewModel.isProxyOn.get() == false) {
+                        proxiesViewModel.turnOnProxy()
+                    }
                 } else {
                     Toast.makeText(
                         this@ProxiesFragment.context, "Invalid host or port", Toast.LENGTH_SHORT

@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.ui.main.video
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +13,8 @@ import androidx.annotation.OptIn
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.FileProvider
 import androidx.core.net.toFile
-import androidx.lifecycle.Observer
+import androidx.core.net.toUri
+import androidx.core.view.get
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -34,8 +36,6 @@ import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.IntentUtil
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
@@ -152,6 +152,7 @@ class VideoFragment : BaseFragment() {
         val popupMenu = PopupMenu(myView.context, myView)
         popupMenu.menuInflater.inflate(R.menu.menu_video, popupMenu.menu)
         popupMenu.setForceShowIcon(true)
+        popupMenu.menu[5].isVisible = isVideoInHiddenFolderFolder(video)
         popupMenu.show()
 
         popupMenu.setOnMenuItemClickListener { arg0 ->
@@ -190,6 +191,33 @@ class VideoFragment : BaseFragment() {
                     true
                 }
 
+                R.id.item_move_to_downloads -> {
+                    try {
+                        val targetDir = Environment.getExternalStoragePublicDirectory(
+                            Environment.DIRECTORY_DOWNLOADS
+                        )
+                        val target = File(targetDir, video.name)
+                        val isSuccess =
+                            fileUtil.moveMedia(requireContext(), video.uri, target.toUri())
+                        if (isSuccess) {
+                            Toast.makeText(
+                                requireContext(),
+                                getString(R.string.media_move_success),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@setOnMenuItemClickListener true
+                        }
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+                    }
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.media_move_error),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    true
+                }
+
                 else -> false
             }
         }
@@ -197,15 +225,24 @@ class VideoFragment : BaseFragment() {
 
     @OptIn(UnstableApi::class)
     private fun startVideo(localVideo: LocalVideo) {
-        startActivity(Intent(
-            requireContext(), VideoPlayerActivity::class.java
-        ).apply {
-            putExtra(VideoPlayerFragment.VIDEO_NAME, localVideo.name)
-            putExtra(
-                VideoPlayerFragment.VIDEO_URL, localVideo.uri.toString()
-            )
-        })
+        startActivity(
+            Intent(
+                requireContext(), VideoPlayerActivity::class.java
+            ).apply {
+                putExtra(VideoPlayerFragment.VIDEO_NAME, localVideo.name)
+                putExtra(
+                    VideoPlayerFragment.VIDEO_URL, localVideo.uri.toString()
+                )
+            })
     }
+
+    private fun isVideoInHiddenFolderFolder(video: LocalVideo): Boolean {
+        val downloadsDir =
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val videoParentDir = video.uri.toFile().parentFile
+        return videoParentDir != null && videoParentDir.absolutePath != downloadsDir.absolutePath
+    }
+
 
     private fun startVideoWith(localVideo: LocalVideo) {
         val intent = Intent(Intent.ACTION_VIEW)

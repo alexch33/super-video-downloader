@@ -209,7 +209,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsLockPortrait(): Boolean {
-        return sharedPreferences.getBoolean(IS_LOCK_PORTRAIT, false)
+        return sharedPreferences.getBoolean(IS_LOCK_PORTRAIT, true)
     }
 
     fun setIsLockPortrait(isLock: Boolean) {
@@ -270,7 +270,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsForceStreamDetection(): Boolean {
-        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DOWNLOAD, false)
+        return sharedPreferences.getBoolean(IS_FORCE_STREAM_DOWNLOAD, true)
     }
 
     fun setIsForceStreamDetection(isForce: Boolean) {
@@ -290,7 +290,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsProcessOnlyLiveDownloadFfmpeg(): Boolean {
-        return sharedPreferences.getBoolean(IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG, false)
+        return sharedPreferences.getBoolean(IS_PROCESS_ONLY_LIVE_DOWNLOAD_FFMPEG, true)
     }
 
     fun setIsProcessOnlyLiveDownloadFfmpeg(isProcessFfmpeg: Boolean) {

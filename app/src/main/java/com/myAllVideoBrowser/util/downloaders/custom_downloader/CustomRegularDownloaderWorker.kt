@@ -155,7 +155,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
             var processedUri: Uri? = null
 
-            if (isProcessFfmpeg) {
+            val isFlv = item.isLive && item.url.contains(".flv", ignoreCase = true)
+            if (isProcessFfmpeg || isFlv) {
                 val startProgress = Progress(0, sourcePath.length())
                 showProgressProcessing(item, startProgress)
                 saveProgress(
@@ -166,9 +167,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 )
                 AppLogger.d("START FFMPEG PROCESSING... $sourcePath")
 
-                // TODO: may be should be changed
                 // Determine if it's an FLV stream
-                val isFlv = item.isLive && item.url.contains(".flv", ignoreCase = true)
                 AppLogger.d("IS FLV: $isFlv")
                 // The FfmpegProcessor call is now correctly blocking this thread
                 processedUri = FfmpegProcessor.getInstance()

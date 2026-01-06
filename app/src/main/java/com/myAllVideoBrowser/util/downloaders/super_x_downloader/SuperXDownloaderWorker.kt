@@ -1,6 +1,7 @@
 package com.myAllVideoBrowser.util.downloaders.super_x_downloader
 
 import android.content.Context
+import android.text.format.Formatter
 import android.util.Base64
 import androidx.core.net.toUri
 import androidx.work.WorkerParameters
@@ -23,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Request
@@ -242,7 +244,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                                 AppLogger.d("HLS (Live): Action detected during wait. Breaking inner wait loop.")
                                 break // Exit the waiting loop immediately
                             }
-                            kotlinx.coroutines.delay(250L) // Short, non-blocking delay
+                            delay(250L) // Short, non-blocking delay
                         }
                     }
                 }
@@ -263,6 +265,14 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
                 // Check which condition ended the loop to provide accurate logging.
                 if (File(hlsTmpDir, STOP_AND_SAVE_FLAG_FILENAME).exists()) {
+                    onProgress(
+                        Progress(hlsTotalBytesDownloaded.get(), hlsTotalBytesDownloaded.get()),
+                        task.also {
+                            it.taskState = VideoTaskState.PREPARE
+                        },
+                        isSizeEstimated = true,
+                        isLIve = true
+                    )
                     AppLogger.d("HLS (Live): Download stopped by user. Proceeding to merge ${allVideoSegments.size} video and ${allAudioSegments.size} audio segments.")
                 } else {
                     AppLogger.d("HLS (Live): Stream finished naturally. Proceeding to merge ${allVideoSegments.size} video and ${allAudioSegments.size} audio segments.")
@@ -598,7 +608,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     throw IOException(PAUSED_MESSAGE)
                 }
                 // Wait for a short period before checking again
-                kotlinx.coroutines.delay(500L)
+                delay(500L)
             }
 
             jobs.awaitAll()
@@ -1814,13 +1824,19 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 val from = sourcePath.toUri()
                 val to = File(targetPath).toUri()
                 AppLogger.d("MOVING FILE $from to -> $to")
+                saveProgress(item.mId, finalProgress, VideoTaskState.PREPARE, "Downloaded, moving...")
                 val fileMoved = fileUtil.moveMedia(applicationContext, from, to)
-
+                saveProgress(
+                    item.mId,
+                    finalProgress,
+                    item.taskState,
+                    "Downloaded, moving ${if (fileMoved) "success" else "failed"}"
+                )
                 if (fileMoved) {
                     AppLogger.d("SuperX: File moved successfully to $targetPath")
                     sourcePath.parentFile?.deleteRecursively()
                     val successProgress = Progress(item.totalSize, item.totalSize)
-                    saveProgress(item.mId, successProgress, item.taskState, "Success")
+                    saveProgress(item.mId, successProgress, VideoTaskState.SUCCESS, "Success")
                 } else {
                     AppLogger.e("FFmpeg: Failed to move file to $targetPath")
                     item.taskState = VideoTaskState.ERROR
@@ -1860,7 +1876,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             taskItem.apply {
                 // Format the notification line to show "Recording..." with size and duration.
                 lineInfo = "Recording: ${
-                    android.text.format.Formatter.formatShortFileSize(
+                    Formatter.formatShortFileSize(
                         applicationContext, progress.currentBytes
                     )
                 } ($durationString)"

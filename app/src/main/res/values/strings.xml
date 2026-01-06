@@ -112,8 +112,8 @@
     <string name="go">GO</string>
     <string name="force_stream_downloading">Force Stream Download(for downloading regular(not m3u8 or mpd) live streams)</string>
     <string name="force_stream_detection">Force Stream Detection(Detection urls with body content length -1, sometimes used for regular live streams)</string>
-    <string name="is_always_remux_regular_downloads">Always remux all regular downloads</string>
-    <string name="is_remux_only_live_regular_downloads">Remux only live regular downloads</string>
+    <string name="is_always_remux_regular_downloads">Postprocessing for all regular downloads</string>
+    <string name="is_remux_only_live_regular_downloads">Postprocessing for only live downloads</string>
     <string name="is_interrupt_intrecepted_resources">Interrupt intrecepted media content for browser</string>
     <string name="add_proxy">Add Proxy</string>
     <string name="current_proxy_chain">Current proxy chain</string>

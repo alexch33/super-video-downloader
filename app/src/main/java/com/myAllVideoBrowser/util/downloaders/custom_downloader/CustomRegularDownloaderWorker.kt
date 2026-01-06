@@ -284,7 +284,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                     e.message == CustomFileDownloader.STOPPED && isStoppedAndSaved.get() -> VideoTaskState.SUCCESS // Special case
                     e.message == CustomFileDownloader.STOPPED -> VideoTaskState.PAUSE
                     e.message == CustomFileDownloader.CANCELED -> VideoTaskState.CANCELED
-                    else -> VideoTaskState.ERROR
+                    else -> if (taskItem.isLive) VideoTaskState.SUCCESS else VideoTaskState.ERROR
                 }
 
                 if (taskState == VideoTaskState.SUCCESS) {

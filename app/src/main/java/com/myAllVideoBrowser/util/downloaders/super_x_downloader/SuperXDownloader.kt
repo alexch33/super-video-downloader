@@ -4,7 +4,9 @@ import android.content.Context
 import android.util.Base64
 import androidx.work.BackoffPolicy
 import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.AppLogger
@@ -14,6 +16,37 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 object SuperXDownloader : GenericDownloader() {
+
+    fun runWorkerTask(
+        context: Context,
+        info: VideoInfo,
+        taskData: OneTimeWorkRequest,
+        action: String
+    ) {
+        if (action == DownloaderActions.PAUSE) {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                info.id + DownloaderActions.PAUSE, ExistingWorkPolicy.APPEND_OR_REPLACE, taskData
+            )
+            return
+        }
+
+        if (action == DownloaderActions.CANCEL) {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                info.id + DownloaderActions.CANCEL, ExistingWorkPolicy.APPEND_OR_REPLACE, taskData
+            )
+            return
+        }
+
+        if (action == DownloaderActions.STOP_SAVE_ACTION) {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                info.id + DownloaderActions.STOP_SAVE_ACTION,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                taskData
+            )
+            return
+        }
+    }
+
     fun stopAndSaveDownload(context: Context, progressInfo: ProgressInfo) {
         val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
         val downloaderData =
@@ -22,7 +55,10 @@ object SuperXDownloader : GenericDownloader() {
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(
-            context, progressInfo.videoInfo, downloadWork.build()
+            context,
+            progressInfo.videoInfo,
+            downloadWork.build(),
+            DownloaderActions.STOP_SAVE_ACTION
         )
     }
 
@@ -38,7 +74,7 @@ object SuperXDownloader : GenericDownloader() {
         runWorkerTask(
             context,
             progressInfo.videoInfo,
-            downloadWork.build()
+            downloadWork.build(), DownloaderActions.CANCEL
         )
     }
 
@@ -53,7 +89,7 @@ object SuperXDownloader : GenericDownloader() {
         runWorkerTask(
             context,
             progressInfo.videoInfo,
-            downloadWork.build()
+            downloadWork.build(), DownloaderActions.PAUSE
         )
     }
 

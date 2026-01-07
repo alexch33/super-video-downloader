@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.ui.main.settings
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -61,7 +62,6 @@ class SettingsFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupSwitchListeners()
         setupSeekBarListeners()
         setupRadioGroupListener()
         setupTextUpdateCallbacks()
@@ -71,7 +71,6 @@ class SettingsFragment : BaseFragment() {
             parentFragmentManager.popBackStack()
         }
 
-        // Load initial values
         settingsViewModel.start()
     }
 
@@ -80,102 +79,52 @@ class SettingsFragment : BaseFragment() {
         super.onDestroyView()
     }
 
-    private fun setupSwitchListeners() {
-        dataBinding.apply {
-            isAutoThemeCheckBox.setOnCheckedChangeListener { _, isChecked ->
-                settingsViewModel.setIsAutoTheme(isChecked)
-            }
-            lockOrientationCheckBox.setOnCheckedChangeListener { _, isChecked ->
-                settingsViewModel.setIsLockPortrait(isChecked)
-            }
-            showVideoAlertCheckBox.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) settingsViewModel.setShowVideoAlertOn() else settingsViewModel.setShowVideoAlertOff()
-            }
-            showVideoActionButtonCheckBox.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) settingsViewModel.setShowVideoActionButtonOn() else settingsViewModel.setShowVideoActionButtonOff()
-            }
-            findVideosByUrl.setOnCheckedChangeListener { _, isChecked ->
-                settingsViewModel.setIsFindVideoByUrl(isChecked)
-            }
-            isCheckEveryRequestOnMp4.setOnCheckedChangeListener { _, isChecked ->
-                settingsViewModel.setIsCheckEveryRequestOnVideo(isChecked)
-            }
-            isCheckEveryRequestOnM3u8.setOnCheckedChangeListener { _, isChecked ->
-                settingsViewModel.setIsCheckIfEveryUrlOnM3u8(isChecked)
-            }
-            isCheckEveryRequestOnAudio.setOnCheckedChangeListener { _, isChecked ->
-                settingsViewModel.setIsCheckOnAudio(isChecked)
-            }
-            isForceStreamDetection.setOnCheckedChangeListener { _, isChecked ->
-                settingsViewModel.setForceStreamDetection(isChecked)
-                if (isChecked) {
-                    settingsViewModel.setRegularThreadsCount(1)
-                }
-            }
-            // Add listener for the new switch
-            isUseLegacyM3u8Detection.setOnCheckedChangeListener { _, isChecked ->
-                settingsViewModel.setUseLegacyM3u8Detection(isChecked)
-            }
-            isForceStreamDownloading.setOnCheckedChangeListener { _, isChecked ->
-                settingsViewModel.setForceStreamDownloading(isChecked)
-            }
-            isAlwaysRemuxRegularDownloads.setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) {
-                    settingsViewModel.setIsRemuxOnlyLiveRegularDownloads(true)
-                }
-                settingsViewModel.setIsRemuxOnlyRegularDownloads(isChecked)
-            }
-            isRemuxOnlyLiveRegularDownloads.setOnCheckedChangeListener { _, isChecked ->
-                if (!isChecked) {
-                    settingsViewModel.setIsRemuxOnlyRegularDownloads(false)
-                }
-                settingsViewModel.setIsRemuxOnlyLiveRegularDownloads(isChecked)
-            }
-            isInterruptIntreceptedResources.setOnCheckedChangeListener { _, isChecked ->
-                settingsViewModel.setIsInterruptInterceptedResources(isChecked)
-            }
-        }
-    }
-
     private fun setupSeekBarListeners() {
         dataBinding.seekBarRegular.setOnSeekBarChangeListener(object :
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
+                    settingsViewModel.regularThreadsCount.set(progress)
+
                     if (lastSavedRegularThreadsCount == 1 && progress > 1) {
                         context?.let { showDownloadWarningDialog(it) }
                     }
                     lastSavedRegularThreadsCount = progress
-                    settingsViewModel.setRegularThreadsCount(progress)
                 }
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(p0: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                seekBar?.let { settingsViewModel.setRegularThreadsCount(it.progress) }
+            }
         })
 
         dataBinding.seekBarM3u8.setOnSeekBarChangeListener(object :
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    settingsViewModel.setM3u8ThreadsCount(progress)
+                    settingsViewModel.m3u8ThreadsCount.set(progress)
                 }
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(p0: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                seekBar?.let { settingsViewModel.setM3u8ThreadsCount(it.progress) }
+            }
         })
 
         dataBinding.seekBarAdsTreshold.setOnSeekBarChangeListener(object :
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    settingsViewModel.setVideoDetectionTreshold(progress)
+                    settingsViewModel.videoDetectionTreshold.set(progress)
                 }
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(p0: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                seekBar?.let { settingsViewModel.setVideoDetectionTreshold(it.progress) }
+            }
         })
     }
 
@@ -186,7 +135,7 @@ class SettingsFragment : BaseFragment() {
                     StorageType.SD -> R.id.option_sd_card
                     StorageType.HIDDEN -> R.id.option_hidden_folder
                     StorageType.HIDDEN_SD -> R.id.option_sd_app_folder
-                    null -> -1 // Should not happen, but good to handle
+                    null -> -1
                 }
                 if (newCheckId != -1 && dataBinding.storageOptions.checkedRadioButtonId != newCheckId) {
                     dataBinding.storageOptions.check(newCheckId)
@@ -194,18 +143,8 @@ class SettingsFragment : BaseFragment() {
             }
         }
 
-        // Add the callback to listen for changes
         settingsViewModel.storageType.addOnPropertyChangedCallback(storageTypeCallback)
-
         storageTypeCallback.onPropertyChanged(null, 0)
-
-        dataBinding.storageOptions.setOnCheckedChangeListener { _, checkedId ->
-            when (checkedId) {
-                R.id.option_sd_card -> settingsViewModel.setDownloadsFolderSdCard()
-                R.id.option_hidden_folder -> settingsViewModel.setDownloadsFolderHidden()
-                R.id.option_sd_app_folder -> settingsViewModel.setDownloadsFolderHiddenSdCard()
-            }
-        }
     }
 
     private fun handleUIEvents() {
@@ -219,17 +158,16 @@ class SettingsFragment : BaseFragment() {
 
     private fun setupTextUpdateCallbacks() {
         val tresholdCallback = object : Observable.OnPropertyChangedCallback() {
+            @SuppressLint("SetTextI18n")
             override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                val readableSize = FileUtil.getFileSizeReadable(
-                    settingsViewModel.videoDetectionTreshold.get().toDouble()
-                )
+                val currentTreshold = settingsViewModel.videoDetectionTreshold.get()
+                val readableSize = FileUtil.getFileSizeReadable(currentTreshold.toDouble())
                 dataBinding.adsTresholdText.text =
-                    getString(R.string.ads_detection_treshold, readableSize)
+                    getString(R.string.ads_detection_treshold) + " $readableSize"
             }
         }
         settingsViewModel.videoDetectionTreshold.addOnPropertyChangedCallback(tresholdCallback)
 
-        // Initialize text at start
         tresholdCallback.onPropertyChanged(null, 0)
     }
 

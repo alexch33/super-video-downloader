@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+
         <import type="android.view.View" />
+
         <variable
             name="viewModel"
             type="com.myAllVideoBrowser.ui.main.settings.SettingsViewModel" />
@@ -86,6 +88,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isAutoDarkMode}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsAutoTheme(isChecked)}"
                 android:text="@string/is_auto_dark"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -96,7 +99,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isLockPortrait}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsLockPortrait(isChecked)}"
                 android:text="@string/lock_screen_orientation_portrait"
+                app:thumbTint="@color/switch_thumb_selector"
+                app:trackDecorationTint="@color/colorAccentDark"
+                app:trackTint="@color/color_gray" />
+
+            <!-- NEW: DRM Enabled Switch -->
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/drm_enabled_check_box"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.isDrmEnabled}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsDrmEnabled(isChecked)}"
+                android:text="@string/drm_permission_title"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
@@ -115,6 +131,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getVideoAlertState()}"
+                android:onCheckedChanged="@{(_, isChecked) -> isChecked ? viewModel.setShowVideoAlertOn() : viewModel.setShowVideoAlertOff()}"
                 android:text="@string/show_video_found_alert"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -125,6 +142,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getVideoButtonState()}"
+                android:onCheckedChanged="@{(_, isChecked) -> isChecked ? viewModel.setShowVideoActionButtonOn() : viewModel.setShowVideoActionButtonOff()}"
                 android:text="@string/show_action_button"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -135,6 +153,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getIsFindVideoByUrl()}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsFindVideoByUrl(isChecked)}"
                 android:text="@string/find_videos_by_url"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -145,6 +164,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.getIsCheckEveryRequestOnMp4Video()}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsCheckEveryRequestOnVideo(isChecked)}"
                 android:text="@string/check_every_request_on_video_mp4"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -155,6 +175,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isCheckIfEveryRequestOnM3u8}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsCheckIfEveryUrlOnM3u8(isChecked)}"
                 android:text="@string/check_every_request_on_video_m3u8"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -165,6 +186,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isCheckOnAudio}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsCheckOnAudio(isChecked)}"
                 android:text="@string/check_every_request_on_audio"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -175,6 +197,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isForceStreamDetection}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setForceStreamDetection(isChecked)}"
                 android:text="@string/force_stream_detection"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -185,6 +208,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isUseLegacyM3u8Detection}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setUseLegacyM3u8Detection(isChecked)}"
                 android:text="@string/use_legacy_m3u8_detection"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -204,6 +228,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isForceStreamDownloading}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setForceStreamDownloading(isChecked)}"
                 android:text="@string/force_stream_downloading"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -214,6 +239,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isAlwaysRemuxRegularDownloads}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsRemuxOnlyRegularDownloads(isChecked)}"
                 android:text="@string/is_always_remux_regular_downloads"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -224,6 +250,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isRemuxOnlyLiveRegularDownloads}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsRemuxOnlyLiveRegularDownloads(isChecked)}"
                 android:text="@string/is_remux_only_live_regular_downloads"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -234,6 +261,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="@{viewModel.isInterruptIntreceptedResources}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsInterruptInterceptedResources(isChecked)}"
                 android:text="@string/is_interrupt_intrecepted_resources"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
@@ -262,7 +290,7 @@
                     android:layout_height="wrap_content"
                     android:max="15"
                     android:min="1"
-                    android:progress="@{viewModel.regularThreadsCount}" />
+                    android:progress="@={viewModel.regularThreadsCount}" />
             </LinearLayout>
 
             <LinearLayout
@@ -285,7 +313,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:max="15"
-                    android:progress="@{viewModel.m3u8ThreadsCount}" />
+                    android:progress="@={viewModel.m3u8ThreadsCount}" />
             </LinearLayout>
 
             <LinearLayout
@@ -307,7 +335,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:max="@{50 * 1024 * 1024}"
-                    android:progress="@{viewModel.videoDetectionTreshold}" />
+                    android:progress="@={viewModel.videoDetectionTreshold}" />
             </LinearLayout>
 
             <!-- Storage Location Section -->
@@ -333,18 +361,24 @@
                         android:id="@+id/option_sd_card"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:checked="@{viewModel.storageType == viewModel.storageType.SD}"
+                        android:onClick="@{() -> viewModel.setDownloadsFolderSdCard()}"
                         android:text="@string/downloads_folder" />
 
                     <RadioButton
                         android:id="@+id/option_hidden_folder"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:checked="@{viewModel.storageType == viewModel.storageType.HIDDEN}"
+                        android:onClick="@{() -> viewModel.setDownloadsFolderHidden()}"
                         android:text="@string/hidden_folder" />
 
                     <RadioButton
                         android:id="@+id/option_sd_app_folder"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:checked="@{viewModel.storageType == viewModel.storageType.HIDDEN_SD}"
+                        android:onClick="@{() -> viewModel.setDownloadsFolderHiddenSdCard()}"
                         android:text="@string/sd_app_folder" />
                 </RadioGroup>
             </LinearLayout>

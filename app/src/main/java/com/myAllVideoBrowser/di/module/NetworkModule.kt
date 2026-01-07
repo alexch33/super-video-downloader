@@ -1,10 +1,15 @@
 package com.myAllVideoBrowser.di.module
 
 import android.app.Application
+import android.content.Context
+import com.franmontiel.persistentcookiejar.PersistentCookieJar
+import com.franmontiel.persistentcookiejar.cache.SetCookieCache
+import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
 import com.myAllVideoBrowser.data.remote.service.ConfigService
 import com.myAllVideoBrowser.data.remote.service.VideoService
 import com.myAllVideoBrowser.data.remote.service.VideoServiceSuperX
 import com.myAllVideoBrowser.data.remote.service.VideoServiceLocal
+import com.myAllVideoBrowser.di.qualifier.ApplicationContext
 import com.myAllVideoBrowser.util.Memory
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
@@ -39,9 +44,16 @@ class NetworkModule {
             )
             .build()
 
-    @Provides
     @Singleton
-    fun provideOkHttpClient(application: Application): OkHttpClient = buildOkHttpClient(application)
+    @Provides
+    fun provideOkHttpClient(cookieJar: PersistentCookieJar): OkHttpClient {
+        return OkHttpClient.Builder()
+            .cookieJar(cookieJar)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
 
     @Provides
     @Singleton
@@ -67,4 +79,10 @@ class NetworkModule {
         VideoServiceSuperX(
             httpClient
         )
+
+    @Singleton
+    @Provides
+    fun provideCookieJar(@ApplicationContext context: Context): PersistentCookieJar {
+        return PersistentCookieJar(SetCookieCache(), SharedPrefsCookiePersistor(context))
+    }
 }

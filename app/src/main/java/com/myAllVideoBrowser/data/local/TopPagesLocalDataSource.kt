@@ -51,7 +51,7 @@ class TopPagesLocalDataSource @Inject constructor(
         val defaultList = arrayListOf<PageInfo>()
 
         defaultList.add(PageInfo(link = "https://www.imdb.com"))
-        defaultList.add(PageInfo(link = "https://www.tiktok.com"))
+        defaultList.add(PageInfo(link = "https://github.com/DNSCrypt/dnscrypt-resolvers/blob/master/v3/public-resolvers.md"))
         defaultList.add(PageInfo(link = "https://www.dailymotion.com"))
         defaultList.add(PageInfo(link = "https://www.instagram.com"))
         defaultList.add(PageInfo(link = "https://www.twitter.com"))

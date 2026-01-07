@@ -135,4 +135,9 @@
     <string name="video_move_downloads">Move Downloads</string>
     <string name="media_move_error">Media Move Error</string>
     <string name="media_move_success">Media move success</string>
+    <string name="drm_permission_title">Allow Protected Content</string>
+    <string name="drm_permission_message">This site wants to play DRM-protected media (like movies or music). Allowing this is required for playback. Do you want to enable this feature?</string>
+    <string name="allow">Allow</string>
+    <string name="block">Block</string>
+
 </resources>

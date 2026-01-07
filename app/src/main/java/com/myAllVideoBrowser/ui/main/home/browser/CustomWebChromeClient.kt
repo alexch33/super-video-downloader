@@ -8,6 +8,7 @@ import android.view.WindowManager
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentWebTabBinding
 import com.myAllVideoBrowser.ui.main.home.MainActivity
@@ -27,6 +28,42 @@ class CustomWebChromeClient(
     private val appUtil: AppUtil,
     private val mainActivity: MainActivity
 ) : WebChromeClient() {
+    override fun onPermissionRequest(request: PermissionRequest?) {
+        if (request == null) {
+            super.onPermissionRequest(null)
+            return
+        }
+
+        val isDrmRequest =
+            request.resources.any { it == PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID }
+
+        if (isDrmRequest) {
+            if (settingsViewModel.isDrmEnabled.get()) {
+                AppLogger.d("DRM: Granting permission based on existing setting.")
+                request.grant(arrayOf(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID))
+                return
+            } else {
+                MaterialAlertDialogBuilder(mainActivity)
+                    .setTitle(R.string.drm_permission_title)
+                    .setMessage(R.string.drm_permission_message)
+                    .setPositiveButton(R.string.allow) { _, _ ->
+                        AppLogger.d("DRM: User granted permission via dialog.")
+                        request.grant(arrayOf(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID))
+                        settingsViewModel.isDrmEnabled.set(true)
+                    }
+                    .setNegativeButton(R.string.block) { _, _ ->
+                        AppLogger.d("DRM: User denied permission via dialog.")
+                        request.deny()
+                    }
+                    .show()
+                return
+            }
+        }
+
+        AppLogger.d("Permissions: Denying non-DRM request for resources: ${request.resources.joinToString()}")
+        request.deny()
+    }
+
     override fun onCreateWindow(
         view: WebView?,
         isDialog: Boolean,

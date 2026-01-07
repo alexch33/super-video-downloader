@@ -111,7 +111,7 @@ class CustomFileDownloader(
                 throw Error("File is not dir")
             }
 
-            File(dirToCancel, Helper.CANCEL_FILE_NAME).createNewFile()
+            dirToCancel.deleteRecursively()
         }
     }
 

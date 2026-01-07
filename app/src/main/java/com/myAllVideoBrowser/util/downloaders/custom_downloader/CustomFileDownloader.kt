@@ -66,7 +66,7 @@ class CustomFileDownloader(
             return File(
                 fileToStop.parentFile,
                 Helper.STOP_FILE_NAME
-            ).exists() && File(fileToStop.parentFile, Helper.SAVE_FILE_NAME).createNewFile()
+            ).exists() && File(fileToStop.parentFile, Helper.SAVE_FILE_NAME).exists()
         }
 
         fun directStop(fileToStop: File) {

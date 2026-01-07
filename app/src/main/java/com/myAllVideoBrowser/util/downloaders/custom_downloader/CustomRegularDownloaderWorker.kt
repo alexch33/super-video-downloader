@@ -5,7 +5,6 @@ import android.net.Uri
 import android.util.Base64
 import androidx.core.net.toFile
 import androidx.core.net.toUri
-import androidx.room.concurrent.AtomicBoolean
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FfmpegProcessor
@@ -29,9 +28,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     @Volatile
     private var lastSavedTime = 0L
 
-    var isCanceled = AtomicBoolean(false)
-
-    var isStoppedAndSaved = AtomicBoolean(false)
 
     companion object {
         private const val PROGRESS_UPDATE_INTERVAL = 1000
@@ -42,28 +38,22 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     ) {
         when (action) {
             GenericDownloader.DownloaderActions.DOWNLOAD -> {
-                isCanceled.set(false)
                 startDownload(task, headers)
             }
 
             GenericDownloader.DownloaderActions.CANCEL -> {
-                isCanceled.set(true)
                 cancelTask(task)
             }
 
             GenericDownloader.DownloaderActions.PAUSE -> {
-                isCanceled.set(false)
                 pauseTask(task)
             }
 
             GenericDownloader.DownloaderActions.RESUME -> {
-                isCanceled.set(false)
                 startDownload(task, headers)
             }
 
             GenericDownloader.DownloaderActions.STOP_SAVE_ACTION -> {
-                isCanceled.set(false)
-                isStoppedAndSaved.set(true)
                 stopAndSave(task)
             }
         }

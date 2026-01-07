@@ -8,21 +8,81 @@ import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
-import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader.DownloaderActions.Companion.STOP_SAVE_ACTION
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 object CustomRegularDownloader : GenericDownloader() {
+    fun runWorkerTask(
+        context: Context,
+        info: VideoInfo,
+        taskData: OneTimeWorkRequest,
+        action: String
+    ) {
+        if (action == DownloaderActions.PAUSE) {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                info.id + DownloaderActions.PAUSE, ExistingWorkPolicy.APPEND_OR_REPLACE, taskData
+            )
+            return
+        }
+
+        if (action == DownloaderActions.CANCEL) {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                info.id + DownloaderActions.CANCEL, ExistingWorkPolicy.APPEND_OR_REPLACE, taskData
+            )
+            return
+        }
+
+        if (action == DownloaderActions.STOP_SAVE_ACTION) {
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                info.id + DownloaderActions.STOP_SAVE_ACTION,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                taskData
+            )
+            return
+        }
+    }
+
+    override fun pauseDownload(context: Context, progressInfo: ProgressInfo) {
+        val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
+
+        val downloaderData = getDownloadDataFromVideoInfo(progressInfo.videoInfo)
+        downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.PAUSE)
+        downloadWork.setInputData(downloaderData.build())
+
+        runWorkerTask(
+            context,
+            progressInfo.videoInfo,
+            downloadWork.build(), DownloaderActions.PAUSE
+        )
+    }
+
+    override fun cancelDownload(context: Context, progressInfo: ProgressInfo, removeFile: Boolean) {
+        val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
+        DownloaderActions
+        val downloaderData = getDownloadDataFromVideoInfo(progressInfo.videoInfo)
+        downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.CANCEL)
+        downloaderData.putString(Constants.IS_FILE_REMOVE_KEY, removeFile.toString())
+        downloadWork.setInputData(downloaderData.build())
+
+        runWorkerTask(
+            context,
+            progressInfo.videoInfo,
+            downloadWork.build(), DownloaderActions.CANCEL
+        )
+    }
 
     fun stopAndSaveDownload(context: Context, progressInfo: ProgressInfo) {
         val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
         val downloaderData =
             getDownloadDataFromVideoInfo(progressInfo.videoInfo)
-        downloaderData.putString(Constants.ACTION_KEY, STOP_SAVE_ACTION)
+        downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.STOP_SAVE_ACTION)
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(
-            context, progressInfo.videoInfo, downloadWork.build()
+            context,
+            progressInfo.videoInfo,
+            downloadWork.build(),
+            DownloaderActions.STOP_SAVE_ACTION
         )
     }
 

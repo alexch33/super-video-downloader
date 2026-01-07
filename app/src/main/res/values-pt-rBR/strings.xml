@@ -101,8 +101,8 @@
     <string name="go">Ir</string>
     <string name="force_stream_downloading">Forçar baixar transmissão (para baixar transmissões comuns(menos m3u8 ou MPD))</string>
     <string name="force_stream_detection">Forçar a detecção de transmissão (detecção da url com o conteúdo do corpo -1, as vezes é usado para transmissões ao vivo comum)</string>
-    <string name="is_always_remux_regular_downloads">Sempre remuxe todos os downloads regulares</string>
-    <string name="is_remux_only_live_regular_downloads">Remux apenas faz downloads regulares ao vivo</string>
+    <string name="is_always_remux_regular_downloads">Sempre postprocess todos os downloads regulares</string>
+    <string name="is_remux_only_live_regular_downloads">Postprocess apenas faz downloads regulares ao vivo</string>
     <string name="is_interrupt_intrecepted_resources">Interromper conteúdo de mídia interceptado para navegador</string>
     <string name="add_proxy">Adicionar Proxy</string>
     <string name="current_proxy_chain">Cadeia de proxy atual</string>

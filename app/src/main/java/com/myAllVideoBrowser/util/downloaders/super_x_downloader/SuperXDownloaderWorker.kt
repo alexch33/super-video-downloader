@@ -551,7 +551,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     }
                     finishWork(pausedTask)
                 } else {
-                    AppLogger.e("MPD: Download failed for task $taskId: ${e.message} ${e.printStackTrace()}")
+                    AppLogger.e("MPD: Download failed for task $taskId: ${e.message}")
+                    e.printStackTrace()
                     val errorTask = task.also {
                         it.mId = taskId
                         it.taskState = VideoTaskState.ERROR

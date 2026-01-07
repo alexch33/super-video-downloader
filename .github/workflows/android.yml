@@ -79,8 +79,8 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Nothing new, just fdroid build try fix"
+          body: "Custom downloader fixed task canceling"
           draft: false
-          make_latest: false
+          make_latest: true
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

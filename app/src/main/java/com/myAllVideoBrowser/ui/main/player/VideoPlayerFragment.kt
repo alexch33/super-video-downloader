@@ -21,7 +21,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
 import androidx.media3.exoplayer.ExoPlayer
@@ -33,12 +33,9 @@ import androidx.media3.ui.PlayerView.SHOW_BUFFERING_ALWAYS
 import com.myAllVideoBrowser.databinding.FragmentPlayerBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.util.AppUtil
+import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
-import java.net.CookieHandler
-import java.net.CookiePolicy
-import java.net.HttpCookie
-import java.net.URI
 import javax.inject.Inject
 
 
@@ -46,16 +43,9 @@ import javax.inject.Inject
 class VideoPlayerFragment : BaseFragment() {
 
     companion object {
-        var DEFAULT_COOKIE_MANAGER: java.net.CookieManager? = null
-
         const val VIDEO_URL = "video_url"
         const val VIDEO_HEADERS = "video_headers"
         const val VIDEO_NAME = "video_name"
-    }
-
-    init {
-        DEFAULT_COOKIE_MANAGER = java.net.CookieManager()
-        DEFAULT_COOKIE_MANAGER?.setCookiePolicy(CookiePolicy.ACCEPT_ALL)
     }
 
     @Inject
@@ -63,6 +53,9 @@ class VideoPlayerFragment : BaseFragment() {
 
     @Inject
     lateinit var appUtil: AppUtil
+
+    @Inject
+    lateinit var okHttpClient: OkHttpProxyClient
 
     private lateinit var player: ExoPlayer
 
@@ -79,11 +72,15 @@ class VideoPlayerFragment : BaseFragment() {
         videoPlayerViewModel =
             ViewModelProvider(this, viewModelFactory)[VideoPlayerViewModel::class.java]
         arguments?.getString(VIDEO_HEADERS)?.let { rawHeaders ->
-            val headers =
-                Json.parseToJsonElement(rawHeaders).jsonObject.toMap()
-                    .map { it.key to it.value.toString() }
-                    .toMap()
-            videoPlayerViewModel.videoHeaders.set(headers)
+            try {
+                val headers =
+                    Json.parseToJsonElement(rawHeaders).jsonObject.mapValues { (_, value) ->
+                        value.toString().removeSurrounding("\"")
+                    }
+                videoPlayerViewModel.videoHeaders.set(headers)
+            } catch (e: Exception) {
+                videoPlayerViewModel.videoHeaders.set(emptyMap())
+            }
         }
         arguments?.getString(VIDEO_NAME)?.let { videoPlayerViewModel.videoName.set(it) }
 
@@ -94,29 +91,14 @@ class VideoPlayerFragment : BaseFragment() {
         }
 
         val url = videoPlayerViewModel.videoUrl.get() ?: Uri.EMPTY
+        // The "Cookie" header will be passed here, but OkHttp using CookieJar
         val headers = videoPlayerViewModel.videoHeaders.get() ?: emptyMap()
 
-        val mediaItem: MediaItem = MediaItem.fromUri(url)
         val mediaFactory = createMediaFactory(headers, url.toString().startsWith("http"))
-
-        val cookiesStrArr = headers["Cookie"]?.split(";")
-        if (!cookiesStrArr.isNullOrEmpty()) {
-            for (cookiePair in cookiesStrArr) {
-                val tmp = cookiePair.split("=")
-                val key = tmp.firstOrNull()
-                val value = tmp.lastOrNull()
-
-                if (key != null && value != null) {
-                    DEFAULT_COOKIE_MANAGER?.cookieStore?.add(
-                        URI(url.toString()),
-                        HttpCookie(key, value)
-                    )
-                }
-            }
-        }
 
         player = ExoPlayer.Builder(requireContext())
             .setRenderersFactory(createRenderFactory())
+            .setMediaSourceFactory(mediaFactory)
             .build()
 
         dataBinding = FragmentPlayerBinding.inflate(inflater, container, false).apply {
@@ -132,7 +114,9 @@ class VideoPlayerFragment : BaseFragment() {
 
             player.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
-                    if (playbackState == PlaybackState.STATE_PLAYING) {
+                    if (playbackState == Player.STATE_READY && player.playWhenReady) {
+                        currentBinding.loadingBar.visibility = View.GONE
+                    } else if (playbackState == Player.STATE_ENDED || playbackState == Player.STATE_IDLE) {
                         currentBinding.loadingBar.visibility = View.GONE
                     } else {
                         currentBinding.loadingBar.visibility = View.VISIBLE
@@ -140,12 +124,13 @@ class VideoPlayerFragment : BaseFragment() {
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
-                    if (viewModel?.videoUrl?.get().toString().startsWith("http")) {
+                    if (videoPlayerViewModel.videoUrl.get().toString().startsWith("http")) {
                         AlertDialog.Builder(requireContext())
                             .setTitle("Download Only")
                             .setMessage("This video supports only download.")
                             .setPositiveButton("OK") { dialog, _ ->
                                 dialog.dismiss()
+                                handleClose()
                             }
                             .show()
                     }
@@ -153,7 +138,8 @@ class VideoPlayerFragment : BaseFragment() {
                 }
             })
 
-            player.setMediaSource(mediaFactory.createMediaSource(mediaItem))
+            val mediaItem: MediaItem = MediaItem.fromUri(url)
+            player.setMediaItem(mediaItem)
             player.prepare()
             player.playWhenReady = true
         }
@@ -163,10 +149,6 @@ class VideoPlayerFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (CookieHandler.getDefault() != DEFAULT_COOKIE_MANAGER) {
-            CookieHandler.setDefault(DEFAULT_COOKIE_MANAGER)
-        }
-
         handleBackPressed()
         handlePlayerEvents()
         videoPlayerViewModel.start()
@@ -211,7 +193,6 @@ class VideoPlayerFragment : BaseFragment() {
                     MediaCodecSelector.DEFAULT
                         .getDecoderInfos(mimeType, requiresSecureDecoder, requiresTunnelingDecoder)
                 if (MimeTypes.VIDEO_H264 == mimeType) {
-                    // copy the list because MediaCodecSelector.DEFAULT returns an unmodifiable list
                     decoderInfos = ArrayList(decoderInfos)
                     decoderInfos.reverse()
                 }
@@ -221,36 +202,16 @@ class VideoPlayerFragment : BaseFragment() {
 
     private fun createMediaFactory(
         headers: Map<String, String>,
-        isUrl: Boolean
+        isHttp: Boolean
     ): DefaultMediaSourceFactory {
-        if (isUrl) {
-            if (headers.isEmpty()) {
-                val factory = DefaultHttpDataSource.Factory()
-                    .setAllowCrossProtocolRedirects(true)
-                    .setKeepPostFor302Redirects(true)
-                return DefaultMediaSourceFactory(requireContext()).setDataSourceFactory(
-                    factory
-                )
-            }
-            val fixedHeaders = headers.toMutableMap()
-
-            val dataSourceFactory: DataSource.Factory = DefaultHttpDataSource.Factory()
-                .setAllowCrossProtocolRedirects(true)
-                .setKeepPostFor302Redirects(true)
-                .setUserAgent(headers["User-Agent"])
-                .setDefaultRequestProperties(fixedHeaders)
-
-            return DefaultMediaSourceFactory(requireContext()).setDataSourceFactory(
-                dataSourceFactory
-            )
+        val dataSourceFactory: DataSource.Factory = if (isHttp) {
+            OkHttpDataSource.Factory(okHttpClient.getProxyOkHttpClient())
+                .setDefaultRequestProperties(headers)
         } else {
-            val dataSourceFactory = DefaultDataSource.Factory(requireContext())
-
-            return DefaultMediaSourceFactory(requireContext()).setDataSourceFactory(
-                dataSourceFactory
-            )
+            DefaultDataSource.Factory(requireContext())
         }
 
+        return DefaultMediaSourceFactory(requireContext()).setDataSourceFactory(dataSourceFactory)
     }
 
     private fun handleBackPressed() {
@@ -273,18 +234,10 @@ class VideoPlayerFragment : BaseFragment() {
         isStretched = !isStretched
 
         if (isStretched) {
-            val orientation = resources.configuration.orientation
-            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-                dataBinding.videoView.resizeMode =
-                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-            } else {
-                dataBinding.videoView.resizeMode =
-                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-            }
+            dataBinding.videoView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
             dataBinding.toolbar.visibility = View.GONE
         } else {
-            dataBinding.videoView.resizeMode =
-                AspectRatioFrameLayout.RESIZE_MODE_FIT
+            dataBinding.videoView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             dataBinding.toolbar.visibility = View.VISIBLE
         }
     }

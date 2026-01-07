@@ -59,19 +59,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         }
     }
 
-    private fun stopAndSave(task: VideoTaskItem) {
-        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
-            ?: return finishWorkWithFailureTaskId(task)
-        val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(task.fileName).name)
-        outputFileName = tmpFile.path
-        CustomFileDownloader.stopAndSave(tmpFile)
-        handleSuccessfulDownload(task.also {
-            it.mId = taskId
-            it.filePath = outputFileName
-            it.setIsLive(true)
-        }, tmpFile)
-    }
-
     @Synchronized
     override fun finishWork(item: VideoTaskItem?) {
         AppLogger.d("FINISHING... ${item?.filePath} $item")
@@ -279,9 +266,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)!!
         val url = taskItem.url
         showProgress(taskItem.also { it.mId = taskId }, progressCached)
-        val preTmp = fileUtil.tmpDir.resolve(taskId)
-        preTmp.deleteRecursively()
-        val tmpDir = preTmp.apply { mkdirs() }
+
+        val tmpDir = fileUtil.tmpDir.resolve(taskId).apply { mkdirs() }
         outputFileName = tmpDir.resolve(taskItem.fileName).toString()
         val fixedHeaders = decodeCookieHeader(headers)
         updateProgressInfoAndStartDownload(taskItem, taskId, url, fixedHeaders)
@@ -318,42 +304,44 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             }
 
             override fun onFailure(e: Throwable) {
-                val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(taskItem.fileName).name)
-                val isStoppedAndSaved = CustomFileDownloader.isStoppedAndSave(tmpFile)
 
-                AppLogger.e("$isStoppedAndSaved  ${e.message} Download Failed for $outputFileName")
+                AppLogger.e("${e.message} Download Failed for $outputFileName")
                 e.printStackTrace()
 
-                val taskState = when {
-                    e.message == CustomFileDownloader.STOPPED && isStoppedAndSaved -> VideoTaskState.SUCCESS // Special case
-                    e.message == CustomFileDownloader.STOPPED -> VideoTaskState.PAUSE
-                    e.message == CustomFileDownloader.CANCELED -> VideoTaskState.CANCELED
+                val taskState = when (e.message) {
+                    CustomFileDownloader.STOPPED_AND_SAVE_ACTION -> VideoTaskState.SUCCESS
+                    CustomFileDownloader.PAUSE_ACTION -> VideoTaskState.PAUSE
+                    CustomFileDownloader.CANCELED_ACTION -> VideoTaskState.CANCELED
                     else -> if (taskItem.isLive) VideoTaskState.SUCCESS else VideoTaskState.ERROR
                 }
-                if (isStoppedAndSaved) {
-                    AppLogger.d("STOP AND SAVE INTERRUPT")
-                    getContinuation().resume(Result.success())
-                    return
-                }
-                if (taskState == VideoTaskState.CANCELED || taskState == VideoTaskState.SUCCESS) {
-                    // CANCEL
-                    AppLogger.d("CUSTOM REGULAR CANCEL INTERRUPT")
-                    getContinuation().resume(Result.success())
-                    return
-                }
 
-                if (taskState == VideoTaskState.ERROR && taskItem.isLive) {
-                    handleSuccessfulDownload(taskItem.also {
+                if (e.message == CustomFileDownloader.STOPPED_AND_SAVE_ACTION) {
+                    taskItem.apply { this.setIsLive(true) }
+                }
+                if (taskState == VideoTaskState.SUCCESS || (taskState == VideoTaskState.ERROR && taskItem.isLive)) {
+                    val item = taskItem.also {
                         it.taskState = VideoTaskState.SUCCESS
                         it.mId = taskId
                         it.filePath = outputFileName
-                    }, File(outputFileName!!))
+                    }
+                    AppLogger.d("HANDLING TASK SUCCESS IN FAILURE $item")
+                    handleSuccessfulDownload(item, File(outputFileName!!))
+                } else if (taskState == VideoTaskState.PAUSE) {
+                    val item = taskItem.also {
+                        it.taskState = taskState
+                        it.lineInfo = "PAUSED"
+                        it.mId = taskId
+                    }
+                    AppLogger.d("HANDLING TASK PAUSE IN FAILURE $taskItem")
+                    finishWork(item)
                 } else {
-                    finishWork(taskItem.also {
+                    val item = taskItem.also {
                         it.taskState = taskState
                         it.errorMessage = e.message
                         it.mId = taskId
-                    })
+                    }
+                    AppLogger.d("HANDLING TASK EROR IN FAILURE $item")
+                    finishWork(item)
                 }
             }
 
@@ -412,10 +400,11 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(task.fileName).name)
         CustomFileDownloader.cancel(tmpFile)
 
-        finishWork(task.also {
-            it.mId = taskId
-            it.taskState = VideoTaskState.CANCELED
-        })
+        getContinuation().resume(Result.success())
+//        finishWork(task.also {
+//            it.mId = taskId
+//            it.taskState = VideoTaskState.CANCELED
+//        })
     }
 
     private fun pauseTask(task: VideoTaskItem) {
@@ -428,12 +417,24 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         }
 
         val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(task.fileName).name)
-        CustomFileDownloader.stop(tmpFile)
+        CustomFileDownloader.pause(tmpFile)
 
-        finishWork(task.also {
-            it.mId = taskId
-            it.taskState = VideoTaskState.PAUSE
-        })
+        getContinuation().resume(Result.success())
+//        finishWork(task.also {
+//            it.mId = taskId
+//            it.taskState = VideoTaskState.PAUSE
+//        })
+    }
+
+    private fun stopAndSave(task: VideoTaskItem) {
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
+            ?: return finishWorkWithFailureTaskId(task)
+
+        val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(task.fileName).name)
+        outputFileName = tmpFile.path
+        AppLogger.d("STOPPING AND SAVING>>>>  $tmpFile")
+        CustomFileDownloader.stopAndSave(tmpFile)
+        getContinuation().resume(Result.success())
     }
 
     private fun showProgressProcessing(taskItem: VideoTaskItem, progress: Progress?) {

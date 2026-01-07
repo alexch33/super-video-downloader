@@ -10,7 +10,6 @@ import com.antonkarpenko.ffmpegkit.FFmpegSession
 import com.antonkarpenko.ffmpegkit.FFprobeKit
 import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
-import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.CustomFileDownloader
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.DownloadListener
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
@@ -724,7 +723,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     lastException = e
 
                     // Check for pause/cancel state first
-                    if (e.message == CustomFileDownloader.STOPPED || e.message == CustomFileDownloader.CANCELED) {
+                    if (e.message == CustomFileDownloader.PAUSE_ACTION || e.message == CustomFileDownloader.CANCELED_ACTION) {
                         if (continuation.isActive) {
                             continuation.cancel(
                                 kotlin.coroutines.cancellation.CancellationException(
@@ -1661,7 +1660,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             // and interrupting the segment downloader threads.
             val downloadDir = fileUtil.tmpDir.resolve(sessionIdString)
             if (isPause) {
-                CustomFileDownloader.directStop(downloadDir)
+                CustomFileDownloader.pauseByDownloadsFolder(downloadDir)
                 AppLogger.d("SuperX: Creating pause flag for playlist task $sessionIdString")
                 try {
                     // Ensure the parent directory exists before creating the flag file.
@@ -1675,7 +1674,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     finishWorkWithFailureTaskId(task)
                 }
             } else {
-                CustomFileDownloader.directCancel(downloadDir)
+                CustomFileDownloader.cancelByDownloadDirectory(downloadDir)
                 AppLogger.d("SuperX: Setting isCanceled flag for playlist task $sessionIdString")
                 try {
                     if (!downloadDir.exists()) {

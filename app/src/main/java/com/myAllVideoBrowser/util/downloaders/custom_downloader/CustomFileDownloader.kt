@@ -42,6 +42,8 @@ class CustomFileDownloader(
 ) {
     private val executorService: ExecutorService = Executors.newFixedThreadPool(threadCount)
     private val isPaused = AtomicBoolean(false)
+
+    private val isSaved = AtomicBoolean(false)
     private val isCanceled = AtomicBoolean(false)
     private var lastProgressUpdate = AtomicLong(0L)
     private val totalBytesAll = AtomicLong(0L)
@@ -50,49 +52,66 @@ class CustomFileDownloader(
     private val callBackIntervalMin = 1000
 
     companion object {
-        const val STOPPED = "STOPPED"
-        const val CANCELED = "CANCELED"
+        const val PAUSE_ACTION = "PAUSE_ACTION"
 
-        fun stop(fileToStop: File) {
-            File(fileToStop.parentFile, Helper.STOP_FILE_NAME).createNewFile()
-        }
+        const val STOPPED_AND_SAVE_ACTION = "STOPPED_AND_SAVE_ACTION"
 
-        fun stopAndSave(fileToStop: File) {
-            File(fileToStop.parentFile, Helper.STOP_FILE_NAME).createNewFile()
-            File(fileToStop.parentFile, Helper.SAVE_FILE_NAME).createNewFile()
-        }
+        const val CANCELED_ACTION = "CANCELED_ACTION"
 
-        fun isStoppedAndSave(fileToStop: File): Boolean {
-            return File(
-                fileToStop.parentFile,
-                Helper.STOP_FILE_NAME
-            ).exists() && File(fileToStop.parentFile, Helper.SAVE_FILE_NAME).exists()
-        }
-
-        fun directStop(fileToStop: File) {
-            val stopFolder = if (fileToStop.isDirectory) {
-                fileToStop
-            } else {
-                fileToStop.parentFile
+        fun pause(fileToPause: File) {
+            if (fileToPause.isDirectory) {
+                throw Error("fileToPause is directory")
             }
-            File(stopFolder, Helper.STOP_FILE_NAME).createNewFile()
+            File(fileToPause.parentFile, Helper.PAUSE_FILE_NAME).createNewFile()
         }
 
-        fun directCancel(fileToStop: File) {
-            try {
-                val stopFolder = if (fileToStop.isDirectory) {
-                    fileToStop
-                } else {
-                    fileToStop.parentFile
-                }
-                stopFolder?.deleteRecursively()
-            } catch (e: Throwable) {
-                AppLogger.e(e.message + e.printStackTrace())
+        fun pauseByDownloadsFolder(directoryToPause: File) {
+            if (!directoryToPause.isDirectory) {
+                throw Error("fileToPause is not dir")
+            }
+            File(directoryToPause.parentFile, Helper.PAUSE_FILE_NAME).createNewFile()
+        }
+
+        fun stopAndSave(fileToSave: File) {
+            if (fileToSave.isDirectory) {
+                throw Error("fileToSave is directory")
+            }
+            val isPaused = Helper.isPaused(fileToSave)
+            File(fileToSave.parentFile, Helper.SAVE_FILE_NAME).createNewFile()
+            if (isPaused) {
+                Helper.unPause(fileToSave)
             }
         }
 
-        fun cancel(fileToStop: File) {
-            fileToStop.parentFile?.deleteRecursively()
+        fun isPaused(fileToPause: File): Boolean {
+            if (fileToPause.isDirectory) {
+                throw Error("fileToPause is directory")
+            }
+            return Helper.isPaused(fileToPause)
+        }
+
+        fun isStoppedAndSave(fileToSave: File): Boolean {
+            if (fileToSave.isDirectory) {
+                throw Error("File is directory")
+            }
+
+            return Helper.isSave(fileToSave)
+        }
+
+        fun cancel(fileToCancel: File) {
+            if (fileToCancel.isDirectory) {
+                throw Error("File is directory")
+            }
+
+            fileToCancel.parentFile?.deleteRecursively()
+        }
+
+        fun cancelByDownloadDirectory(dirToCancel: File) {
+            if (!dirToCancel.isDirectory) {
+                throw Error("File is not dir")
+            }
+
+            File(dirToCancel, Helper.CANCEL_FILE_NAME).createNewFile()
         }
     }
 
@@ -127,7 +146,8 @@ class CustomFileDownloader(
 
         totalBytesAll.set(contentSize)
 
-        Helper.unStop(file)
+        Helper.unPause(file)
+        Helper.unStopAndSave(file)
 
         val isUrlSupportBytesRangeHeader = isUrlSupportingBytesRangeHeader()
 
@@ -173,17 +193,21 @@ class CustomFileDownloader(
             }
         }
 
-        val isStopped = isPaused.get()
+        val isPaused = isPaused.get()
         val isCanceled = isCanceled.get()
+        val isSaved = isSaved.get()
 
-        if (allPartsSucceed && !isStopped) {
+        if (allPartsSucceed && !isPaused) {
             this.onSuccess()
-        } else if (isStopped) {
-            AppLogger.d("CHUNKS STOPPED")
-            this.onFailure(Error(STOPPED))
+        } else if (isSaved) {
+            AppLogger.d("CHUNKS STOPPED AND SAVE")
+            this.onFailure(Error(STOPPED_AND_SAVE_ACTION))
+        } else if (isPaused) {
+            AppLogger.d("CHUNKS PAUSED")
+            this.onFailure(Error(PAUSE_ACTION))
         } else if (isCanceled) {
             AppLogger.d("CHUNKS CANCELED")
-            this.onFailure(Error(CANCELED))
+            this.onFailure(Error(CANCELED_ACTION))
         } else {
             AppLogger.d("CHUNKS ERROR")
             this.onFailure(Error("Not All Chunks downloaded, retry"))
@@ -217,7 +241,9 @@ class CustomFileDownloader(
 
         try {
             inputStream.use { urlStream ->
-                while (!isPaused.get() && !isCanceled.get() && (urlStream.read(buffer)
+                while (!isSaved.get() && !isPaused.get() && !isCanceled.get() && (urlStream.read(
+                        buffer
+                    )
                         .also { bytesRead = it }) >= 0
                 ) {
                     fileChannel.write(ByteBuffer.wrap(buffer, 0, bytesRead), bytesCopied)
@@ -227,10 +253,12 @@ class CustomFileDownloader(
                 }
             }
 
-            if (Helper.isStopped(file)) {
-                this.onFailure(Error(STOPPED))
+            if (Helper.isPaused(file)) {
+                this.onFailure(Error(PAUSE_ACTION))
+            } else if (Helper.isSave(file)) {
+                this.onFailure(Error(STOPPED_AND_SAVE_ACTION))
             } else if (Helper.isCanceled(file)) {
-                this.onFailure(Error(CANCELED))
+                this.onFailure(Error(CANCELED_ACTION))
             } else {
                 this.onSuccess()
             }
@@ -255,14 +283,24 @@ class CustomFileDownloader(
 
         AppLogger.e("Task Download Failed $e")
 
+        if (e.message == CANCELED_ACTION) {
+            val downloadDir = file.parentFile
+            if (downloadDir?.exists() == true && downloadDir.isDirectory) {
+                downloadDir.deleteRecursively()
+            }
+        }
+
+
         listener?.onFailure(e)
     }
 
     private fun onProgressUpdate(downloadedBytes: Long, totalBytes: Long) {
         val time = Date().time
         if (time - lastProgressUpdate.get() >= callBackIntervalMin) {
-            isPaused.set(Helper.isStopped(file))
+            isPaused.set(Helper.isPaused(file))
             isCanceled.set(Helper.isCanceled(file))
+            isSaved.set(Helper.isSave(file))
+
             lastProgressUpdate.set(time)
             listener?.onProgressUpdate(downloadedBytes, totalBytes)
         }
@@ -328,7 +366,7 @@ class CustomFileDownloader(
 
         RandomAccessFile(chunkFile, "rw").channel.use { chunkChannel ->
             inputStream.use { urlStream ->
-                while (!isPaused.get() && !isCanceled.get() && (urlStream.read( // && bytesCopied < range.last
+                while (!isSaved.get() && !isPaused.get() && !isCanceled.get() && (urlStream.read( // && bytesCopied < range.last
                         buffer
                     ).also { bytesRead = it }) >= 0
                 ) {
@@ -339,11 +377,14 @@ class CustomFileDownloader(
                         bytesCopied, totalBytesChunks[chunkIndex], chunkIndex
                     )
                 }
-                if (Helper.isStopped(file)) {
-                    throw Exception(STOPPED)
+                if (Helper.isPaused(file)) {
+                    throw Exception(PAUSE_ACTION)
+                }
+                if (Helper.isSave(file)) {
+                    throw Exception(STOPPED_AND_SAVE_ACTION)
                 }
                 if (Helper.isCanceled(file)) {
-                    throw Exception(CANCELED)
+                    throw Exception(CANCELED_ACTION)
                 }
             }
         }
@@ -408,24 +449,38 @@ class CustomFileDownloader(
     }
 
     private object Helper {
-        const val STOP_FILE_NAME = "stop"
+        const val PAUSE_FILE_NAME = "pause"
+
+        const val CANCEL_FILE_NAME = "cancel"
 
         const val SAVE_FILE_NAME = "save"
 
         const val DOWNLOAD_BUFFER_SIZE = 1024
 
-        fun unStop(fileToUnStop: File) {
-            File(fileToUnStop.parentFile, STOP_FILE_NAME).delete()
+        fun unPause(fileToUnStop: File) {
+            File(fileToUnStop.parentFile, PAUSE_FILE_NAME).delete()
         }
 
-        fun isStopped(fileToCheck: File): Boolean {
+        fun unStopAndSave(fileToUnStop: File) {
+            File(fileToUnStop.parentFile, SAVE_FILE_NAME).delete()
+        }
+
+        fun isPaused(fileToCheck: File): Boolean {
             return File(
-                fileToCheck.parentFile, STOP_FILE_NAME
+                fileToCheck.parentFile, PAUSE_FILE_NAME
+            ).exists()
+        }
+
+        fun isSave(fileToCheck: File): Boolean {
+            return File(
+                fileToCheck.parentFile, SAVE_FILE_NAME
             ).exists()
         }
 
         fun isCanceled(fileToCheck: File): Boolean {
-            return !(fileToCheck.parentFile?.exists() ?: false)
+            return !(fileToCheck.parentFile?.exists() ?: false) || File(
+                fileToCheck.parentFile, CANCEL_FILE_NAME
+            ).exists()
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.util
 
+import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
@@ -23,22 +24,26 @@ object CookieUtils {
     val chromeDefaultPathApi28Less =
         "${ContextUtils.getApplicationContext().filesDir.parentFile}/app_webview/"
 
-    fun webRequestToHttpWithCookies(request: WebResourceRequest): Request? {
-        val url = request.url.toString()
+    fun webResourceRequestToOkHttpRequest(webResourceRequest: WebResourceRequest): Request {
+        val url = webResourceRequest.url.toString()
+        val method = webResourceRequest.method
+        val headers = webResourceRequest.requestHeaders.toHeaders()
 
-        val tmpHeaders = request.requestHeaders
-        tmpHeaders["Cookie"] = try {
-            CookieManager.getInstance().getCookie(url) ?: ""
-        } catch (e: Throwable) {
-            ""
-        }
-        val verReq = try {
-            Request.Builder().headers(tmpHeaders.toHeaders()).url(url).build()
-        } catch (e: Throwable) {
-            null
-        }
+        val cookieManager = CookieManager.getInstance()
+        val cookies = cookieManager.getCookie(url)
 
-        return verReq
+        val requestBuilder = Request.Builder()
+            .url(url)
+            .headers(headers)
+
+        if (!cookies.isNullOrEmpty()) {
+            requestBuilder.header("Cookie", cookies)
+        }
+        // WebResourceRequest does not expose the request body, so this is
+        // primarily for GET requests. Set the method without a request body.
+        requestBuilder.method(method, null)
+
+        return requestBuilder.build()
     }
 
     fun addCookiesToRequest(

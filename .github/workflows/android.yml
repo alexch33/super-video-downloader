@@ -78,8 +78,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: true
-          body: "Custom downloader fixed task canceling"
+          prerelease: false
+          body: "Settings crash fix\nFixed an issue where settings were not being saved correctly to SharedPreferences."
           draft: false
           make_latest: true
           tag_name: ${{ github.ref_name }}

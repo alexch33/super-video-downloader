@@ -88,9 +88,9 @@
     <string name="dark_mode">Dark Mode</string>
     <string name="found_videos_from">Found videos from %1$s</string>
     <string name="title">Title</string>
-    <string name="ads_detection_treshold">Ads Detection Treshold: %1$s</string>
-    <string name="thread_count_for_regular_files">Thread Count for regular files: %1$s</string>
-    <string name="thread_count_for_hls_and_mpd">Thread Count for HLS and MPD: %1$s</string>
+    <string name="ads_detection_treshold">Ads Detection Treshold: </string>
+    <string name="thread_count_for_regular_files">Thread Count for regular files: </string>
+    <string name="thread_count_for_hls_and_mpd">Thread Count for HLS and MPD: </string>
     <string name="lock_screen_orientation_portrait">Lock portrait screen orientation</string>
     <string name="regular_threads_count">Regular Threads Count:</string>
     <string name="m3u8_threads_count">M3U8 Threads Count:</string>

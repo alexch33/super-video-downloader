@@ -6,6 +6,8 @@
     <data>
 
         <import type="android.view.View" />
+        <import type="com.myAllVideoBrowser.R" />
+
 
         <variable
             name="viewModel"
@@ -152,7 +154,7 @@
                 android:id="@+id/find_videos_by_url"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:checked="@{viewModel.getIsFindVideoByUrl()}"
+                android:checked="@{viewModel.isFindVideoByUrl}"
                 android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsFindVideoByUrl(isChecked)}"
                 android:text="@string/find_videos_by_url"
                 app:thumbTint="@color/switch_thumb_selector"
@@ -163,7 +165,7 @@
                 android:id="@+id/is_check_every_request_on_mp4"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:checked="@{viewModel.getIsCheckEveryRequestOnMp4Video()}"
+                android:checked="@{viewModel.isCheckEveryRequestOnMp4Video}"
                 android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsCheckEveryRequestOnVideo(isChecked)}"
                 android:text="@string/check_every_request_on_video_mp4"
                 app:thumbTint="@color/switch_thumb_selector"
@@ -279,7 +281,7 @@
                     android:id="@+id/regular_threads_count_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@{@string/regular_threads_count(viewModel.regularThreadsCount)}"
+                    android:text="@{(context.getString(R.string.regular_threads_count) + viewModel.regularThreadsCount)}"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
                     tools:text="Regular Download Threads: 4" />
 
@@ -288,9 +290,10 @@
                     style="@style/Widget.AppCompat.SeekBar.Discrete"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:scaleX="1.2"
+                    android:scaleY="1.2"
                     android:max="15"
-                    android:min="1"
-                    android:progress="@={viewModel.regularThreadsCount}" />
+                    android:progress="@{viewModel.regularThreadsCount}" />
             </LinearLayout>
 
             <LinearLayout
@@ -303,7 +306,7 @@
                     android:id="@+id/m3u8_threads_count_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@{@string/m3u8_threads_count(viewModel.m3u8ThreadsCount)}"
+                    android:text="@{context.getString(R.string.m3u8_threads_count) + viewModel.m3u8ThreadsCount}"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
                     tools:text="M3U8 Download Threads: 8" />
 
@@ -313,7 +316,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:max="15"
-                    android:progress="@={viewModel.m3u8ThreadsCount}" />
+                    android:scaleX="1.2"
+                    android:scaleY="1.2"
+                    android:progress="@{viewModel.m3u8ThreadsCount}" />
             </LinearLayout>
 
             <LinearLayout
@@ -326,7 +331,7 @@
                     android:id="@+id/ads_treshold_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@{@string/ads_detection_treshold(viewModel.videoDetectionTreshold / (1024*1024))}"
+                    android:text="@string/ads_detection_treshold"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle2"
                     tools:text="Ads detection treshold is 4Mb" />
 
@@ -334,8 +339,10 @@
                     android:id="@+id/seekBarAdsTreshold"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:scaleX="1.2"
+                    android:scaleY="1.2"
                     android:max="@{50 * 1024 * 1024}"
-                    android:progress="@={viewModel.videoDetectionTreshold}" />
+                    android:progress="@{viewModel.videoDetectionTreshold}" />
             </LinearLayout>
 
             <!-- Storage Location Section -->

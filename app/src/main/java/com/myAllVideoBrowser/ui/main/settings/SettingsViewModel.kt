@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.math.max
 
 enum class StorageType {
     SD, HIDDEN, HIDDEN_SD
@@ -276,15 +277,17 @@ class SettingsViewModel @Inject constructor(
 
     fun setM3u8ThreadsCount(progress: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            m3u8ThreadsCount.set(progress)
-            sharedPrefHelper.setM3u8DownloaderThreadCount(progress)
+            val finalCount = max(1, progress)
+            m3u8ThreadsCount.set(finalCount)
+            sharedPrefHelper.setM3u8DownloaderThreadCount(finalCount)
         }
     }
 
     fun setRegularThreadsCount(progress: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            regularThreadsCount.set(progress)
-            sharedPrefHelper.setRegularDownloaderThreadCount(progress)
+            val finalCount = max(1, progress)
+            regularThreadsCount.set(finalCount)
+            sharedPrefHelper.setRegularDownloaderThreadCount(finalCount)
         }
     }
 
@@ -323,8 +326,9 @@ class SettingsViewModel @Inject constructor(
 
     fun setVideoDetectionTreshold(progress: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            videoDetectionTreshold.set(progress)
-            sharedPrefHelper.setVideoDetectionTreshold(progress)
+            val finalResult = max(0, progress)
+            videoDetectionTreshold.set(finalResult)
+            sharedPrefHelper.setVideoDetectionTreshold(finalResult)
         }
     }
 }

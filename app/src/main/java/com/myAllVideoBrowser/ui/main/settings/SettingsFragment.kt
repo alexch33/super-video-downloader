@@ -84,7 +84,7 @@ class SettingsFragment : BaseFragment() {
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    settingsViewModel.regularThreadsCount.set(progress)
+                    settingsViewModel.setRegularThreadsCount(progress)
 
                     if (lastSavedRegularThreadsCount == 1 && progress > 1) {
                         context?.let { showDownloadWarningDialog(it) }
@@ -103,7 +103,7 @@ class SettingsFragment : BaseFragment() {
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    settingsViewModel.m3u8ThreadsCount.set(progress)
+                    settingsViewModel.setM3u8ThreadsCount(progress)
                 }
             }
 
@@ -117,7 +117,7 @@ class SettingsFragment : BaseFragment() {
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    settingsViewModel.videoDetectionTreshold.set(progress)
+                    settingsViewModel.setVideoDetectionTreshold(progress)
                 }
             }
 

@@ -173,7 +173,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
             if (isM3u8Check || isMp4Check) {
                 val requestWithCookies = request.let { resourceRequest ->
                     try {
-                        CookieUtils.webRequestToHttpWithCookies(
+                        CookieUtils.webResourceRequestToOkHttpRequest(
                             resourceRequest
                         )
                     } catch (_: Throwable) {

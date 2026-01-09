@@ -19,6 +19,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.IVideoDetector
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTab
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabViewModel
+import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.SingleLiveEvent
 import com.myAllVideoBrowser.util.VideoUtils
@@ -108,18 +109,20 @@ class CustomWebViewClient(
     override fun shouldInterceptRequest(
         view: WebView?, request: WebResourceRequest?
     ): WebResourceResponse? {
-        val url = request?.url.toString()
+        if (request == null || request.url == null) {
+            return super.shouldInterceptRequest(view, request)
+        }
+
+        val url = request.url.toString()
 
         val isCheckM3u8 = settingsModel.isCheckIfEveryRequestOnM3u8.get()
         val isCheckOnMp4 = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
         val isCheckOnAudio = settingsModel.isCheckOnAudio.get()
 
         if (isCheckOnMp4 || isCheckM3u8 || isCheckOnAudio) {
-            val requestWithCookies = request?.let { resourceRequest ->
+            val requestWithCookies = request.let { resourceRequest ->
                 try {
-                    CookieUtils.webRequestToHttpWithCookies(
-                        resourceRequest
-                    )
+                    CookieUtils.webResourceRequestToOkHttpRequest(request)
                 } catch (_: Throwable) {
                     null
                 }

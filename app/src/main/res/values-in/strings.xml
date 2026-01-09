@@ -103,8 +103,8 @@
     <string name="go">LANJUT</string>
     <string name="force_stream_downloading">Paksa Unduh Aliran(untuk mengunduh aliran langsung reguler (bukan m3u8 atau mpd))</string>
     <string name="force_stream_detection">Paksa Deteksi Aliran (Deteksi URL dengan panjang konten utama -1, terkadang digunakan untuk siaran langsung reguler)</string>
-    <string name="is_always_remux_regular_downloads">Selalu konversi ulang semua unduhan reguler</string>
-    <string name="is_remux_only_live_regular_downloads">Konversi ulang hanya untuk unduhan siaran langsung reguler</string>
+    <string name="is_always_remux_regular_downloads">Pemrosesan ulang untuk semua unduhan reguler</string>
+    <string name="is_remux_only_live_regular_downloads">Pemrosesan ulang hanya untuk unduhan siaran langsung reguler</string>
     <string name="is_interrupt_intrecepted_resources">Menyela konten media yang diterima oleh browser</string>
     <string name="add_proxy">Tambah Proksi</string>
     <string name="current_proxy_chain">Alur proksi saat ini</string>
@@ -116,4 +116,15 @@
     <string name="doh_quad9">DOH Quad9</string>
     <string name="doh_ad_guard">DOH Adguard</string>
     <string name="custom_dns_saved_message">DNS khusus telah disimpan</string>
+    <string name="settings_detection">Pengaturan Pendeteksian</string>
+    <string name="settings_downloading">Pengaturan Pengunduhan</string>
+    <string name="use_legacy_m3u8_detection">Gunakan deteksi m3u8/mpd versi lama (oleh youtube-dlp)</string>
+    <string name="playback_channel_name">Pemutaran</string>
+    <string name="video_move_downloads">Pindah ke Unduhan</string>
+    <string name="media_move_error">Kesalahan Pemindahan Media</string>
+    <string name="media_move_success">Sukses memindahkan media</string>
+    <string name="drm_permission_title">Izinkan Konten Dilindungi</string>
+    <string name="drm_permission_message">Situs ini ingin memutar media yang dilindungi DRM (seperti film atau musik). Mengizinkan hal ini diperlukan untuk pemutaran. Apakah Anda ingin mengaktifkan fitur ini?</string>
+    <string name="allow">Izinkan</string>
+    <string name="block">Blokir</string>
 </resources>

@@ -64,11 +64,11 @@
     <string name="dark_mode">深色模式</string>
     <string name="found_videos_from">发现来自 %1$s 的视频</string>
     <string name="title">标题</string>
-    <string name="ads_detection_treshold">广告检测阈值：%1$s</string>
-    <string name="thread_count_for_hls_and_mpd">HLS 和 MPD 的线程数：%1$s</string>
+    <string name="ads_detection_treshold">广告检测阈值: </string>
+    <string name="thread_count_for_hls_and_mpd">HLS 和 MPD 的线程数：</string>
     <string name="lock_screen_orientation_portrait">锁定竖屏</string>
     <string name="regular_threads_count">常规线程数：</string>
-    <string name="thread_count_for_regular_files">常规文件下载线程数：%1$s</string>
+    <string name="thread_count_for_regular_files">常规文件下载线程数：</string>
     <string name="m3u8_threads_count">M3U8线程数：</string>
     <string name="downloads_location">下载位置</string>
     <string name="downloads_folder">公共下载目录</string>

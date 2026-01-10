@@ -1,8 +1,16 @@
-<b>Fitur</b>
-Aplikasi pengunduh video gratis memungkinkan Anda mengunduh video dari situs web atau platform media sosial apa pun seperti Facebook, Instagram, Twitch, dan lainnya.
-Semua dikerjakan pada klien
-Mendukung daftar M3U8 dan MPD, streaming mp4, dan siaran langsung
-Semua video disimpan sebagai video mp4
-Mendukung Cookie
-Dukungan proksi HTTP
-Dukungan proksi SOCKS
+SuperX adalah pengunduh video yang tangguh dan pribadi untuk Android, dirancang dengan kebebasan dan fleksibilitas sebagai prioritas utama. Aplikasi ini memungkinkan Anda mengunduh video dari berbagai situs web dan platform langsung ke perangkat Anda untuk ditonton secara offline. Sebagai aplikasi open-source sepenuhnya, SuperX tidak mengandung pelacak, iklan, dan semua proses dilakukan secara lokal di perangkat Anda untuk melindungi privasi Anda.
+
+<b>Fitur Utama:</b>
+
+*   <b>Kompatibilitas Luas:</b> Unduh video dari banyak situs web dan platform media sosial.
+*   <b>Dukungan Streaming Lanjutan:</b> Mendukung sepenuhnya protokol streaming modern, termasuk manifes HLS (.m3u8) dan DASH (.mpd), serta aliran MP4 standar dan siaran langsung.
+*   <b>Format Standar:</b> Semua video yang diunduh disimpan dalam penyimpanan .mp4 universal untuk kompatibilitas maksimal dengan pemutar apa pun.
+*   <b>Pemrosesan di Perangkat Pengguna:</b> Semua proses dilakukan di perangkat Anda. Tidak ada data yang dikirim ke server eksternal, memastikan aktivitas Anda tetap pribadi.
+
+<b>Privasi & Jaringan Lanjutan:</b>
+
+*   <b>Dukungan Cookie:</b> Mengizinkan Anda menggunakan cookie peramban untuk mengakses dan mengunduh video dari area pribadi atau yang dilindungi login.
+*   <b>Integrasi Proxy Penuh:</b> Perkuat privasi Anda dan lewati batasan jaringan dengan dukungan bawaan untuk proxy HTTP dan SOCKS.
+*   <b>Penggabungan Proxy & DNS Keamanan:</b> Untuk privasi yang maksimal, aplikasi ini mendukung penggabungan proxy dan dapat dikonfigurasi dengan DNS terenkripsi (DoH/DoT) dan server khusus.
+
+SuperX adalah alat ideal bagi pengguna yang menginginkan kendali penuh atas media dan privasi mereka. Dengan menyediakan akses langsung ke unduhan streaming dan alat jaringan yang tangguh, aplikasi ini memastikan cara bebas dan terbuka untuk mengakses konten video online.

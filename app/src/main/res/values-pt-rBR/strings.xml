@@ -77,9 +77,9 @@
     <string name="dark_mode">Tema escuro</string>
     <string name="found_videos_from">Vídeo encontrado de %1$s</string>
     <string name="title">Titulo</string>
-    <string name="ads_detection_treshold">Intervalo de detecção de anúncios: %1$s</string>
-    <string name="thread_count_for_regular_files">Quantidade de thread para arquivos comuns: %1$s</string>
-    <string name="thread_count_for_hls_and_mpd">Quantidade de thread para HLS e MPD: %1$s</string>
+    <string name="ads_detection_treshold">Intervalo de detecção de anúncios: </string>
+    <string name="thread_count_for_regular_files">Quantidade de thread para arquivos comuns: </string>
+    <string name="thread_count_for_hls_and_mpd">Quantidade de thread para HLS e MPD: </string>
     <string name="lock_screen_orientation_portrait">Travar a orientação da tela como retrato</string>
     <string name="regular_threads_count">Quantidade de threads padrão:</string>
     <string name="m3u8_threads_count">Quantidade de threads para M3U8:</string>

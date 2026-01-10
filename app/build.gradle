@@ -80,8 +80,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 121
-        versionName "0.8.4"
+        versionCode 127
+        versionName "0.8.4.0"
 
         if (splitApks) {
             splits {

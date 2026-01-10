@@ -78,9 +78,9 @@
     <string name="dark_mode">Mode Gelap</string>
     <string name="found_videos_from">Ditemukan video dari %1$s</string>
     <string name="title">Judul</string>
-    <string name="ads_detection_treshold">Ambang Batas Deteksi Iklan: %1$s</string>
-    <string name="thread_count_for_regular_files">Jumlah Thread untuk berkas biasa: %1$s</string>
-    <string name="thread_count_for_hls_and_mpd">Jumlah Thread untuk HLS dan MPD: %1$s</string>
+    <string name="ads_detection_treshold">Ambang Batas Deteksi Iklan:</string>
+    <string name="thread_count_for_regular_files">Jumlah Thread untuk berkas biasa:</string>
+    <string name="thread_count_for_hls_and_mpd">Jumlah Thread untuk HLS dan MPD:</string>
     <string name="regular_threads_count">Jumlah Thread Biasa:</string>
     <string name="m3u8_threads_count">Jumlah Thread M3U8:</string>
     <string name="downloads_location">Lokasi Unduhan</string>

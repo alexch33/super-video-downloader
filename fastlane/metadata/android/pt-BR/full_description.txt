@@ -1,8 +1,16 @@
-<b>Recursos</b>
-Aplicativo gratuito para baixar videos de qualquer website ou plataforma de mídia social como Facebook, Instagram, Twitch and mais.
-Todo o trabalho é feito pelo cliente
-Suporta M3U8 e list MPD, transmissão mp4 e transmissão aovivo
-Todos os videos baixados são codificados em .mp4
-Suporte para Cookies
-Suporte para proxy HTTP
-Suporte para proxy SOCKS
+SuperX é um baixador de vídeo poderoso e privado para Android, desenvolvido com liberdade e flexibilidade em mente. Ele permite que você salve vídeos de uma ampla variedade de sites e plataformas diretamente no seu dispositivo para visualização offline. Por ser um aplicativo totalmente de código aberto, ele não contém rastreadores, nem anúncios, e todo o processamento é feito localmente no seu dispositivo para proteger sua privacidade.
+
+<b>Recursos principais:</b>
+
+* <b>Ampla Compatibilidade:</b> Baixe vídeos de vários sites e plataformas de mídia social.
+* <b>Suporte avançado para transmissões ao vivo:</b> Suporta total a protocolos de transmissão modernos, incluindo HLS (.m3u8) e DASH (.mpd), bem como transmissões MP4  e transmissões ao vivo.
+* <b>Formato padrão:</b> Todos os vídeos baixados são salvos no contêiner universal .mp4 para máxima compatibilidade com qualquer player.
+* <b>Processamento do lado do cliente:</b> Todas as operações acontecem no seu dispositivo. Nenhum dado é enviado para servidores externos, garantindo que sua atividade permaneça privada.
+
+<b>Privacidade e rede avançadas:</b>
+
+* <b>Suporte a cookies:</b> permite que você use os cookies do seu navegador para acessar e baixar vídeos de áreas privadas ou protegidas por login.
+* <b>Integração total com proxy:</b> Melhore sua privacidade e contorne as restrições de rede com suporte integrado para proxies HTTP e SOCKS.
+* <b>Encadeamento de proxy e segurança de DNS:</b> Para maior privacidade, o aplicativo oferece suporte a cadeias de proxy e pode ser configurado com DNS criptografado (DoH/DoT) e servidores personalizados.
+
+SuperX é a ferramenta ideal para usuários que exigem controle sobre sua mídia e privacidade. Ao fornecer acesso direto a fluxos de download e ferramentas de rede robustas, garante uma maneira gratuita e aberta de acessar conteúdo de vídeo online.

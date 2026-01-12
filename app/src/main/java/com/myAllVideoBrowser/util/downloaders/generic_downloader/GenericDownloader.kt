@@ -17,6 +17,24 @@ abstract class GenericDownloader {
     companion object {
         private var instance: GenericDownloader? = null
 
+        fun isWorkScheduled(context: Context, uniqueWorkName: String): Boolean {
+            val workManager = WorkManager.getInstance(context)
+            try {
+                // This is a blocking call, but it's okay inside a worker's background thread.
+                val workInfos = workManager.getWorkInfosForUniqueWork(uniqueWorkName).get()
+                if (workInfos.isNullOrEmpty()) {
+                    return false
+                }
+                // Check if any of the work info states is "active" (not finished, cancelled, or failed)
+                return workInfos.any { !it.state.isFinished }
+            } catch (e: Exception) {
+                // Handle exceptions, e.g., if the get() is interrupted
+                AppLogger.e("isWorkScheduled: Error checking work status for $uniqueWorkName")
+                e.printStackTrace()
+                return false // Assume not running if we can't check
+            }
+        }
+
         fun getInstance(): GenericDownloader {
             if (instance == null) {
                 instance = object : GenericDownloader() {

@@ -110,10 +110,21 @@
     <string name="secure_dns">DNS seguro</string>
     <string name="dns_custom">Personalizado</string>
     <string name="dns_custom_url_hint">Insira DoH ou DoT URL</string>
-    <string name="doh_cloudflare">Cloudflare DOH</string>
-    <string name="doh_quad9">Quad9 DOH</string>
-    <string name="doh_ad_guard">Adguard DOH</string>
+    <string name="doh_cloudflare">DOH da Cloudflare</string>
+    <string name="doh_quad9">DOH da Quad9</string>
+    <string name="doh_ad_guard">DOH da Adguard</string>
     <string name="custom_dns_saved_message">DNS personalizado salvo</string>
     <string name="app_icon">Ícone da aplicação</string>
     <string name="app_name">SuperX</string>
+    <string name="settings_detection">Configuração de detecção</string>
+    <string name="settings_downloading">Configuração de download</string>
+    <string name="use_legacy_m3u8_detection">Usar detecção legada de m3u8/mpd (por youtube-dlp)</string>
+    <string name="playback_channel_name">Reprodução</string>
+    <string name="video_move_downloads">Mover downloads</string>
+    <string name="media_move_error">Erro ao mover mídia</string>
+    <string name="media_move_success">Sucesso ao mover mídia</string>
+    <string name="drm_permission_title">Permitir conteúdo protegido</string>
+    <string name="drm_permission_message">Este site deseja reproduzir mídia protegida por DRM (como filmes ou música). Permitir isso é necessário para a reprodução da mídia. Deseja ativar esse recurso?</string>
+    <string name="allow">Permitir</string>
+    <string name="block">Bloquear</string>
 </resources>

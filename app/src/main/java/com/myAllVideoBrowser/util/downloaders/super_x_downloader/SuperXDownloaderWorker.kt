@@ -5,7 +5,6 @@ import android.text.format.Formatter
 import android.util.Base64
 import androidx.core.net.toUri
 import androidx.work.WorkerParameters
-import com.antonkarpenko.ffmpegkit.FFmpegSession
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
@@ -107,14 +106,14 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val isLive = inputData.getBoolean(GenericDownloader.Constants.IS_LIVE, false)
 
         // Check if the URL is a playlist
-        if (isHlsPlaylist(task.url)) {
+        if (isHlsPlaylist()) {
             AppLogger.d("HLS Playlist detected. Starting advanced parsing flow.")
             if (isLive) {
                 startLiveHlsDownloadLoop(task, headers)
             } else {
                 startHlsDownload(task, headers)
             }
-        } else if (isMpdPlaylist(task.url)) {
+        } else if (isMpdPlaylist()) {
             AppLogger.d("MPD Manifest detected. Starting advanced parsing flow.")
             startMpdDownload(task, headers)
         } else {
@@ -266,7 +265,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             }
 
             selectedAudioRendition?.url != null -> {
-                val audioMediaPlaylist = fetchAndParse(selectedAudioRendition.url!!)
+                val audioMediaPlaylist = fetchAndParse(selectedAudioRendition.url)
                 if (audioMediaPlaylist is HlsPlaylistParser.MediaPlaylist) {
                     audioPlaylist = audioMediaPlaylist
                 }
@@ -551,7 +550,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val selectedAudioRendition = initialPlaylist.alternateRenditions.find { rendition ->
             rendition.type == HlsPlaylistParser.RenditionType.AUDIO && "hls-audio-${rendition.groupId}-${rendition.name}" == selectedFormatId
         }
-        var videoSegments: List<HlsPlaylistParser.MediaSegment>? = null
+        var videoSegments: List<HlsPlaylistParser.MediaSegment>?
         var audioSegments: List<HlsPlaylistParser.MediaSegment>? = null
 
         // 3. Determine which segments to fetch based on the user's selection.
@@ -759,18 +758,18 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             fixedHeaders["Cookie"]?.let {
                 try {
                     fixedHeaders["Cookie"] = String(Base64.decode(it, Base64.DEFAULT))
-                } catch (e: IllegalArgumentException) {
+                } catch (_: IllegalArgumentException) {
                     AppLogger.e("SuperX: Failed to decode Base64 Cookie: $it")
                 }
             }
         }
     }
 
-    private fun isHlsPlaylist(url: String): Boolean {
+    private fun isHlsPlaylist(): Boolean {
         return inputData.getBoolean(GenericDownloader.Constants.IS_M3U8, false)
     }
 
-    private fun isMpdPlaylist(url: String): Boolean {
+    private fun isMpdPlaylist(): Boolean {
         return inputData.getBoolean(GenericDownloader.Constants.IS_MPD, false)
     }
 

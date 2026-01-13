@@ -109,7 +109,7 @@ object DownloaderUtils {
                 httpClient.newCall(initRequest).execute()
                     .use { response ->
                         if (!response.isSuccessful) throw IOException("Failed to download fMP4 $prefix init segment. HTTP ${response.code}")
-                        response.body?.use { output.write(it.bytes()) }
+                        response.body.use { output.write(it.bytes()) }
                     }
 
                 // 2. Append all corresponding media segments
@@ -161,14 +161,14 @@ object DownloaderUtils {
         val keyFileName = "${filePrefix}encryption.key"
 
         if (isEncrypted) {
-            AppLogger.d("HLS: Encryption detected for $filePrefix. Method: ${key!!.method}, URI: ${key.uri}")
+            AppLogger.d("HLS: Encryption detected for $filePrefix. Method: ${key.method}, URI: ${key.uri}")
             val keyFile = hlsTmpDir.resolve(keyFileName)
             try {
                 val request = Request.Builder().url(key.uri).build()
                 httpClient.newCall(request).execute()
                     .use { response ->
                         if (!response.isSuccessful) throw IOException("Failed to download key file. HTTP ${response.code}")
-                        response.body?.use { keyFile.writeBytes(it.bytes()) }
+                        response.body.use { keyFile.writeBytes(it.bytes()) }
                         AppLogger.d("HLS: Encryption key for $filePrefix downloaded to ${keyFile.absolutePath}")
                     }
             } catch (e: Exception) {
@@ -184,7 +184,7 @@ object DownloaderUtils {
                 appendLine("#EXTM3U")
                 appendLine("#EXT-X-VERSION:3")
                 appendLine("#EXT-X-TARGETDURATION:10") // A default value, FFmpeg is robust to this.
-                appendLine("#EXT-X-KEY:METHOD=${key!!.method},URI=\"$keyFileName\"")
+                appendLine("#EXT-X-KEY:METHOD=${key.method},URI=\"$keyFileName\"")
             }
 
             segments.forEachIndexed { index, segment ->

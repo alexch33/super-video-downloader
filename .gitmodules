@@ -1,0 +1,3 @@
+[submodule "youtubedl-android"]
+	path = youtubedl-android
+	url = https://github.com/alexch33/youtubedl-android.git

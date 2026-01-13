@@ -12,7 +12,6 @@ import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
 import com.myAllVideoBrowser.util.proxy_utils.ProxyService
-import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLException
 import dagger.android.AndroidInjector
@@ -91,7 +90,6 @@ open class DLApplication : DaggerApplication() {
     private fun initializeYoutubeDl() {
         try {
             YoutubeDL.getInstance().init(applicationContext)
-            FFmpeg.getInstance().init(applicationContext)
         } catch (e: YoutubeDLException) {
             AppLogger.e("failed to initialize youtubedl-android $e")
         }

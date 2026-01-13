@@ -80,8 +80,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 127
-        versionName "0.8.4.0"
+        versionCode 133
+        versionName "0.8.5"
 
         if (splitApks) {
             splits {
@@ -226,8 +226,7 @@ dependencies {
     // (see https://github.com/ReactiveX/RxJava/releases for latest 3.x.x version)
     implementation 'io.reactivex.rxjava3:rxjava:3.1.12'
 
-    implementation('io.github.junkfood02.youtubedl-android:library:0.18.1')
-    implementation('io.github.junkfood02.youtubedl-android:ffmpeg:0.18.1')
+    implementation("com.github.yausername:library")
     implementation("com.antonkarpenko:ffmpeg-kit-full-gpl:2.1.0")
 
     implementation 'com.github.bumptech.glide:glide:5.0.5'

@@ -303,7 +303,7 @@ tasks.coveralls {
 
 ext {
     v2rayRepo = 'https://github.com/2dust/AndroidLibXrayLite.git'
-    v2rayCommit = 'v25.12.8'
+    v2rayCommit = '93a711245dec705be8dd6aa6a47f8aafa7898c40'
     buildDirV2ray = file("${project.rootDir}/build/v2ray")
     goExecutable = file('/usr/local/go/bin/go').exists() ? '/usr/local/go/bin/go' : 'go'
     gitExecutable = file('/usr/bin/git').exists() ? '/usr/bin/git' : 'git'
@@ -338,15 +338,35 @@ def archConfigs = [
         'x86'        : [goArch: '386', target: 'i686-linux-android']
 ]
 
-// 1. Clones the V2Ray source code.
-tasks.register('cloneV2raySource', Exec) {
+// 1. Clones the V2Ray source code and checks out the specific commit.
+tasks.register('cloneV2raySource') {
     group = "Go Setup"
-    description = "Clones the upstream V2Ray source code."
+    description = "Clones V2Ray source and checks out a specific commit."
     def srcDir = file("${buildDirV2ray}/src")
     outputs.dir(srcDir)
     onlyIf { !srcDir.exists() }
-    workingDir project.rootDir
-    commandLine gitExecutable, 'clone', '--depth=1', '--branch', v2rayCommit, v2rayRepo, srcDir.absolutePath
+
+    doLast {
+        println "--- Cloning V2Ray repository and checking out commit ${v2rayCommit} ---"
+
+        // Step 1: Clone the default branch with a shallow history
+        project.exec {
+            workingDir project.rootDir
+            commandLine gitExecutable, 'clone', '--depth=1', v2rayRepo, srcDir.absolutePath
+        }
+
+        // Step 2: Fetch the specific commit from the origin
+        project.exec {
+            workingDir srcDir
+            commandLine gitExecutable, 'fetch', 'origin', v2rayCommit
+        }
+
+        // Step 3: Checkout the fetched commit
+        project.exec {
+            workingDir srcDir
+            commandLine gitExecutable, 'checkout', v2rayCommit
+        }
+    }
 }
 
 // 2. Prepares the MAIN Go module and creates the vendor directory.

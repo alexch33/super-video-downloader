@@ -25,7 +25,6 @@ import okhttp3.Request
 import java.io.File
 import java.io.IOException
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import java.util.concurrent.TimeUnit
 import kotlin.collections.filter
@@ -35,9 +34,6 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters) :
     GenericDownloadWorkerWrapper(appContext, workerParams) {
-
-    private val ffmpegSession = AtomicReference<FFmpegSession?>()
-    private var outputFileName: String? = null
 
     @Volatile
     private lateinit var taskId: String
@@ -59,8 +55,15 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
                 GenericDownloader.DownloaderActions.CANCEL -> {
                     AppLogger.d("HLS: Cancel action received for task $taskId. Creating flag file.")
-                    controller.requestCancel()
-                    getContinuation().resume(Result.success())
+                    val isWorkerRunning =
+                        GenericDownloader.isWorkScheduled(applicationContext, taskId)
+                    if (isWorkerRunning) {
+                        controller.requestCancel()
+                        getContinuation().resume(Result.success())
+                    } else {
+                        controller.requestCancel()
+                        finishWork(task.also { it.taskState = VideoTaskState.CANCELED })
+                    }
                 }
 
                 GenericDownloader.DownloaderActions.PAUSE -> {
@@ -182,6 +185,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     controller.isCancelRequested() -> {
                         AppLogger.d("HLS (Live): Task $taskId was canceled.")
                         finishWork(task.apply { taskState = VideoTaskState.CANCELED })
+                        return@launch
                     }
 
                     controller.isPauseRequested() || e is CancellationException -> {
@@ -325,6 +329,12 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             } catch (e: Exception) {
                 // 4. Handle failures
                 when {
+                    controller.isCancelRequested() -> {
+                        AppLogger.d("MPD: Task $taskId was canceled by user.")
+                        finishWork(task.also { it.taskState = VideoTaskState.CANCELED })
+                        return@launch
+                    }
+
                     controller.isPauseRequested() || e is CancellationException -> {
                         AppLogger.d("MPD: Task $taskId is pausing gracefully.")
                         finishWork(task.also {
@@ -475,7 +485,12 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             } catch (e: Exception) {
                 // 4. Handle failures, including pause and cancel.
                 when {
-                    // Check if failure was due to a pause request.
+                    controller.isCancelRequested() -> {
+                        AppLogger.d("HLS: Task $taskId was canceled by user.")
+                        finishWork(task.apply { taskState = VideoTaskState.CANCELED })
+                        return@launch
+                    }
+
                     controller.isPauseRequested() || e is CancellationException -> {
                         AppLogger.d("HLS: Task $taskId is pausing gracefully.")
                         finishWork(task.also {
@@ -605,7 +620,6 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             return
         }
         AppLogger.d("FFmpeg: Finishing work for task $taskId with state ${item.taskState}")
-        ffmpegSession.set(null)
 
         handleTaskCompletion(item)
 
@@ -627,7 +641,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
         when (item.taskState) {
             VideoTaskState.CANCELED -> {
-                sourcePath.parentFile?.deleteRecursively()
+                // for cancellation path should be specified separately
+                val taskDir = fileUtil.tmpDir.resolve(taskId)
+                AppLogger.d("Task cancelled by user, removing task's dir: $taskDir")
+                taskDir.deleteRecursively()
                 saveProgress(item.mId, finalProgress, item.taskState, "Canceled")
             }
 

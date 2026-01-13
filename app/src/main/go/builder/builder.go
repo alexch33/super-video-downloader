@@ -59,7 +59,8 @@ func Java_com_myAllVideoBrowser_v2ray_V2Ray_XrayRun(env *C.JNIEnv, class C.jclas
 	defer C.release_string_utf_chars(env, jConfig, cConfig)
 
 	goConfig := C.GoString(cConfig)
-	if err := getController().StartLoop(goConfig); err != nil {
+	// Set TUN fd key, 0 means do not use TUN
+	if err := getController().StartLoop(goConfig, 0); err != nil {
 		return 1
 	}
 	return 0

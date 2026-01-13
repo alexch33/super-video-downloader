@@ -111,7 +111,7 @@ object SuperXDownloader : GenericDownloader() {
     override fun getDownloadDataFromVideoInfo(videoInfo: VideoInfo): Data.Builder {
         val videoUrl = videoInfo.originalUrl
         val headers = videoInfo.formats.formats.firstOrNull()?.httpHeaders
-        val headersMap = headers?.toMap<String, String>()?.toMutableMap() ?: mutableMapOf()
+        val headersMap = headers?.toMap()?.toMutableMap() ?: mutableMapOf()
 
         val fileName = videoInfo.name
 

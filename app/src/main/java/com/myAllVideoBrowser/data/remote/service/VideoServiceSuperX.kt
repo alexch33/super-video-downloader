@@ -211,18 +211,27 @@ class VideoServiceSuperX(
     private fun parseMpdManifest(
         manifest: MpdPlaylistParser.MpdManifest, headers: Map<String, String>
     ): VideoInfoWrapper? {
-        val allRepresentations = manifest.periods.flatMap { it.adaptationSets }
-            .filter { it.mimeType?.startsWith("video/") == true }.flatMap { it.representations }
+        // 1. Detect if the stream is live. This is the primary indicator.
+        val isLive = manifest.type == "dynamic"
 
-        if (allRepresentations.isEmpty()) {
+        // 2. Determine duration. For live streams, duration is 0. For VoD, parse it.
+        val durationInMillis = if (isLive) {
+            0L
+        } else {
+            parseIso8601Duration(manifest.mediaPresentationDuration)
+        }
+
+        // 3. Find all video representations across all periods and adaptation sets.
+        val allVideoRepresentations = manifest.periods.flatMap { it.adaptationSets }
+            .filter { it.mimeType?.startsWith("video/") == true }
+            .flatMap { it.representations }
+
+        if (allVideoRepresentations.isEmpty()) {
             AppLogger.d("MPD Parse: No video representations found.")
             return null
         }
 
-        val isLive = manifest.type == "dynamic"
-        val durationInMillis = parseIso8601Duration(manifest.mediaPresentationDuration)
-
-        val formats = allRepresentations.mapNotNull { rep ->
+        val formats = allVideoRepresentations.mapNotNull { rep ->
             if (rep.height == 0 || rep.width == 0) return@mapNotNull null
 
             VideoFormatEntity(
@@ -231,7 +240,10 @@ class VideoServiceSuperX(
                 formatNote = "${rep.height}p",
                 ext = "mp4",
                 vcodec = rep.codecs?.substringBefore(",") ?: "unknown",
-                acodec = rep.codecs?.substringAfter(",", "unknown") ?: "unknown",
+                // A better fallback for acodec in case there is no comma
+                acodec = if (rep.codecs?.contains(',') == true) rep.codecs.substringAfter(
+                    ","
+                ) else "unknown",
                 url = manifest.baseUri, // The download URL is always the manifest URL
                 manifestUrl = manifest.baseUri,
                 httpHeaders = headers,

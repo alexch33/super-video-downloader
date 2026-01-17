@@ -56,7 +56,7 @@ class VideoAdapter(
                 Glide.with(this@VideoViewHolder.itemView.context).load(localVideo.uri).fitCenter()
                     .error(R.drawable.ic_video_24dp)
                     .placeholder(R.drawable.ic_video_24dp)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .apply(RequestOptions().override(size.first / 8, size.second / 8))
                     .into(this.ivThumbnail)
 

@@ -2,10 +2,12 @@ package com.myAllVideoBrowser.util.hls_parser
 
 import androidx.annotation.OptIn
 import androidx.core.net.toUri
+import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.dash.manifest.DashManifest
 import androidx.media3.exoplayer.dash.manifest.DashManifestParser
 import androidx.media3.exoplayer.dash.manifest.Representation
+import com.myAllVideoBrowser.util.AppLogger
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
 import java.io.ByteArrayInputStream
@@ -18,26 +20,16 @@ import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
-/**
- * A parser for MPEG-DASH (MPD) manifests that uses the robust ExoPlayer DASH library internally.
- * It provides a simplified API, similar to HlsPlaylistParser, by wrapping ExoPlayer's parsing logic.
- *
- * This approach supports all DASH features handled by ExoPlayer's parser, including:
- * - static and dynamic presentations.
- * - SegmentTemplate, SegmentList, and SegmentBase.
- * - Number, Time, and Timeline template modes.
- *
- * It also includes a custom fallback parser to handle manifests that ExoPlayer may fail to parse.
- */
 object MpdPlaylistParser {
 
-    // --- Public Data Models (Our simple, consistent API) ---
-
+    // --- Public Data Models ---
     data class MpdManifest(
         val baseUri: String,
         val mediaPresentationDuration: String?,
         val periods: List<Period>,
-        val type: String?
+        val type: String?,
+        val minimumUpdatePeriod: Double?,
+        val timeShiftBufferDepth: Double?
     )
 
     data class Period(
@@ -59,8 +51,11 @@ object MpdPlaylistParser {
         val height: Int,
         val codecs: String?,
         val baseUrls: List<String>,
-        val segments: List<Segment>
-    )
+        val segments: List<Segment>,
+        val initializationUrl: String?
+    ) {
+        var manifest: MpdManifest? = null
+    }
 
     // A simplified segment model
     data class Segment(
@@ -86,7 +81,7 @@ object MpdPlaylistParser {
             // 3. "Translate" the complex ExoPlayer manifest into our simple, clean data models.
             translateManifest(exoManifest, baseUri, manifestContent)
 
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // If ExoPlayer fails, attempt to parse with the custom fallback parser.
             try {
                 parseWithFallback(manifestContent, baseUri)
@@ -100,7 +95,6 @@ object MpdPlaylistParser {
     }
 
     // --- Private Translator Functions ---
-
     @OptIn(UnstableApi::class)
     private fun translateManifest(
         exoManifest: DashManifest,
@@ -121,7 +115,12 @@ object MpdPlaylistParser {
                         id = exoAdaptationSet.id,
                         mimeType = exoAdaptationSet.representations.firstOrNull()?.format?.sampleMimeType,
                         representations = exoAdaptationSet.representations.map { exoRepresentation ->
-                            translateRepresentation(exoRepresentation, periodDuration, baseUri)
+                            translateRepresentation(
+                                exoRepresentation,
+                                periodDuration,
+                                baseUri,
+                                exoManifest.dynamic
+                            )
                         }
                     )
                 }
@@ -130,53 +129,99 @@ object MpdPlaylistParser {
 
         val manifestDurationString = extractMediaPresentationDuration(manifestContent)
         val manifestType = if (exoManifest.dynamic) "dynamic" else "static"
+        val minimumUpdatePeriodSeconds =
+            if (exoManifest.minUpdatePeriodMs == -9223372036854775807L) null else exoManifest.minUpdatePeriodMs / 1000.0
+        val timeShiftBufferDepthSeconds =
+            if (exoManifest.timeShiftBufferDepthMs == -9223372036854775807L) null else exoManifest.timeShiftBufferDepthMs / 1000.0
 
-        return MpdManifest(
-            baseUri = baseUri,
-            mediaPresentationDuration = manifestDurationString,
-            periods = periods,
-            type = manifestType
+        val manifest = MpdManifest(
+            baseUri,
+            manifestDurationString,
+            periods,
+            manifestType,
+            minimumUpdatePeriodSeconds,
+            timeShiftBufferDepthSeconds
         )
+
+        manifest.periods.forEach { period ->
+            period.adaptationSets.forEach { adaptationSet ->
+                adaptationSet.representations.forEach { representation ->
+                    representation.manifest = manifest
+                }
+            }
+        }
+
+        return manifest
     }
 
     private fun extractMediaPresentationDuration(manifestContent: String): String? {
-        // Regex to find mediaPresentationDuration="<value>"
         val pattern = Pattern.compile("""mediaPresentationDuration="([^"]*)"""")
         val matcher = pattern.matcher(manifestContent)
-        return if (matcher.find()) {
-            matcher.group(1)
-        } else {
-            null
-        }
+        return if (matcher.find()) matcher.group(1) else null
     }
-
 
     @OptIn(UnstableApi::class)
     private fun translateRepresentation(
         exoRep: Representation,
         periodDuration: Double?,
-        baseUri: String
+        baseUri: String,
+        isLive: Boolean
     ): MpdRepresentation {
         val segments = mutableListOf<Segment>()
         val index = exoRep.index
+        val initUrlTemplate = exoRep.initializationUri?.resolveUri(baseUri)?.toString()
 
-        // Check against -1 because getSegmentCount can return it for unknown lengths (live streams).
-        if (index != null && periodDuration != null) {
-            // Convert the period duration from seconds (Double) to microseconds (Long) for the ExoPlayer API.
-            val periodDurationUs = (periodDuration * 1_000_000).toLong()
+        if (index == null) {
+            AppLogger.d("MPD Parser: No segment index found for representation ${exoRep.format.id}.")
+        } else {
+            if (isLive) {
+                // Case 1: LIVE stream logic (as determined by the top-level manifest)
+                AppLogger.d("MPD Parser: Detected LIVE index for ${exoRep.format.id}.")
+                try {
+                    val liveEdgeUs =
+                        System.currentTimeMillis() * 1000 - exoRep.presentationTimeOffsetUs
+                    val segmentNum = index.getSegmentNum(liveEdgeUs, C.TIME_UNSET)
 
-            val segmentCount = index.getSegmentCount(periodDurationUs)
-            if (segmentCount > 0) {
-                for (i in 0 until segmentCount.toInt()) {
-                    val segmentDurationUs = index.getDurationUs(i.toLong(), periodDurationUs)
-                    val segmentUri = index.getSegmentUrl(i.toLong())
+                    if (segmentNum > 0) {
+                        val segmentUrl =
+                            index.getSegmentUrl(segmentNum).resolveUri(baseUri).toString()
+                        val segmentDuration =
+                            index.getDurationUs(segmentNum, C.TIME_UNSET) / 1_000_000.0
+                        segments.add(Segment(segmentUrl, segmentDuration))
+                        AppLogger.d("MPD Parser (Live): Calculated live edge segment #$segmentNum for ${exoRep.format.id}")
+                    } else {
+                        AppLogger.w("MPD Parser (Live): Calculated a non-positive segment number ($segmentNum), skipping.")
+                    }
+                } catch (e: Exception) {
+                    AppLogger.e("MPD Parser (Live): Failed to calculate live edge segment ${e.message}")
+                    e.printStackTrace()
+                }
+            } else {
+                // Case 2: VOD (Static) stream logic
+                AppLogger.d("MPD Parser: Detected VOD index for ${exoRep.format.id}.")
+                if (periodDuration != null) {
+                    val periodDurationUs = (periodDuration * 1_000_000).toLong()
+                    val segmentCount = index.getSegmentCount(periodDurationUs)
 
-                    segments.add(
-                        Segment(
-                            url = resolveUrl(baseUri, segmentUri.toString()),
-                            durationSeconds = segmentDurationUs / 1_000_000.0
-                        )
-                    )
+                    if (segmentCount > 0) {
+                        val firstSegmentNum = index.firstSegmentNum
+                        (0 until segmentCount).forEach { i ->
+                            val segmentNum = firstSegmentNum + i
+                            val segmentRangedUri = index.getSegmentUrl(segmentNum)
+                            segments.add(
+                                Segment(
+                                    url = segmentRangedUri.resolveUri(baseUri).toString(),
+                                    durationSeconds = index.getDurationUs(
+                                        segmentNum,
+                                        periodDurationUs
+                                    ) / 1_000_000.0
+                                )
+                            )
+                        }
+                        AppLogger.d("MPD Parser (VOD): Found $segmentCount segments for ${exoRep.format.id}.")
+                    } else {
+                        AppLogger.d("MPD Parser (VOD): No segments found for ${exoRep.format.id} (count: $segmentCount).")
+                    }
                 }
             }
         }
@@ -184,10 +229,7 @@ object MpdPlaylistParser {
         val resolvedBaseUrls = exoRep.baseUrls.map { baseUrlObject ->
             resolveUrl(baseUri, baseUrlObject.url)
         }
-
-        val finalBaseUrls = resolvedBaseUrls.ifEmpty {
-            listOf(baseUri)
-        }
+        val finalBaseUrls = resolvedBaseUrls.ifEmpty { listOf(baseUri) }
 
         return MpdRepresentation(
             id = exoRep.format.id,
@@ -196,7 +238,11 @@ object MpdPlaylistParser {
             height = exoRep.format.height,
             codecs = exoRep.format.codecs,
             baseUrls = finalBaseUrls,
-            segments = segments
+            segments = segments,
+            initializationUrl = initUrlTemplate?.replace(
+                "\$RepresentationID\$",
+                exoRep.format.id ?: ""
+            )
         )
     }
 
@@ -205,7 +251,7 @@ object MpdPlaylistParser {
             // If the URL is already absolute, the constructor will use it as is.
             // If the URL is relative, it will be resolved against the baseUri context.
             URL(URL(baseUri), url).toString()
-        } catch (e: MalformedURLException) {
+        } catch (_: MalformedURLException) {
             // Fallback for cases where the baseUri might not be a perfect URL (e.g., missing a slash)
             // This logic is similar to your original but slightly safer.
             when {
@@ -219,7 +265,6 @@ object MpdPlaylistParser {
     }
 
     // --- Fallback Parser ---
-
     private fun parseWithFallback(manifestContent: String, baseUri: String): MpdManifest {
         val factory = DocumentBuilderFactory.newInstance()
         factory.isNamespaceAware = true
@@ -231,6 +276,23 @@ object MpdPlaylistParser {
         val mediaPresentationDuration = xpath.evaluate("/MPD/@mediaPresentationDuration", document)
         val type = xpath.evaluate("/MPD/@type", document)
 
+        val minimumUpdatePeriodStr = xpath.evaluate("/MPD/@minimumUpdatePeriod", document)
+        val minimumUpdatePeriod = minimumUpdatePeriodStr?.let {
+            try {
+                it.replace("PT", "").replace("S", "").toDoubleOrNull()
+            } catch (_: Exception) {
+                null
+            }
+        }
+        val timeShiftBufferDepthStr = xpath.evaluate("/MPD/@timeShiftBufferDepth", document)
+        val timeShiftBufferDepth = timeShiftBufferDepthStr?.let {
+            try {
+                it.replace("PT", "").replace("S", "").toDoubleOrNull()
+            } catch (_: Exception) {
+                null
+            }
+        }
+
         val periodNodes =
             xpath.evaluate("/MPD/Period", document, XPathConstants.NODESET) as NodeList
         val periods = (0 until periodNodes.length).map { i ->
@@ -240,7 +302,7 @@ object MpdPlaylistParser {
             val periodDuration = periodDurationStr.let {
                 try {
                     it.replace("PT", "").replace("S", "").toDoubleOrNull()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
             }
@@ -251,6 +313,10 @@ object MpdPlaylistParser {
                 val adaptationSetId = adaptationSetNode.getAttribute("id")
                 val mimeType = adaptationSetNode.getAttribute("mimeType")
 
+                // 1. Look for a SegmentTemplate at the AdaptationSet level.
+                val adaptationSetSegmentTemplate =
+                    adaptationSetNode.getElementsByTagName("SegmentTemplate").item(0) as? Element
+
                 val representationNodes = adaptationSetNode.getElementsByTagName("Representation")
                 val representations = (0 until representationNodes.length).map { k ->
                     val representationNode = representationNodes.item(k) as Element
@@ -260,6 +326,26 @@ object MpdPlaylistParser {
                     val width = representationNode.getAttribute("width").toIntOrNull() ?: 0
                     val height = representationNode.getAttribute("height").toIntOrNull() ?: 0
                     val codecs = representationNode.getAttribute("codecs")
+
+                    // 2. Look for a SegmentTemplate at the Representation level.
+                    val representationSegmentTemplate =
+                        representationNode.getElementsByTagName("SegmentTemplate")
+                            .item(0) as? Element
+
+                    // 3. The Representation's template takes precedence over the AdaptationSet's.
+                    val segmentTemplate =
+                        representationSegmentTemplate ?: adaptationSetSegmentTemplate
+
+                    val initUrlTemplate = segmentTemplate?.getAttribute("initialization")
+
+                    val initializationUrl = if (!initUrlTemplate.isNullOrBlank()) {
+                        resolveUrl(baseUri, initUrlTemplate).replace(
+                            "\$RepresentationID\$",
+                            representationId
+                        )
+                    } else {
+                        null
+                    }
 
                     val baseUrls = (representationNode.getElementsByTagName("BaseURL").let {
                         (0 until it.length).map { l -> it.item(l).textContent }
@@ -272,7 +358,8 @@ object MpdPlaylistParser {
                         height = height,
                         codecs = codecs,
                         baseUrls = baseUrls.map { resolveUrl(baseUri, it) },
-                        segments = emptyList() // Segment parsing in fallback is complex and omitted for this example.
+                        segments = emptyList(),
+                        initializationUrl = initializationUrl
                     )
                 }
 
@@ -289,11 +376,23 @@ object MpdPlaylistParser {
             )
         }
 
-        return MpdManifest(
+        val manifest = MpdManifest(
             baseUri = baseUri,
             mediaPresentationDuration = mediaPresentationDuration,
             periods = periods,
-            type = type
+            type = type,
+            minimumUpdatePeriod = minimumUpdatePeriod,
+            timeShiftBufferDepth = timeShiftBufferDepth
         )
+
+        manifest.periods.forEach { period ->
+            period.adaptationSets.forEach { adaptationSet ->
+                adaptationSet.representations.forEach { representation ->
+                    representation.manifest = manifest
+                }
+            }
+        }
+
+        return manifest
     }
 }

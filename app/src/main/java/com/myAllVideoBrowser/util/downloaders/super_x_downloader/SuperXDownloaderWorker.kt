@@ -15,6 +15,7 @@ import com.myAllVideoBrowser.util.downloaders.super_x_downloader.control.FileBas
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.strategy.HlsDownloader
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.strategy.HlsLiveDownloader
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.strategy.MpdDownloader
+import com.myAllVideoBrowser.util.downloaders.super_x_downloader.strategy.MpdLiveDownloader
 import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
 import com.myAllVideoBrowser.util.hls_parser.MpdPlaylistParser
 import kotlinx.coroutines.CoroutineScope
@@ -115,7 +116,11 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             }
         } else if (isMpdPlaylist()) {
             AppLogger.d("MPD Manifest detected. Starting advanced parsing flow.")
-            startMpdDownload(task, headers)
+            if (isLive) {
+                startMpdLiveDownload(task, headers)
+            } else {
+                startMpdDownload(task, headers)
+            }
         } else {
             val tsk = task.apply {
                 this.taskState = VideoTaskState.ERROR
@@ -348,6 +353,95 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         finishWork(task.also {
                             it.taskState = VideoTaskState.ERROR
                             it.errorMessage = "MPD download failed: ${e.message}"
+                        })
+                    }
+                }
+            }
+        }
+    }
+
+    private fun startMpdLiveDownload(task: VideoTaskItem, headers: Map<String, String>) {
+        AppLogger.d("MPD (Live): Delegating download for task $taskId to MpdLiveDownloader strategy.")
+        val mpdTmpDir = fileUtil.tmpDir.resolve(taskId)
+        val controller = FileBasedDownloadController(mpdTmpDir)
+        controller.start()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // 1. Instantiate the MpdLiveDownloader strategy
+                val liveDownloader = MpdLiveDownloader(
+                    httpClient = proxyOkHttpClient.getProxyOkHttpClient(),
+                    getMpdRepresentations = ::getMpdRepresentations,
+                    onMergeProgress = { progress, progressTask ->
+                        onProgress(
+                            progress,
+                            progressTask.also {
+                                it.taskState = VideoTaskState.PREPARE
+                                it.lineInfo = "Merging recorded segments..."
+                            },
+                            isSizeEstimated = true,
+                            isLIve = true
+                        )
+                    },
+                    videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC)
+                )
+
+                // 2. Execute the download. This handles the entire live recording loop.
+                val finalOutputFile = liveDownloader.download(
+                    task = task,
+                    headers = headers,
+                    downloadDir = mpdTmpDir,
+                    controller = controller,
+                    onProgress = { progress ->
+                        onProgress(progress, task, isSizeEstimated = false, isLIve = true)
+                    }
+                )
+
+                // 3. Handle success
+                AppLogger.d("MPD (Live): Strategy download completed successfully.")
+                val completedTask = task.also {
+                    it.taskState = VideoTaskState.SUCCESS
+                    it.filePath = finalOutputFile.absolutePath
+                    it.totalSize = finalOutputFile.length()
+                    it.downloadSize = it.totalSize
+                    it.errorMessage = null
+                }
+                finishWork(completedTask)
+
+            } catch (e: Exception) {
+                // 4. Handle failures (Cancel, Pause/Error)
+                when {
+                    e is CancellationException -> {
+                        AppLogger.d("MPD (Live): Task $taskId was stopped by user. Checking for merged file.")
+                        // The downloader is designed to proceed to merge on cancellation.
+                        // We check if the merged file was successfully created.
+                        val finalFile = mpdTmpDir.resolve("merged_output.mp4")
+                        if (finalFile.exists() && finalFile.length() > 500) { // Check for a reasonable file size
+                            AppLogger.d("MPD (Live): Merge after stop was successful.")
+                            // This is now a SUCCESS state.
+                            val completedTask = task.also {
+                                it.taskState = VideoTaskState.SUCCESS
+                                it.filePath =
+                                    finalFile.absolutePath
+                                it.totalSize = finalFile.length()
+                                it.downloadSize = it.totalSize
+                                it.errorMessage = "Recording stopped by user."
+                            }
+
+                            finishWork(completedTask)
+                        } else {
+                            AppLogger.d("MPD (Live): Task $taskId was canceled before any segments could be merged.")
+                            finishWork(task.apply { taskState = VideoTaskState.CANCELED })
+                        }
+                        return@launch
+                    }
+
+                    else -> {
+                        AppLogger.e("MPD (Live): Download failed for task $taskId: ${e.message}")
+                        e.printStackTrace()
+                        finishWork(task.also {
+                            it.taskState = VideoTaskState.ERROR
+                            it.errorMessage = "MPD Live download failed: ${e.message}"
                         })
                     }
                 }

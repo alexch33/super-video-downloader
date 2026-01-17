@@ -1,5 +1,7 @@
 package com.myAllVideoBrowser.util.downloaders.super_x_downloader.strategy
 
+import androidx.core.view.forEach
+import androidx.core.view.indices
 import com.antonkarpenko.ffmpegkit.FFmpegKit
 import com.antonkarpenko.ffmpegkit.FFmpegSession
 import com.antonkarpenko.ffmpegkit.ReturnCode
@@ -57,25 +59,37 @@ class MpdDownloader(
         onProgress: (progress: Progress) -> Unit
     ): File {
         return withContext(Dispatchers.IO) {
-            // Step 1: Parse the manifest to get user-selected representations
             val (videoRep, audioRep) = getMpdRepresentations(task.url, headers)
             val primaryRep = videoRep ?: audioRep
             ?: throw IOException("No downloadable video or audio representation found for the selected format.")
 
-            // Step 2: Decide which download strategy to use
             val finalOutputFile = if (primaryRep.segments.isNotEmpty()) {
-                // --- STRATEGY A: Segment-based Download ---
                 AppLogger.d("MPD: Detected manifest with segments. Starting segment download.")
-                downloadBySegments(task, headers, downloadDir, videoRep?.segments, audioRep?.segments, controller, onProgress)
+                downloadBySegments(
+                    task,
+                    headers,
+                    downloadDir,
+                    videoRep,
+                    audioRep,
+                    controller,
+                    onProgress
+                )
             } else if (primaryRep.baseUrls.isNotEmpty()) {
-                // --- STRATEGY B: BaseURL-based Download ---
                 AppLogger.d("MPD: Detected manifest with Base URLs. Starting file download.")
-                downloadByBaseUrl(task, headers, downloadDir, videoRep, audioRep, controller, onProgress)
+                downloadByBaseUrl(
+                    task,
+                    headers,
+                    downloadDir,
+                    videoRep,
+                    audioRep,
+                    controller,
+                    onProgress
+                )
             } else {
                 throw IOException("MPD manifest contains neither segments nor base URLs. Cannot download.")
             }
 
-            finalOutputFile // Return the successfully merged file
+            finalOutputFile
         }
     }
 
@@ -86,13 +100,16 @@ class MpdDownloader(
         task: VideoTaskItem,
         headers: Map<String, String>,
         downloadDir: File,
-        videoSegments: List<MpdPlaylistParser.Segment>?,
-        audioSegments: List<MpdPlaylistParser.Segment>?,
+        videoRep: MpdPlaylistParser.MpdRepresentation?, // Changed from List<Segment>
+        audioRep: MpdPlaylistParser.MpdRepresentation?, // Changed from List<Segment>
         controller: FileBasedDownloadController,
         onProgress: (progress: Progress) -> Unit
     ): File = coroutineScope {
         val totalBytesDownloaded = AtomicLong(0)
         val segmentsCompleted = AtomicLong(0)
+
+        val videoSegments = videoRep?.segments
+        val audioSegments = audioRep?.segments
 
         val totalSegmentsToDownload = (videoSegments?.size ?: 0) + (audioSegments?.size ?: 0)
         if (totalSegmentsToDownload == 0) {
@@ -104,20 +121,60 @@ class MpdDownloader(
             downloadDir.resolve("segment_${"%05d".format(videoSegments.indexOf(it))}.m4s").exists()
         } ?: emptyList()
         val alreadyDownloadedAudio = audioSegments?.filter {
-            downloadDir.resolve("audio_segment_${"%05d".format(audioSegments.indexOf(it))}.m4s").exists()
+            downloadDir.resolve("audio_segment_${"%05d".format(audioSegments.indexOf(it))}.m4s")
+                .exists()
         } ?: emptyList()
 
         // Sum initial size and report progress
-        val initialSize = (alreadyDownloadedVideo.sumOf { downloadDir.resolve("segment_${"%05d".format(videoSegments!!.indexOf(it))}.m4s").length() } +
-                alreadyDownloadedAudio.sumOf { downloadDir.resolve("audio_segment_${"%05d".format(audioSegments!!.indexOf(it))}.m4s").length() })
+        val initialSize = (alreadyDownloadedVideo.sumOf {
+            downloadDir.resolve(
+                "segment_${
+                    "%05d".format(videoSegments!!.indexOf(it))
+                }.m4s"
+            ).length()
+        } +
+                alreadyDownloadedAudio.sumOf {
+                    downloadDir.resolve(
+                        "audio_segment_${
+                            "%05d".format(
+                                audioSegments!!.indexOf(it)
+                            )
+                        }.m4s"
+                    ).length()
+                })
         totalBytesDownloaded.set(initialSize)
         segmentsCompleted.set((alreadyDownloadedVideo.size + alreadyDownloadedAudio.size).toLong())
-        // (Initial progress reporting logic can be enhanced here)
 
         // Download remaining segments
         val segmentDownloader = SegmentDownloader(httpClient, headers, controller)
-        val downloadJobs = mutableListOf<Job>()
         val dispatcher = Dispatchers.IO.limitedParallelism(threadCount)
+        val downloadJobs = mutableListOf<Job>()
+
+        videoRep?.initializationUrl?.let { url ->
+            val job = launch(dispatcher) {
+                AppLogger.d("MPD: Downloading video init segment from $url")
+                segmentDownloader.download(
+                    url,
+                    downloadDir.resolve("video_init.m4s"),
+                    "MPD-Video-Init",
+                    0
+                )
+            }
+            downloadJobs.add(job)
+        }
+
+        audioRep?.initializationUrl?.let { url ->
+            val job = launch(dispatcher) {
+                AppLogger.d("MPD: Downloading audio init segment from $url")
+                segmentDownloader.download(
+                    url,
+                    downloadDir.resolve("audio_init.m4s"),
+                    "MPD-Audio-Init",
+                    0
+                )
+            }
+            downloadJobs.add(job)
+        }
 
         videoSegments?.filterNot { alreadyDownloadedVideo.contains(it) }?.forEach { segment ->
             val index = videoSegments.indexOf(segment)
@@ -130,7 +187,8 @@ class MpdDownloader(
                 )
                 val completed = segmentsCompleted.incrementAndGet()
                 val totalDownloaded = totalBytesDownloaded.addAndGet(downloadedBytes)
-                val estimatedTotal = if (completed > 0) (totalDownloaded / completed) * totalSegmentsToDownload else 0
+                val estimatedTotal =
+                    if (completed > 0) (totalDownloaded / completed) * totalSegmentsToDownload else 0
                 onProgress(Progress(totalDownloaded, estimatedTotal))
             }
             downloadJobs.add(job)
@@ -147,7 +205,8 @@ class MpdDownloader(
                 )
                 val completed = segmentsCompleted.incrementAndGet()
                 val totalDownloaded = totalBytesDownloaded.addAndGet(downloadedBytes)
-                val estimatedTotal = if (completed > 0) (totalDownloaded / completed) * totalSegmentsToDownload else 0
+                val estimatedTotal =
+                    if (completed > 0) (totalDownloaded / completed) * totalSegmentsToDownload else 0
                 onProgress(Progress(totalDownloaded, estimatedTotal))
             }
             downloadJobs.add(job)
@@ -159,7 +218,8 @@ class MpdDownloader(
         AppLogger.d("MPD (Segments): All segments downloaded. Merging...")
         onMergeProgress(Progress(totalBytesDownloaded.get(), totalBytesDownloaded.get()))
         val finalOutputFile = downloadDir.resolve("merged_output.mp4")
-        val mergeSession = mergeMpdSegments(downloadDir, videoSegments, audioSegments, finalOutputFile.absolutePath)
+        val mergeSession =
+            mergeMpdSegments(downloadDir, videoRep, audioRep, finalOutputFile.absolutePath)
 
         if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
             throw IOException("FFmpeg failed to merge MPD segments. Log: ${mergeSession.allLogsAsString}")
@@ -188,11 +248,21 @@ class MpdDownloader(
         // Launch video download if it exists
         videoRep?.baseUrls?.takeIf { it.isNotEmpty() }?.let { urls ->
             val job = async {
-                downloadFileWithCustomDownloader(urls, videoTempFile, headers, controller) { downloaded, total ->
+                downloadFileWithCustomDownloader(
+                    urls,
+                    videoTempFile,
+                    headers,
+                    controller
+                ) { downloaded, total ->
                     launch {
                         progressMutex.withLock {
                             videoProgress = Progress(downloaded, total)
-                            onProgress(Progress(videoProgress.currentBytes + audioProgress.currentBytes, videoProgress.totalBytes + audioProgress.totalBytes))
+                            onProgress(
+                                Progress(
+                                    videoProgress.currentBytes + audioProgress.currentBytes,
+                                    videoProgress.totalBytes + audioProgress.totalBytes
+                                )
+                            )
                         }
                     }
                 }
@@ -203,11 +273,21 @@ class MpdDownloader(
         // Launch audio download if it exists
         audioRep?.baseUrls?.takeIf { it.isNotEmpty() }?.let { urls ->
             val job = async {
-                downloadFileWithCustomDownloader(urls, audioTempFile, headers, controller) { downloaded, total ->
+                downloadFileWithCustomDownloader(
+                    urls,
+                    audioTempFile,
+                    headers,
+                    controller
+                ) { downloaded, total ->
                     launch {
                         progressMutex.withLock {
                             audioProgress = Progress(downloaded, total)
-                            onProgress(Progress(videoProgress.currentBytes + audioProgress.currentBytes, videoProgress.totalBytes + audioProgress.totalBytes))
+                            onProgress(
+                                Progress(
+                                    videoProgress.currentBytes + audioProgress.currentBytes,
+                                    videoProgress.totalBytes + audioProgress.totalBytes
+                                )
+                            )
                         }
                     }
                 }
@@ -219,9 +299,18 @@ class MpdDownloader(
         if (controller.isInterrupted()) throw CancellationException("Download interrupted.")
 
         AppLogger.d("MPD (BaseURL): All stream downloads complete. Merging...")
-        onMergeProgress(Progress(videoTempFile.length() + audioTempFile.length(), videoTempFile.length() + audioTempFile.length()))
+        onMergeProgress(
+            Progress(
+                videoTempFile.length() + audioTempFile.length(),
+                videoTempFile.length() + audioTempFile.length()
+            )
+        )
 
-        val mergeSession = mergeBaseUrlStreams(videoTempFile, audioTempFile.takeIf { it.exists() }, finalFile.absolutePath)
+        val mergeSession = mergeBaseUrlStreams(
+            videoTempFile,
+            audioTempFile.takeIf { it.exists() },
+            finalFile.absolutePath
+        )
         if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
             throw IOException("FFmpeg failed to merge BaseURL streams. Log: ${mergeSession.allLogsAsString}")
         }
@@ -252,11 +341,26 @@ class MpdDownloader(
             override fun onProgressUpdate(downloadedBytes: Long, totalBytes: Long) {
                 onProgress(downloadedBytes, totalBytes)
             }
-            override fun onChunkProgressUpdate(downloadedBytes: Long, allBytesChunk: Long, chunkIndex: Int) {}
+
+            override fun onChunkProgressUpdate(
+                downloadedBytes: Long,
+                allBytesChunk: Long,
+                chunkIndex: Int
+            ) {
+            }
+
             override fun onChunkFailure(e: Throwable, index: CustomFileDownloader.Chunk) {}
         }
 
-        val downloader = CustomFileDownloader(URL(urls.first()), outputFile, threadCount, headers, httpClient, listener, false)
+        val downloader = CustomFileDownloader(
+            URL(urls.first()),
+            outputFile,
+            threadCount,
+            headers,
+            httpClient,
+            listener,
+            false
+        )
         downloader.download()
 
         continuation.invokeOnCancellation {
@@ -276,45 +380,56 @@ class MpdDownloader(
 
     private fun mergeMpdSegments(
         mpdTmpDir: File,
-        videoSegments: List<MpdPlaylistParser.Segment>?,
-        audioSegments: List<MpdPlaylistParser.Segment>?,
+        videoRep: MpdPlaylistParser.MpdRepresentation?,
+        audioRep: MpdPlaylistParser.MpdRepresentation?,
         finalOutputPath: String,
     ): FFmpegSession {
-        AppLogger.d("MPD: Starting merge. ${videoSegments?.size ?: 0} video, ${audioSegments?.size ?: 0} audio.")
+        val videoSegments = videoRep?.segments
+        val audioSegments = audioRep?.segments
+        val hasVideo = !videoSegments.isNullOrEmpty()
+        val hasAudio = !audioSegments.isNullOrEmpty()
 
-        val arguments = mutableListOf<String>()
+        AppLogger.d("MPD: Starting manual concat merge. ${videoSegments?.size ?: 0} video, ${audioSegments?.size ?: 0} audio.")
 
-        if (!videoSegments.isNullOrEmpty()) {
-            val videoConcatFile = mpdTmpDir.resolve("ffmpeg_video_concat.txt")
-            videoConcatFile.writeText(
-                videoSegments.indices.joinToString("\n") { index ->
-                    "file 'segment_${"%05d".format(index)}.m4s'"
-                })
-            arguments.apply {
-                add("-f"); add("concat"); add("-safe"); add("0")
-                add("-i"); add(videoConcatFile.absolutePath)
+        val tempVideoFile = mpdTmpDir.resolve("temp_video.mp4")
+        val tempAudioFile = mpdTmpDir.resolve("temp_audio.mp4")
+
+        // Manually concatenate VIDEO segments
+        if (hasVideo) {
+            val videoFilesToConcat = mutableListOf<File>()
+            if (videoRep.initializationUrl != null) {
+                videoFilesToConcat.add(mpdTmpDir.resolve("video_init.m4s"))
             }
-        }
-
-        if (!audioSegments.isNullOrEmpty()) {
-            val audioConcatFile = mpdTmpDir.resolve("ffmpeg_audio_concat.txt")
-            audioConcatFile.writeText(
-                audioSegments.indices.joinToString("\n") { index ->
-                    "file 'audio_segment_${"%05d".format(index)}.m4s'"
-                })
-            arguments.apply {
-                add("-f"); add("concat"); add("-safe"); add("0")
-                add("-i"); add(audioConcatFile.absolutePath)
+            // Add all media segments
+            videoSegments.indices.forEach { index ->
+                videoFilesToConcat.add(mpdTmpDir.resolve("segment_${"%05d".format(index)}.m4s"))
             }
+            manualConcat(videoFilesToConcat, tempVideoFile)
         }
 
-        if (arguments.isEmpty()) {
-            throw IOException("Cannot merge segments: No video or audio segments were provided.")
+        // Manually concatenate AUDIO segments
+        if (hasAudio) {
+            val audioFilesToConcat = mutableListOf<File>()
+            if (audioRep.initializationUrl != null) {
+                audioFilesToConcat.add(mpdTmpDir.resolve("audio_init.m4s"))
+            }
+            // Add all media segments
+            audioSegments.indices.forEach { index ->
+                audioFilesToConcat.add(mpdTmpDir.resolve("audio_segment_${"%05d".format(index)}.m4s"))
+            }
+            manualConcat(audioFilesToConcat, tempAudioFile)
         }
 
-        addCommonMergeArguments(arguments, !videoSegments.isNullOrEmpty(), !audioSegments.isNullOrEmpty(), finalOutputPath)
-        AppLogger.d("FFmpeg: Executing MPD segment merge with arguments: $arguments")
-        return FFmpegKit.executeWithArguments(arguments.toTypedArray())
+        val mergeSession = mergeBaseUrlStreams(
+            tempVideoFile,
+            tempAudioFile.takeIf { it.exists() && it.length() > 0 },
+            finalOutputPath
+        )
+
+        tempVideoFile.delete()
+        tempAudioFile.delete()
+
+        return mergeSession
     }
 
     private fun mergeBaseUrlStreams(
@@ -327,29 +442,75 @@ class MpdDownloader(
             arguments.add("-i")
             arguments.add(it.absolutePath)
         }
-        addCommonMergeArguments(arguments, true, audioFile != null, finalOutputPath)
+        addCommonMergeArguments(arguments, true, audioFile != null, finalOutputPath, false)
         AppLogger.d("FFmpeg: Executing MPD BaseURL merge with arguments: $arguments")
         return FFmpegKit.executeWithArguments(arguments.toTypedArray())
     }
 
-    private fun addCommonMergeArguments(arguments: MutableList<String>, hasVideo: Boolean, hasAudio: Boolean, finalOutputPath: String) {
+    private fun addCommonMergeArguments(
+        arguments: MutableList<String>,
+        hasVideo: Boolean,
+        hasAudio: Boolean,
+        finalOutputPath: String,
+        isSegmentMerge: Boolean
+    ) {
         arguments.apply {
             when {
-                hasVideo && hasAudio -> { add("-map"); add("0:v:0?"); add("-map"); add("1:a:0?") }
-                hasVideo -> { add("-map"); add("0:v:0?") }
-                hasAudio -> { add("-map"); add("0:a:0?") }
+                hasVideo && hasAudio -> {
+                    // Map video from the first input (0) and audio from the second (1).
+                    // This is now applied to both segment and base URL merges.
+                    add("-map"); add("0:v:0?"); add("-map"); add("1:a:0?")
+                }
+                // This case might not be strictly necessary if you always have one input
+                // when there's only one stream, but it's good for robustness.
+                hasVideo -> {
+                    add("-map"); add("0:v:0?")
+                }
+
+                hasAudio -> {
+                    add("-map"); add("0:a:0?")
+                }
             }
 
             if (hasVideo && (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true)) {
-                add("-c:v"); add("libx264"); add("-preset"); add("veryfast"); add("-crf"); add("23"); add("-pix_fmt"); add("yuv420p")
+                add("-c:v"); add("libx264"); add("-preset"); add("veryfast"); add("-crf"); add("23"); add(
+                    "-pix_fmt"
+                ); add("yuv420p")
                 if (hasAudio) add("-c:a"); add("copy")
             } else {
                 add("-c"); add("copy")
             }
 
-            add("-bsf:a"); add("aac_adtstoasc")
-            add("-movflags"); add("+faststart")
+            // Only add these flags if it's NOT a segment merge
+            if (!isSegmentMerge) {
+                add("-bsf:a"); add("aac_adtstoasc")
+                add("-movflags"); add("+faststart")
+            }
+
             add("-y"); add(finalOutputPath)
         }
+    }
+
+    private fun manualConcat(
+        filesToConcat: List<File>,
+        outputFile: File
+    ) {
+        if (filesToConcat.isEmpty()) {
+            AppLogger.w("ManualConcat: No files to concatenate for ${outputFile.name}")
+            return
+        }
+        AppLogger.d("ManualConcat: Starting for ${outputFile.name}. Concatenating ${filesToConcat.size} files.")
+        outputFile.outputStream().use { output ->
+            filesToConcat.forEach { file ->
+                if (file.exists()) {
+                    file.inputStream().use { input ->
+                        input.copyTo(output)
+                    }
+                } else {
+                    AppLogger.w("ManualConcat: File not found, skipping: ${file.name}")
+                }
+            }
+        }
+        AppLogger.d("ManualConcat: Finished. Output size: ${outputFile.length()} bytes.")
     }
 }

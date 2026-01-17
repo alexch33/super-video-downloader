@@ -436,6 +436,21 @@ class WebTabFragment : BaseWebTabFragment() {
                 userAgentString = BrowserFragment.DESKTOP_USER_AGENT
             }
         }
+        currentWebView?.setOnCreateContextMenuListener { menu, v, menuInfo ->
+            val webView = v as WebView
+            val hitTestResult = webView.hitTestResult
+
+            if (hitTestResult.type == WebView.HitTestResult.SRC_ANCHOR_TYPE) {
+                val url = hitTestResult.extra
+                if (url != null) {
+                    menu.setHeaderTitle(url)
+                    menu.add(0, 1, 0, "Open in new tab").setOnMenuItemClickListener {
+                        tabViewModel.openPageEvent.value = WebTab(url, url)
+                        true
+                    }
+                }
+            }
+        }
         fragmentWebTabBinding.webviewContainer.addView(
             webTab.getWebView(),
             LinearLayout.LayoutParams(-1, -1)

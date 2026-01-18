@@ -48,6 +48,46 @@ Please help with translations using [Weblate](https://toolate.othing.xyz/project
 - **Database**: Room
 - **Networking**: OkHttp, libv2ray
 
+# How to run
+A compact set of copy-paste commands to build the app on different OSes.
+
+- Build debug APK (macOS / Linux):
+
+```bash
+# from repository root
+./gradlew :app:assembleDebug
+```
+
+- Build debug APK (Windows CMD/PowerShell):
+
+```powershell
+# from repository root (PowerShell)
+.\\gradlew.bat :app:assembleDebug
+```
+
+- Vendor Go dependencies only:
+
+```bash
+./gradlew :app:vendorGoDependencies
+```
+
+- Clean build artifacts:
+
+```bash
+./gradlew clean
+```
+
+- If `go` is not on PATH, override the detected `go` binary:
+
+```bash
+# macOS / Linux
+export GO_EXECUTABLE=/opt/homebrew/bin/go
+./gradlew :app:vendorGoDependencies
+
+# Or pass as Gradle property
+./gradlew -PGO_EXECUTABLE=/opt/homebrew/bin/go :app:vendorGoDependencies
+```
+
 ## License
 
 This package is licensed under the [LICENSE](./LICENSE) for details.

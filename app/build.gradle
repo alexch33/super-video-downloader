@@ -305,7 +305,16 @@ ext {
     v2rayRepo = 'https://github.com/2dust/AndroidLibXrayLite.git'
     v2rayCommit = '93a711245dec705be8dd6aa6a47f8aafa7898c40'
     buildDirV2ray = file("${project.rootDir}/build/v2ray")
-    goExecutable = file('/usr/local/go/bin/go').exists() ? '/usr/local/go/bin/go' : 'go'
+    // Resolve Go executable robustly: allow env/project override, check common install locations, fall back to PATH 'go'
+    goExecutable = ({
+        def envOverride = System.getenv('GO_EXECUTABLE')
+        if (envOverride && file(envOverride).exists()) return envOverride
+        if (project.hasProperty('GO_EXECUTABLE') && file(project.property('GO_EXECUTABLE')).exists()) return project.property('GO_EXECUTABLE')
+        def candidates = ['/opt/homebrew/bin/go', '/usr/local/go/bin/go', '/usr/local/bin/go', '/usr/bin/go']
+        def found = candidates.find { file(it).exists() }
+        if (found) return found
+        return 'go'
+    })()
     gitExecutable = file('/usr/bin/git').exists() ? '/usr/bin/git' : 'git'
 }
 
@@ -330,6 +339,20 @@ static def findNdkPath(Project project) {
 }
 
 def ndkPath = findNdkPath(project)
+
+// Detect the correct prebuilt toolchain folder inside the NDK (e.g. darwin-x86_64, linux-x86_64, windows-x86_64)
+def prebuiltToolchainsDir = file("${ndkPath}/toolchains/llvm/prebuilt")
+if (!prebuiltToolchainsDir.exists()) {
+    throw new GradleException("NDK toolchains prebuilt directory not found at: ${prebuiltToolchainsDir}. Check your NDK installation and ndk.dir/ANDROID_NDK_HOME/ANDROID_NDK_ROOT settings.")
+}
+
+def prebuiltChildren = prebuiltToolchainsDir.listFiles()?.findAll { it.isDirectory() } ?: []
+if (prebuiltChildren.size() == 0) {
+    throw new GradleException("No prebuilt toolchain directory found under ${prebuiltToolchainsDir}.")
+}
+
+def ndkPrebuiltFolder = (prebuiltChildren.find { it.name.contains('darwin') } ?: prebuiltChildren[0]).name
+println "Using NDK prebuilt folder: ${ndkPrebuiltFolder}"
 
 def archConfigs = [
         'arm64-v8a'  : [goArch: 'arm64', target: 'aarch64-linux-android'],
@@ -382,6 +405,23 @@ tasks.register('vendorGoDependencies') {
 
     inputs.file("${builderDir}/builder.go")
     outputs.dir(vendorDir)
+
+    // Pre-check: ensure the `go` executable is available and runnable before attempting to vendor.
+    doFirst {
+        println "--- (CHECK) Verifying Go executable ---"
+        def overrideEnv = System.getenv('GO_EXECUTABLE')
+        def overrideProp = project.hasProperty('GO_EXECUTABLE') ? project.property('GO_EXECUTABLE') : null
+        def goExecCandidate = overrideEnv ?: overrideProp ?: goExecutable
+        try {
+            exec {
+                workingDir builderDir
+                commandLine goExecCandidate, 'version'
+                // don't capture output; failure will throw an exception
+            }
+        } catch (Exception e) {
+            throw new GradleException("Go executable not found or failed to run. Tried: ${goExecCandidate}.\nInstall Go (e.g. on macOS: 'brew install go') or set environment variable GO_EXECUTABLE=/path/to/go or pass -PGO_EXECUTABLE=/path/to/go. Original error: ${e.message}")
+        }
+    }
 
     doLast {
         println "--- Initializing main Go module and vendoring dependencies ---"
@@ -455,7 +495,7 @@ archConfigs.each { abi, config ->
         workingDir builderDir
 
         def apiLevel = 21
-        def toolchainPath = "${ndkPath}/toolchains/llvm/prebuilt/linux-x86_64"
+        def toolchainPath = "${ndkPath}/toolchains/llvm/prebuilt/${ndkPrebuiltFolder}"
         def compiler = "${toolchainPath}/bin/${target}${apiLevel}-clang"
         def sysroot = "${toolchainPath}/sysroot"
 

@@ -73,12 +73,10 @@ class VideoServiceSuperX(
         }
     }
 
-// In VideoServiceSuperX.kt
-
     private fun parseHlsManifest(
         manifest: HlsPlaylistParser.HlsPlaylist, headers: Map<String, String>
     ): VideoInfoWrapper? {
-        var formats = mutableListOf<VideoFormatEntity>()
+        val formats = mutableListOf<VideoFormatEntity>()
         val title: String
         var duration: Long
         val isLive: Boolean
@@ -98,7 +96,7 @@ class VideoServiceSuperX(
                     return null
                 }
 
-                // --- NEW LOGIC: Handle Separate Audio and Video ---
+                // --- Handle Separate Audio and Video ---
 
                 // 1. Find all available audio renditions, grouping them by their GROUP-ID.
                 val audioRenditionsByGroup: Map<String, List<HlsPlaylistParser.HlsRendition>> =

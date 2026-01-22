@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.util.downloaders.super_x_downloader.strategy
 import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.DownloaderUtils
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.SegmentDownloader
@@ -135,7 +136,12 @@ class HlsLiveDownloader(
                 }
 
                 AppLogger.d("HLS (Live): Proceeding to merge ${allVideoSegments.size} video and ${allAudioSegments.size} audio segments.")
-                onMergeProgress(Progress(totalBytesDownloaded, totalBytesDownloaded), task)
+                onMergeProgress(
+                    Progress(totalBytesDownloaded, totalBytesDownloaded),
+                    task.apply {
+                        this.taskState = VideoTaskState.PREPARE
+                        this.lineInfo = "Merging segments..."
+                    })
                 finalOutputFile = downloadDir.resolve("merged_output.mp4")
                 val mergeSession = DownloaderUtils.mergeHlsSegments(
                     hlsTmpDir = downloadDir,

@@ -105,7 +105,7 @@ object MpdPlaylistParser {
             val exoPeriod = exoManifest.getPeriod(i)
             val periodDurationMs = exoManifest.getPeriodDurationMs(i)
             val periodDuration =
-                if (periodDurationMs == -9223372036854775807L) null else periodDurationMs / 1000.0
+                if (periodDurationMs == C.TIME_UNSET) null else periodDurationMs / 1000.0
 
             Period(
                 id = exoPeriod.id,
@@ -130,9 +130,9 @@ object MpdPlaylistParser {
         val manifestDurationString = extractMediaPresentationDuration(manifestContent)
         val manifestType = if (exoManifest.dynamic) "dynamic" else "static"
         val minimumUpdatePeriodSeconds =
-            if (exoManifest.minUpdatePeriodMs == -9223372036854775807L) null else exoManifest.minUpdatePeriodMs / 1000.0
+            if (exoManifest.minUpdatePeriodMs == C.TIME_UNSET) null else exoManifest.minUpdatePeriodMs / 1000.0
         val timeShiftBufferDepthSeconds =
-            if (exoManifest.timeShiftBufferDepthMs == -9223372036854775807L) null else exoManifest.timeShiftBufferDepthMs / 1000.0
+            if (exoManifest.timeShiftBufferDepthMs == C.TIME_UNSET) null else exoManifest.timeShiftBufferDepthMs / 1000.0
 
         val manifest = MpdManifest(
             baseUri,

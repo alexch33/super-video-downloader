@@ -278,7 +278,6 @@ object HlsPlaylistParser {
 
         var currentKey: HlsEncryptionKey? = null
 
-        // This is a simplified, single-pass version of your original media parser.
         while (lines.isNotEmpty()) {
             val line = lines.removeFirst()
             when {
@@ -461,7 +460,6 @@ object HlsPlaylistParser {
                     language = exoRendition.format.language,
                     isDefault = exoRendition.format.selectionFlags and C.SELECTION_FLAG_DEFAULT != 0,
                     isAutoselect = exoRendition.format.selectionFlags and C.SELECTION_FLAG_AUTOSELECT != 0,
-                    // **THE FIX IS HERE:** We now populate formatInfo correctly.
                     formatInfo = mapOf(
                         "CODECS" to (exoRendition.format.codecs ?: ""),
                         "BANDWIDTH" to (exoRendition.format.bitrate.toString())
@@ -485,6 +483,7 @@ object HlsPlaylistParser {
                 exoMedia.segments.firstOrNull { it.fullSegmentEncryptionKeyUri != null }
             if (firstEncryptedSegment != null) {
                 hlsEncryptionKey = HlsEncryptionKey(
+                    // TODO: detect method
                     method = "AES-128", // This is the assumed standard
                     uri = firstEncryptedSegment.fullSegmentEncryptionKeyUri!!,
                     iv = firstEncryptedSegment.encryptionIV

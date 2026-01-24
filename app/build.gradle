@@ -80,8 +80,8 @@ android {
         applicationId "com.myAllVideoBrowser"
         minSdkVersion build_versions.min_sdk
         targetSdkVersion build_versions.target_sdk
-        versionCode 145
-        versionName "0.8.7"
+        versionCode 151
+        versionName "0.8.8"
 
         if (splitApks) {
             splits {
@@ -232,8 +232,6 @@ dependencies {
 
     implementation 'com.github.bumptech.glide:glide:5.0.5'
 
-    implementation 'com.github.bumptech.glide:glide:5.0.5'
-
     // Another Webview versions has random crashes
     implementation('androidx.webkit:webkit:1.12.1')
 
@@ -260,9 +258,6 @@ dependencies {
 
     // For building media playback UIs
     implementation "androidx.media3:media3-ui:$media3_version"
-
-    // For exposing and controlling media sessions
-    implementation "androidx.media3:media3-session:$media3_version"
 
     // For extracting data from media containers
     implementation "androidx.media3:media3-extractor:$media3_version"

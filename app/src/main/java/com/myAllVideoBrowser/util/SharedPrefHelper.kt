@@ -317,10 +317,22 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getGeneratedCreds(): GeneratedProxyCreds {
-        val initialCreds = GeneratedProxyCreds.generateProxyCredentials()
-        setGeneratedCreds(initialCreds)
+        val creds = sharedPreferences.getString(GENERATED_CREDENTIALS, null)
+        return if (creds != null) {
+            val saved = GeneratedProxyCreds.fromJson(creds)
 
-        return initialCreds
+            val hasSpecialChar = saved.localPassword.any { !it.isLetterOrDigit() }
+            if (!hasSpecialChar) {
+                val newCreds = GeneratedProxyCreds.generateProxyCredentials()
+                setGeneratedCreds(newCreds)
+                return newCreds
+            }
+            saved
+        } else {
+            val initialCreds = GeneratedProxyCreds.generateProxyCredentials()
+            setGeneratedCreds(initialCreds)
+            initialCreds
+        }
     }
 
     fun getIsDohOn(): Boolean {

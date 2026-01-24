@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: false
-          body: "Settings crash fix\nFixed an issue where settings were not being saved correctly to SharedPreferences."
+          body: "Youtube-dlp fix: fixed local proxy password generation"
           draft: false
           make_latest: true
           tag_name: ${{ github.ref_name }}

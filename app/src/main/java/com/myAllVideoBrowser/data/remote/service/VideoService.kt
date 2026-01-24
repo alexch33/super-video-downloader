@@ -65,6 +65,9 @@ open class VideoServiceLocal(
             }
         }
 
+        request.addOption("--force-ipv4")
+        request.addOption("--source-address", "127.0.0.1")
+
         val currentProxy = proxyController.getCurrentRunningProxy()
         if (currentProxy != Proxy.noProxy()) {
             attachProxyToRequest(request, currentProxy)

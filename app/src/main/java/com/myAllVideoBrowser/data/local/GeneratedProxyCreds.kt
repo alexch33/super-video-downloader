@@ -17,8 +17,7 @@ data class GeneratedProxyCreds(val localUser: String, val localPassword: String)
         private const val USERNAME_LENGTH = 16
         private const val PASSWORD_LENGTH = 32
         private val USER_CHARSET = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-        private val PASSWORD_CHARSET =
-            USER_CHARSET + "!@#$%^&*()_+-=[]{}|;':,./<>?".toCharArray().toList()
+        private val PASSWORD_CHARSET = USER_CHARSET
 
         fun generateProxyCredentials(): GeneratedProxyCreds {
             val user = generateRandomString(USERNAME_LENGTH, USER_CHARSET)

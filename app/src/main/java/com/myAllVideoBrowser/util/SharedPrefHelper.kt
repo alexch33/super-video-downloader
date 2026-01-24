@@ -322,7 +322,7 @@ class SharedPrefHelper @Inject constructor(
             val saved = GeneratedProxyCreds.fromJson(creds)
 
             val hasSpecialChar = saved.localPassword.any { !it.isLetterOrDigit() }
-            if (!hasSpecialChar) {
+            if (hasSpecialChar) {
                 val newCreds = GeneratedProxyCreds.generateProxyCredentials()
                 setGeneratedCreds(newCreds)
                 return newCreds

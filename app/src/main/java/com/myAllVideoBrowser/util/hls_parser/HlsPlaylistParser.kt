@@ -134,7 +134,7 @@ object HlsPlaylistParser {
     @Throws(IOException::class)
     fun parse(playlistContent: String, baseUri: String): HlsPlaylist {
         try {
-            AppLogger.d("HLS Parser: Attempting to parse with ExoPlayer parser. manifest body: $playlistContent")
+            AppLogger.d("HLS Parser: Attempting to parse with ExoPlayer parser. manifest body length: ${playlistContent.length}")
             return parseWithExoPlayer(playlistContent, baseUri)
         } catch (exoPlayerError: Exception) {
             AppLogger.w("HLS Parser: ExoPlayer parser failed ('${exoPlayerError.message}'). Falling back to legacy parser.")

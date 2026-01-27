@@ -138,6 +138,7 @@ class WebTabFragment : BaseWebTabFragment() {
         tabViewModel.thisTabIndex.set(thisTabIndex)
 
         webTab = pageTabProvider.getPageTab(thisTabIndex)
+        videoDetectionTabViewModel.initialUrl = webTab.getUrl()
 
         AppLogger.d("onCreate Webview::::::::: ${webTab.getUrl()} $savedInstanceState")
         suggestionAdapter =
@@ -591,7 +592,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 ?: BrowserFragment.MOBILE_USER_AGENT
             if (url != null) {
                 videoDetectionTabViewModel.viewModelScope.launch(videoDetectionTabViewModel.executorReload) {
-                    videoDetectionTabViewModel.onStartPage(url, userAgent)
+                    videoDetectionTabViewModel.onReloadPage(url, userAgent)
                 }
 
                 if (url.contains("www.facebook") && urlWasChange) {

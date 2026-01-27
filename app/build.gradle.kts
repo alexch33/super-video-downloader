@@ -27,7 +27,7 @@ kotlin {
 }
 
 allOpen {
-    annotation("com.allVideoBrowserXmaster.OpenForTesting")
+    annotation("com.myAllVideoBrowser.OpenForTesting")
 }
 
 jacoco {
@@ -113,8 +113,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 151
-        versionName = "0.8.8"
+        versionCode = 157
+        versionName = "0.8.9"
 
         if (splitApks) {
             splits {

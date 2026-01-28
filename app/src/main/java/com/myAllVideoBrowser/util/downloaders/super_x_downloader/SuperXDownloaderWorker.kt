@@ -539,14 +539,12 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 val hlsDownloader = HlsDownloader(
                     httpClient = proxyOkHttpClient.getProxyOkHttpClient(),
                     getMediaSegments = ::getMediaSegments,
-                    onMergeProgress = { progress ->
+                    onMergeProgress = { progress, progressTask ->
                         onProgress(
                             progress,
-                            task.also {
-                                it.taskState = VideoTaskState.PREPARE
-                                it.lineInfo = "Merging segments..."
-                            },
+                            progressTask,
                             isSizeEstimated = true,
+                            isOnMerge = true
                         )
                     },
                     threadCount = sharedPrefHelper.getM3u8DownloaderThreadCount(),
@@ -876,16 +874,19 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     ) {
         if (getDone()) return
         val isLIve = isLIve || task.isLive
-        showProgress(task, progress)
         if (isOnMerge) {
             saveProgress(
                 task.mId,
                 progress,
                 VideoTaskState.PREPARE,
                 isLive = isLIve,
+                infoLine = task.lineInfo
             )
+            showProgress(task, progress)
             return
         }
+        showProgress(task, progress)
+
         if (isSizeEstimated || isLIve) {
             saveProgress(
                 task.mId,

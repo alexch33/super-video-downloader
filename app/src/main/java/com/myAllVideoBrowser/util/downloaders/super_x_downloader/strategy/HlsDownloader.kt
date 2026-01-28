@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.util.downloaders.super_x_downloader.strategy
 import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.DownloaderUtils
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.SegmentDownloader
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong
 class HlsDownloader(
     private val httpClient: OkHttpClient,
     private val getMediaSegments: suspend (url: String, headers: Map<String, String>) -> Pair<List<HlsPlaylistParser.MediaSegment>?, List<HlsPlaylistParser.MediaSegment>?>,
-    private val onMergeProgress: (progress: Progress) -> Unit,
+    private val onMergeProgress: (progress: Progress, task: VideoTaskItem) -> Unit,
     private val threadCount: Int,
     private val videoCodec: String?
 ) : ManifestDownloader {
@@ -153,7 +154,10 @@ class HlsDownloader(
             }
 
             val finalDownloadedBytes = hlsTotalBytesDownloaded.get()
-            onMergeProgress(Progress(finalDownloadedBytes, finalDownloadedBytes))
+            onMergeProgress(Progress(finalDownloadedBytes, finalDownloadedBytes), task.apply {
+                this.taskState = VideoTaskState.PREPARE
+                this.lineInfo = "Merging segments..."
+            });
 
             AppLogger.d("HLS: All segments downloaded successfully. Starting merge.")
             val finalOutputFile = downloadDir.resolve("merged_output.mp4")
@@ -165,7 +169,15 @@ class HlsDownloader(
                 audioSegments,
                 finalOutputFile.absolutePath,
                 videoCodec,
-                httpClient
+                httpClient,
+                onMergeProgress = { percentage ->
+                    onMergeProgress(
+                        Progress(finalDownloadedBytes * percentage / 100, finalDownloadedBytes),
+                        task.apply {
+                            this.lineInfo = "Merging segments... $percentage"
+                            this.taskState = VideoTaskState.PREPARE
+                        });
+                }
             )
             if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
                 throw IOException("FFmpeg failed to merge segments. Return code: ${mergeSession.returnCode}. Logs: ${mergeSession.allLogsAsString}")

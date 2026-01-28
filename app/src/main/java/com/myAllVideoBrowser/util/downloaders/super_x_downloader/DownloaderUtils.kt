@@ -1,19 +1,24 @@
-// com/myAllVideoBrowser/util/downloaders/super_x_downloader/DownloaderUtils.kt
 package com.myAllVideoBrowser.util.downloaders.super_x_downloader
 
 import com.antonkarpenko.ffmpegkit.FFmpegKit
 import com.antonkarpenko.ffmpegkit.FFmpegSession
+import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.CountDownLatch
 
 object DownloaderUtils {
 
     /**
      * This is the MERGE logic, now living in a central utility location.
+     * With progress reporting.
+     *
+     * This version uses executeAsync and blocks until completion to fit the synchronous
+     * nature of the calling HlsLiveDownloader.
      */
     fun mergeHlsSegments(
         hlsTmpDir: File,
@@ -21,7 +26,8 @@ object DownloaderUtils {
         audioSegments: List<HlsPlaylistParser.MediaSegment>?,
         finalOutputPath: String,
         videoCodec: String?,
-        httpClient: OkHttpClient
+        httpClient: OkHttpClient,
+        onMergeProgress: ((percentage: Int) -> Unit)? = null
     ): FFmpegSession {
         val arguments = mutableListOf<String>()
 
@@ -58,6 +64,11 @@ object DownloaderUtils {
             throw IOException("Cannot merge segments: No video or audio segments were provided.")
         }
 
+        // --- Calculate Total Duration for Progress ---
+        val totalDurationSeconds = (videoSegments?.sumOf { it.duration } ?: 0.0) +
+                (audioSegments?.takeIf { videoSegments.isNullOrEmpty() }?.sumOf { it.duration }
+                    ?: 0.0)
+
         // --- Final FFmpeg Arguments ---
         arguments.apply {
             val hasVideo = !videoSegments.isNullOrEmpty()
@@ -85,7 +96,49 @@ object DownloaderUtils {
         }
 
         AppLogger.d("DownloaderUtils: Executing HLS merge with arguments: $arguments")
-        return FFmpegKit.executeWithArguments(arguments.toTypedArray())
+
+        val latch = CountDownLatch(1)
+        lateinit var finalSession: FFmpegSession
+
+        // 1. Execute FFmpeg asynchronously
+        val session = FFmpegKit.executeAsync(
+            arguments.joinToString(" "),
+            { completedSession -> // This callback runs when the command finishes
+                finalSession = completedSession
+                // If the command failed, log the reason.
+                if (!ReturnCode.isSuccess(completedSession.returnCode)) {
+                    AppLogger.e("FFmpeg merge failed with return code ${completedSession.returnCode}. Log: ${completedSession.allLogsAsString}")
+                }
+                latch.countDown() // Release the latch
+            },
+            { log ->
+                // Log callback (optional, but good for debugging)
+                AppLogger.d("FFmpeg: ${log.message}")
+            },
+            { statistics ->
+                // 2. This is the statistics callback for progress
+                if (onMergeProgress != null && totalDurationSeconds > 0) {
+                    val totalDurationMillis = (totalDurationSeconds * 1000).toLong()
+                    val currentTimeMillis = statistics.time
+                    if (currentTimeMillis > 0) {
+                        val percentage = ((currentTimeMillis * 100) / totalDurationMillis).toInt()
+                        onMergeProgress(percentage.coerceIn(0, 100))
+                    }
+                }
+            })
+
+        // 3. Block the current thread until the FFmpeg command completes
+        try {
+            latch.await()
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            // If the wait is interrupted, try to cancel the FFmpeg job
+            FFmpegKit.cancel(session.sessionId)
+            throw IOException("FFmpeg merge was interrupted.", e)
+        }
+
+        // 4. Return the completed session
+        return finalSession
     }
 
     /**

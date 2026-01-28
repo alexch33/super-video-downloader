@@ -151,10 +151,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                             progress,
                             progressTask.also {
                                 it.taskState = VideoTaskState.PREPARE
-                                it.lineInfo = "Merging recorded segments..."
                             },
                             isSizeEstimated = true,
-                            isLIve = true
+                            isLIve = true,
+                            isOnMerge = true
                         )
                     },
                     videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC),
@@ -301,7 +301,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                                 it.taskState = VideoTaskState.PREPARE
                                 it.lineInfo = "Merging downloaded files..."
                             },
-                            isSizeEstimated = true
+                            isSizeEstimated = true,
                         )
                     },
                     threadCount = sharedPrefHelper.getM3u8DownloaderThreadCount(),
@@ -380,7 +380,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                                 it.lineInfo = "Merging recorded segments..."
                             },
                             isSizeEstimated = true,
-                            isLIve = true
+                            isLIve = true,
                         )
                     },
                     videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC)
@@ -546,7 +546,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                                 it.taskState = VideoTaskState.PREPARE
                                 it.lineInfo = "Merging segments..."
                             },
-                            isSizeEstimated = true
+                            isSizeEstimated = true,
                         )
                     },
                     threadCount = sharedPrefHelper.getM3u8DownloaderThreadCount(),
@@ -832,7 +832,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         progress: Progress,
         downloadStatus: Int,
         infoLine: String = "",
-        isLive: Boolean = false
+        isLive: Boolean = false,
     ) {
         if (getDone() && downloadStatus == VideoTaskState.DOWNLOADING) return
         val dbTask = progressRepository.getProgressInfos().blockingFirst()
@@ -868,11 +868,24 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     }
 
     private fun onProgress(
-        progress: Progress, task: VideoTaskItem, isSizeEstimated: Boolean, isLIve: Boolean = false
+        progress: Progress,
+        task: VideoTaskItem,
+        isSizeEstimated: Boolean,
+        isLIve: Boolean = false,
+        isOnMerge: Boolean = false
     ) {
         if (getDone()) return
         val isLIve = isLIve || task.isLive
         showProgress(task, progress)
+        if (isOnMerge) {
+            saveProgress(
+                task.mId,
+                progress,
+                VideoTaskState.PREPARE,
+                isLive = isLIve,
+            )
+            return
+        }
         if (isSizeEstimated || isLIve) {
             saveProgress(
                 task.mId,

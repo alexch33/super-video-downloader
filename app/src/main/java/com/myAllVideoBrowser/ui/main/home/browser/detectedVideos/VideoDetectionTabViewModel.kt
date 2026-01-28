@@ -221,7 +221,6 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
-    @Synchronized
     open fun startVerifyProcess(
         resourceRequest: Request, isM3u8: Boolean, isMpd: Boolean, hlsTitle: String? = null
     ) {

@@ -1,51 +1,105 @@
 package com.myAllVideoBrowser.util.downloaders.generic_downloader.models;
 
+import androidx.annotation.NonNull;
+
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.Video.Type;
+
 public class VideoTaskItem implements Cloneable {
 
-    private String mUrl;                 //下载视频的url
-    private String mCoverUrl;            //封面图的url
-    private String mCoverPath;           //封面图存储的位置
-    private String mTitle;               //视频的标题
-    private String mGroupName;           //下载分组的名称
-    private long mDownloadCreateTime;    //下载创建的时间
-    private int mTaskState;              //当前任务的状态
-    private String mMimeType;            // 视频url的mime type
-    private String mFinalUrl;            //30x跳转之后的url
-    private int mErrorCode;              //当前任务下载错误码
-    private int mVideoType;              //当前文件类型
-    private int mTotalTs;                //当前M3U8的总分片
-    private int mCurTs;                  //当前M3U8已缓存的分片
-    private float mSpeed;                //当前下载速度, getSpeedString 函数可以将速度格式化
-    private float mPercent;              //当前下载百分比, 0 ~ 100,是浮点数
-    private long mDownloadSize;          //已下载大小, getDownloadSizeString 函数可以将大小格式化
-    private long mTotalSize;             //文件总大小, M3U8文件无法准确获知
-    private String mFileHash;            //文件名的md5
-    private String mSaveDir;             //保存视频文件的文件目录名
-    private boolean mIsCompleted;        //是否下载完成
-    private boolean mIsInDatabase;       //是否存到数据库中
-    private long mLastUpdateTime;        //上一次更新数据库的时间
-    private String mFileName;            //文件名
-    private String mFilePath;            //文件完整路径(包括文件名)
-    private boolean mPaused;
-    private boolean mIsLive;
+    private String mUrl;                 // Download video URL
+    private String mCoverUrl;            // Cover image URL
+    private String mCoverPath;           // Cover image local path
+    private String mTitle;               // Video title
+    private String mGroupName;           // Download group name
+    private long mDownloadCreateTime;    // Download creation time
+    private int mTaskState;              // Current task state (e.g., DOWNLOADING, PAUSE)
+    private String mMimeType;            // Mime type of the video URL
+    private String mFinalUrl;            // URL after any 30x redirects
+    private int mErrorCode;              // Error code if the download fails
+    private int mVideoType;              // File type (e.g., HLS, MPD)
+    private int mTotalTs;                // Total number of M3U8 segments
+    private int mCurTs;                  // Number of M3U8 segments currently cached
+    private float mSpeed;                // Current download speed
+    private float mPercent;              // Current download percentage (0-100)
+    private long mDownloadSize;          // Size downloaded so far
+    private long mTotalSize;             // Total file size
+    private String mFileHash;            // MD5 hash of the file name
+    private String mSaveDir;             // Directory where the file is saved
+    private boolean mIsCompleted;        // Is the download complete?
+    private boolean mIsInDatabase;       // Is the task saved in the database?
+    private long mLastUpdateTime;        // Last time the database was updated
+    private String mFileName;            // File name
+    private String mFilePath;            // Full file path (including name)
+    private boolean mPaused;             // Is the task paused?
+    private boolean mIsLive;             // Is it a live stream?
+    private String mErrorMessage;        // Error message on failure
+    private String mId;                  // Unique ID for the task
+    private String lineInfo;             // Extra info line for the UI (e.g., "Merging...")
+    private Long accumulatedDuration = 0L; // Accumulated duration for live streams
 
-    private String mErrorMessage;
+    public VideoTaskItem(String url) {
+        this(url, "", "", "");
+    }
 
-    private String mId;
+    public VideoTaskItem(String url, String coverUrl, String title, String groupName) {
+        mUrl = url;
+        mCoverUrl = coverUrl;
+        mTitle = title;
+        mGroupName = groupName;
+        mTaskState = VideoTaskState.DEFAULT;
+    }
 
-    private String lineInfo;
+    /**
+     * Creates and returns a deep copy of this VideoTaskItem.
+     * All fields are copied to the new object.
+     */
+    @NonNull
+    @Override
+    public VideoTaskItem clone() {
+        VideoTaskItem clonedItem = new VideoTaskItem(this.mUrl);
+        clonedItem.mCoverUrl = this.mCoverUrl;
+        clonedItem.mCoverPath = this.mCoverPath;
+        clonedItem.mTitle = this.mTitle;
+        clonedItem.mGroupName = this.mGroupName;
+        clonedItem.mDownloadCreateTime = this.mDownloadCreateTime;
+        clonedItem.mTaskState = this.mTaskState;
+        clonedItem.mMimeType = this.mMimeType;
+        clonedItem.mFinalUrl = this.mFinalUrl;
+        clonedItem.mErrorCode = this.mErrorCode;
+        clonedItem.mVideoType = this.mVideoType;
+        clonedItem.mTotalTs = this.mTotalTs;
+        clonedItem.mCurTs = this.mCurTs;
+        clonedItem.mSpeed = this.mSpeed;
+        clonedItem.mPercent = this.mPercent;
+        clonedItem.mDownloadSize = this.mDownloadSize;
+        clonedItem.mTotalSize = this.mTotalSize;
+        clonedItem.mFileHash = this.mFileHash;
+        clonedItem.mSaveDir = this.mSaveDir;
+        clonedItem.mIsCompleted = this.mIsCompleted;
+        clonedItem.mIsInDatabase = this.mIsInDatabase;
+        clonedItem.mLastUpdateTime = this.mLastUpdateTime;
+        clonedItem.mFileName = this.mFileName;
+        clonedItem.mFilePath = this.mFilePath;
+        clonedItem.mPaused = this.mPaused;
+        clonedItem.mIsLive = this.mIsLive;
+        clonedItem.mErrorMessage = this.mErrorMessage;
+        clonedItem.mId = this.mId;
+        clonedItem.lineInfo = this.lineInfo;
+        clonedItem.accumulatedDuration = this.accumulatedDuration;
 
-    private Long accumulatedDuration = 0L;
+        return clonedItem;
+    }
+
+
+    // --- Other Methods (unchanged, but getters/setters listed for completeness) ---
 
     public float getPercentFromBytes() {
         if (getTotalSize() == 0) return 0;
-
-       return (1F * getDownloadSize() / getTotalSize()) * 100F;
+        return (1F * getDownloadSize() / getTotalSize()) * 100F;
     }
 
     public float getPercentFromBytes(long downloadSize, long totalSize) {
         if (totalSize == 0) return 0;
-
         return (1F * downloadSize / totalSize) * 100F;
     }
 
@@ -61,7 +115,7 @@ public class VideoTaskItem implements Cloneable {
         this.lineInfo = info;
     }
 
-    public String  getLineInfo() {
+    public String getLineInfo() {
         return this.lineInfo;
     }
 
@@ -73,44 +127,49 @@ public class VideoTaskItem implements Cloneable {
         return mId;
     }
 
-    public VideoTaskItem(String url) {
-        this(url, "", "", "");
-    }
-
-    public VideoTaskItem(String url, String coverUrl, String title, String groupName) {
-        mUrl = url;
-        mCoverUrl = coverUrl;
-        mTitle = title;
-        mGroupName = groupName;
-    }
-
     public void setErrorMessage(String message) {
         mErrorMessage = message;
     }
 
     public String getErrorMessage() {
-        return  mErrorMessage;
+        return mErrorMessage;
     }
 
     public String getUrl() {
         return mUrl;
     }
 
-    public void setCoverUrl(String coverUrl) { mCoverUrl = coverUrl; }
+    public void setCoverUrl(String coverUrl) {
+        mCoverUrl = coverUrl;
+    }
 
-    public String getCoverUrl() { return mCoverUrl; }
+    public String getCoverUrl() {
+        return mCoverUrl;
+    }
 
-    public void setCoverPath(String coverPath) { mCoverPath = coverPath; }
+    public void setCoverPath(String coverPath) {
+        mCoverPath = coverPath;
+    }
 
-    public String getCoverPath() { return mCoverPath; }
+    public String getCoverPath() {
+        return mCoverPath;
+    }
 
-    public void setTitle(String title) { mTitle = title; }
+    public void setTitle(String title) {
+        mTitle = title;
+    }
 
-    public String getTitle() { return mTitle; }
+    public String getTitle() {
+        return mTitle;
+    }
 
-    public void setGroupName(String groupName) { mGroupName = groupName; }
+    public void setGroupName(String groupName) {
+        mGroupName = groupName;
+    }
 
-    public String getGroupName() { return mGroupName; }
+    public String getGroupName() {
+        return mGroupName;
+    }
 
     public void setDownloadCreateTime(long time) {
         mDownloadCreateTime = time;
@@ -297,14 +356,14 @@ public class VideoTaskItem implements Cloneable {
     }
 
     public boolean isHlsType() {
-        return mVideoType == Video.Type.HLS_TYPE;
+        return mVideoType == Type.HLS_TYPE;
     }
 
     public void reset() {
         mDownloadCreateTime = 0L;
         mMimeType = null;
         mErrorCode = 0;
-        mVideoType = Video.Type.DEFAULT;
+        mVideoType = Type.DEFAULT;
         mTaskState = VideoTaskState.DEFAULT;
         mSpeed = 0.0f;
         mPercent = 0.0f;
@@ -316,55 +375,44 @@ public class VideoTaskItem implements Cloneable {
         mCoverPath = "";
         mTitle = "";
         mGroupName = "";
-    }
-
-    @Override
-    public Object clone() {
-        VideoTaskItem taskItem = new VideoTaskItem(mUrl);
-        taskItem.setDownloadCreateTime(mDownloadCreateTime);
-        taskItem.setTaskState(mTaskState);
-        taskItem.setMimeType(mMimeType);
-        taskItem.setErrorCode(mErrorCode);
-        taskItem.setVideoType(mVideoType);
-        taskItem.setPercent(mPercent);
-        taskItem.setDownloadSize(mDownloadSize);
-        taskItem.setSpeed(mSpeed);
-        taskItem.setTotalSize(mTotalSize);
-        taskItem.setFileHash(mFileHash);
-        taskItem.setFilePath(mFilePath);
-        taskItem.setFileName(mFileName);
-        taskItem.setCoverUrl(mCoverUrl);
-        taskItem.setCoverPath(mCoverPath);
-        taskItem.setTitle(mTitle);
-        taskItem.setGroupName(mGroupName);
-        taskItem.setIsLive(mIsLive);
-        return taskItem;
+        mErrorMessage = null;
+        lineInfo = null;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj != null && obj instanceof VideoTaskItem) {
-            String objUrl = ((VideoTaskItem) obj).getUrl();
-            if (mUrl.equals(objUrl)) {
-                return true;
-            }
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        VideoTaskItem that = (VideoTaskItem) obj;
+        // A more robust equals: check a unique ID if it exists, otherwise the URL.
+        if (mId != null) {
+            return mId.equals(that.mId);
         }
-        return false;
+        return mUrl.equals(that.mUrl);
     }
 
+    @Override
+    public int hashCode() {
+        // A corresponding robust hashCode
+        if (mId != null) {
+            return mId.hashCode();
+        }
+        return mUrl.hashCode();
+    }
+
+
+    @Override
     public String toString() {
-        return "VideoTaskItem[Url=" + mUrl +
-                ", Type=" + mVideoType +
-                ", Percent=" + mPercent +
-                ", DownloadSize=" + mDownloadSize +
-                ", State=" + mTaskState +
-                ", FilePath=" + mFileName +
-                ", LocalFile=" + mFilePath +
-                ", CoverUrl=" + mCoverUrl +
-                ", CoverPath=" + mCoverPath +
-                ", Title=" + mTitle +
+        return "VideoTaskItem[" + "mId='" + mId + '\'' +
+                ", mUrl='" + mUrl + '\'' +
+                ", mTitle='" + mTitle + '\'' +
+                ", mTaskState=" + mTaskState +
+                ", mPercent=" + mPercent +
+                ", mDownloadSize=" + mDownloadSize +
+                ", mTotalSize=" + mTotalSize +
+                ", mFilePath='" + mFilePath + '\'' +
                 ", isLive=" + mIsLive +
-                "]";
+                ']';
     }
 
     public Long getAccumulatedDuration() {

@@ -294,14 +294,12 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 val mpdDownloader = MpdDownloader(
                     httpClient = proxyOkHttpClient.getProxyOkHttpClient(),
                     getMpdRepresentations = ::getMpdRepresentations,
-                    onMergeProgress = { progress ->
+                    onMergeProgress = { progress, progressTask ->
                         onProgress(
                             progress,
-                            task.also {
-                                it.taskState = VideoTaskState.PREPARE
-                                it.lineInfo = "Merging downloaded files..."
-                            },
+                            progressTask,
                             isSizeEstimated = true,
+                            isOnMerge = true
                         )
                     },
                     threadCount = sharedPrefHelper.getM3u8DownloaderThreadCount(),
@@ -714,7 +712,11 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
         handleTaskCompletion(item)
 
-        val notificationData = notificationsHelper.createNotificationBuilder(item)
+        val notificationData = notificationsHelper.createNotificationBuilder(item.also {
+            if (item.taskState == VideoTaskState.SUCCESS) {
+                it.lineInfo = "Success"
+            }
+        })
         showNotificationFinal(notificationData.first, notificationData.second)
 
         val result =
@@ -754,7 +756,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 saveProgress(
                     item.mId,
                     finalProgress,
-                    item.taskState,
+                    if (fileMoved) VideoTaskState.SUCCESS else VideoTaskState.ERROR,
                     "Downloaded, moving ${if (fileMoved) "success" else "failed"}"
                 )
                 if (fileMoved) {
@@ -875,6 +877,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         if (getDone()) return
         val isLIve = isLIve || task.isLive
         if (isOnMerge) {
+            showProgress(task.clone(), progress)
             saveProgress(
                 task.mId,
                 progress,
@@ -882,7 +885,6 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 isLive = isLIve,
                 infoLine = task.lineInfo
             )
-            showProgress(task, progress)
             return
         }
         showProgress(task, progress)

@@ -373,12 +373,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     onMergeProgress = { progress, progressTask ->
                         onProgress(
                             progress,
-                            progressTask.also {
-                                it.taskState = VideoTaskState.PREPARE
-                                it.lineInfo = "Merging recorded segments..."
-                            },
+                            progressTask,
                             isSizeEstimated = true,
                             isLIve = true,
+                            isOnMerge = true
                         )
                     },
                     videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC)

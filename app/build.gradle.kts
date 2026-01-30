@@ -328,7 +328,7 @@ tasks.named("coveralls") {
 
 // V2Ray Repository Configuration
 val v2rayRepo = "https://github.com/2dust/AndroidLibXrayLite.git"
-val v2rayCommit = "93a711245dec705be8dd6aa6a47f8aafa7898c40"
+val v2rayCommit = "1f10bdfa7fd77241e135bbc5bcb8412b4b5e5d6b"
 val buildDirV2ray = file("${project.rootDir}/build/v2ray")
 
 // Go Executable Detection

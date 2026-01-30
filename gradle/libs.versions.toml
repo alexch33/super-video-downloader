@@ -19,9 +19,9 @@ coreSplashscreen = "1.2.0"
 legacySupportV4 = "1.0.0"
 
 # AndroidX Work
-workRuntime = "2.11.0"
-workRxjava = "2.11.0"
-workMultiprocess = "2.11.0"
+workRuntime = "2.11.1"
+workRxjava = "2.11.1"
+workMultiprocess = "2.11.1"
 
 # AndroidX Fragment
 fragmentKtx = "1.8.9"
@@ -31,7 +31,7 @@ concurrentFutures = "1.3.0"
 
 # AndroidX Lifecycle
 lifecycleExtensions = "2.2.0"
-lifecycleCompiler = "2.5.1"
+lifecycleCompiler = "2.10.0"
 lifecycleCommonJava8 = "2.10.0"
 lifecycleLivedata = "2.10.0"
 lifecycleViewmodel = "2.10.0"
@@ -40,20 +40,18 @@ lifecycleViewmodel = "2.10.0"
 room = "2.8.4"
 
 # AndroidX Arch Core
-archCore = "2.0.0"
+archCore = "2.2.0"
 
 # Dagger2
-dagger = "2.57.2"
+dagger = "2.59"
 
 # OkHttp
-okhttp = "5.2.1"
+okhttp = "5.2.1" #after update error: abstract classes cant be instantiated
 
 # Retrofit
 retrofit = "3.0.0"
 
 # RxJava and RxAndroid
-rxjava2 = "2.2.2"
-rxandroid2 = "2.1.0"
 rxjava3 = "3.1.12"
 rxandroid3 = "3.0.2"
 
@@ -65,13 +63,13 @@ ffmpegKit = "2.1.0"
 # version change can break build
 jsoup = "1.21.1"
 
-timeago = "4.1.0"
+timeago = "4.2.0"
 persistentCookieJar = "1.0.1"
-kotlinxSerializationJson = "1.9.0"
-kotlinxSerializationCore = "1.9.0"
+kotlinxSerializationJson = "1.10.0"
+kotlinxSerializationCore = "1.10.0"
 
 # Media3
-media3 = "1.9.0"
+media3 = "1.9.1"
 
 # Testing
 testRunner = "1.1.0"
@@ -79,13 +77,13 @@ junit = "4.13.2"
 espresso = "3.0.2"
 mockito = "5.21.0"
 mockitoKotlin = "1.6.0"
-androidxTestJunit = "1.1.1"
-androidxTestEspresso = "3.1.0"
-androidxTestEspressoIntents = "3.1.0"
+androidxTestJunit = "1.3.0"
+androidxTestEspresso = "3.7.0"
+androidxTestEspressoIntents = "3.7.0"
 
 # Code coverage and quality
 jacoco = "0.8.1"
-coveralls = "2.8.1"
+coveralls = "2.12.2"
 desugarJdk = "2.1.5"
 
 # NDK
@@ -163,8 +161,6 @@ retrofitGson = { module = "com.squareup.retrofit2:converter-gson", version.ref =
 retrofitRxjava3 = { module = "com.squareup.retrofit2:adapter-rxjava3", version.ref = "retrofit" }
 
 # RxJava and RxAndroid
-rxjava2 = { module = "io.reactivex.rxjava2:rxjava", version.ref = "rxjava2" }
-rxandroid2 = { module = "io.reactivex.rxjava2:rxandroid", version.ref = "rxandroid2" }
 rxjava3 = { module = "io.reactivex.rxjava3:rxjava", version.ref = "rxjava3" }
 rxandroid3 = { module = "io.reactivex.rxjava3:rxandroid", version.ref = "rxandroid3" }
 

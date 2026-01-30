@@ -54,7 +54,7 @@ val abiCodes = mapOf(
 android {
     namespace = "com.myAllVideoBrowser"
     compileSdk = libs.versions.targetSdk.get().toInt()
-    ndkVersion = "27.3.13750724"
+    ndkVersion = libs.versions.ndk.get()
 
     // Compile Options
     compileOptions {
@@ -558,12 +558,12 @@ tasks.register<DefaultTask>("vendorGoDependencies") {
         println("║  PREPARING GO DEPENDENCIES                             ║")
         println("╚════════════════════════════════════════════════════════╝")
 
-        val builderDir = file("src/main/go/builder")
+        val builderDirectory = file("src/main/go/builder")
         println("→ Creating go.mod...")
-        createGoModule(builderDir)
+        createGoModule(builderDirectory)
 
         println("→ Vendoring dependencies...")
-        vendorGoDependencies(builderDir, goExecutable)
+        vendorGoDependencies(builderDirectory, goExecutable)
         println("✓ Go dependencies ready\n")
     }
 }

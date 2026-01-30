@@ -1,7 +1,5 @@
 package com.myAllVideoBrowser.util.downloaders.super_x_downloader.strategy
 
-import androidx.core.view.forEach
-import androidx.core.view.indices
 import com.antonkarpenko.ffmpegkit.FFmpegKit
 import com.antonkarpenko.ffmpegkit.FFmpegSession
 import com.antonkarpenko.ffmpegkit.ReturnCode
@@ -9,6 +7,7 @@ import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.CustomFileDownloader
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.DownloadListener
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.SegmentDownloader
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.control.FileBasedDownloadController
@@ -20,6 +19,7 @@ import okhttp3.OkHttpClient
 import java.io.File
 import java.io.IOException
 import java.net.URL
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -41,7 +41,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class MpdDownloader(
     private val httpClient: OkHttpClient,
     private val getMpdRepresentations: suspend (url: String, headers: Map<String, String>) -> Pair<MpdPlaylistParser.MpdRepresentation?, MpdPlaylistParser.MpdRepresentation?>,
-    private val onMergeProgress: (progress: Progress) -> Unit,
+    private val onMergeProgress: (progress: Progress, task: VideoTaskItem) -> Unit,
     private val threadCount: Int,
     private val videoCodec: String?
 ) : ManifestDownloader {
@@ -215,11 +215,45 @@ class MpdDownloader(
         downloadJobs.joinAll()
         if (controller.isInterrupted()) throw CancellationException("Download interrupted.")
 
+        val totalDurationSeconds = videoRep?.segments?.sumOf { it.durationSeconds }
+            ?: audioRep?.segments?.sumOf { it.durationSeconds } ?: 0.0
         AppLogger.d("MPD (Segments): All segments downloaded. Merging...")
-        onMergeProgress(Progress(totalBytesDownloaded.get(), totalBytesDownloaded.get()))
+        var isPreparing = true
+        onMergeProgress(
+            Progress(0, totalBytesDownloaded.get()),
+            task.apply {
+                this.lineInfo = "Merging... 0%"
+                this.taskState = VideoTaskState.PREPARE
+            })
+
         val finalOutputFile = downloadDir.resolve("merged_output.mp4")
         val mergeSession =
-            mergeMpdSegments(downloadDir, videoRep, audioRep, finalOutputFile.absolutePath)
+            mergeMpdSegments(
+                downloadDir,
+                videoRep,
+                audioRep,
+                finalOutputFile.absolutePath,
+                totalDurationSeconds
+
+            ) { percentage ->
+                if (isPreparing && percentage == 100) {
+                    isPreparing = false
+                }
+
+                val message =
+                    if (isPreparing) "Preparing segments... $percentage%" else "Merging... $percentage%"
+
+                onMergeProgress(
+                    Progress(
+                        totalBytesDownloaded.get() * percentage / 100,
+                        totalBytesDownloaded.get()
+                    ),
+                    task.apply {
+                        this.lineInfo = message
+                        this.taskState = VideoTaskState.PREPARE
+                    }
+                )
+            }
 
         if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
             throw IOException("FFmpeg failed to merge MPD segments. Log: ${mergeSession.allLogsAsString}")
@@ -299,17 +333,34 @@ class MpdDownloader(
         if (controller.isInterrupted()) throw CancellationException("Download interrupted.")
 
         AppLogger.d("MPD (BaseURL): All stream downloads complete. Merging...")
+        val totalDurationSeconds = videoRep?.segments?.sumOf { it.durationSeconds }
+            ?: audioRep?.segments?.sumOf { it.durationSeconds } ?: 0.0
+
         onMergeProgress(
             Progress(
-                videoTempFile.length() + audioTempFile.length(),
+                0,
                 videoTempFile.length() + audioTempFile.length()
-            )
+            ),
+            task.apply {
+                this.lineInfo = "Merging... 0%"
+                this.taskState = VideoTaskState.PREPARE
+            }
         )
-
+        val totalBytesDownloaded = videoProgress.totalBytes + audioProgress.totalBytes;
         val mergeSession = mergeBaseUrlStreams(
             videoTempFile,
             audioTempFile.takeIf { it.exists() },
-            finalFile.absolutePath
+            finalFile.absolutePath,
+            totalDurationSeconds = totalDurationSeconds,
+            onMergeProgress = { percentage ->
+                onMergeProgress(
+                    Progress(totalBytesDownloaded * percentage / 100, totalBytesDownloaded),
+                    task.apply {
+                        this.lineInfo = "Merging... $percentage%"
+                        this.taskState = VideoTaskState.PREPARE
+                    }
+                )
+            }
         )
         if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
             throw IOException("FFmpeg failed to merge BaseURL streams. Log: ${mergeSession.allLogsAsString}")
@@ -383,6 +434,8 @@ class MpdDownloader(
         videoRep: MpdPlaylistParser.MpdRepresentation?,
         audioRep: MpdPlaylistParser.MpdRepresentation?,
         finalOutputPath: String,
+        totalDurationSeconds: Double,
+        onMergeProgress: ((percentage: Int) -> Unit)?
     ): FFmpegSession {
         val videoSegments = videoRep?.segments
         val audioSegments = audioRep?.segments
@@ -394,36 +447,53 @@ class MpdDownloader(
         val tempVideoFile = mpdTmpDir.resolve("temp_video.mp4")
         val tempAudioFile = mpdTmpDir.resolve("temp_audio.mp4")
 
-        // Manually concatenate VIDEO segments
+        val videoFilesToConcat = mutableListOf<File>()
         if (hasVideo) {
-            val videoFilesToConcat = mutableListOf<File>()
-            if (videoRep.initializationUrl != null) {
+            if (mpdTmpDir.resolve("video_init.m4s").exists()) {
                 videoFilesToConcat.add(mpdTmpDir.resolve("video_init.m4s"))
             }
-            // Add all media segments
             videoSegments.indices.forEach { index ->
                 videoFilesToConcat.add(mpdTmpDir.resolve("segment_${"%05d".format(index)}.m4s"))
             }
-            manualConcat(videoFilesToConcat, tempVideoFile)
         }
 
-        // Manually concatenate AUDIO segments
+        val audioFilesToConcat = mutableListOf<File>()
         if (hasAudio) {
-            val audioFilesToConcat = mutableListOf<File>()
-            if (audioRep.initializationUrl != null) {
+            if (mpdTmpDir.resolve("audio_init.m4s").exists()) {
                 audioFilesToConcat.add(mpdTmpDir.resolve("audio_init.m4s"))
             }
-            // Add all media segments
             audioSegments.indices.forEach { index ->
                 audioFilesToConcat.add(mpdTmpDir.resolve("audio_segment_${"%05d".format(index)}.m4s"))
             }
-            manualConcat(audioFilesToConcat, tempAudioFile)
         }
+
+        val totalConcatSize = (videoFilesToConcat.sumOf { if (it.exists()) it.length() else 0L } +
+                audioFilesToConcat.sumOf { if (it.exists()) it.length() else 0L })
+        var concatenatedBytes = 0L
+
+        val concatProgressCallback: (bytes: Long) -> Unit = { bytes ->
+            concatenatedBytes += bytes
+            if (totalConcatSize > 0) {
+                val percentage = ((concatenatedBytes * 100) / totalConcatSize).toInt()
+                onMergeProgress?.invoke(percentage)
+            }
+        }
+
+        if (hasVideo) {
+            manualConcat(videoFilesToConcat, tempVideoFile, concatProgressCallback)
+        }
+        if (hasAudio) {
+            manualConcat(audioFilesToConcat, tempAudioFile, concatProgressCallback)
+        }
+
+        AppLogger.d("MPD: Concatenation finished. Starting FFmpeg merge.")
 
         val mergeSession = mergeBaseUrlStreams(
             tempVideoFile,
             tempAudioFile.takeIf { it.exists() && it.length() > 0 },
-            finalOutputPath
+            finalOutputPath,
+            totalDurationSeconds,
+            onMergeProgress
         )
 
         tempVideoFile.delete()
@@ -435,16 +505,64 @@ class MpdDownloader(
     private fun mergeBaseUrlStreams(
         videoFile: File,
         audioFile: File?,
-        finalOutputPath: String
+        finalOutputPath: String,
+        totalDurationSeconds: Double,
+        onMergeProgress: ((percentage: Int) -> Unit)?
     ): FFmpegSession {
-        val arguments = mutableListOf("-y", "-i", videoFile.absolutePath)
-        audioFile?.let {
-            arguments.add("-i")
-            arguments.add(it.absolutePath)
+        val arguments = mutableListOf<String>()
+
+        if (videoFile.exists()) {
+            arguments.addAll(listOf("-i", videoFile.absolutePath))
         }
-        addCommonMergeArguments(arguments, true, audioFile != null, finalOutputPath, false)
-        AppLogger.d("FFmpeg: Executing MPD BaseURL merge with arguments: $arguments")
-        return FFmpegKit.executeWithArguments(arguments.toTypedArray())
+
+        audioFile?.takeIf { it.exists() }?.let {
+            arguments.addAll(listOf("-i", it.absolutePath))
+        }
+
+        if (arguments.isEmpty()) {
+            throw IOException("No valid video or audio files to merge.")
+        }
+        arguments.add(0, "-y")
+
+        val hasVideo = videoFile.exists()
+        val hasAudio = audioFile?.exists() == true
+
+        addCommonMergeArguments(arguments, hasVideo, hasAudio, finalOutputPath)
+
+        val commandString = arguments.joinToString(" ")
+        AppLogger.d("FFmpeg: Executing MPD BaseURL merge with command: $commandString")
+
+        val latch = CountDownLatch(1)
+        lateinit var finalSession: FFmpegSession
+
+        val session = FFmpegKit.executeAsync(commandString, { completedSession ->
+            finalSession = completedSession
+            if (!ReturnCode.isSuccess(completedSession.returnCode)) {
+                AppLogger.e("FFmpeg merge failed. Log: ${completedSession.allLogsAsString}")
+            }
+            latch.countDown()
+        }, { log ->
+            AppLogger.d("FFmpeg: ${log.message}")
+        }, { statistics ->
+            if (onMergeProgress != null && totalDurationSeconds > 0) {
+                val totalDurationMillis = (totalDurationSeconds * 1000).toLong()
+                val currentTimeMillis = statistics.time
+                if (currentTimeMillis > 0) {
+                    val percentage = ((currentTimeMillis * 100) / totalDurationMillis).toInt()
+                    onMergeProgress(percentage.coerceIn(0, 100))
+                }
+            }
+        })
+
+        try {
+            latch.await()
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            FFmpegKit.cancel(session.sessionId)
+            throw IOException("FFmpeg merge was interrupted.", e)
+        }
+
+        return finalSession
     }
 
     private fun addCommonMergeArguments(
@@ -452,7 +570,6 @@ class MpdDownloader(
         hasVideo: Boolean,
         hasAudio: Boolean,
         finalOutputPath: String,
-        isSegmentMerge: Boolean
     ) {
         arguments.apply {
             when {
@@ -481,11 +598,8 @@ class MpdDownloader(
                 add("-c"); add("copy")
             }
 
-            // Only add these flags if it's NOT a segment merge
-            if (!isSegmentMerge) {
-                add("-bsf:a"); add("aac_adtstoasc")
-                add("-movflags"); add("+faststart")
-            }
+            add("-bsf:a"); add("aac_adtstoasc")
+            add("-movflags"); add("+faststart")
 
             add("-y"); add(finalOutputPath)
         }
@@ -493,22 +607,46 @@ class MpdDownloader(
 
     private fun manualConcat(
         filesToConcat: List<File>,
-        outputFile: File
+        outputFile: File,
+        onProgress: ((bytesCopied: Long) -> Unit)? = null
     ) {
         if (filesToConcat.isEmpty()) {
             AppLogger.w("ManualConcat: No files to concatenate for ${outputFile.name}")
             return
         }
         AppLogger.d("ManualConcat: Starting for ${outputFile.name}. Concatenating ${filesToConcat.size} files.")
+
         outputFile.outputStream().use { output ->
+            val buffer = ByteArray(64 * 1024)
+            var bytesRead: Int
+
+            var lastUpdateTime = System.currentTimeMillis()
+            val updateInterval = 250L
+            var bytesSinceLastUpdate = 0L
+
             filesToConcat.forEach { file ->
                 if (file.exists()) {
                     file.inputStream().use { input ->
-                        input.copyTo(output)
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            output.write(buffer, 0, bytesRead)
+                            bytesSinceLastUpdate += bytesRead
+
+                            val now = System.currentTimeMillis()
+                            if (now - lastUpdateTime > updateInterval) {
+                                onProgress?.invoke(bytesSinceLastUpdate)
+                                // Reset counters
+                                bytesSinceLastUpdate = 0L
+                                lastUpdateTime = now
+                            }
+                        }
                     }
                 } else {
                     AppLogger.w("ManualConcat: File not found, skipping: ${file.name}")
                 }
+            }
+
+            if (bytesSinceLastUpdate > 0) {
+                onProgress?.invoke(bytesSinceLastUpdate)
             }
         }
         AppLogger.d("ManualConcat: Finished. Output size: ${outputFile.length()} bytes.")

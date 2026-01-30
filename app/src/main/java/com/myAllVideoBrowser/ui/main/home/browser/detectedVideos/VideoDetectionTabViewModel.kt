@@ -53,6 +53,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
     val selectedFormatUrl = ObservableField<String>()
 
+    var initialUrl: String = ""
+
     @Volatile
     var m3u8LoadingList = ObservableField<MutableSet<String>>()
 
@@ -83,6 +85,9 @@ open class VideoDetectionTabViewModel @Inject constructor(
     private val hasCheckLoadingsRegular = ObservableBoolean(false)
 
     private val executorRegular = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
+    @Volatile
+    private var lastUrl = ""
 
     override fun start() {
         AppLogger.d("START")
@@ -123,6 +128,32 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     override fun onStartPage(url: String, userAgentString: String) {
+        if (url == lastUrl) {
+            AppLogger.d("onStartPage: URL is the same. Not clearing list.")
+            return
+        }
+        lastUrl = url
+        downloadButtonState.set(DownloadButtonStateCanNotDownload())
+
+        if (url != initialUrl) {
+            AppLogger.d("onStartPage: URL is not initial url. Clearing list.")
+            detectedVideosList.set(mutableSetOf())
+            cancelAllCheckJobs()
+        } else {
+            AppLogger.d("onStartPage: URL is initial url. Skipped clearing list.")
+        }
+
+        val req = getRequestWithHeadersForUrl(
+            url, url, userAgentString
+        )?.build()
+
+        if (req != null) {
+            verifyLinkStatus(req)
+        }
+    }
+
+    fun onReloadPage(url: String, userAgentString: String) {
+        lastUrl = url
         downloadButtonState.set(DownloadButtonStateCanNotDownload())
 
         detectedVideosList.set(mutableSetOf())
@@ -153,7 +184,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             webTabModel?.getTabTextInput()?.get()?.let {
                 if (it.startsWith("http")) {
                     viewModelScope.launch(executorRegular) {
-                        onStartPage(
+                        onReloadPage(
                             it.trim(),
                             webTabModel?.userAgent?.get() ?: BrowserFragment.MOBILE_USER_AGENT
                         )
@@ -168,10 +199,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     override fun verifyLinkStatus(
-        resourceRequest: Request,
-        hlsTitle: String?,
-        isM3u8: Boolean,
-        isMpd: Boolean
+        resourceRequest: Request, hlsTitle: String?, isM3u8: Boolean, isMpd: Boolean
     ) {
         if (resourceRequest.url.toString().contains("tiktok.")) {
             return
@@ -196,34 +224,31 @@ open class VideoDetectionTabViewModel @Inject constructor(
     open fun startVerifyProcess(
         resourceRequest: Request, isM3u8: Boolean, isMpd: Boolean, hlsTitle: String? = null
     ) {
-        val taskUrlCleaned = resourceRequest.url.toString().split("?").firstOrNull()?.trim() ?: ""
+        val taskUrl = resourceRequest.url.toString().trim()
 
-        val job = verifyVideoLinkJobStorage[taskUrlCleaned]
-        if (job != null && !job.isDisposed || taskUrlCleaned.isEmpty()) {
+        val job = verifyVideoLinkJobStorage[taskUrl]
+        if (job != null && !job.isDisposed || taskUrl.isEmpty()) {
             return
         }
 
         val loadings = m3u8LoadingList.get()?.toMutableSet()
         loadings?.add(resourceRequest.url.toString())
         m3u8LoadingList.set(loadings?.toMutableSet())
-        setButtonState(DownloadButtonStateLoading())
+        if (detectedVideosList.get()?.isEmpty() == true) {
+            setButtonState(DownloadButtonStateLoading())
+        }
 
-        verifyVideoLinkJobStorage[taskUrlCleaned] =
+        verifyVideoLinkJobStorage[taskUrl] =
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 val info = try {
                     val isUseLegacyDetection = settingsModel.isUseLegacyM3u8Detection.get()
                     if (!isUseLegacyDetection && (isM3u8 || isMpd)) {
                         videoRepository.getVideoInfoBySuperXDetector(
-                            resourceRequest,
-                            isM3u8,
-                            isMpd,
-                            settingsModel.isCheckOnAudio.get()
+                            resourceRequest, isM3u8, isMpd, settingsModel.isCheckOnAudio.get()
                         )
                     } else {
                         videoRepository.getVideoInfo(
-                            resourceRequest,
-                            false,
-                            settingsModel.isCheckOnAudio.get()
+                            resourceRequest, false, settingsModel.isCheckOnAudio.get()
                         )
                     }
                 } catch (e: Throwable) {
@@ -240,7 +265,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val loadings2 = m3u8LoadingList.get()?.toMutableSet()
                 loadings2?.remove(resourceRequest.url.toString())
                 m3u8LoadingList.set(loadings2?.toMutableSet())
-                verifyVideoLinkJobStorage.remove(taskUrlCleaned)
+                verifyVideoLinkJobStorage.remove(taskUrl)
             }.observeOn(baseSchedulers.computation).subscribeOn(baseSchedulers.videoService)
                 .subscribe { info ->
                     if (info.id.isNotEmpty()) {
@@ -254,6 +279,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
     }
 
+    @Synchronized
     open fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
         if (newInfo.formats.formats.isEmpty()) {
             return
@@ -280,11 +306,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
         AppLogger.d("PUSHING $newInfo to list: \n  $detectedVideos")
         detectedVideosList.set(detectedVideos + newInfo)
+        setButtonState(DownloadButtonStateCanDownload(newInfo))
 
         viewModelScope.launch(Dispatchers.Main) {
             videoPushedEvent.call()
         }
-        setButtonState(DownloadButtonStateCanDownload(newInfo))
     }
 
     private fun isVideoInfoDuplicate(existing: VideoInfo, newInfo: VideoInfo): Boolean {
@@ -304,9 +330,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     override fun checkRegularVideoOrAudio(
-        request: Request?,
-        isCheckOnAudio: Boolean,
-        isCheckOnVideo: Boolean
+        request: Request?, isCheckOnAudio: Boolean, isCheckOnVideo: Boolean
     ): Disposable? {
         if (request == null) {
             return null
@@ -360,6 +384,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
         verifyVideoLinkJobStorage.clear()
     }
 
+
+    @Synchronized
     fun setButtonState(state: DownloadButtonState) {
         when (state) {
             is DownloadButtonStateCanDownload -> {
@@ -369,14 +395,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             is DownloadButtonStateCanNotDownload -> {
                 val detectedSize = detectedVideosList.get()?.size
                 if (detectedSize == null || detectedSize == 0) {
-                    val impEl = regularLoadingList.get()?.find { it.contains(".mp4") }
-                    if (m3u8LoadingList.get()?.isEmpty() != true || (m3u8LoadingList.get()
-                            ?.isEmpty() == true && impEl != null)
-                    ) {
-                        downloadButtonState.set(DownloadButtonStateLoading())
-                    } else {
-                        downloadButtonState.set(DownloadButtonStateCanNotDownload())
-                    }
+                    downloadButtonState.set(DownloadButtonStateCanNotDownload())
                 } else {
                     downloadButtonState.set(
                         DownloadButtonStateCanDownload(
@@ -507,8 +526,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val isAboveUserThreshold = contentLength > threshold
                 val isStreamDetectionOn = isRegularStreamDetectionOn
 
-                val isVideoContent = isVideo && isCheckOnVideo &&
-                        (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)
+                val isVideoContent =
+                    isVideo && isCheckOnVideo && (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)
 
                 val isAudioContent = isAudio && isCheckOnAudio
 
@@ -536,10 +555,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
     // THIS BULLSHIT NEEDED FOR SOME INDIAN WEB-SITES
     private fun handleUnauthorizedResponse(
-        url: String,
-        threshold: Int,
-        isCheckOnAudio: Boolean,
-        isCheckOnVideo: Boolean
+        url: String, threshold: Int, isCheckOnAudio: Boolean, isCheckOnVideo: Boolean
     ) {
         val finalUrlPairEmpty = runCatching {
             CookieUtils.getFinalRedirectURL(URL(url.toUri().toString()), emptyMap())
@@ -553,8 +569,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
                 when {
                     contentType.contains(
-                        "video",
-                        true
+                        "video", true
                     ) && isCheckOnVideo && contentLength > threshold.toLong() -> {
                         setMediaInfoWrapperFromUrl(
                             finalUrlPairEmpty.first,

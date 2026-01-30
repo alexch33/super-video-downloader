@@ -151,10 +151,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                             progress,
                             progressTask.also {
                                 it.taskState = VideoTaskState.PREPARE
-                                it.lineInfo = "Merging recorded segments..."
                             },
                             isSizeEstimated = true,
-                            isLIve = true
+                            isLIve = true,
+                            isOnMerge = true
                         )
                     },
                     videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC),
@@ -294,14 +294,12 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 val mpdDownloader = MpdDownloader(
                     httpClient = proxyOkHttpClient.getProxyOkHttpClient(),
                     getMpdRepresentations = ::getMpdRepresentations,
-                    onMergeProgress = { progress ->
+                    onMergeProgress = { progress, progressTask ->
                         onProgress(
                             progress,
-                            task.also {
-                                it.taskState = VideoTaskState.PREPARE
-                                it.lineInfo = "Merging downloaded files..."
-                            },
-                            isSizeEstimated = true
+                            progressTask,
+                            isSizeEstimated = true,
+                            isOnMerge = true
                         )
                     },
                     threadCount = sharedPrefHelper.getM3u8DownloaderThreadCount(),
@@ -375,12 +373,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     onMergeProgress = { progress, progressTask ->
                         onProgress(
                             progress,
-                            progressTask.also {
-                                it.taskState = VideoTaskState.PREPARE
-                                it.lineInfo = "Merging recorded segments..."
-                            },
+                            progressTask,
                             isSizeEstimated = true,
-                            isLIve = true
+                            isLIve = true,
+                            isOnMerge = true
                         )
                     },
                     videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC)
@@ -539,14 +535,12 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 val hlsDownloader = HlsDownloader(
                     httpClient = proxyOkHttpClient.getProxyOkHttpClient(),
                     getMediaSegments = ::getMediaSegments,
-                    onMergeProgress = { progress ->
+                    onMergeProgress = { progress, progressTask ->
                         onProgress(
                             progress,
-                            task.also {
-                                it.taskState = VideoTaskState.PREPARE
-                                it.lineInfo = "Merging segments..."
-                            },
-                            isSizeEstimated = true
+                            progressTask,
+                            isSizeEstimated = true,
+                            isOnMerge = true
                         )
                     },
                     threadCount = sharedPrefHelper.getM3u8DownloaderThreadCount(),
@@ -716,7 +710,11 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
         handleTaskCompletion(item)
 
-        val notificationData = notificationsHelper.createNotificationBuilder(item)
+        val notificationData = notificationsHelper.createNotificationBuilder(item.also {
+            if (item.taskState == VideoTaskState.SUCCESS) {
+                it.lineInfo = "Success"
+            }
+        })
         showNotificationFinal(notificationData.first, notificationData.second)
 
         val result =
@@ -756,7 +754,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 saveProgress(
                     item.mId,
                     finalProgress,
-                    item.taskState,
+                    if (fileMoved) VideoTaskState.SUCCESS else VideoTaskState.ERROR,
                     "Downloaded, moving ${if (fileMoved) "success" else "failed"}"
                 )
                 if (fileMoved) {
@@ -832,12 +830,20 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         progress: Progress,
         downloadStatus: Int,
         infoLine: String = "",
-        isLive: Boolean = false
+        isLive: Boolean = false,
     ) {
-        if (getDone() && downloadStatus == VideoTaskState.DOWNLOADING) return
-        val dbTask = progressRepository.getProgressInfos().blockingFirst()
+        if (getDone() && downloadStatus == VideoTaskState.DOWNLOADING) {
+            return
+        }
+        val dbTask = progressRepository.getProgressInfos().blockingFirst(emptyList())
             .find { it.id == taskId || it.downloadId == taskId.toLongOrNull() } ?: return
-        if (dbTask.downloadStatus == VideoTaskState.SUCCESS) return
+        if (dbTask.downloadStatus == VideoTaskState.SUCCESS) {
+            return
+        }
+        if (downloadStatus == VideoTaskState.CANCELED || dbTask.downloadStatus == VideoTaskState.CANCELED) {
+            progressRepository.deleteProgressInfo(dbTask)
+            return
+        }
         dbTask.downloadStatus = downloadStatus
         dbTask.infoLine = infoLine
         dbTask.isLive = isLive
@@ -868,11 +874,27 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     }
 
     private fun onProgress(
-        progress: Progress, task: VideoTaskItem, isSizeEstimated: Boolean, isLIve: Boolean = false
+        progress: Progress,
+        task: VideoTaskItem,
+        isSizeEstimated: Boolean,
+        isLIve: Boolean = false,
+        isOnMerge: Boolean = false
     ) {
         if (getDone()) return
         val isLIve = isLIve || task.isLive
+        if (isOnMerge) {
+            showProgress(task.clone(), progress)
+            saveProgress(
+                task.mId,
+                progress,
+                VideoTaskState.PREPARE,
+                isLive = isLIve,
+                infoLine = task.lineInfo
+            )
+            return
+        }
         showProgress(task, progress)
+
         if (isSizeEstimated || isLIve) {
             saveProgress(
                 task.mId,

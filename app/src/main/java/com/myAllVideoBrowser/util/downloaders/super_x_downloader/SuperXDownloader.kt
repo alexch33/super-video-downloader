@@ -64,7 +64,6 @@ object SuperXDownloader : GenericDownloader() {
 
     override fun cancelDownload(context: Context, progressInfo: ProgressInfo, removeFile: Boolean) {
         val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
-        DownloaderActions
         val downloaderData =
             getDownloadDataFromVideoInfo(progressInfo.videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.CANCEL)

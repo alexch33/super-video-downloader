@@ -16,7 +16,8 @@ import java.io.IOException
 class SegmentDownloader(
     private val client: OkHttpClient,
     private val headers: Map<String, String>,
-    private val controller: FileBasedDownloadController
+    private val controller: FileBasedDownloadController,
+    private val onProgress: ((bytes: Long) -> Unit)? = null
 ) {
 
     companion object {
@@ -72,6 +73,7 @@ class SegmentDownloader(
                     }
                 }
                 AppLogger.d("$logPrefix: Segment $segmentIdentifier downloaded successfully.")
+                onProgress?.invoke(bytesCopied)
                 return bytesCopied // Success, return the size
             } catch (e: Exception) {
                 if (e is CancellationException) throw e

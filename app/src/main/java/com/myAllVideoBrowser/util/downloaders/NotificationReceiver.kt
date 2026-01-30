@@ -7,6 +7,7 @@ import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.ProgressRepository
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.CustomRegularDownloader
+import com.myAllVideoBrowser.util.downloaders.super_x_downloader.SuperXDownloader
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloader
 import dagger.android.DaggerBroadcastReceiver
 import kotlinx.coroutines.CoroutineScope
@@ -68,6 +69,10 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
                 progressRepository.deleteProgressInfo(task)
             }
 
+            DOWNLOADER_SUPER_XD -> {
+                SuperXDownloader.cancelDownload(context, task, true)
+            }
+
             else -> {
                 AppLogger.d("Unexpected downloader type: $downloaderType")
             }
@@ -83,6 +88,11 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
 
             DOWNLOADER_REGULAR -> {
                 CustomRegularDownloader.resumeDownload(context, task)
+            }
+
+
+            DOWNLOADER_SUPER_XD -> {
+                SuperXDownloader.resumeDownload(context, task)
             }
 
             else -> {
@@ -102,6 +112,10 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
                 CustomRegularDownloader.pauseDownload(context, task)
             }
 
+            DOWNLOADER_SUPER_XD -> {
+                SuperXDownloader.pauseDownload(context, task)
+            }
+
             else -> {
                 AppLogger.d("Unexpected downloader type: $downloaderType")
             }
@@ -111,12 +125,15 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
     private fun getTaskType(videoInfo: VideoInfo): String {
         return if (videoInfo.isRegularDownload) {
             DOWNLOADER_REGULAR
+        } else if (videoInfo.isDetectedBySuperX) {
+            DOWNLOADER_SUPER_XD
         } else {
             DOWNLOADER_YOUTUBE_DL
         }
     }
 
     companion object {
+        const val DOWNLOADER_SUPER_XD = "DOWNLOADER_SUPER_XD"
         const val DOWNLOADER_YOUTUBE_DL = "DOWNLOADER_YOUTUBE_DL"
         const val DOWNLOADER_REGULAR = "DOWNLOADER_REGULAR"
         const val TASK_ID = "TASK_ID"

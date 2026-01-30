@@ -9,7 +9,11 @@ appcompat = "1.7.1"
 material = "1.13.0"
 constraintlayout = "2.2.1"
 recyclerview = "1.4.0"
+
+# another versions of webkit has random crashes
 webkit = "1.12.1"
+
+
 coreKtx = "1.17.0"
 coreSplashscreen = "1.2.0"
 legacySupportV4 = "1.0.0"
@@ -57,7 +61,10 @@ rxandroid3 = "3.0.2"
 glide = "5.0.5"
 youtubedl = "0.18.1-alexch33-3"
 ffmpegKit = "2.1.0"
+
+# version change can break build
 jsoup = "1.21.1"
+
 timeago = "4.1.0"
 persistentCookieJar = "1.0.1"
 kotlinxSerializationJson = "1.9.0"

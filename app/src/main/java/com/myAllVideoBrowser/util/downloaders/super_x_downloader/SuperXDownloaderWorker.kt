@@ -58,9 +58,13 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     val isWorkerRunning =
                         GenericDownloader.isWorkScheduled(applicationContext, taskId)
                     if (isWorkerRunning) {
+                        AppLogger.d("111111111111111111111111111111 $taskId. Creating flag file.")
+
                         controller.requestCancel()
                         getContinuation().resume(Result.success())
                     } else {
+                        AppLogger.d("22222222222222222222222 $taskId. Creating flag file.")
+
                         controller.requestCancel()
                         finishWork(task.also { it.taskState = VideoTaskState.CANCELED })
                     }
@@ -832,10 +836,18 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         infoLine: String = "",
         isLive: Boolean = false,
     ) {
-        if (getDone() && downloadStatus == VideoTaskState.DOWNLOADING) return
-        val dbTask = progressRepository.getProgressInfos().blockingFirst()
+        if (getDone() && downloadStatus == VideoTaskState.DOWNLOADING) {
+            return
+        }
+        val dbTask = progressRepository.getProgressInfos().blockingFirst(emptyList())
             .find { it.id == taskId || it.downloadId == taskId.toLongOrNull() } ?: return
-        if (dbTask.downloadStatus == VideoTaskState.SUCCESS) return
+        if (dbTask.downloadStatus == VideoTaskState.SUCCESS) {
+            return
+        }
+        if (downloadStatus == VideoTaskState.CANCELED || dbTask.downloadStatus == VideoTaskState.CANCELED) {
+            progressRepository.deleteProgressInfo(dbTask)
+            return
+        }
         dbTask.downloadStatus = downloadStatus
         dbTask.infoLine = infoLine
         dbTask.isLive = isLive

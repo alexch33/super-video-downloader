@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: false
-          body: "Youtube-dlp fix: fixed local proxy password generation"
+          body: " Video detection fixes \n Notification's actions fix \n Live streams progress fix \n Detailed merge progress"
           draft: false
           make_latest: true
           tag_name: ${{ github.ref_name }}

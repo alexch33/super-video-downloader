@@ -37,6 +37,20 @@ class ProxiesFragment : BaseFragment() {
 
     private lateinit var proxiesAdapter: ProxiesAdapter
 
+    private val proxiesListCallback = object :
+        androidx.databinding.Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(
+            sender: androidx.databinding.Observable?,
+            propertyId: Int
+        ) {
+            proxiesViewModel.proxiesList.get()?.let {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    proxiesAdapter.setData(it)
+                }
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -104,25 +118,18 @@ class ProxiesFragment : BaseFragment() {
             this.proxiesContainer.setBackgroundColor(color)
         }
 
-        proxiesViewModel.proxiesList.addOnPropertyChangedCallback(object :
-            androidx.databinding.Observable.OnPropertyChangedCallback() {
-            override fun onPropertyChanged(
-                sender: androidx.databinding.Observable?,
-                propertyId: Int
-            ) {
-                proxiesViewModel.proxiesList.get()?.let {
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        proxiesAdapter.setData(it)
-                    }
-                }
-            }
-        })
+        proxiesViewModel.proxiesList.addOnPropertyChangedCallback(proxiesListCallback)
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             parentFragmentManager.popBackStack()
         }
 
         return dataBinding.root
+    }
+
+    override fun onDestroyView() {
+        proxiesViewModel.proxiesList.removeOnPropertyChangedCallback(proxiesListCallback)
+        super.onDestroyView()
     }
 
     private val proxiesListener = object : ProxiesListener {

@@ -17,6 +17,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.widget.ViewPager2
+import com.myAllVideoBrowser.DLApplication
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.ActivityMainBinding
 import com.myAllVideoBrowser.ui.component.adapter.MainAdapter
@@ -56,11 +57,24 @@ class MainActivity : BaseActivity() {
 
     private lateinit var mainAdapter: MainAdapter
 
+    private val screenOrientationCallback = object : Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            val isLock = settingsViewModel.isLockPortrait.get()
+            requestedOrientation = if (isLock) {
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
 
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE)
         super.onCreate(savedInstanceState)
+
+        (applicationContext as? DLApplication)?.startProxyService()
 
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
@@ -206,6 +220,7 @@ class MainActivity : BaseActivity() {
 
     override fun onDestroy() {
         mainViewModel.stop()
+        settingsViewModel.isLockPortrait.removeOnPropertyChangedCallback(screenOrientationCallback)
         super.onDestroy()
     }
 
@@ -220,17 +235,6 @@ class MainActivity : BaseActivity() {
 
     private fun handleScreenOrientationSettingChange() {
         // CHANGES HANDLING
-        settingsViewModel.isLockPortrait.addOnPropertyChangedCallback(object :
-            Observable.OnPropertyChangedCallback() {
-            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                val isLock = settingsViewModel.isLockPortrait.get()
-
-                requestedOrientation = if (isLock) {
-                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                } else {
-                    ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                }
-            }
-        })
+        settingsViewModel.isLockPortrait.addOnPropertyChangedCallback(screenOrientationCallback)
     }
 }

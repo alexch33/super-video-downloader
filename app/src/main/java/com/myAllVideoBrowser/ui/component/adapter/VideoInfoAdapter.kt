@@ -33,6 +33,20 @@ class VideoInfoAdapter(
         private val appUtil: AppUtil
     ) :
         RecyclerView.ViewHolder(binding.root) {
+        private val selectedFormatsCallback = object : OnPropertyChangedCallback() {
+            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+                val currentVideoInfo = binding.videoInfo ?: return
+
+                val curSelected = model.selectedFormats.get()?.get(currentVideoInfo.id)
+                val foundFormat = currentVideoInfo.formats.formats.find { it.format == curSelected }
+
+                if (foundFormat != null) {
+                    model.selectedFormatUrl.set(foundFormat.url)
+                }
+            }
+        }
+        private var isCallbackAdded = false
+
         @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
         fun bind(info: VideoInfo) {
             with(binding) {
@@ -131,7 +145,7 @@ class VideoInfoAdapter(
                         candidateFormatListener.onPreviewVideo(videoInfo, format, isForce)
                     }
 
-                    override fun onFormatUrlShare(videoInfo: VideoInfo, format: String) : Boolean {
+                    override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
                         return candidateFormatListener.onFormatUrlShare(videoInfo, format)
                     }
 
@@ -169,6 +183,20 @@ class VideoInfoAdapter(
                 executePendingBindings()
             }
         }
+
+        fun addCallback() {
+            if (!isCallbackAdded) {
+                model.selectedFormats.addOnPropertyChangedCallback(selectedFormatsCallback)
+                isCallbackAdded = true
+            }
+        }
+
+        fun removeCallback() {
+            if (isCallbackAdded) {
+                model.selectedFormats.removeOnPropertyChangedCallback(selectedFormatsCallback)
+                isCallbackAdded = false
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoInfoViewHolder {
@@ -186,6 +214,17 @@ class VideoInfoAdapter(
         val videoInfo = videoInfoList[position]
         holder.bind(videoInfo)
     }
+
+    override fun onViewAttachedToWindow(holder: VideoInfoViewHolder) {
+        super.onViewAttachedToWindow(holder)
+        holder.addCallback()
+    }
+
+    override fun onViewDetachedFromWindow(holder: VideoInfoViewHolder) {
+        super.onViewDetachedFromWindow(holder)
+        holder.removeCallback()
+    }
+
 
     override fun getItemCount(): Int = videoInfoList.size
 

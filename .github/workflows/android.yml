@@ -6,7 +6,7 @@ on:
       - dev
       - master
     tags:
-      - 'v*'
+      - '*'
 
 jobs:
   build:

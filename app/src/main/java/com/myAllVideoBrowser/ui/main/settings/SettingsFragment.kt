@@ -160,6 +160,9 @@ class SettingsFragment : BaseFragment() {
         val tresholdCallback = object : Observable.OnPropertyChangedCallback() {
             @SuppressLint("SetTextI18n")
             override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+                if (!isAdded) {
+                    return
+                }
                 val currentTreshold = settingsViewModel.videoDetectionTreshold.get()
                 val readableSize = FileUtil.getFileSizeReadable(currentTreshold.toDouble())
                 dataBinding.adsTresholdText.text =

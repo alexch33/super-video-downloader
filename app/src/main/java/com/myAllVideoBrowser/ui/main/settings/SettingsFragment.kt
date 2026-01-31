@@ -46,6 +46,34 @@ class SettingsFragment : BaseFragment() {
 
     private var lastSavedRegularThreadsCount = -1
 
+    private val tresholdCallback = object : Observable.OnPropertyChangedCallback() {
+        @SuppressLint("SetTextI18n")
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            if (!isAdded) {
+                return
+            }
+            val currentTreshold = settingsViewModel.videoDetectionTreshold.get()
+            val readableSize = FileUtil.getFileSizeReadable(currentTreshold.toDouble())
+            dataBinding.adsTresholdText.text =
+                getString(R.string.ads_detection_treshold) + " $readableSize"
+        }
+    }
+
+    private val storageTypeCallback = object : Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            if (!isAdded) return
+            val newCheckId = when (settingsViewModel.storageType.get()) {
+                StorageType.SD -> R.id.option_sd_card
+                StorageType.HIDDEN -> R.id.option_hidden_folder
+                StorageType.HIDDEN_SD -> R.id.option_sd_app_folder
+                else -> -1
+            }
+            if (newCheckId != -1 && dataBinding.storageOptions.checkedRadioButtonId != newCheckId) {
+                dataBinding.storageOptions.check(newCheckId)
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -76,6 +104,12 @@ class SettingsFragment : BaseFragment() {
 
     override fun onDestroyView() {
         settingsViewModel.stop()
+        tresholdCallback.let {
+            settingsViewModel.videoDetectionTreshold.removeOnPropertyChangedCallback(
+                it
+            )
+        }
+        storageTypeCallback.let { settingsViewModel.storageType.removeOnPropertyChangedCallback(it) }
         super.onDestroyView()
     }
 
@@ -129,21 +163,7 @@ class SettingsFragment : BaseFragment() {
     }
 
     private fun setupRadioGroupListener() {
-        val storageTypeCallback = object : Observable.OnPropertyChangedCallback() {
-            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                val newCheckId = when (settingsViewModel.storageType.get()) {
-                    StorageType.SD -> R.id.option_sd_card
-                    StorageType.HIDDEN -> R.id.option_hidden_folder
-                    StorageType.HIDDEN_SD -> R.id.option_sd_app_folder
-                    null -> -1
-                }
-                if (newCheckId != -1 && dataBinding.storageOptions.checkedRadioButtonId != newCheckId) {
-                    dataBinding.storageOptions.check(newCheckId)
-                }
-            }
-        }
-
-        settingsViewModel.storageType.addOnPropertyChangedCallback(storageTypeCallback)
+        storageTypeCallback.let { settingsViewModel.storageType.addOnPropertyChangedCallback(it) }
         storageTypeCallback.onPropertyChanged(null, 0)
     }
 
@@ -157,19 +177,11 @@ class SettingsFragment : BaseFragment() {
     }
 
     private fun setupTextUpdateCallbacks() {
-        val tresholdCallback = object : Observable.OnPropertyChangedCallback() {
-            @SuppressLint("SetTextI18n")
-            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                if (!isAdded) {
-                    return
-                }
-                val currentTreshold = settingsViewModel.videoDetectionTreshold.get()
-                val readableSize = FileUtil.getFileSizeReadable(currentTreshold.toDouble())
-                dataBinding.adsTresholdText.text =
-                    getString(R.string.ads_detection_treshold) + " $readableSize"
-            }
+        tresholdCallback.let {
+            settingsViewModel.videoDetectionTreshold.addOnPropertyChangedCallback(
+                it
+            )
         }
-        settingsViewModel.videoDetectionTreshold.addOnPropertyChangedCallback(tresholdCallback)
 
         tresholdCallback.onPropertyChanged(null, 0)
     }

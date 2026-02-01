@@ -34,6 +34,67 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
     private var popupMenu: PopupMenu? = null
 
+    private val darkModeCallback = object : Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            if (!isAdded) {
+                return
+            }
+            lifecycleScope.launch(Dispatchers.Main) {
+                popupMenu?.menu?.findItem(R.id.is_dark)?.isChecked =
+                    mainActivity.settingsViewModel.isDarkMode.get()
+            }
+        }
+    }
+
+    private val autoDarkModeCallback = object : Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            if (!isAdded) {
+                return
+            }
+            lifecycleScope.launch(Dispatchers.Main) {
+                popupMenu?.menu?.findItem(R.id.is_dark)?.isEnabled =
+                    !mainActivity.settingsViewModel.isAutoDarkMode.get()
+            }
+        }
+    }
+
+    private val desktopModeCallback = object : Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            if (!isAdded) {
+                return
+            }
+            lifecycleScope.launch(Dispatchers.Main) {
+                popupMenu?.menu?.findItem(R.id.desktop_mode)?.isChecked =
+                    mainActivity.settingsViewModel.isDesktopMode.get()
+            }
+        }
+    }
+
+    private val proxyOnCallback = object : Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            if (!isAdded) {
+                return
+            }
+            val isProxyOn = mainActivity.proxiesViewModel.isProxyOn.get() == true
+            lifecycleScope.launch(Dispatchers.Main) {
+                popupMenu?.menu?.findItem(R.id.proxies)?.isChecked = isProxyOn
+            }
+            sharedPrefHelper.setIsProxyOn(isProxyOn)
+        }
+    }
+
+    override fun onDestroyView() {
+        popupMenu?.dismiss()
+        popupMenu = null
+
+        mainActivity.settingsViewModel.isDarkMode.removeOnPropertyChangedCallback(darkModeCallback)
+        mainActivity.settingsViewModel.isAutoDarkMode.removeOnPropertyChangedCallback(autoDarkModeCallback)
+        mainActivity.settingsViewModel.isDesktopMode.removeOnPropertyChangedCallback(desktopModeCallback)
+        mainActivity.proxiesViewModel.isProxyOn.removeOnPropertyChangedCallback(proxyOnCallback)
+
+        super.onDestroyView()
+    }
+
     abstract fun shareWebLink()
 
     abstract fun bookmarkCurrentUrl()
@@ -57,41 +118,13 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
             popupMenu!!.setForceShowIcon(true)
 
-            mainActivity.settingsViewModel.isDarkMode.addOnPropertyChangedCallback(object :
-                Observable.OnPropertyChangedCallback() {
-                override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        isDarkModeItem.isChecked = mainActivity.settingsViewModel.isDarkMode.get()
-                    }
-                }
-            })
+            mainActivity.settingsViewModel.isDarkMode.addOnPropertyChangedCallback(darkModeCallback)
 
-            mainActivity.settingsViewModel.isAutoDarkMode.addOnPropertyChangedCallback(object :
-                Observable.OnPropertyChangedCallback() {
-                override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        isDarkModeItem.isEnabled =
-                            !mainActivity.settingsViewModel.isAutoDarkMode.get()
-                    }
-                }
-            })
+            mainActivity.settingsViewModel.isAutoDarkMode.addOnPropertyChangedCallback(autoDarkModeCallback)
 
-            mainActivity.settingsViewModel.isDesktopMode.addOnPropertyChangedCallback(object :
-                Observable.OnPropertyChangedCallback() {
-                override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        desktopMenuItem.isChecked =
-                            mainActivity.settingsViewModel.isDesktopMode.get() == true
-                    }
-                }
-            })
+            mainActivity.settingsViewModel.isDesktopMode.addOnPropertyChangedCallback(desktopModeCallback)
 
-            isProxyOn.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
-                override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                    proxyItem.isChecked = isProxyOn.get() == true
-                    sharedPrefHelper.setIsProxyOn(isProxyOn.get() == true)
-                }
-            })
+            isProxyOn.addOnPropertyChangedCallback(proxyOnCallback)
 
             shareMenuItem.isVisible = !isHomeTab
             bookmarkMenuItem.isVisible = !isHomeTab

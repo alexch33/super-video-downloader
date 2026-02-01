@@ -89,41 +89,56 @@ open class VideoDetectionTabViewModel @Inject constructor(
     @Volatile
     private var lastUrl = ""
 
+    private val regularLoadingListCallback = object : OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            val notEmpty = regularLoadingList.get()?.isNotEmpty() == true
+            hasCheckLoadingsRegular.set(notEmpty)
+            if (notEmpty) {
+                setButtonState(DownloadButtonStateCanNotDownload())
+            }
+        }
+    }
+
+    private val m3u8LoadingListCallback = object : OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            val notEmpty = m3u8LoadingList.get()?.isNotEmpty() == true
+            hasCheckLoadingsM3u8.set(notEmpty)
+            if (notEmpty) {
+                setButtonState(DownloadButtonStateCanNotDownload())
+            }
+        }
+    }
+
+    private val downloadButtonStateCallback = object : OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            when (downloadButtonState.get()) {
+                is DownloadButtonStateCanNotDownload -> downloadButtonIcon.set(R.drawable.refresh_24px)
+                is DownloadButtonStateCanDownload -> downloadButtonIcon.set(R.drawable.ic_download_24dp)
+                is DownloadButtonStateLoading -> {
+                    downloadButtonIcon.set(R.drawable.invisible_24px)
+                }
+
+                null -> {
+                    downloadButtonIcon.set(R.drawable.refresh_24px)
+                }
+            }
+        }
+    }
+
     override fun start() {
         AppLogger.d("START")
-        regularLoadingList.addOnPropertyChangedCallback(object : OnPropertyChangedCallback() {
-            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                val notEmpty = regularLoadingList.get()?.isNotEmpty() == true
-                hasCheckLoadingsRegular.set(notEmpty)
-                if (notEmpty) {
-                    setButtonState(DownloadButtonStateCanNotDownload())
-                }
-            }
-        })
-        m3u8LoadingList.addOnPropertyChangedCallback(object : OnPropertyChangedCallback() {
-            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                val notEmpty = m3u8LoadingList.get()?.isNotEmpty() == true
-                hasCheckLoadingsM3u8.set(notEmpty)
-                if (notEmpty) {
-                    setButtonState(DownloadButtonStateCanNotDownload())
-                }
-            }
-        })
-        downloadButtonState.addOnPropertyChangedCallback(object : OnPropertyChangedCallback() {
-            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                when (downloadButtonState.get()) {
-                    is DownloadButtonStateCanNotDownload -> downloadButtonIcon.set(R.drawable.refresh_24px)
-                    is DownloadButtonStateCanDownload -> downloadButtonIcon.set(R.drawable.ic_download_24dp)
-                    is DownloadButtonStateLoading -> {
-                        downloadButtonIcon.set(R.drawable.invisible_24px)
-                    }
-                }
-            }
-        })
+        regularLoadingList.addOnPropertyChangedCallback(regularLoadingListCallback)
+        m3u8LoadingList.addOnPropertyChangedCallback(m3u8LoadingListCallback)
+        downloadButtonState.addOnPropertyChangedCallback(downloadButtonStateCallback)
+
+        downloadButtonStateCallback.onPropertyChanged(null, 0)
     }
 
     override fun stop() {
         AppLogger.d("STOP")
+        regularLoadingList.removeOnPropertyChangedCallback(regularLoadingListCallback)
+        m3u8LoadingList.removeOnPropertyChangedCallback(m3u8LoadingListCallback)
+        downloadButtonState.removeOnPropertyChangedCallback(downloadButtonStateCallback)
         cancelAllCheckJobs()
     }
 

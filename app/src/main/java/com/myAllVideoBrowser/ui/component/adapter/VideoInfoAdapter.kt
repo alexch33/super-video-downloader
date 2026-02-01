@@ -1,5 +1,5 @@
-package com.myAllVideoBrowser.ui.component.adapter
-
+import com.myAllVideoBrowser.ui.component.adapter.CandidatesListRecyclerViewAdapter
+import com.myAllVideoBrowser.ui.component.adapter.DownloadTabListener
 import android.annotation.SuppressLint
 import android.text.Editable
 import android.text.TextWatcher
@@ -33,12 +33,41 @@ class VideoInfoAdapter(
         private val appUtil: AppUtil
     ) :
         RecyclerView.ViewHolder(binding.root) {
+        private val selectedFormatsCallback = object : OnPropertyChangedCallback() {
+            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+                val currentVideoInfo = binding.videoInfo ?: return
+
+                val curSelected = model.selectedFormats.get()?.get(currentVideoInfo.id)
+                val foundFormat = currentVideoInfo.formats.formats.find { it.format == curSelected }
+
+                if (foundFormat != null) {
+                    model.selectedFormatUrl.set(foundFormat.url)
+                }
+            }
+        }
+
+        private val textWatcher = object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val title = s.toString()
+                binding.videoInfo?.id?.let { videoId ->
+                    val titlesF = model.formatsTitles.get()?.toMutableMap() ?: mutableMapOf()
+                    titlesF[videoId] = title
+                    model.formatsTitles.set(titlesF)
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        }
+        private var isCallbackAdded = false
+
         @SuppressLint("ClickableViewAccessibility", "SetTextI18n")
         fun bind(info: VideoInfo) {
             with(binding) {
+                videoTitleEdit.removeTextChangedListener(textWatcher)
+
                 val titles = model.formatsTitles.get()?.toMutableMap() ?: mutableMapOf()
                 titles[info.id] = titles[info.id] ?: info.title
-
                 model.formatsTitles.set(titles)
 
                 val frmts = model.selectedFormats.get()?.toMutableMap() ?: mutableMapOf()
@@ -47,14 +76,13 @@ class VideoInfoAdapter(
                 if (selected == null) {
                     frmts[info.id] = defaultFormat
                 }
-
                 model.selectedFormats.set(frmts)
+
                 if (info.isRegularDownload) {
                     model.selectedFormatUrl.set(info.firstUrlToString)
                 } else {
                     model.selectedFormatUrl.set(info.formats.formats.lastOrNull()?.url)
                 }
-
 
                 videoInfo = info
                 val typeText = if (info.isM3u8 || info.isMpd) {
@@ -68,6 +96,7 @@ class VideoInfoAdapter(
                 } else {
                     ""
                 }
+
                 if (info.isRegularDownload) {
                     val fileSize = info.formats.formats.firstOrNull()?.fileSize
                     if (fileSize != null) {
@@ -86,7 +115,6 @@ class VideoInfoAdapter(
                     if (actionId == EditorInfo.IME_ACTION_DONE) {
                         this.videoTitleEdit.clearFocus()
                         appUtil.hideSoftKeyboard(videoTitleEdit)
-
                         false
                     } else false
                 }
@@ -94,16 +122,6 @@ class VideoInfoAdapter(
                 videoTitleEdit.setText(titles[info.id])
 
                 viewModel = model
-
-                model.selectedFormats.addOnPropertyChangedCallback(object :
-                    OnPropertyChangedCallback() {
-                    override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                        val curSelected = model.selectedFormats.get()?.get(videoInfo?.id)
-                        val foundFormat =
-                            videoInfo?.formats?.formats?.find { it.format == curSelected }
-                        model.selectedFormatUrl.set(foundFormat?.url.toString())
-                    }
-                })
 
                 val layoutManager =
                     LinearLayoutManager(
@@ -131,7 +149,7 @@ class VideoInfoAdapter(
                         candidateFormatListener.onPreviewVideo(videoInfo, format, isForce)
                     }
 
-                    override fun onFormatUrlShare(videoInfo: VideoInfo, format: String) : Boolean {
+                    override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
                         return candidateFormatListener.onFormatUrlShare(videoInfo, format)
                     }
 
@@ -151,22 +169,23 @@ class VideoInfoAdapter(
                     }
                 }
 
-                videoTitleEdit.addTextChangedListener(object : TextWatcher {
-                    override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                    }
-
-                    override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                        val title = p0.toString()
-                        val titlesF = model.formatsTitles.get()?.toMutableMap() ?: mutableMapOf()
-                        titlesF[info.id] = title
-                        model.formatsTitles.set(titlesF)
-                    }
-
-                    override fun afterTextChanged(p0: Editable?) {
-                    }
-                })
+                videoTitleEdit.addTextChangedListener(textWatcher)
 
                 executePendingBindings()
+            }
+        }
+
+        fun addCallback() {
+            if (!isCallbackAdded) {
+                model.selectedFormats.addOnPropertyChangedCallback(selectedFormatsCallback)
+                isCallbackAdded = true
+            }
+        }
+
+        fun removeCallback() {
+            if (isCallbackAdded) {
+                model.selectedFormats.removeOnPropertyChangedCallback(selectedFormatsCallback)
+                isCallbackAdded = false
             }
         }
     }
@@ -186,6 +205,17 @@ class VideoInfoAdapter(
         val videoInfo = videoInfoList[position]
         holder.bind(videoInfo)
     }
+
+    override fun onViewAttachedToWindow(holder: VideoInfoViewHolder) {
+        super.onViewAttachedToWindow(holder)
+        holder.addCallback()
+    }
+
+    override fun onViewDetachedFromWindow(holder: VideoInfoViewHolder) {
+        super.onViewDetachedFromWindow(holder)
+        holder.removeCallback()
+    }
+
 
     override fun getItemCount(): Int = videoInfoList.size
 

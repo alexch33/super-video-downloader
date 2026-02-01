@@ -50,21 +50,24 @@ class WebTabViewModel @Inject constructor(
     private val tabUrl = ObservableField("")
     private var tabSuggestionJob: Job? = null
 
+    private val showProgressCallBack = object :
+        Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            when (isShowProgress.get()) {
+                true -> progressIcon.set(R.drawable.close_24px)
+                false -> progressIcon.set(R.drawable.ic_refresh_24dp)
+            }
+        }
+    }
+
     override fun start() {
         tabPublishSubject = PublishSubject.create()
 
-        isShowProgress.addOnPropertyChangedCallback(object :
-            Observable.OnPropertyChangedCallback() {
-            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                when (isShowProgress.get()) {
-                    true -> progressIcon.set(R.drawable.close_24px)
-                    false -> progressIcon.set(R.drawable.ic_refresh_24dp)
-                }
-            }
-        })
+        isShowProgress.addOnPropertyChangedCallback(showProgressCallBack)
     }
 
     override fun stop() {
+        isShowProgress.removeOnPropertyChangedCallback(showProgressCallBack)
     }
 
     fun finishPage(url: String) {

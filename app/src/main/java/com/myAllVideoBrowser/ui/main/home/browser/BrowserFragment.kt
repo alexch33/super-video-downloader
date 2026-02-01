@@ -156,6 +156,16 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
     private var backPressedOnce = false
 
+    private val buttonStateCallback = object :
+        Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            lifecycleScope.launch(Dispatchers.Main) {
+                browserViewModel.workerM3u8MpdEvent.value =
+                    videoDetectionModel.downloadButtonState.get()
+            }
+        }
+    }
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
@@ -197,7 +207,11 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
                         }
                     }
                 } else if (contentType == ContentType.VIDEO && isMp4Check || contentType == ContentType.AUDIO && isCheckOnAudio) {
-                    videoDetectionModel.checkRegularVideoOrAudio(requestWithCookies, isCheckOnAudio, isMp4Check)
+                    videoDetectionModel.checkRegularVideoOrAudio(
+                        requestWithCookies,
+                        isCheckOnAudio,
+                        isMp4Check
+                    )
                 }
             }
 
@@ -317,15 +331,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
             onBackPressed()
         }
 
-        videoDetectionModel.downloadButtonState.addOnPropertyChangedCallback(object :
-            Observable.OnPropertyChangedCallback() {
-            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                lifecycleScope.launch(Dispatchers.Main) {
-                    browserViewModel.workerM3u8MpdEvent.value =
-                        videoDetectionModel.downloadButtonState.get()
-                }
-            }
-        })
+        videoDetectionModel.downloadButtonState.addOnPropertyChangedCallback(buttonStateCallback)
 
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -352,6 +358,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     }
 
     override fun onDestroyView() {
+        videoDetectionModel.downloadButtonState.removeOnPropertyChangedCallback(buttonStateCallback)
         super.onDestroyView()
         browserViewModel.stop()
         videoDetectionModel.stop()

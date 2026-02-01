@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.ui.main.home.browser.detectedVideos
 
+import VideoInfoAdapter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,7 +10,6 @@ import androidx.activity.addCallback
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentDetectedVideosTabBinding
-import com.myAllVideoBrowser.ui.component.adapter.VideoInfoAdapter
 import com.myAllVideoBrowser.ui.component.adapter.DownloadTabListener
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity

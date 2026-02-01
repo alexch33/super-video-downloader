@@ -25,19 +25,26 @@ class GlobalVideoDetectionModel @Inject constructor(
     private var lastVerifiedLink: String = ""
     private var lastVerifiedM3u8PointUrl = Pair("", "")
 
-    override fun start() {
-        downloadButtonState.addOnPropertyChangedCallback(object :
-            Observable.OnPropertyChangedCallback() {
-            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                when (downloadButtonState.get()) {
-                    is DownloadButtonStateCanNotDownload -> downloadButtonIcon.set(R.drawable.refresh_24px)
-                    is DownloadButtonStateCanDownload -> downloadButtonIcon.set(R.drawable.ic_download_24dp)
-                    is DownloadButtonStateLoading -> {
-                        downloadButtonIcon.set(R.drawable.invisible_24px)
-                    }
+    private val butonStateCallBack = object :
+        Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            when (downloadButtonState.get()) {
+                is DownloadButtonStateCanNotDownload -> downloadButtonIcon.set(R.drawable.refresh_24px)
+                is DownloadButtonStateCanDownload -> downloadButtonIcon.set(R.drawable.ic_download_24dp)
+                is DownloadButtonStateLoading -> {
+                    downloadButtonIcon.set(R.drawable.invisible_24px)
                 }
             }
-        })
+        }
+    }
+
+    override fun start() {
+        downloadButtonState.addOnPropertyChangedCallback(butonStateCallBack)
+    }
+
+    override fun stop() {
+        downloadButtonState.removeOnPropertyChangedCallback(butonStateCallBack)
+        super.stop()
     }
 
     override fun cancelAllCheckJobs() {

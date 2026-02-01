@@ -26,6 +26,7 @@ import javax.inject.Inject
 open class DLApplication : DaggerApplication() {
     companion object {
         const val DEBUG_TAG: String = "YOUTUBE_DL_DEBUG_TAG"
+        var isProxyServiceStarted = false
     }
 
     private lateinit var androidInjector: AndroidInjector<out DaggerApplication>
@@ -74,8 +75,6 @@ open class DLApplication : DaggerApplication() {
             initializeYoutubeDl()
             updateYoutubeDL()
         }
-
-        startProxyService()
     }
 
     private fun initializeFileUtils() {
@@ -105,12 +104,21 @@ open class DLApplication : DaggerApplication() {
         }
     }
 
-    private fun startProxyService() {
+    fun startProxyService() {
+        if (isProxyServiceStarted) {
+            return
+        }
+
         val serviceIntent = Intent(this, ProxyService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent)
-        } else {
-            startService(serviceIntent)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
+            isProxyServiceStarted = true
+        } catch (e: Exception) {
+            AppLogger.e("Failed to start ProxyService: ${e.message}")
         }
     }
 

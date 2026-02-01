@@ -1,5 +1,7 @@
 import com.android.build.api.variant.FilterConfiguration
+import org.gradle.kotlin.dsl.support.serviceOf
 import java.util.Properties
+import org.gradle.process.ExecOperations
 
 plugins {
     alias(libs.plugins.android.application)
@@ -113,8 +115,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 163
-        versionName = "0.8.10"
+        versionCode = 169
+        versionName = "0.8.11"
 
         if (splitApks) {
             splits {
@@ -186,7 +188,7 @@ android {
 
                 val baseAbiCode = abiCodes[name]
                 if (baseAbiCode != null) {
-                    output.versionCode.set(baseAbiCode + (output.versionCode.get() ?: 0))
+                    output.versionCode.set(baseAbiCode + (output.versionCode.get()))
                 }
             }
         }
@@ -325,6 +327,7 @@ tasks.named("coveralls") {
 // =========================================================================
 // GO REPRODUCIBLE BUILD SETUP (Multi-Architecture)
 // =========================================================================
+val execOps = project.serviceOf<ExecOperations>()
 
 // V2Ray Repository Configuration
 val v2rayRepo = "https://github.com/2dust/AndroidLibXrayLite.git"
@@ -426,7 +429,7 @@ val archConfigs = listOf(
 
 fun verifyGoExecutable(builderDir: File, executablePath: String) {
     try {
-        exec {
+        execOps.exec {
             workingDir(builderDir)
             commandLine(executablePath, "version")
         }
@@ -460,7 +463,7 @@ fun vendorGoDependencies(builderDir: File, executablePath: String) {
     val goEnv = mapOf("GOPROXY" to "https://proxy.golang.org,direct")
 
     // Add the replace directive for our local clone
-    exec {
+    execOps.exec {
         workingDir(builderDir)
         environment(goEnv)
         commandLine(
@@ -470,14 +473,14 @@ fun vendorGoDependencies(builderDir: File, executablePath: String) {
     }
 
     // Tidy the module
-    exec {
+    execOps.exec {
         workingDir(builderDir)
         environment(goEnv)
         commandLine(executablePath, "mod", "tidy")
     }
 
     // Create the vendor directory
-    exec {
+    execOps.exec {
         workingDir(builderDir)
         environment(goEnv)
         commandLine(executablePath, "mod", "vendor")
@@ -504,21 +507,21 @@ tasks.register<DefaultTask>("cloneV2raySource") {
 
         // Clone the default branch with a shallow history
         println("→ Cloning repository with depth=1...")
-        exec {
+        execOps.exec {
             workingDir(project.rootDir)
             commandLine(gitExecutable, "clone", "--depth=1", v2rayRepo, srcDir.absolutePath)
         }
 
         // Fetch the specific commit from the origin
         println("→ Fetching specific commit: $v2rayCommit...")
-        exec {
+        execOps.exec {
             workingDir(srcDir)
             commandLine(gitExecutable, "fetch", "origin", v2rayCommit)
         }
 
         // Checkout the fetched commit
         println("→ Checking out commit...")
-        exec {
+        execOps.exec {
             workingDir(srcDir)
             commandLine(gitExecutable, "checkout", v2rayCommit)
         }

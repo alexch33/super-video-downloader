@@ -8,6 +8,7 @@ import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
 import com.myAllVideoBrowser.util.hls_parser.MpdPlaylistParser
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
+import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Request
 import java.io.IOException
 import java.time.Duration
@@ -300,9 +301,7 @@ class VideoServiceSuperX(
         val firstVariantUrl = manifest.variants.firstOrNull()?.url ?: return null
 
         return try {
-            val request = Request.Builder().url(firstVariantUrl).apply {
-                headers.forEach { (key, value) -> addHeader(key, value) }
-            }.build()
+            val request = Request.Builder().url(firstVariantUrl).headers(headers.toHeaders()).build()
             val response = client.getProxyOkHttpClient().newCall(request).execute()
             val content = response.body.string()
 

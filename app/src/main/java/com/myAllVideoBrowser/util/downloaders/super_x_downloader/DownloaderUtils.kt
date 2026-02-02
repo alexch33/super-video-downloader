@@ -5,6 +5,7 @@ import com.antonkarpenko.ffmpegkit.FFmpegSession
 import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -27,6 +28,7 @@ object DownloaderUtils {
         finalOutputPath: String,
         videoCodec: String?,
         httpClient: OkHttpClient,
+        headers: Headers,
         onMergeProgress: ((percentage: Int) -> Unit)? = null
     ): FFmpegSession {
         val arguments = mutableListOf<String>()
@@ -39,11 +41,24 @@ object DownloaderUtils {
         // --- Video Input ---
         if (!videoSegments.isNullOrEmpty()) {
             if (isVideoFmp4) {
-                val concatenatedVideoFile = createConcatenatedFmp4File(hlsTmpDir, videoSegments, "video", httpClient)
+                val concatenatedVideoFile = createConcatenatedFmp4File(
+                    hlsTmpDir,
+                    videoSegments,
+                    "video",
+                    httpClient,
+                    headers
+                )
                 arguments.add("-i")
                 arguments.add(concatenatedVideoFile.absolutePath)
             } else {
-                val videoPlaylistFile = createTsPlaylistFile(hlsTmpDir, videoSegments, "segment_", "video.m3u8", httpClient)
+                val videoPlaylistFile = createTsPlaylistFile(
+                    hlsTmpDir,
+                    videoSegments,
+                    "segment_",
+                    "video.m3u8",
+                    httpClient,
+                    headers
+                )
                 addPlaylistArguments(arguments, videoPlaylistFile)
             }
         }
@@ -51,11 +66,24 @@ object DownloaderUtils {
         // --- Audio Input ---
         if (!audioSegments.isNullOrEmpty()) {
             if (isAudioFmp4) {
-                val concatenatedAudioFile = createConcatenatedFmp4File(hlsTmpDir, audioSegments, "audio", httpClient)
+                val concatenatedAudioFile = createConcatenatedFmp4File(
+                    hlsTmpDir,
+                    audioSegments,
+                    "audio",
+                    httpClient,
+                    headers
+                )
                 arguments.add("-i")
                 arguments.add(concatenatedAudioFile.absolutePath)
             } else {
-                val audioPlaylistFile = createTsPlaylistFile(hlsTmpDir, audioSegments, "audio_segment_", "audio.m3u8", httpClient)
+                val audioPlaylistFile = createTsPlaylistFile(
+                    hlsTmpDir,
+                    audioSegments,
+                    "audio_segment_",
+                    "audio.m3u8",
+                    httpClient,
+                    headers
+                )
                 addPlaylistArguments(arguments, audioPlaylistFile)
             }
         }
@@ -75,9 +103,17 @@ object DownloaderUtils {
             val hasAudio = !audioSegments.isNullOrEmpty()
 
             when {
-                hasVideo && hasAudio -> { add("-map"); add("0:v?"); add("-map"); add("1:a?") }
-                hasVideo -> { add("-map"); add("0") }
-                hasAudio -> { add("-map"); add("0:a?") }
+                hasVideo && hasAudio -> {
+                    add("-map"); add("0:v?"); add("-map"); add("1:a?")
+                }
+
+                hasVideo -> {
+                    add("-map"); add("0")
+                }
+
+                hasAudio -> {
+                    add("-map"); add("0:a?")
+                }
             }
 
             if (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true) {
@@ -148,7 +184,8 @@ object DownloaderUtils {
         hlsTmpDir: File,
         segments: List<HlsPlaylistParser.MediaSegment>,
         prefix: String, // "video" or "audio"
-        httpClient: OkHttpClient
+        httpClient: OkHttpClient,
+        headers: Headers
     ): File {
         val initSegment =
             (segments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
@@ -158,7 +195,7 @@ object DownloaderUtils {
             concatenatedFile.outputStream().use { output ->
                 // 1. Download and write the initialization segment
                 AppLogger.d("HLS (fMP4): Downloading $prefix init segment from ${initSegment.url}")
-                val initRequest = Request.Builder().url(initSegment.url).build()
+                val initRequest = Request.Builder().url(initSegment.url).headers(headers).build()
                 httpClient.newCall(initRequest).execute()
                     .use { response ->
                         if (!response.isSuccessful) throw IOException("Failed to download fMP4 $prefix init segment. HTTP ${response.code}")
@@ -201,7 +238,8 @@ object DownloaderUtils {
         segments: List<HlsPlaylistParser.MediaSegment>,
         filePrefix: String,
         playlistName: String,
-        httpClient: OkHttpClient
+        httpClient: OkHttpClient,
+        headers: Headers
     ): File {
         val firstSegment = segments.firstOrNull() as? HlsPlaylistParser.UrlMediaSegment
         val key = firstSegment?.encryptionKey
@@ -217,7 +255,7 @@ object DownloaderUtils {
             AppLogger.d("HLS: Encryption detected for $filePrefix. Method: ${key.method}, URI: ${key.uri}")
             val keyFile = hlsTmpDir.resolve(keyFileName)
             try {
-                val request = Request.Builder().url(key.uri).build()
+                val request = Request.Builder().url(key.uri).headers(headers).build()
                 httpClient.newCall(request).execute()
                     .use { response ->
                         if (!response.isSuccessful) throw IOException("Failed to download key file. HTTP ${response.code}")

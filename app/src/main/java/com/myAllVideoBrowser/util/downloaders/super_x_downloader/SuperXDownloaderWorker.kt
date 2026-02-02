@@ -21,6 +21,7 @@ import com.myAllVideoBrowser.util.hls_parser.MpdPlaylistParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Request
 import java.io.File
 import java.io.IOException
@@ -219,9 +220,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     ): Pair<HlsPlaylistParser.MediaPlaylist?, HlsPlaylistParser.MediaPlaylist?> {
         val client = proxyOkHttpClient.getProxyOkHttpClient()
         fun fetchAndParse(url: String): HlsPlaylistParser.HlsPlaylist {
-            val request = Request.Builder().url(url).apply {
-                headers.forEach { (key, value) -> addHeader(key, value) }
-            }.build()
+            val request = Request.Builder().url(url).headers(headers.toHeaders()).build()
             val response = client.newCall(request).execute()
             val content = response.body.string()
             if (!response.isSuccessful || content.isEmpty()) {
@@ -450,9 +449,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         manifestUrl: String, headers: Map<String, String>
     ): Pair<MpdPlaylistParser.MpdRepresentation?, MpdPlaylistParser.MpdRepresentation?> {
         val client = proxyOkHttpClient.getProxyOkHttpClient()
-        val request = Request.Builder().url(manifestUrl).apply {
-            headers.forEach { (key, value) -> addHeader(key, value) }
-        }.build()
+        val request = Request.Builder().url(manifestUrl).headers(headers.toHeaders()).build()
         val response = client.newCall(request).execute()
         val content = response.body.string()
         if (!response.isSuccessful || content.isEmpty()) {
@@ -605,9 +602,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     ): Pair<List<HlsPlaylistParser.MediaSegment>?, List<HlsPlaylistParser.MediaSegment>?> {
         val client = proxyOkHttpClient.getProxyOkHttpClient()
         fun fetchAndParse(url: String): HlsPlaylistParser.HlsPlaylist {
-            val request = Request.Builder().url(url).apply {
-                headers.forEach { (key, value) -> addHeader(key, value) }
-            }.build()
+            val request = Request.Builder().url(url).headers(headers.toHeaders()).build()
             val response = client.newCall(request).execute()
             val content = response.body.string()
             if (!response.isSuccessful || content.isEmpty()) {

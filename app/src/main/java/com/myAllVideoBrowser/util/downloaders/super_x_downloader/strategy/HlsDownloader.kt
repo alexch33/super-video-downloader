@@ -10,6 +10,7 @@ import com.myAllVideoBrowser.util.downloaders.super_x_downloader.SegmentDownload
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.control.FileBasedDownloadController
 import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
 import kotlinx.coroutines.*
+import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
 import java.io.File
 import java.io.IOException
@@ -170,6 +171,7 @@ class HlsDownloader(
                 finalOutputFile.absolutePath,
                 videoCodec,
                 httpClient,
+                headers.toHeaders(),
                 onMergeProgress = { percentage ->
                     onMergeProgress(
                         Progress(finalDownloadedBytes * percentage / 100, finalDownloadedBytes),

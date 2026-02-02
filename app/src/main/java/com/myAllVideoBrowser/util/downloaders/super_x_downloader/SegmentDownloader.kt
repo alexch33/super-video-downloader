@@ -4,6 +4,7 @@ import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.control.FileBasedDownloadController
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -56,9 +57,7 @@ class SegmentDownloader(
 
             try {
                 AppLogger.d("$logPrefix: Downloading segment $segmentIdentifier from $segmentUrl (Attempt $attempt/$RETRY_COUNT)")
-                val request = Request.Builder().url(segmentUrl).apply {
-                    headers.forEach { (key, value) -> addHeader(key, value) }
-                }.build()
+                val request = Request.Builder().url(segmentUrl).headers(headers.toHeaders()).build()
 
                 val response = client.newCall(request).execute()
 
@@ -89,7 +88,8 @@ class SegmentDownloader(
             }
         }
         throw IOException(
-            "Failed to download segment $segmentIdentifier after $RETRY_COUNT attempts.", lastException
+            "Failed to download segment $segmentIdentifier after $RETRY_COUNT attempts.",
+            lastException
         )
     }
 }

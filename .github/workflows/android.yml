@@ -78,9 +78,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: false
-          body: "Ads threshold crash fix && minor fixes"
+          prerelease: true
+          body: "Headers fix for merge fmp4 files and for aes encrypted streams"
           draft: false
-          make_latest: true
+          make_latest: false
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

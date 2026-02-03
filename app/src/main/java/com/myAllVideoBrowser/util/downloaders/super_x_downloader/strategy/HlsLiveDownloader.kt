@@ -139,6 +139,22 @@ class HlsLiveDownloader(
                     throw IOException("No segments were downloaded, nothing to merge.")
                 }
 
+                // --- Download Encryption Keys before merging ---
+                (allVideoSegments.firstOrNull() as? HlsPlaylistParser.UrlMediaSegment)?.encryptionKey?.let { key ->
+                    val keyFile = downloadDir.resolve("video_encryption.key")
+                    if (!keyFile.exists() || keyFile.length() == 0L) {
+                        AppLogger.d("HLS: Downloading video encryption key from ${key.uri}")
+                        DownloaderUtils.downloadKey(httpClient, key.uri, keyFile, headers.toHeaders())
+                    }
+                }
+                (allAudioSegments.firstOrNull() as? HlsPlaylistParser.UrlMediaSegment)?.encryptionKey?.let { key ->
+                    val keyFile = downloadDir.resolve("audio_encryption.key")
+                    if (!keyFile.exists() || keyFile.length() == 0L) {
+                        AppLogger.d("HLS: Downloading audio encryption key from ${key.uri}")
+                        DownloaderUtils.downloadKey(httpClient, key.uri, keyFile, headers.toHeaders())
+                    }
+                }
+
                 AppLogger.d("HLS (Live): Proceeding to merge ${allVideoSegments.size} video and ${allAudioSegments.size} audio segments.")
                 onMergeProgress(
                     Progress(totalBytesDownloaded, totalBytesDownloaded),
@@ -154,8 +170,6 @@ class HlsLiveDownloader(
                     audioSegments = allAudioSegments,
                     finalOutputPath = finalOutputFile.absolutePath,
                     videoCodec = videoCodec,
-                    httpClient = httpClient,
-                    headers.toHeaders(),
                     onMergeProgress = { percentage ->
                         onMergeProgress(
                             Progress(totalBytesDownloaded * percentage / 100, totalBytesDownloaded),

@@ -5,7 +5,6 @@ import com.antonkarpenko.ffmpegkit.FFmpegSession
 import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -27,8 +26,6 @@ object DownloaderUtils {
         audioSegments: List<HlsPlaylistParser.MediaSegment>?,
         finalOutputPath: String,
         videoCodec: String?,
-        httpClient: OkHttpClient,
-        headers: Headers,
         onMergeProgress: ((percentage: Int) -> Unit)? = null
     ): FFmpegSession {
         val arguments = mutableListOf<String>()
@@ -44,9 +41,7 @@ object DownloaderUtils {
                 val concatenatedVideoFile = createConcatenatedFmp4File(
                     hlsTmpDir,
                     videoSegments,
-                    "video",
-                    httpClient,
-                    headers
+                    "video"
                 )
                 arguments.add("-i")
                 arguments.add(concatenatedVideoFile.absolutePath)
@@ -56,8 +51,7 @@ object DownloaderUtils {
                     videoSegments,
                     "segment_",
                     "video.m3u8",
-                    httpClient,
-                    headers
+                    "video_encryption.key"
                 )
                 addPlaylistArguments(arguments, videoPlaylistFile)
             }
@@ -69,9 +63,7 @@ object DownloaderUtils {
                 val concatenatedAudioFile = createConcatenatedFmp4File(
                     hlsTmpDir,
                     audioSegments,
-                    "audio",
-                    httpClient,
-                    headers
+                    "audio"
                 )
                 arguments.add("-i")
                 arguments.add(concatenatedAudioFile.absolutePath)
@@ -81,8 +73,7 @@ object DownloaderUtils {
                     audioSegments,
                     "audio_segment_",
                     "audio.m3u8",
-                    httpClient,
-                    headers
+                    "audio_encryption.key"
                 )
                 addPlaylistArguments(arguments, audioPlaylistFile)
             }
@@ -178,29 +169,51 @@ object DownloaderUtils {
     }
 
     /**
+     * Downloads an HLS encryption key. This method is thread-safe and can be called from any downloader.
+     *
+     * @param httpClient The OkHttpClient to use for the request.
+     * @param uri The URL of the key file.
+     * @param keyFile The destination file to save the key.
+     * @param headers The headers to include in the request.
+     * @throws IOException if the download fails.
+     */
+    @Throws(IOException::class)
+    fun downloadKey(httpClient: OkHttpClient, uri: String, keyFile: File, headers: okhttp3.Headers) {
+        try {
+            val request = Request.Builder().url(uri).headers(headers).build()
+            httpClient.newCall(request).execute()
+                .use { response ->
+                    if (!response.isSuccessful) throw IOException("Failed to download key file. HTTP ${response.code}")
+                    response.body.use { keyFile.writeBytes(it.bytes()) }
+                    AppLogger.d("HLS: Encryption key downloaded to ${keyFile.absolutePath}")
+                }
+        } catch (e: Exception) {
+            throw IOException(
+                "Failed to download HLS encryption key: ${e.message}",
+                e
+            )
+        }
+    }
+
+    /**
      * Creates a single MP4 file by concatenating an fMP4 init segment and all media segments.
      */
     private fun createConcatenatedFmp4File(
         hlsTmpDir: File,
         segments: List<HlsPlaylistParser.MediaSegment>,
-        prefix: String, // "video" or "audio"
-        httpClient: OkHttpClient,
-        headers: Headers
+        prefix: String // "video" or "audio"
     ): File {
-        val initSegment =
-            (segments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
+        val initFile = hlsTmpDir.resolve("init_$prefix.mp4")
         val concatenatedFile = hlsTmpDir.resolve("concatenated_$prefix.mp4")
 
         try {
             concatenatedFile.outputStream().use { output ->
-                // 1. Download and write the initialization segment
-                AppLogger.d("HLS (fMP4): Downloading $prefix init segment from ${initSegment.url}")
-                val initRequest = Request.Builder().url(initSegment.url).headers(headers).build()
-                httpClient.newCall(initRequest).execute()
-                    .use { response ->
-                        if (!response.isSuccessful) throw IOException("Failed to download fMP4 $prefix init segment. HTTP ${response.code}")
-                        response.body.use { output.write(it.bytes()) }
-                    }
+                // 1. Write the pre-downloaded initialization segment
+                if (!initFile.exists()) {
+                    throw IOException("fMP4 init segment file not found for $prefix: ${initFile.absolutePath}")
+                }
+                AppLogger.d("HLS (fMP4): Reading $prefix init segment from ${initFile.absolutePath}")
+                output.write(initFile.readBytes())
 
                 // 2. Append all corresponding media segments
                 segments.forEachIndexed { index, _ ->
@@ -238,8 +251,7 @@ object DownloaderUtils {
         segments: List<HlsPlaylistParser.MediaSegment>,
         filePrefix: String,
         playlistName: String,
-        httpClient: OkHttpClient,
-        headers: Headers
+        keyFileName: String
     ): File {
         val firstSegment = segments.firstOrNull() as? HlsPlaylistParser.UrlMediaSegment
         val key = firstSegment?.encryptionKey
@@ -249,24 +261,12 @@ object DownloaderUtils {
         else playlistName.replace(".m3u8", ".txt")
 
         val playlistFile = hlsTmpDir.resolve(finalPlaylistName)
-        val keyFileName = "${filePrefix}encryption.key"
 
         if (isEncrypted) {
-            AppLogger.d("HLS: Encryption detected for $filePrefix. Method: ${key.method}, URI: ${key.uri}")
+            AppLogger.d("HLS: Encryption detected for $filePrefix. Method: ${key.method}")
             val keyFile = hlsTmpDir.resolve(keyFileName)
-            try {
-                val request = Request.Builder().url(key.uri).headers(headers).build()
-                httpClient.newCall(request).execute()
-                    .use { response ->
-                        if (!response.isSuccessful) throw IOException("Failed to download key file. HTTP ${response.code}")
-                        response.body.use { keyFile.writeBytes(it.bytes()) }
-                        AppLogger.d("HLS: Encryption key for $filePrefix downloaded to ${keyFile.absolutePath}")
-                    }
-            } catch (e: Exception) {
-                throw IOException(
-                    "Failed to download HLS encryption key for $filePrefix: ${e.message}",
-                    e
-                )
+            if (!keyFile.exists() || keyFile.length() == 0L) {
+                throw IOException("Encryption key file not found: ${keyFile.absolutePath}")
             }
         }
 

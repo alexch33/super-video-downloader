@@ -477,22 +477,37 @@ object HlsPlaylistParser {
 
     @OptIn(UnstableApi::class)
     private fun translateMediaPlaylist(exoMedia: HlsMediaPlaylist): MediaPlaylist {
-        var hlsEncryptionKey: HlsEncryptionKey? = null
-        if (exoMedia.protectionSchemes != null) {
-            val firstEncryptedSegment =
-                exoMedia.segments.firstOrNull { it.fullSegmentEncryptionKeyUri != null }
-            if (firstEncryptedSegment != null) {
-                hlsEncryptionKey = HlsEncryptionKey(
-                    // TODO: detect method
-                    method = "AES-128", // This is the assumed standard
-                    uri = firstEncryptedSegment.fullSegmentEncryptionKeyUri!!,
-                    iv = firstEncryptedSegment.encryptionIV
-                )
-                AppLogger.d("HLS Parser (Exo): Successfully translated encryption key. URI: ${hlsEncryptionKey.uri}")
+        val schemeToMethodMap = mutableMapOf<String?, String>()
+        exoMedia.tags.forEach { tag ->
+            if (tag.startsWith("#EXT-X-KEY")) {
+                val attributes = parseAttributeList(tag.substringAfter(':'))
+                val method = attributes["METHOD"]
+                val uri = attributes["URI"]
+                if (method != null && uri != null) {
+                    schemeToMethodMap[resolveUrl(exoMedia.baseUri, uri)] = method
+                }
             }
         }
 
         val segments = exoMedia.segments.map { exoSegment ->
+            val encryptionKey =
+                if (exoSegment.fullSegmentEncryptionKeyUri != null) {
+                    val method = schemeToMethodMap[resolveUrl(
+                        exoMedia.baseUri,
+                        exoSegment.fullSegmentEncryptionKeyUri!!
+                    )] ?: "AES-128"
+
+                    HlsEncryptionKey(
+                        method = method,
+                        uri = resolveUrl(
+                            exoMedia.baseUri,
+                            exoSegment.fullSegmentEncryptionKeyUri!!
+                        ),
+                        iv = exoSegment.encryptionIV
+                    )
+                } else {
+                    null
+                }
             UrlMediaSegment(
                 url = resolveUrl(exoMedia.baseUri, exoSegment.url),
                 duration = exoSegment.durationUs / 1_000_000.0,
@@ -516,7 +531,7 @@ object HlsPlaylistParser {
                             ByteRange(it, exoPart.byteRangeOffset)
                         })
                 },
-                encryptionKey = hlsEncryptionKey
+                encryptionKey = encryptionKey
             )
         }
 

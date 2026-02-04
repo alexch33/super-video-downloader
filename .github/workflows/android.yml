@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Headers fix for merge fmp4 files and for aes encrypted streams"
+          body: "Headers fix for merge fmp4 files and for aes encrypted streams \n Custom Downloaders minor fixes \n Error throw if MPD has DRM protection"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

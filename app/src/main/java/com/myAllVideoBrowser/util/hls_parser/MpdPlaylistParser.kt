@@ -1,6 +1,6 @@
 package com.myAllVideoBrowser.util.hls_parser
 
-import androidx.annotation.OptIn
+import android.util.Base64
 import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
@@ -52,10 +52,18 @@ object MpdPlaylistParser {
         val codecs: String?,
         val baseUrls: List<String>,
         val segments: List<Segment>,
-        val initializationUrl: String?
+        val initializationUrl: String?,
+        val isDrmProtected: Boolean,
+        val drmSchemes: List<DrmScheme>
     ) {
         var manifest: MpdManifest? = null
     }
+
+    data class DrmScheme(
+        val uuid: String,
+        val licenseUrl: String?,
+        val psshData: String? // Base64 encoded PSSH data
+    )
 
     // A simplified segment model
     data class Segment(
@@ -66,7 +74,7 @@ object MpdPlaylistParser {
 
     // --- Main Parsing Logic ---
 
-    @OptIn(UnstableApi::class)
+    @androidx.annotation.OptIn(UnstableApi::class)
     @Throws(IOException::class)
     fun parse(manifestContent: String, baseUri: String): MpdManifest {
         return try {
@@ -95,7 +103,7 @@ object MpdPlaylistParser {
     }
 
     // --- Private Translator Functions ---
-    @OptIn(UnstableApi::class)
+    @androidx.annotation.OptIn(UnstableApi::class)
     private fun translateManifest(
         exoManifest: DashManifest,
         baseUri: String,
@@ -160,7 +168,7 @@ object MpdPlaylistParser {
         return if (matcher.find()) matcher.group(1) else null
     }
 
-    @OptIn(UnstableApi::class)
+    @androidx.annotation.OptIn(UnstableApi::class)
     private fun translateRepresentation(
         exoRep: Representation,
         periodDuration: Double?,
@@ -231,6 +239,28 @@ object MpdPlaylistParser {
         }
         val finalBaseUrls = resolvedBaseUrls.ifEmpty { listOf(baseUri) }
 
+        val drmInitData = exoRep.format.drmInitData
+        val drmSchemes = mutableListOf<DrmScheme>()
+        var isDrmProtected = false
+
+        if (drmInitData != null) {
+            isDrmProtected = true
+            for (i in 0 until drmInitData.schemeDataCount) {
+                val schemeData = drmInitData.get(i)
+                val psshData = schemeData.data // This is the raw PSSH byte array
+                val base64Pssh = Base64.encodeToString(psshData, Base64.NO_WRAP)
+
+                drmSchemes.add(
+                    DrmScheme(
+                        uuid = schemeData.uuid.toString(),
+                        licenseUrl = null,
+                        psshData = base64Pssh
+                    )
+                )
+                AppLogger.d("MPD Parser: Found DRM scheme ${schemeData.uuid} for rep ${exoRep.format.id}")
+            }
+        }
+
         return MpdRepresentation(
             id = exoRep.format.id,
             bandwidth = exoRep.format.bitrate.toLong(),
@@ -242,7 +272,9 @@ object MpdPlaylistParser {
             initializationUrl = initUrlTemplate?.replace(
                 "\$RepresentationID\$",
                 exoRep.format.id ?: ""
-            )
+            ),
+            isDrmProtected = isDrmProtected,
+            drmSchemes = drmSchemes
         )
     }
 
@@ -317,6 +349,9 @@ object MpdPlaylistParser {
                 val adaptationSetSegmentTemplate =
                     adaptationSetNode.getElementsByTagName("SegmentTemplate").item(0) as? Element
 
+                val adaptationSetCpNodes =
+                    adaptationSetNode.getElementsByTagName("ContentProtection")
+
                 val representationNodes = adaptationSetNode.getElementsByTagName("Representation")
                 val representations = (0 until representationNodes.length).map { k ->
                     val representationNode = representationNodes.item(k) as Element
@@ -351,6 +386,24 @@ object MpdPlaylistParser {
                         (0 until it.length).map { l -> it.item(l).textContent }
                     }).ifEmpty { listOf(baseUri) }
 
+                    val repCpNodes = representationNode.getElementsByTagName("ContentProtection")
+                    val allCpNodes =
+                        (0 until adaptationSetCpNodes.length).map { adaptationSetCpNodes.item(it) } +
+                                (0 until repCpNodes.length).map { repCpNodes.item(it) }
+
+                    val drmSchemes = allCpNodes.mapNotNull { cpNode ->
+                        val element = cpNode as? Element
+                        val schemeIdUri =
+                            element?.getAttribute("schemeIdUri") ?: return@mapNotNull null
+                        // The UUID is typically the last part of the URN
+                        val uuid = schemeIdUri.substringAfter("urn:uuid:")
+
+                        val psshNode = element.getElementsByTagName("cenc:pssh").item(0)
+                        val psshData = psshNode?.textContent
+
+                        DrmScheme(uuid, null, psshData)
+                    }
+
                     MpdRepresentation(
                         id = representationId,
                         bandwidth = bandwidth,
@@ -358,8 +411,10 @@ object MpdPlaylistParser {
                         height = height,
                         codecs = codecs,
                         baseUrls = baseUrls.map { resolveUrl(baseUri, it) },
-                        segments = emptyList(),
-                        initializationUrl = initializationUrl
+                        segments = emptyList(), // Fallback doesn't parse segments currently
+                        initializationUrl = initializationUrl,
+                        isDrmProtected = drmSchemes.isNotEmpty(),
+                        drmSchemes = drmSchemes
                     )
                 }
 

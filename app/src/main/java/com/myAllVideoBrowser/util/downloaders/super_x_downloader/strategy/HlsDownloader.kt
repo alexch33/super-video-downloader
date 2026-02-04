@@ -63,6 +63,44 @@ class HlsDownloader(
             val audioExt = if (isAudioFmp4) "m4s" else "ts"
             val totalSegmentsToDownload = (videoSegments?.size ?: 0) + (audioSegments?.size ?: 0)
 
+            val segmentDownloader = SegmentDownloader(httpClient, headers, controller)
+
+            // --- Download Initialization Segments (for fMP4) ---
+            if (isVideoFmp4) {
+                val initSegment = (videoSegments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
+                val initFile = downloadDir.resolve("init_video.mp4")
+                if (!initFile.exists() || initFile.length() == 0L) {
+                    AppLogger.d("HLS (fMP4): Downloading video init segment from ${initSegment.url}")
+                    val downloadedBytes = segmentDownloader.download(initSegment.url, initFile, "HLS-Init", 0)
+                    hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
+                }
+            }
+            if (isAudioFmp4) {
+                val initSegment = (audioSegments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
+                val initFile = downloadDir.resolve("init_audio.mp4")
+                if (!initFile.exists() || initFile.length() == 0L) {
+                    AppLogger.d("HLS (fMP4): Downloading audio init segment from ${initSegment.url}")
+                    val downloadedBytes = segmentDownloader.download(initSegment.url, initFile, "HLS-Init", 1)
+                    hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
+                }
+            }
+
+            // --- Download Encryption Keys (for TS) ---
+            (videoSegments?.firstOrNull() as? HlsPlaylistParser.UrlMediaSegment)?.encryptionKey?.let { key ->
+                val keyFile = downloadDir.resolve("video_encryption.key")
+                if (!keyFile.exists() || keyFile.length() == 0L) {
+                    AppLogger.d("HLS: Downloading video encryption key from ${key.uri}")
+                    DownloaderUtils.downloadKey(httpClient, key.uri, keyFile, headers.toHeaders())
+                }
+            }
+            (audioSegments?.firstOrNull() as? HlsPlaylistParser.UrlMediaSegment)?.encryptionKey?.let { key ->
+                val keyFile = downloadDir.resolve("audio_encryption.key")
+                if (!keyFile.exists() || keyFile.length() == 0L) {
+                    AppLogger.d("HLS: Downloading audio encryption key from ${key.uri}")
+                    DownloaderUtils.downloadKey(httpClient, key.uri, keyFile, headers.toHeaders())
+                }
+            }
+
             // 2. Handle Resuming: Calculate initial progress from already downloaded files
             val alreadyDownloadedVideo = videoSegments?.filter { segment ->
                 val segmentFile =
@@ -93,7 +131,7 @@ class HlsDownloader(
             val initialTotalDownloaded = initialVideoSize + initialAudioSize
             val initialSegmentsCompleted = alreadyDownloadedVideo.size + alreadyDownloadedAudio.size
 
-            hlsTotalBytesDownloaded.set(initialTotalDownloaded)
+            hlsTotalBytesDownloaded.addAndGet(initialTotalDownloaded)
             hlsSegmentsCompleted.set(initialSegmentsCompleted)
 
             if (initialSegmentsCompleted > 0) {
@@ -106,7 +144,6 @@ class HlsDownloader(
             }
 
             // 3. Download remaining segments in parallel using coroutines
-            val segmentDownloader = SegmentDownloader(httpClient, headers, controller)
             val downloadJobs = mutableListOf<Job>()
             val dispatcher = Dispatchers.IO.limitedParallelism(threadCount)
 
@@ -170,8 +207,6 @@ class HlsDownloader(
                 audioSegments,
                 finalOutputFile.absolutePath,
                 videoCodec,
-                httpClient,
-                headers.toHeaders(),
                 onMergeProgress = { percentage ->
                     onMergeProgress(
                         Progress(finalDownloadedBytes * percentage / 100, finalDownloadedBytes),

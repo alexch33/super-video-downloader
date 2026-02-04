@@ -60,6 +60,12 @@ class MpdDownloader(
     ): File {
         return withContext(Dispatchers.IO) {
             val (videoRep, audioRep) = getMpdRepresentations(task.url, headers)
+
+            if (videoRep?.isDrmProtected == true || audioRep?.isDrmProtected == true) {
+                AppLogger.e("MPD: Content is DRM-protected. Download is not permitted.")
+                throw IOException("Cannot download: The content is protected by DRM and cannot be downloaded.")
+            }
+
             val primaryRep = videoRep ?: audioRep
             ?: throw IOException("No downloadable video or audio representation found for the selected format.")
 

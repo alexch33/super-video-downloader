@@ -342,13 +342,11 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     ) {
         request.addOption("--progress")
 
-        val threadsCount = sharedPrefHelper.getM3u8DownloaderThreadCount() + 1
+        val threadsCount = sharedPrefHelper.getM3u8DownloaderThreadCount()
         request.addOption("-N", threadsCount)
 
         val isAudioOnly = vFormat.vcodec == "none" && vFormat.acodec != "none"
 
-        request.addOption("--force-ipv4")
-        request.addOption("--source-address", "0.0.0.0")
         if (isAudioOnly) {
             request.addOption("--audio-quality", "0")
             request.addOption("--extract-audio")

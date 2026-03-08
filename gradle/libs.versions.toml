@@ -57,7 +57,7 @@ rxandroid3 = "3.0.2"
 
 # Other Dependencies
 glide = "5.0.5"
-youtubedl = "0.18.1-alexch33-3"
+youtubedl = "0.18.1"
 ffmpegKit = "2.1.0"
 
 # version change can break build
@@ -169,7 +169,8 @@ glideRuntime = { module = "com.github.bumptech.glide:glide", version.ref = "glid
 glideCompiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
 
 # Other Dependencies
-youtubedl = { module = "io.github.alexch33:youtubedl-android", version.ref = "youtubedl" }
+youtubedl = { module = "io.github.junkfood02.youtubedl-android:library", version.ref = "youtubedl" }
+youtubedl-ffmpeg = { module = "io.github.junkfood02.youtubedl-android:ffmpeg", version.ref = "youtubedl" }
 ffmpegKit = { module = "com.antonkarpenko:ffmpeg-kit-full-gpl", version.ref = "ffmpegKit" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 timeago = { module = "com.github.marlonlom:timeago", version.ref = "timeago" }

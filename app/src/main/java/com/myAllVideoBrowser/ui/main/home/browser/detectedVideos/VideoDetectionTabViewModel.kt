@@ -304,14 +304,6 @@ open class VideoDetectionTabViewModel @Inject constructor(
             return
         }
 
-        val currentTabUrl = webTabModel?.getTabTextInput()?.get()
-        val isTwitch = currentTabUrl?.contains(".twitch.") == true
-
-        if (isTwitch && !newInfo.isMaster) {
-            AppLogger.d("SKIP TWICH DUPLICATED VIDEO INFO: $newInfo")
-            return
-        }
-
         val detectedVideos = detectedVideosList.get() ?: emptySet()
 
         if (detectedVideos.any { isVideoInfoDuplicate(it, newInfo) }) {

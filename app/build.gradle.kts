@@ -115,8 +115,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 181
-        versionName = "0.8.13"
+        versionCode = 187
+        versionName = "0.8.14"
 
         if (splitApks) {
             splits {
@@ -268,6 +268,7 @@ dependencies {
 
     // Media & Video Processing
     implementation(libs.youtubedl)
+    implementation(libs.youtubedl.ffmpeg)
     implementation(libs.ffmpegKit)
     implementation(libs.media3Exoplayer)
     implementation(libs.media3ExoplayerDash)

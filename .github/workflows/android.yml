@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Youtube-dlp fix: fork replaced with original"
+          body: "Security fix (golang grpc upgraded to v1.79.3)"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

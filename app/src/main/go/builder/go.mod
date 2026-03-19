@@ -46,4 +46,6 @@ require (
 	lukechampine.com/blake3 v1.4.1 // indirect
 )
 
+replace google.golang.org/grpc v1.78.0 => google.golang.org/grpc v1.79.3
+
 replace github.com/2dust/AndroidLibXrayLite => ../../../../../build/v2ray/src

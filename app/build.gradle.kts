@@ -115,8 +115,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 187
-        versionName = "0.8.14"
+        versionCode = 193
+        versionName = "0.8.15"
 
         if (splitApks) {
             splits {
@@ -456,6 +456,7 @@ fun createGoModule(builderDir: File) {
 	        github.com/xtls/xray-core v1.260123.1-0.20260206094241-12ee51e4bb1d
 	        golang.org/x/mobile v0.0.0-20260204172633-1dceadbbeea3
         )
+        replace google.golang.org/grpc v1.78.0 => google.golang.org/grpc v1.79.3
         """.trimIndent()
     )
     file("${builderDir}/go.sum").delete()

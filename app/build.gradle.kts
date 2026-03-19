@@ -332,7 +332,7 @@ val execOps = project.serviceOf<ExecOperations>()
 
 // V2Ray Repository Configuration
 val v2rayRepo = "https://github.com/2dust/AndroidLibXrayLite.git"
-val v2rayCommit = "93a711245dec705be8dd6aa6a47f8aafa7898c40"
+val v2rayCommit = "d783dc8ea75afa0ff8fc9dcd51a426a9a67f6a70"
 val buildDirV2ray = file("${project.rootDir}/build/v2ray")
 
 // Go Executable Detection
@@ -450,11 +450,12 @@ fun createGoModule(builderDir: File) {
     goModFile.writeText(
         """
         module builder
-        go 1.25.0
+        go 1.25.7
 
-        // This rule is copied from the AndroidLibXrayLite go.mod file.
-        // It forces the entire build to use the one, correct version of gvisor.
-        replace gvisor.dev/gvisor => gvisor.dev/gvisor v0.0.0-20250606001031-fa4c4dd86b43
+        require (
+	        github.com/xtls/xray-core v1.260123.1-0.20260206094241-12ee51e4bb1d
+	        golang.org/x/mobile v0.0.0-20260204172633-1dceadbbeea3
+        )
         """.trimIndent()
     )
     file("${builderDir}/go.sum").delete()

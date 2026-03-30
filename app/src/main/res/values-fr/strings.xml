@@ -24,7 +24,7 @@
     <string name="progress_menu_cancel">Annuler</string>
     <string name="all_text_cancel">Annuler</string>
     <string name="progress_menu_pause">Pause</string>
-    <string name="progress_menu_resume">Résumé</string>
+    <string name="progress_menu_resume">Reprendre</string>
     <string name="download_link_label">URL de la vidéo</string>
     <string name="paste">Coller</string>
     <string name="history">Historique</string>
@@ -51,7 +51,7 @@
     <string name="download_started">Téléchargement de la vidéo démarré avec succès !</string>
     <string name="more_tabs_in_next_updates">Plus d’onglets seront disponibles dans les prochaines mises à jour</string>
     <string name="download_open_in_app">Ouvrir dans l’application</string>
-    <string name="download_watch_in_app">Regarder la vidéo</string>
+    <string name="download_watch_in_app">Voir la vidéo</string>
     <string name="ad_blocker">Bloqueur de publicités</string>
     <string name="desktop_mode_on">Mode Bureau activé</string>
     <string name="desktop_mode_off">Mode Bureau désactivé</string>
@@ -95,8 +95,8 @@
     <string name="save_proxy">Sauvegarder</string>
     <string name="http_proxy">Proxy HTTP</string>
     <string name="check_if_in_list">Vérifier les URL des sites uniquement s’ils figurent dans la liste des sites pris en charge</string>
-    <string name="bookmark">Favori</string>
-    <string name="bookmarks_list">Favoris</string>
+    <string name="bookmark">Ajouter un signet</string>
+    <string name="bookmarks_list">Signets</string>
     <string name="is_auto_dark">Mode thème automatique</string>
     <string name="check_every_request_on_audio">Vérifier chaque requête pour l’audio</string>
     <string name="go">GO</string>
@@ -111,7 +111,7 @@
     <string name="secure_dns">DNS sécurisé</string>
     <string name="dns_custom">Personnalisé</string>
     <string name="dns_custom_url_hint">Saisissez l\'URL DoH ou DoT</string>
-    <string name="doh_cloudflare"></string>
+    <string name="doh_cloudflare"/>
     <string name="custom_dns_saved_message">DNS personnalisé enregistré</string>
     <string name="settings_detection">Paramètres de détection</string>
     <string name="settings_downloading">Paramètres de téléchargement</string>

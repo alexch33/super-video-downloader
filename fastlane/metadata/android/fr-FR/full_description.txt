@@ -1,0 +1,16 @@
+SuperX est un téléchargeur de vidéos puissant et respectueux de la vie privée pour Android, conçu pour vous offrir liberté et flexibilité. Il vous permet d'enregistrer des vidéos provenant d'une grande variété de sites web et de plateformes directement sur votre appareil pour un visionnage hors ligne. Entièrement open source, cette application ne contient ni traqueurs ni publicités, et tout le traitement est effectué localement sur votre appareil afin de protéger votre vie privée.
+
+<b>Fonctionnalités principales :</b>
+
+*    <b>Large compatibilité :</b> Téléchargez des vidéos depuis de nombreux sites web et plateformes de réseaux sociaux.
+*    <b>Prise en charge avancée des flux :</b> Compatible avec les protocoles de streaming modernes, notamment HLS (.m3u8) et DASH (.mpd), ainsi qu'avec les flux MP4 standard et les diffusions en direct.
+*    <b>Format standard :</b> Toutes les vidéos téléchargées sont enregistrées au format .mp4 universel pour une compatibilité maximale avec tous les lecteurs.
+*    <b>Traitement côté client :</b> Toutes les opérations se déroulent sur votre appareil. Aucune donnée n'est envoyée à des serveurs externes, garantissant ainsi la confidentialité de votre activité.
+
+Confidentialité et réseau avancés :
+
+*    Prise en charge des cookies : Permet d'utiliser les cookies de votre navigateur pour accéder aux vidéos et les télécharger depuis des zones privées ou protégées par authentification.
+*    Intégration complète des proxys : Renforcez votre confidentialité et contournez les restrictions réseau grâce à la prise en charge intégrée des proxys HTTP et SOCKS.
+*    Chaînage de proxys et sécurité DNS : Pour une confidentialité optimale, l'application prend en charge les chaînes de proxys et peut être configurée avec un DNS chiffré (DoH/DoT) et des serveurs personnalisés.
+
+SuperX est l'outil idéal pour les utilisateurs exigeants qui souhaitent maîtriser leurs contenus multimédias et leur vie privée. En offrant un accès direct aux flux de téléchargement et des outils réseau performants, il garantit un accès libre et ouvert aux contenus vidéo en ligne.

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="browser_search_hint">Rechercher dans DuckDuckGo ou saisir une URL</string>
-    <string name="app_icon">icône de l\'application</string>
+    <string name="app_icon">Icône de l\'application</string>
     <string name="title_video">Vidéo</string>
     <string name="title_progress">Progression</string>
     <string name="title_settings">Réglages</string>
@@ -111,7 +111,7 @@
     <string name="secure_dns">DNS sécurisé</string>
     <string name="dns_custom">Personnalisé</string>
     <string name="dns_custom_url_hint">Saisissez l\'URL DoH ou DoT</string>
-    <string name="doh_cloudflare"/>
+    <string name="doh_cloudflare">Cloudflare DoH</string>
     <string name="custom_dns_saved_message">DNS personnalisé enregistré</string>
     <string name="settings_detection">Paramètres de détection</string>
     <string name="settings_downloading">Paramètres de téléchargement</string>
@@ -124,4 +124,7 @@
     <string name="drm_permission_message">Ce site souhaite lire des contenus protégés par DRM (comme des films ou de la musique). L\'autorisation est nécessaire pour la lecture. Voulez-vous activer cette fonctionnalité ?</string>
     <string name="allow">Autoriser</string>
     <string name="block">Bloquer</string>
+    <string name="app_name">SuperX</string>
+    <string name="doh_quad9">Quad9 DoH</string>
+    <string name="doh_ad_guard">Adguard DoH</string>
 </resources>

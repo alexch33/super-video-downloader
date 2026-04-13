@@ -1,0 +1,21 @@
+Superx, özgürlük ve esneklik düşünülerek tasarlanmış, Android için güçlü ve özel bir video indirme uygulamasıdır. Çok çeşitli web sitelerinden ve platformlardan videoları doğrudan cihazınıza kaydedip çevrimdışı izlemenize olanak tanır. Tamamen açık kaynaklı bir uygulama olarak, izleyici içermez, reklam içermez ve gizliliğinizi korumak için tüm işlemler cihazınızda yerel olarak yapılır.
+
+<b>Temel Özellikler:</b>
+
+* <b>Geniş Uyumluluk:</b> Birçok web sitesinden ve sosyal medya platformundan video indirin.
+
+* <b>Gelişmiş Akış Desteği:</b> HLS (.m3u8) ve DASH (.mpd) manifestleri de dahil olmak üzere modern akış protokollerini, standart MP4 akışlarını ve canlı yayınları tam olarak destekler.
+
+* <b>Standart Format:</b> İndirilen tüm videolar, herhangi bir oynatıcıyla maksimum uyumluluk için evrensel .mp4 kapsayıcısına kaydedilir.
+
+* <b>İstemci Tarafı İşleme:</b> Tüm işlemler cihazınızda gerçekleşir. Hiçbir veri harici sunuculara gönderilmez, böylece etkinliğiniz gizli kalır.
+
+<b>Gelişmiş Gizlilik ve Ağ Bağlantısı:</b>
+
+* <b>Çerez Desteği:</b> Tarayıcınızın çerezlerini kullanarak özel veya giriş korumalı alanlardan videolara erişmenizi ve indirmenizi sağlar.
+
+* <b>Tam Proxy Entegrasyonu:</b> HTTP ve SOCKS proxy'leri için yerleşik destekle gizliliğinizi artırın ve ağ kısıtlamalarını aşın.
+
+* <b>Proxy Zincirleme ve DNS Güvenliği:</b> En üst düzey gizlilik için uygulama proxy zincirlerini destekler ve şifrelenmiş DNS (DoH/DoT) ve özel sunucularla yapılandırılabilir.
+
+SuperX, medyaları ve gizlilikleri üzerinde kontrol isteyen kullanıcılar için ideal bir araçtır. İndirme akışlarına doğrudan erişim ve sağlam ağ araçları sağlayarak, çevrimiçi video içeriğine erişim için özgür ve açık bir yol sunar.

@@ -31,6 +31,8 @@ class ProxyService : Service() {
     private var proxyJob: Job? = null
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
+    private var lastProxyData: String? = null
+
     companion object {
         @Volatile
         var isRunning = false
@@ -57,7 +59,10 @@ class ProxyService : Service() {
             handleSystemStartOrRestart()
         } else {
             when (intent.action) {
-                ACTION_START_OR_UPDATE -> handleStartOrUpdate(intent)
+                ACTION_START_OR_UPDATE -> {
+                    handleStartOrUpdate(intent)
+                }
+
                 ACTION_STOP -> {
                     AppLogger.i("Stopping proxy service via explicit stop action.")
                     stopSelf()
@@ -152,6 +157,14 @@ class ProxyService : Service() {
         proxyJob = serviceScope.launch {
             val localCreds = sharedPrefHelper.getGeneratedCreds()
             AppLogger.i("Starting or updating proxy chain via Intent.")
+
+            val proxyData =
+                proxyHops.joinToString { "${it.type}_${it.address}_${it.port}_${it.password} ${it.username}_${dnsUrl}" }
+            if (proxyData == lastProxyData) {
+                AppLogger.i("Proxy config did change skip...")
+                return@launch
+            }
+            lastProxyData = proxyData
 
             val success = ProxyManager.startProxyChain(
                 localPort = 8888,

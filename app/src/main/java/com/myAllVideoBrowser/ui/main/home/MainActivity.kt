@@ -224,15 +224,19 @@ class MainActivity : BaseActivity() {
     }
 
     override fun onDestroy() {
-        mainViewModel.stop()
-        settingsViewModel.isLockPortrait.removeOnPropertyChangedCallback(screenOrientationCallback)
-        val isDownloadingNow = progressViewModel.progressInfos.get()
-            ?.find { it.downloadStatus == VideoTaskState.DOWNLOADING || it.downloadStatus == VideoTaskState.PREPARE || it.downloadStatus == VideoTaskState.PENDING } == null
-        if (isDownloadingNow) {
-            AppLogger.d("No active downloads, shutdown local proxy service...")
-            proxiesViewModel.shutdownProxyService()
+        if (isFinishing) {
+            mainViewModel.stop()
+            settingsViewModel.isLockPortrait.removeOnPropertyChangedCallback(
+                screenOrientationCallback
+            )
+            val isDownloadingNow = progressViewModel.progressInfos.get()
+                ?.find { it.downloadStatus == VideoTaskState.DOWNLOADING || it.downloadStatus == VideoTaskState.PREPARE || it.downloadStatus == VideoTaskState.PENDING } == null
+            if (isDownloadingNow) {
+                AppLogger.d("No active downloads, shutdown local proxy service...")
+                proxiesViewModel.shutdownProxyService()
+            }
+            progressViewModel.stop()
         }
-        progressViewModel.stop()
         super.onDestroy()
     }
 

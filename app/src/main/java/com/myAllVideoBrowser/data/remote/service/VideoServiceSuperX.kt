@@ -273,17 +273,39 @@ class VideoServiceSuperX(
     }
 
     /**
-     * Parses an ISO 8601 duration string (like "PT0H1M35.378S" or "P1DT2H")
-     * into milliseconds using java.time.Duration.
+     * Parses an ISO 8601 duration string into milliseconds.
+     * Robustly handles standard formats and non-standard variants (e.g., PT6333.74S, PT1M90S).
      */
     private fun parseIso8601Duration(duration: String?): Long {
-        if (duration.isNullOrBlank()) {
-            return 0L
-        }
-        return try {
-            Duration.parse(duration).toMillis()
+        if (duration.isNullOrBlank()) return 0L
+
+        // 1. Try strict standard parsing first
+        try {
+            return Duration.parse(duration).toMillis()
         } catch (e: Exception) {
-            AppLogger.e("Failed to parse ISO 8601 duration string: $duration \n${e.printStackTrace()}")
+            // If strict parsing fails, use regex for a more flexible extraction
+        }
+
+        // Pattern matches: optional Hours (H), optional Minutes (M), and optional Seconds (S)
+        // Groups: 1=Hours, 2=Minutes, 3=Seconds
+        val pattern =
+            Regex("PT(?:(\\d+(?:\\.\\d+)?)H)?(?:(\\d+(?:\\.\\d+)?)M)?(?:(\\d+(?:\\.\\d+)?)S)?")
+
+        return try {
+            val matchResult = pattern.matchEntire(duration)
+            if (matchResult != null) {
+                val hours = matchResult.groupValues[1].ifEmpty { "0" }.toDouble()
+                val minutes = matchResult.groupValues[2].ifEmpty { "0" }.toDouble()
+                val seconds = matchResult.groupValues[3].ifEmpty { "0" }.toDouble()
+
+                val totalSeconds = (hours * 3600) + (minutes * 60) + seconds
+                (totalSeconds * 1000).toLong()
+            } else {
+                AppLogger.e("Unrecognized duration format: $duration")
+                0L
+            }
+        } catch (e: Exception) {
+            AppLogger.e("Error calculating duration for: $duration - ${e.message}")
             0L
         }
     }
@@ -301,7 +323,8 @@ class VideoServiceSuperX(
         val firstVariantUrl = manifest.variants.firstOrNull()?.url ?: return null
 
         return try {
-            val request = Request.Builder().url(firstVariantUrl).headers(headers.toHeaders()).build()
+            val request =
+                Request.Builder().url(firstVariantUrl).headers(headers.toHeaders()).build()
             val response = client.getProxyOkHttpClient().newCall(request).execute()
             val content = response.body.string()
 

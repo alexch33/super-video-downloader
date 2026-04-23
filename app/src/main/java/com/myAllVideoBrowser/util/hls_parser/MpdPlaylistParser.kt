@@ -177,7 +177,14 @@ object MpdPlaylistParser {
     ): MpdRepresentation {
         val segments = mutableListOf<Segment>()
         val index = exoRep.index
-        val initUrlTemplate = exoRep.initializationUri?.resolveUri(baseUri)?.toString()
+
+        val actualBaseUri = if (exoRep.baseUrls.isNotEmpty()) {
+            exoRep.baseUrls.first().url
+        } else {
+            baseUri
+        }
+
+        val initUrlTemplate = exoRep.initializationUri?.resolveUri(actualBaseUri)?.toString()
 
         if (index == null) {
             AppLogger.d("MPD Parser: No segment index found for representation ${exoRep.format.id}.")
@@ -218,7 +225,7 @@ object MpdPlaylistParser {
                             val segmentRangedUri = index.getSegmentUrl(segmentNum)
                             segments.add(
                                 Segment(
-                                    url = segmentRangedUri.resolveUri(baseUri).toString(),
+                                    url = segmentRangedUri.resolveUri(actualBaseUri).toString(),
                                     durationSeconds = index.getDurationUs(
                                         segmentNum,
                                         periodDurationUs

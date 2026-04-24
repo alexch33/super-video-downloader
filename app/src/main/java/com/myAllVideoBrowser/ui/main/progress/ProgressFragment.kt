@@ -50,7 +50,7 @@ class ProgressFragment : BaseFragment() {
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         mainViewModel = mainActivity.mainViewModel
-        progressViewModel = ViewModelProvider(this, viewModelFactory)[ProgressViewModel::class.java]
+        progressViewModel = mainActivity.progressViewModel
         progressAdapter = ProgressAdapter(emptyList(), progressListener)
 
         val isDark = mainActivity.settingsViewModel.isDarkMode.get()
@@ -77,13 +77,7 @@ class ProgressFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        progressViewModel.start()
         handleDownloadVideoEvent()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        progressViewModel.stop()
     }
 
     private fun handleDownloadVideoEvent() {

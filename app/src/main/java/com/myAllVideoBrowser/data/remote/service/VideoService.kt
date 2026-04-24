@@ -12,7 +12,9 @@ import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import com.yausername.youtubedl_android.mapper.VideoFormat
 import okhttp3.Request
+import org.json.JSONObject
 import java.util.*
+import kotlin.text.lowercase
 
 interface VideoService {
     fun getVideoInfo(
@@ -56,29 +58,78 @@ open class VideoServiceLocal(
         isM3u8OrMpd: Boolean = false,
         isAudioCheck: Boolean
     ): VideoInfoWrapper {
-        val request = YoutubeDLRequest(
+        val originalUrl =
             url.url.toString().replace(Regex("&feature=youtu.be|#bottom-sheet"), "").trim()
-        )
+        val request = YoutubeDLRequest(originalUrl)
+
+        request.addOption("--dump-json")
+
         url.headers.forEach { (name, value) ->
             if (name != COOKIE_HEADER) {
                 request.addOption("--add-header", "$name:${value}")
             }
         }
 
-        request.addOption("--force-ipv4")
-        request.addOption("--source-address", "127.0.0.1")
-
         val currentProxy = proxyController.getCurrentRunningProxy()
         if (currentProxy != Proxy.noProxy()) {
             attachProxyToRequest(request, currentProxy)
         }
 
-        val tmpCookieFile = CookieUtils.addCookiesToRequest(url.url.toString(), request)
+        val tmpCookieFile = CookieUtils.addCookiesToRequest(originalUrl, request)
 
         try {
-            val info = YoutubeDL.getInstance().getInfo(request)
-            val formats = info.formats?.map { videoEntityFromFormat(it) } ?: emptyList()
-            val filtered = if (url.url.toString().contains(FACEBOOK_HOST)) {
+            val response = YoutubeDL.getInstance().execute(request)
+            val jsonStr = response.out
+
+            val json = JSONObject(jsonStr)
+
+            val videoTitle = json.optString("title", "no title")
+            val videoDuration = json.optLong("duration", 0L)
+            val videoThumbnail = json.optString("thumbnail", "")
+            val videoExt = json.optString("ext", MP4_EXT)
+
+            val formats = mutableListOf<VideoFormatEntity>()
+            val formatsArray = json.optJSONArray("formats")
+
+            if (formatsArray != null) {
+                for (i in 0 until formatsArray.length()) {
+                    val f = formatsArray.getJSONObject(i)
+
+                    // Extract localization (language)
+                    val lang = f.optString("language", "").replace("null", "")
+                    val formatNote = f.optString("format_note", "")
+
+                    // Create localization label: "original [en]" or just "[en]"
+                    val localizedNote = when {
+                        lang.isNotBlank() && !formatNote.isNullOrBlank() -> "$formatNote [$lang]"
+                        lang.isNotBlank() -> "[$lang]"
+                        else -> formatNote
+                    }
+
+                    val entity = VideoFormatEntity(
+                        formatId = f.optString("format_id"),
+                        format = f.optString("format"),
+                        formatNote = localizedNote,
+                        url = f.optString("url"),
+                        ext = f.optString("ext"),
+                        vcodec = f.optString("vcodec", "none"),
+                        acodec = f.optString("acodec", "none"),
+                        width = f.optInt("width", 0),
+                        height = f.optInt("height", 0),
+                        fps = f.optInt("fps", 0),
+                        asr = f.optDouble("asr", 0.0).toInt(),
+                        tbr = f.optDouble("tbr", 0.0).toInt(),
+                        abr = f.optDouble("abr", 0.0).toInt(),
+                        fileSize = f.optLong("filesize", 0L),
+                        duration = videoDuration * 1000,
+                        manifestUrl = f.optString("manifest_url"),
+                        httpHeaders = url.headers.toMap()
+                    )
+                    formats.add(entity)
+                }
+            }
+
+            val filtered = if (originalUrl.contains(FACEBOOK_HOST)) {
                 formats.filter {
                     it.formatId?.lowercase(Locale.ROOT)?.contains(Regex("hd|sd")) == true
                 }
@@ -96,15 +147,17 @@ open class VideoServiceLocal(
 
             return VideoInfoWrapper(
                 VideoInfo(
-                    title = info.title ?: "no title", formats = listFormats
+                    title = videoTitle,
+                    formats = listFormats
                 ).apply {
-                    ext = info.ext ?: MP4_EXT
-                    thumbnail = info.thumbnail ?: ""
-                    duration = info.duration.toLong()
-                    originalUrl = url.url.toString()
+                    ext = videoExt
+                    thumbnail = videoThumbnail
+                    duration = videoDuration * 1000 // Convert to millis
+                    this.originalUrl = originalUrl
                     downloadUrls = if (isM3u8OrMpd) emptyList() else listOf(url)
                     isRegularDownload = false
-                })
+                }
+            )
         } catch (e: Throwable) {
             throw e
         } finally {

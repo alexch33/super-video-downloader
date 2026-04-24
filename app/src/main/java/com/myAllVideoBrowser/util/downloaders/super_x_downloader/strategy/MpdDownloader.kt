@@ -366,7 +366,8 @@ class MpdDownloader(
                         this.taskState = VideoTaskState.PREPARE
                     }
                 )
-            }
+            },
+            audioCodec = audioRep?.codecs
         )
         if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
             throw IOException("FFmpeg failed to merge BaseURL streams. Log: ${mergeSession.allLogsAsString}")
@@ -513,7 +514,8 @@ class MpdDownloader(
         audioFile: File?,
         finalOutputPath: String,
         totalDurationSeconds: Double,
-        onMergeProgress: ((percentage: Int) -> Unit)?
+        onMergeProgress: ((percentage: Int) -> Unit)?,
+        audioCodec: String? = null
     ): FFmpegSession {
         val arguments = mutableListOf<String>()
 
@@ -533,7 +535,7 @@ class MpdDownloader(
         val hasVideo = videoFile.exists()
         val hasAudio = audioFile?.exists() == true
 
-        addCommonMergeArguments(arguments, hasVideo, hasAudio, finalOutputPath)
+        addCommonMergeArguments(arguments, hasVideo, hasAudio, finalOutputPath, audioCodec)
 
         val commandString = arguments.joinToString(" ")
         AppLogger.d("FFmpeg: Executing MPD BaseURL merge with command: $commandString")
@@ -576,6 +578,7 @@ class MpdDownloader(
         hasVideo: Boolean,
         hasAudio: Boolean,
         finalOutputPath: String,
+        audioCodec: String? = null
     ) {
         arguments.apply {
             when {
@@ -604,7 +607,10 @@ class MpdDownloader(
                 add("-c"); add("copy")
             }
 
-            add("-bsf:a"); add("aac_adtstoasc")
+            if (hasAudio && audioCodec?.contains("aac", ignoreCase = true) == true) {
+                add("-bsf:a"); add("aac_adtstoasc")
+            }
+
             add("-movflags"); add("+faststart")
 
             add("-y"); add(finalOutputPath)

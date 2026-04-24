@@ -22,13 +22,14 @@ import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.ActivityMainBinding
 import com.myAllVideoBrowser.ui.component.adapter.MainAdapter
 import com.myAllVideoBrowser.ui.main.base.BaseActivity
+import com.myAllVideoBrowser.ui.main.progress.ProgressViewModel
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker
 import com.myAllVideoBrowser.util.fragment.FragmentFactory
-import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import javax.inject.Inject
 
@@ -48,6 +49,8 @@ class MainActivity : BaseActivity() {
     lateinit var sharedPrefHelper: SharedPrefHelper
 
     lateinit var mainViewModel: MainViewModel
+
+    lateinit var progressViewModel: ProgressViewModel
 
     lateinit var proxiesViewModel: ProxiesViewModel
 
@@ -79,6 +82,7 @@ class MainActivity : BaseActivity() {
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         mainViewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
+        progressViewModel = ViewModelProvider(this, viewModelFactory)[ProgressViewModel::class.java]
         proxiesViewModel = ViewModelProvider(this, viewModelFactory)[ProxiesViewModel::class.java]
         settingsViewModel = ViewModelProvider(this, viewModelFactory)[SettingsViewModel::class.java]
 
@@ -112,6 +116,7 @@ class MainActivity : BaseActivity() {
         proxiesViewModel.start()
         settingsViewModel.start()
         mainViewModel.start()
+        progressViewModel.start()
 
         if (intent.action == Intent.ACTION_VIEW) {
             val videoUrl = intent.dataString
@@ -219,8 +224,19 @@ class MainActivity : BaseActivity() {
     }
 
     override fun onDestroy() {
-        mainViewModel.stop()
-        settingsViewModel.isLockPortrait.removeOnPropertyChangedCallback(screenOrientationCallback)
+        if (isFinishing) {
+            mainViewModel.stop()
+            settingsViewModel.isLockPortrait.removeOnPropertyChangedCallback(
+                screenOrientationCallback
+            )
+            val isDownloadingNow = progressViewModel.progressInfos.get()
+                ?.find { it.downloadStatus == VideoTaskState.DOWNLOADING || it.downloadStatus == VideoTaskState.PREPARE || it.downloadStatus == VideoTaskState.PENDING } == null
+            if (isDownloadingNow) {
+                AppLogger.d("No active downloads, shutdown local proxy service...")
+                proxiesViewModel.shutdownProxyService()
+            }
+            progressViewModel.stop()
+        }
         super.onDestroy()
     }
 

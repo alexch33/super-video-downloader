@@ -141,16 +141,20 @@ class ProxiesViewModel @Inject constructor(
         }
     }
 
+    fun shutdownProxyService() {
+        val intent =
+            Intent(ContextUtils.getApplicationContext(), ProxyService::class.java).apply {
+                action = ProxyService.ACTION_STOP
+            }
+        ContextUtils.getApplicationContext().stopService(intent)
+    }
+
     private fun updateChain(proxies: List<Proxy>) {
         val useProxy = isProxyOn.get() == true
         val useDns = isSecureDnsOn.get() == true
 
         if (!useProxy && !useDns) {
-            val intent =
-                Intent(ContextUtils.getApplicationContext(), ProxyService::class.java).apply {
-                    action = ProxyService.ACTION_STOP
-                }
-            ContextUtils.getApplicationContext().startService(intent)
+            shutdownProxyService()
             return
         }
 

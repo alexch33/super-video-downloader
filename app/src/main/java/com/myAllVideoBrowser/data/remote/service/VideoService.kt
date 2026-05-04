@@ -60,6 +60,11 @@ open class VideoServiceLocal(
     ): VideoInfoWrapper {
         val originalUrl =
             url.url.toString().replace(Regex("&feature=youtu.be|#bottom-sheet"), "").trim()
+
+        if (originalUrl.contains("youtube.com")) {
+            throw Exception("Youtube not supported")
+        }
+
         val request = YoutubeDLRequest(originalUrl)
 
         request.addOption("--dump-json")

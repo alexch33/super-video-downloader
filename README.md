@@ -5,8 +5,10 @@
 This project was created for research and educational purposes to explore the downloading of a wide variety of video formats and stream types. The developer does not take any responsibility for illegal actions performed by users of this application.
 
 [![F-Droid](https://img.shields.io/f-droid/v/com.myAllVideoBrowser?color=b4eb12&label=F-Droid&logo=fdroid&logoColor=1f78d2)](https://f-droid.org/packages/com.myAllVideoBrowser)
+[![Google Play](https://img.shields.io/badge/Google%20Play-Get%20it%20on-green?logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.myAllVideoBrowser)
 
 <a href="https://f-droid.org/packages/com.myAllVideoBrowser"><img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid"></a>
+<a href="https://play.google.com/store/apps/details?id=com.myAllVideoBrowser"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="40"></a>
 
 ## Developer Support. Donations.
 If you want see new features, bug fixes and updates, you could support the project by donating to the address below.

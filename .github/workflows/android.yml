@@ -23,8 +23,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - name: set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -36,12 +34,11 @@ jobs:
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r29
-          add-to-path: true
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26.0'
+          go-version: '1.25.7'
           cache: false
 
       - name: Set up Rust
@@ -50,8 +47,6 @@ jobs:
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
       - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: "rust_adblock"
 
       - name: Decode and Save Keystore
         run: |
@@ -61,37 +56,37 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build Signed APKs
-        run: ./gradlew assembleRelease --info
+      - name: Build Signed AAB
+        run: ./gradlew bundleRelease --info
 
-      - name: Upload APKs to GitHub Artifacts
+      - name: Upload Artifacts to GitHub Artifacts
         uses: actions/upload-artifact@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: apk-files
-          path: app/build/outputs/apk/release/*.apk
+          name: build-artifacts
+          path: app/build/outputs/bundle/release/*.aab
 
   release:
-    name: Release APKs
+    name: Release Artifacts
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-      - name: Download APKs from build
+      - name: Download Artifacts from build
         uses: actions/download-artifact@v4
         with:
-          name: apk-files
-          path: apk-release
+          name: build-artifacts
+          path: release-files
 
-      - name: Upload Release APKs
+      - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: true
-          body: "Fixed bug with stopping all youtube-dlp tasks if one canceled (for now it happening only if live stream canceled, because live stream can't be canceled another way)\nAbout section added\n Performance && memory optimizations\nStability improvements"
+          prerelease: false
+          body: "Crash fix\nImproved thread safety and synchronization in video detection view models and performance optimization\nF-droid build fix"
           draft: false
-          make_latest: false
+          make_latest: true
           tag_name: ${{ github.ref_name }}
-          files: apk-release/*.apk
+          files: release-files/**/*.aab

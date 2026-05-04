@@ -51,30 +51,32 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build --info
 
-      - name: Build Signed APKs
-        run: ./gradlew assembleRelease --info
+      - name: Build Signed APKs and AAB
+        run: ./gradlew assembleRelease bundleRelease --info
 
-      - name: Upload APKs to GitHub Artifacts
+      - name: Upload Artifacts to GitHub Artifacts
         uses: actions/upload-artifact@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: apk-files
-          path: app/build/outputs/apk/release/*.apk
+          name: build-artifacts
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
 
   release:
-    name: Release APKs
+    name: Release Artifacts
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-      - name: Download APKs from build
+      - name: Download Artifacts from build
         uses: actions/download-artifact@v4
         with:
-          name: apk-files
-          path: apk-release
+          name: build-artifacts
+          path: release-files
 
-      - name: Upload Release APKs
+      - name: Upload Release Artifacts
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
@@ -84,4 +86,6 @@ jobs:
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}
-          files: apk-release/*.apk
+          files: |
+            release-files/**/*.apk
+            release-files/**/*.aab

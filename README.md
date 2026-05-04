@@ -8,6 +8,13 @@ This project was created for research and educational purposes to explore the do
 
 <a href="https://f-droid.org/packages/com.myAllVideoBrowser"><img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid"></a>
 
+## Developer Support. Donations.
+If you want see new features, bug fixes and updates, you could support the project by donating to the address below.
+
+| Type | Address |
+| :--- | :--- |
+| <img src="https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" alt="Bitcoin" width="50"/> | `bc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fj` |
+
 ## Features
 
 - **Extensive Site Support**: Download videos from YouTube, Facebook, Twitter, Instagram, Dailymotion, Vimeo, and over [1000 other sites](http://rg3.github.io/youtube-dl/supportedsites.html).
@@ -91,10 +98,3 @@ export GO_EXECUTABLE=/opt/homebrew/bin/go
 ## License
 
 This package is licensed under the [LICENSE](./LICENSE) for details.
-
-## Donate
-You can support the project by donating to the address below.
-
-| Type | Address |
-| :--- | :--- |
-| <img src="https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" alt="Bitcoin" width="50"/> | `bc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fj` |

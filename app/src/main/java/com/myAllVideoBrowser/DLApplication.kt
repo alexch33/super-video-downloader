@@ -107,9 +107,13 @@ open class DLApplication : DaggerApplication() {
     }
 
     fun startProxyService() {
-        if (isProxyServiceStarted) {
+        val isProxyOn = sharedPrefHelper.getIsProxyOn()
+        val isDohOn = sharedPrefHelper.getIsDohOn()
+        if (isProxyServiceStarted || !(isProxyOn || isDohOn)) {
+            AppLogger.i("Proxy service is already running or not enabled")
             return
         }
+        AppLogger.i("Proxy service is starting...")
 
         val serviceIntent = Intent(this, ProxyService::class.java)
         try {
@@ -119,7 +123,7 @@ open class DLApplication : DaggerApplication() {
                 startService(serviceIntent)
             }
             isProxyServiceStarted = true
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             AppLogger.e("Failed to start ProxyService: ${e.message}")
         }
     }

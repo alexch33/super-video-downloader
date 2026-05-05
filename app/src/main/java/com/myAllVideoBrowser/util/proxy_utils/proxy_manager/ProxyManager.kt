@@ -106,7 +106,7 @@ object ProxyManager {
         // Assemble the complete JSON configuration
         val xrayJsonConfig = """
         {
-          "log": { "loglevel": "info" },
+          "log": { "loglevel": "none" },
           "inbounds": [
             {
               "tag": "$localProxyTag",

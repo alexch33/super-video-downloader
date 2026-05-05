@@ -43,9 +43,6 @@ class MainActivity : BaseActivity() {
     lateinit var viewModelFactory: ViewModelProvider.Factory
 
     @Inject
-    lateinit var baseSchedulers: BaseSchedulers
-
-    @Inject
     lateinit var sharedPrefHelper: SharedPrefHelper
 
     lateinit var mainViewModel: MainViewModel

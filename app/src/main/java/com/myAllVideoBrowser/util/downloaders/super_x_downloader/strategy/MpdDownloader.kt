@@ -422,7 +422,11 @@ class MpdDownloader(
         downloader.download()
 
         continuation.invokeOnCancellation {
-            CustomFileDownloader.pause(outputFile)
+            runCatching {
+                CustomFileDownloader.pause(outputFile)
+            }.onFailure { e ->
+                AppLogger.e("MpdDownloader: Failed to pause downloader during cancellation: ${e.message}")
+            }
         }
 
         CoroutineScope(continuation.context).launch {

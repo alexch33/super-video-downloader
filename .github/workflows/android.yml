@@ -79,8 +79,8 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Security fix (golang grpc upgraded to v1.79.3)"
+          body: "Progress tracking DB optimizations\nCrashes fixes"
           draft: false
-          make_latest: false
+          make_latest: true
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

@@ -2,6 +2,7 @@
 # Android and Gradle
 gradlePlugin = "8.13.2"
 kotlin = "2.2.10"
+kotlinxCoroutinesRx3 = "1.10.2"
 ksp = "2.2.10-2.0.2"
 
 # AndroidX Core
@@ -37,6 +38,8 @@ lifecycleViewmodel = "2.10.0"
 
 # AndroidX Room
 room = "2.8.4"
+
+mmkv = "2.4.0"
 
 # AndroidX Arch Core
 archCore = "2.2.0"
@@ -102,6 +105,7 @@ gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "grad
 kotlin-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk7", version.ref = "kotlin" }
 kotlin-allopen = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlin" }
+kotlinx-coroutines-rx3 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-rx3", version.ref = "kotlinxCoroutinesRx3" }
 ksp-plugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 kotlin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "kotlin" }
 
@@ -109,6 +113,7 @@ kotlin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", v
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
+mmkv = { module = "com.tencent:mmkv", version.ref = "mmkv" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 coreKtx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }

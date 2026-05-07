@@ -39,7 +39,7 @@ class ProgressAdapter(
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(progressInfo: ProgressInfo, progressListener: ProgressListener) {
-            val thumbnail = progressInfo.videoInfo.thumbnail
+            val thumbnail = progressInfo.thumbnail
             val placeholder = R.drawable.ic_video_24dp
             val size = getScreenResolution(itemView.context)
             val color =
@@ -52,7 +52,6 @@ class ProgressAdapter(
                 this.progressInfo = progressInfo
                 this.progressListener = progressListener
                 this.downloadId = progressInfo.downloadId
-                this.isRegular = progressInfo.videoInfo.isRegularDownload
 
                 Glide.with(this@ProgressViewHolder.itemView.context).load(thumbnail).fitCenter()
                     .error(placeholder)
@@ -85,5 +84,5 @@ class ProgressAdapter(
 }
 
 interface ProgressListener {
-    fun onMenuClicked(view: View, downloadId: Long, isRegular: Boolean)
+    fun onMenuClicked(view: View, downloadId: Long)
 }

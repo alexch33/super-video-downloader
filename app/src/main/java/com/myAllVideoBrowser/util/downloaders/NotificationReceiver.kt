@@ -2,6 +2,7 @@ package com.myAllVideoBrowser.util.downloaders
 
 import android.content.Context
 import android.content.Intent
+import com.myAllVideoBrowser.data.local.VideoMetadataManager
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.ProgressRepository
@@ -36,17 +37,19 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
                 return@launch
             }
 
+            val videoInfo = VideoMetadataManager.getVideoInfo(progressInfo.id) ?: return@launch
+
             when (intent.action) {
                 ACTION_PAUSE -> {
-                    handlePause(context, progressInfo)
+                    handlePause(context, videoInfo)
                 }
 
                 ACTION_RESUME -> {
-                    handleResume(context, progressInfo)
+                    handleResume(context, videoInfo)
                 }
 
                 ACTION_CANCEL -> {
-                    handleCancel(context, progressInfo)
+                    handleCancel(context, progressInfo, videoInfo)
                 }
 
                 else -> {
@@ -56,21 +59,23 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
         }
     }
 
-    private fun handleCancel(context: Context, task: ProgressInfo) {
+    private fun handleCancel(context: Context, task: ProgressInfo, videoInfo: VideoInfo) {
         AppLogger.d("HANDLE CANCEL $task")
-        when (val downloaderType = getTaskType(task.videoInfo)) {
+        VideoMetadataManager.deleteVideoInfo(videoInfo.id)
+
+        when (val downloaderType = getTaskType(videoInfo)) {
             DOWNLOADER_YOUTUBE_DL -> {
-                YoutubeDlDownloader.cancelDownload(context, task, true)
+                YoutubeDlDownloader.cancelDownload(context, videoInfo, true)
                 progressRepository.deleteProgressInfo(task)
             }
 
             DOWNLOADER_REGULAR -> {
-                CustomRegularDownloader.cancelDownload(context, task, true)
+                CustomRegularDownloader.cancelDownload(context, videoInfo, true)
                 progressRepository.deleteProgressInfo(task)
             }
 
             DOWNLOADER_SUPER_XD -> {
-                SuperXDownloader.cancelDownload(context, task, true)
+                SuperXDownloader.cancelDownload(context, videoInfo, true)
             }
 
             else -> {
@@ -79,9 +84,9 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
         }
     }
 
-    private fun handleResume(context: Context, task: ProgressInfo) {
+    private fun handleResume(context: Context, task: VideoInfo) {
         AppLogger.d("HANDLE RESUME $task")
-        when (val downloaderType = getTaskType(task.videoInfo)) {
+        when (val downloaderType = getTaskType(task)) {
             DOWNLOADER_YOUTUBE_DL -> {
                 YoutubeDlDownloader.resumeDownload(context, task)
             }
@@ -101,9 +106,9 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
         }
     }
 
-    private fun handlePause(context: Context, task: ProgressInfo) {
+    private fun handlePause(context: Context, task: VideoInfo) {
         AppLogger.d("HANDLE PAUSE $task")
-        when (val downloaderType = getTaskType(task.videoInfo)) {
+        when (val downloaderType = getTaskType(task)) {
             DOWNLOADER_YOUTUBE_DL -> {
                 YoutubeDlDownloader.pauseDownload(context, task)
             }

@@ -16,6 +16,7 @@ import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.core.view.get
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.color.MaterialColors
@@ -36,6 +37,9 @@ import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.IntentUtil
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 
@@ -190,29 +194,29 @@ class VideoFragment : BaseFragment() {
                 }
 
                 R.id.item_move_to_downloads -> {
-                    try {
-                        val targetDir = Environment.getExternalStoragePublicDirectory(
-                            Environment.DIRECTORY_DOWNLOADS
-                        )
-                        val target = File(targetDir, video.name)
-                        val isSuccess =
-                            fileUtil.moveMedia(requireContext(), video.uri, target.toUri())
-                        if (isSuccess) {
-                            Toast.makeText(
-                                requireContext(),
-                                getString(R.string.media_move_success),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@setOnMenuItemClickListener true
+                    val targetDir =
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    val target = File(targetDir, video.name)
+
+                    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                        try {
+                            val isSuccess =
+                                fileUtil.moveMedia(requireContext(), video.uri, target.toUri())
+                            withContext(Dispatchers.Main) {
+                                val msg =
+                                    if (isSuccess) R.string.media_move_success else R.string.media_move_error
+                                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    R.string.media_move_error,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
-                    } catch (e: Throwable) {
-                        e.printStackTrace()
                     }
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.media_move_error),
-                        Toast.LENGTH_SHORT
-                    ).show()
                     true
                 }
 

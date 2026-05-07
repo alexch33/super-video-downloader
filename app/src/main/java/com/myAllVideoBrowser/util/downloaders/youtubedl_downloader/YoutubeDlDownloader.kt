@@ -14,14 +14,14 @@ import java.util.concurrent.TimeUnit
 
 object YoutubeDlDownloader : GenericDownloader() {
 
-    fun stopAndSaveDownload(context: Context, progressInfo: ProgressInfo) {
-        val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
-        val downloaderData = getDownloadDataFromVideoInfo(progressInfo.videoInfo)
-        downloaderData.putString(Constants.ACTION_KEY, GenericDownloader.DownloaderActions.STOP_SAVE_ACTION)
+    fun stopAndSaveDownload(context: Context, videoInfo: VideoInfo) {
+        val downloadWork = getWorkRequest(videoInfo.id)
+        val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
+        downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.STOP_SAVE_ACTION)
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(
-            context, progressInfo.videoInfo, downloadWork.build()
+            context, videoInfo, downloadWork.build()
         )
     }
 

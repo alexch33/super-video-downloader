@@ -5,7 +5,6 @@ on:
     branches:
       - dev
       - master
-      - playmarket
     tags:
       - '*'
 
@@ -51,41 +50,37 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build --info
 
-      - name: Build Signed APKs and AAB
-        run: ./gradlew assembleRelease bundleRelease --info
+      - name: Build Signed APKs
+        run: ./gradlew assembleRelease --info
 
-      - name: Upload Artifacts to GitHub Artifacts
+      - name: Upload APKs to GitHub Artifacts
         uses: actions/upload-artifact@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: build-artifacts
-          path: |
-            app/build/outputs/apk/release/*.apk
-            app/build/outputs/bundle/release/*.aab
+          name: apk-files
+          path: app/build/outputs/apk/release/*.apk
 
   release:
-    name: Release Artifacts
+    name: Release APKs
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-      - name: Download Artifacts from build
+      - name: Download APKs from build
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
-          path: release-files
+          name: apk-files
+          path: apk-release
 
-      - name: Upload Release Artifacts
+      - name: Upload Release APKs
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Security fix (golang grpc upgraded to v1.79.3)"
+          body: "Progress tracking DB optimizations\nCrashes fixes"
           draft: false
-          make_latest: false
+          make_latest: true
           tag_name: ${{ github.ref_name }}
-          files: |
-            release-files/**/*.apk
-            release-files/**/*.aab
+          files: apk-release/*.apk

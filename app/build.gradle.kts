@@ -247,6 +247,11 @@ dependencies {
     implementation(libs.roomGuava)
     ksp(libs.roomCompiler)
 
+    // Key value DB
+    implementation(libs.mmkv)
+
+    implementation(libs.kotlinx.coroutines.rx3)
+
     // Dagger 2 - Dependency Injection
     implementation(libs.daggerRuntime)
     implementation(libs.daggerAndroid)

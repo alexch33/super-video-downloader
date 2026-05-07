@@ -15,11 +15,6 @@
             name="downloadId"
             type="Long" />
 
-
-        <variable
-            name="isRegular"
-            type="Boolean" />
-
         <variable
             name="progressListener"
             type="com.myAllVideoBrowser.ui.component.adapter.ProgressListener" />
@@ -61,7 +56,7 @@
                 android:layout_height="wrap_content"
                 android:lines="2"
                 android:maxLines="2"
-                android:text="@{progressInfo.videoInfo.name}"
+                android:text="@{progressInfo.title}"
                 android:textSize="@dimen/text_medium"
                 android:layout_marginTop="@dimen/padding_small"
                 app:layout_constraintBottom_toTopOf="@id/progress_bar"
@@ -136,7 +131,7 @@
                 <androidx.appcompat.widget.AppCompatImageView
                     android:layout_width="49dp"
                     android:layout_height="49dp"
-                    android:onClick="@{(view) -> progressListener.onMenuClicked(view, downloadId, isRegular)}"
+                    android:onClick="@{(view) -> progressListener.onMenuClicked(view, downloadId)}"
                     android:padding="@dimen/padding_small"
                     app:srcCompat="@drawable/ic_more_24dp"
                     tools:ignore="VectorDrawableCompat" />

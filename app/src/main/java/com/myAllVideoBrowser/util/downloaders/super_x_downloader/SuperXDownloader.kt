@@ -47,62 +47,62 @@ object SuperXDownloader : GenericDownloader() {
         }
     }
 
-    fun stopAndSaveDownload(context: Context, progressInfo: ProgressInfo) {
-        val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
+    fun stopAndSaveDownload(context: Context, videoInfo: VideoInfo) {
+        val downloadWork = getWorkRequest(videoInfo.id)
         val downloaderData =
-            getDownloadDataFromVideoInfo(progressInfo.videoInfo)
+            getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.STOP_SAVE_ACTION)
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(
             context,
-            progressInfo.videoInfo,
+            videoInfo,
             downloadWork.build(),
             DownloaderActions.STOP_SAVE_ACTION
         )
     }
 
-    override fun cancelDownload(context: Context, progressInfo: ProgressInfo, removeFile: Boolean) {
-        val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
+    override fun cancelDownload(context: Context, videoInfo: VideoInfo, removeFile: Boolean) {
+        val downloadWork = getWorkRequest(videoInfo.id)
         val downloaderData =
-            getDownloadDataFromVideoInfo(progressInfo.videoInfo)
+            getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.CANCEL)
         downloaderData.putString(Constants.IS_FILE_REMOVE_KEY, removeFile.toString())
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(
             context,
-            progressInfo.videoInfo,
+            videoInfo,
             downloadWork.build(), DownloaderActions.CANCEL
         )
     }
 
-    override fun pauseDownload(context: Context, progressInfo: ProgressInfo) {
-        val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
+    override fun pauseDownload(context: Context, videoInfo: VideoInfo) {
+        val downloadWork = getWorkRequest(videoInfo.id)
 
         val downloaderData =
-            getDownloadDataFromVideoInfo(progressInfo.videoInfo)
+            getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.PAUSE)
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(
             context,
-            progressInfo.videoInfo,
+            videoInfo,
             downloadWork.build(), DownloaderActions.PAUSE
         )
     }
 
-    override fun resumeDownload(context: Context, progressInfo: ProgressInfo) {
-        val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
+    override fun resumeDownload(context: Context, videoInfo: VideoInfo) {
+        val downloadWork = getWorkRequest(videoInfo.id)
 
         val downloaderData =
-            getDownloadDataFromVideoInfo(progressInfo.videoInfo)
+            getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.RESUME)
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(
             context,
-            progressInfo.videoInfo,
+            videoInfo,
             downloadWork.build()
         )
     }

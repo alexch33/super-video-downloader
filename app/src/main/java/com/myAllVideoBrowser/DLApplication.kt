@@ -12,6 +12,7 @@ import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
 import com.myAllVideoBrowser.util.proxy_utils.ProxyService
+import com.tencent.mmkv.MMKV
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLException
@@ -23,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
+
 
 open class DLApplication : DaggerApplication() {
     companion object {
@@ -59,6 +61,8 @@ open class DLApplication : DaggerApplication() {
 
         val file: File = fileUtil.folderDir
         val ctx = applicationContext
+
+        MMKV.initialize(this)
 
         WorkManager.initialize(
             ctx, Configuration.Builder().setWorkerFactory(workerFactory).build()

@@ -8,7 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -84,12 +83,12 @@ class ProgressFragment : BaseFragment() {
         mainViewModel.downloadVideoEvent.observe(viewLifecycleOwner) { videoInfo ->
             val currentOriginal = videoInfo.originalUrl
             mainViewModel.currentOriginal.set(currentOriginal)
-            progressViewModel.downloadVideo(videoInfo)
+            progressViewModel.downloadVideo(this.context, videoInfo)
         }
     }
 
     private val progressListener = object : ProgressListener {
-        override fun onMenuClicked(view: View, downloadId: Long, isRegular: Boolean) {
+        override fun onMenuClicked(view: View, downloadId: Long) {
             showPopupMenu(view, downloadId)
         }
     }

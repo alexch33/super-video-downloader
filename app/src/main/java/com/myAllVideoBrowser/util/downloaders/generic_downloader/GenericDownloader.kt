@@ -4,13 +4,13 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
 import androidx.work.*
-import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
 import java.io.ByteArrayOutputStream
 import java.util.zip.Deflater
 import java.util.zip.Inflater
+import androidx.core.content.edit
 
 
 abstract class GenericDownloader {
@@ -101,45 +101,44 @@ abstract class GenericDownloader {
 
     }
 
-    open fun cancelDownload(context: Context, progressInfo: ProgressInfo, removeFile: Boolean) {
-        val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
-        DownloaderActions
-        val downloaderData = getDownloadDataFromVideoInfo(progressInfo.videoInfo)
+    open fun cancelDownload(context: Context, videoInfo: VideoInfo, removeFile: Boolean) {
+        val downloadWork = getWorkRequest(videoInfo.id)
+        val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.CANCEL)
         downloaderData.putString(Constants.IS_FILE_REMOVE_KEY, removeFile.toString())
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(
             context,
-            progressInfo.videoInfo,
+            videoInfo,
             downloadWork.build()
         )
     }
 
-    open fun pauseDownload(context: Context, progressInfo: ProgressInfo) {
-        val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
+    open fun pauseDownload(context: Context, videoInfo: VideoInfo) {
+        val downloadWork = getWorkRequest(videoInfo.id)
 
-        val downloaderData = getDownloadDataFromVideoInfo(progressInfo.videoInfo)
+        val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.PAUSE)
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(
             context,
-            progressInfo.videoInfo,
+            videoInfo,
             downloadWork.build()
         )
     }
 
-    open fun resumeDownload(context: Context, progressInfo: ProgressInfo) {
-        val downloadWork = getWorkRequest(progressInfo.videoInfo.id)
+    open fun resumeDownload(context: Context, videoInfo: VideoInfo) {
+        val downloadWork = getWorkRequest(videoInfo.id)
 
-        val downloaderData = getDownloadDataFromVideoInfo(progressInfo.videoInfo)
+        val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.RESUME)
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(
             context,
-            progressInfo.videoInfo,
+            videoInfo,
             downloadWork.build()
         )
     }
@@ -152,9 +151,9 @@ abstract class GenericDownloader {
         if (workId == null) {
             return
         }
-        val editor = getDownloaderPreferences(context).edit()
-        editor.putString(workId, headersString)
-        editor.apply()
+        getDownloaderPreferences(context).edit {
+            putString(workId, headersString)
+        }
         AppLogger.d("saveHeadersStringToSharedPreferences  $workId")
     }
 
@@ -176,9 +175,9 @@ abstract class GenericDownloader {
             return
         }
 
-        val editor = getDownloaderPreferences(context).edit()
-        editor.remove(workId)
-        editor.apply()
+        getDownloaderPreferences(context).edit {
+            remove(workId)
+        }
         AppLogger.d("deleteHeadersStringFromSharedPreferences  $workId")
     }
 

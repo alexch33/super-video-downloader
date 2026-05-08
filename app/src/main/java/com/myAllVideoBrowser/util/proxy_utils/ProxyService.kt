@@ -79,6 +79,9 @@ class ProxyService : Service() {
      * It reads its configuration directly from SharedPreferences to be self-sufficient.
      */
     private fun handleSystemStartOrRestart() {
+        startForegroundWithCorrectType()
+        AppLogger.i("ProxyService (re)started by system. Initializing from SharedPreferences.")
+
         proxyJob?.cancel()
         proxyJob = serviceScope.launch {
             val useProxy = sharedPrefHelper.getIsProxyOn()
@@ -87,12 +90,10 @@ class ProxyService : Service() {
             // If both features are off according to settings, the service shouldn't be running.
             if (!useProxy && !useDns) {
                 AppLogger.i("Proxy and DNS are off, stopping restarted service.")
+                stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
                 return@launch
             }
-
-            startForegroundWithCorrectType()
-            AppLogger.i("ProxyService (re)started by system. Initializing from SharedPreferences.")
 
             val proxyHops = if (useProxy) {
                 sharedPrefHelper.getUserProxyChain().filter { it != Proxy.noProxy() }.map { proxy ->
@@ -186,15 +187,36 @@ class ProxyService : Service() {
      * Helper function to start the foreground service with the correct type based on Android version.
      */
     private fun startForegroundWithCorrectType() {
-        val notification = createNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            )
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        try {
+            val notification = createNotification()
+
+            when {
+                // Android 14+ (API 34+)
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> {
+                    startForeground(
+                        NOTIFICATION_ID,
+                        notification,
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                    )
+                }
+                // Android 10 to 13 (API 29-33)
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+                    startForeground(NOTIFICATION_ID, notification, 0)
+                }
+                // Older than Android 10
+                else -> {
+                    startForeground(NOTIFICATION_ID, notification)
+                }
+            }
+        } catch (e: Exception) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                e is android.app.ForegroundServiceStartNotAllowedException
+            ) {
+                AppLogger.e("App is in background, cannot start foreground service: ${e.message}")
+                stopSelf()
+            } else {
+                AppLogger.e("Error starting foreground service: ${e.message}")
+            }
         }
     }
 

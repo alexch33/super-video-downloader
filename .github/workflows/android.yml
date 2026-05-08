@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Progress tracking DB optimizations\nCrashes fixes"
+          body: "32 bit arch support fix\nCrashes fixes"
           draft: false
           make_latest: true
           tag_name: ${{ github.ref_name }}

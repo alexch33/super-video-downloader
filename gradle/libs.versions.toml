@@ -39,7 +39,8 @@ lifecycleViewmodel = "2.10.0"
 # AndroidX Room
 room = "2.8.4"
 
-mmkv = "2.4.0"
+# 1.3.x for 32-bit support
+mmkv = "1.3.16"
 
 # AndroidX Arch Core
 archCore = "2.2.0"

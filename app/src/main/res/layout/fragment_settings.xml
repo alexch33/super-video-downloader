@@ -6,6 +6,7 @@
     <data>
 
         <import type="android.view.View" />
+
         <import type="com.myAllVideoBrowser.R" />
 
 
@@ -290,10 +291,10 @@
                     style="@style/Widget.AppCompat.SeekBar.Discrete"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:scaleX="1.2"
-                    android:scaleY="1.2"
                     android:max="15"
-                    android:progress="@{viewModel.regularThreadsCount}" />
+                    android:progress="@{viewModel.regularThreadsCount}"
+                    android:scaleX="1.2"
+                    android:scaleY="1.2" />
             </LinearLayout>
 
             <LinearLayout
@@ -316,9 +317,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:max="15"
+                    android:progress="@{viewModel.m3u8ThreadsCount}"
                     android:scaleX="1.2"
-                    android:scaleY="1.2"
-                    android:progress="@{viewModel.m3u8ThreadsCount}" />
+                    android:scaleY="1.2" />
             </LinearLayout>
 
             <LinearLayout
@@ -339,10 +340,10 @@
                     android:id="@+id/seekBarAdsTreshold"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:scaleX="1.2"
-                    android:scaleY="1.2"
                     android:max="@{50 * 1024 * 1024}"
-                    android:progress="@{viewModel.videoDetectionTreshold}" />
+                    android:progress="@{viewModel.videoDetectionTreshold}"
+                    android:scaleX="1.2"
+                    android:scaleY="1.2" />
             </LinearLayout>
 
             <!-- Storage Location Section -->
@@ -389,6 +390,12 @@
                         android:text="@string/sd_app_folder" />
                 </RadioGroup>
             </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:id="@+id/bottom_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
 
             <LinearLayout
                 android:layout_width="match_parent"

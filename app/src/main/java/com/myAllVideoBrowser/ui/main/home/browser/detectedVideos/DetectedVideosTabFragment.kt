@@ -7,6 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentDetectedVideosTabBinding
@@ -67,6 +69,16 @@ class DetectedVideosTabFragment : BaseFragment() {
             videoInfoList.isNestedScrollingEnabled = true
             videoInfoList.adapter = adapter
             dialogListener = candidateFormatListener
+
+
+            ViewCompat.setOnApplyWindowInsetsListener(this.root) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+
+                this.bottomBar.setPadding(0, 0, 0, (systemBars.bottom * 1.3).toInt())
+                insets
+            }
+
         }
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {

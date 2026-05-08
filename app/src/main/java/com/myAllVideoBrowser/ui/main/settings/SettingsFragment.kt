@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import com.myAllVideoBrowser.R
@@ -83,6 +85,15 @@ class SettingsFragment : BaseFragment() {
         dataBinding = FragmentSettingsBinding.inflate(inflater, container, false)
         dataBinding.viewModel = settingsViewModel
         dataBinding.lifecycleOwner = viewLifecycleOwner
+
+
+        ViewCompat.setOnApplyWindowInsetsListener(dataBinding.root) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+
+            dataBinding.bottomBar.setPadding(0, 0, 0, (systemBars.bottom * 1.3).toInt())
+            insets
+        }
 
         return dataBinding.root
     }

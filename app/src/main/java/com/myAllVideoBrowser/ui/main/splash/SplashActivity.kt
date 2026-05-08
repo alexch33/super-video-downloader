@@ -7,6 +7,7 @@ import androidx.databinding.DataBindingUtil
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import androidx.activity.enableEdgeToEdge
 //import com.allVideoDownloaderXmaster.OpenForTesting
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.ActivitySplashBinding
@@ -26,6 +27,7 @@ class SplashActivity : BaseActivity() {
     private lateinit var dataBinding: ActivitySplashBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         splashViewModel = ViewModelProvider(this, viewModelFactory)[SplashViewModel::class.java]

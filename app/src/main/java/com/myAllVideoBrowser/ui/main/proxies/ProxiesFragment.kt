@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.data.local.model.ProxyType
@@ -116,6 +118,14 @@ class ProxiesFragment : BaseFragment() {
 
             val color = getThemeBackgroundColor()
             this.proxiesContainer.setBackgroundColor(color)
+
+            ViewCompat.setOnApplyWindowInsetsListener(this.root) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+
+                dataBinding.bottomBar.setPadding(0, 0, 0, (systemBars.bottom * 1.3).toInt())
+                insets
+            }
         }
 
         proxiesViewModel.proxiesList.addOnPropertyChangedCallback(proxiesListCallback)

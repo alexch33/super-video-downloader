@@ -18,18 +18,18 @@
         android:id="@+id/detected_videos_tab_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         android:layout_marginBottom="60dp"
+        android:orientation="vertical"
         android:padding="@dimen/padding_normal"
         tools:context=".ui.main.home.browser.detectedVideos.DetectedVideosTabFragment">
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/title"
-            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-            android:text="@string/title"
-            android:maxLines="2"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:text="@string/title"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/video_info_list"
@@ -42,13 +42,19 @@
             android:id="@+id/tv_cancel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:drawableStart="@drawable/ic_cancel_24dp"
             android:drawablePadding="@dimen/padding_small"
             android:onClick="@{() -> dialogListener.onCancel()}"
             android:padding="@dimen/padding_normal"
             android:text="@string/dialog_download_cancel"
-            android:layout_marginBottom="16dp"
             android:textSize="@dimen/text_medium" />
+
+        <LinearLayout
+            android:id="@+id/bottom_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
 
     </LinearLayout>
 </layout>

@@ -215,6 +215,7 @@ dependencies {
     println("\n📦 Resolving Dependencies...")
 
     // Core Android Libraries
+    implementation(libs.activity)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)

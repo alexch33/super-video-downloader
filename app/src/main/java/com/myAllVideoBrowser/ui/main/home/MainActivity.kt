@@ -1,7 +1,6 @@
 package com.myAllVideoBrowser.ui.main.home
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
@@ -10,9 +9,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.Window
+import androidx.activity.enableEdgeToEdge
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
@@ -30,7 +32,6 @@ import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker
 import com.myAllVideoBrowser.util.fragment.FragmentFactory
-import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import javax.inject.Inject
 
 //@OpenForTesting
@@ -70,6 +71,7 @@ class MainActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
+        enableEdgeToEdge()
 
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE)
         super.onCreate(savedInstanceState)
@@ -77,6 +79,14 @@ class MainActivity : BaseActivity() {
         (applicationContext as? DLApplication)?.startProxyService()
 
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+
+        ViewCompat.setOnApplyWindowInsetsListener(dataBinding.root) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+
+            dataBinding.bottomBar.setPadding(0, 0, 0, systemBars.bottom)
+            insets
+        }
 
         mainViewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
         progressViewModel = ViewModelProvider(this, viewModelFactory)[ProgressViewModel::class.java]
@@ -135,13 +145,12 @@ class MainActivity : BaseActivity() {
         onNewIntent(intent)
     }
 
-    @SuppressLint("MissingSuperCall")
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent?.getBooleanExtra(
+        if (intent.getBooleanExtra(
                 YoutubeDlDownloaderWorker.IS_FINISHED_DOWNLOAD_ACTION_KEY,
                 false
-            ) == true
+            )
         ) {
             if (intent.getBooleanExtra(
                     YoutubeDlDownloaderWorker.IS_FINISHED_DOWNLOAD_ACTION_ERROR_KEY,
@@ -163,7 +172,7 @@ class MainActivity : BaseActivity() {
                 }, 1000)
             }
         } else {
-            if (intent?.hasExtra(YoutubeDlDownloaderWorker.IS_FINISHED_DOWNLOAD_ACTION_KEY) == true) {
+            if (intent.hasExtra(YoutubeDlDownloaderWorker.IS_FINISHED_DOWNLOAD_ACTION_KEY)) {
                 dataBinding.viewPager.currentItem = 1
             } else {
                 dataBinding.viewPager.currentItem = 0

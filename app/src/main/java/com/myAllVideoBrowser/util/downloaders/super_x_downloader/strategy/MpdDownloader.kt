@@ -421,14 +421,6 @@ class MpdDownloader(
         )
         downloader.download()
 
-        continuation.invokeOnCancellation {
-            runCatching {
-                CustomFileDownloader.pause(outputFile)
-            }.onFailure { e ->
-                AppLogger.e("MpdDownloader: Failed to pause downloader during cancellation: ${e.message}")
-            }
-        }
-
         CoroutineScope(continuation.context).launch {
             while (isActive) { // Check `isActive` of this new scope
                 if (controller.isInterrupted()) {

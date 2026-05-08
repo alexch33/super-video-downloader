@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser
 
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.work.Configuration
@@ -18,6 +17,7 @@ import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLException
 import dagger.android.AndroidInjector
 import dagger.android.DaggerApplication
+import dagger.android.HasAndroidInjector
 import io.reactivex.rxjava3.plugins.RxJavaPlugins
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,8 +32,6 @@ open class DLApplication : DaggerApplication() {
         var isProxyServiceStarted = false
     }
 
-    private lateinit var androidInjector: AndroidInjector<out DaggerApplication>
-
     @Inject
     lateinit var workerFactory: DaggerWorkerFactory
 
@@ -43,14 +41,9 @@ open class DLApplication : DaggerApplication() {
     @Inject
     lateinit var fileUtil: FileUtil
 
-    override fun attachBaseContext(base: Context?) {
-        super.attachBaseContext(base)
-
-        androidInjector = DaggerAppComponent.builder().application(this).build()
+    public override fun applicationInjector(): AndroidInjector<out DaggerApplication> {
+        return DaggerAppComponent.builder().application(this).build()
     }
-
-    public override fun applicationInjector(): AndroidInjector<out DaggerApplication> =
-        androidInjector
 
     override fun onCreate() {
         super.onCreate()

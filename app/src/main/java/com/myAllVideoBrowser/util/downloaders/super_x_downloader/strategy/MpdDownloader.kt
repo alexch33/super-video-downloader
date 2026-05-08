@@ -421,10 +421,6 @@ class MpdDownloader(
         )
         downloader.download()
 
-        continuation.invokeOnCancellation {
-            CustomFileDownloader.pause(outputFile)
-        }
-
         CoroutineScope(continuation.context).launch {
             while (isActive) { // Check `isActive` of this new scope
                 if (controller.isInterrupted()) {

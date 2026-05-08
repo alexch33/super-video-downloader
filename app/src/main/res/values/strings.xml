@@ -139,5 +139,10 @@
     <string name="drm_permission_message">This site wants to play DRM-protected media (like movies or music). Allowing this is required for playback. Do you want to enable this feature?</string>
     <string name="allow">Allow</string>
     <string name="block">Block</string>
+    <string name="ask_redirection_title">Ask for redirection</string>
+    <string name="redirection_dialog_title">Redirection</string>
+    <string name="redirection_dialog_message">This site is redirecting you to another domain Do you want to continue?:</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 
 </resources>

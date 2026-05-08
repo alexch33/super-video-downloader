@@ -108,7 +108,6 @@
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />
 
-            <!-- NEW: DRM Enabled Switch -->
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/drm_enabled_check_box"
                 android:layout_width="match_parent"
@@ -116,6 +115,17 @@
                 android:checked="@{viewModel.isDrmEnabled}"
                 android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsDrmEnabled(isChecked)}"
                 android:text="@string/drm_permission_title"
+                app:thumbTint="@color/switch_thumb_selector"
+                app:trackDecorationTint="@color/colorAccentDark"
+                app:trackTint="@color/color_gray" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/ask_redirection_check_box"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="@{viewModel.isAskRedirection}"
+                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsAskRedirection(isChecked)}"
+                android:text="@string/ask_redirection_title"
                 app:thumbTint="@color/switch_thumb_selector"
                 app:trackDecorationTint="@color/colorAccentDark"
                 app:trackTint="@color/color_gray" />

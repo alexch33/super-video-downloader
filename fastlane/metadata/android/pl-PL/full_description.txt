@@ -1,0 +1,16 @@
+SuperX to potężna i prywatna aplikacja do pobierania filmów na Androida, stworzona z myślą o swobodzie i elastyczności. Umożliwia zapisywanie filmów z wielu różnych stron internetowych i platform bezpośrednio na urządzeniu do oglądania w trybie offline. Jako aplikacja w pełni otwartoźródłowa nie zawiera żadnych modułów śledzących ani reklam, a całe przetwarzanie odbywa się lokalnie na urządzeniu, aby chronić Twoją prywatność.
+
+<b>Główne funkcje:</b>
+
+*   <b>Szeroka kompatybilność:</b> Pobieraj filmy z wielu stron internetowych i platform mediów społecznościowych.
+*   <b>Zaawansowana obsługa strumieni:</b> Pełna obsługa nowoczesnych protokołów przesyłania strumieniowego, w tym manifestów HLS (.m3u8) i DASH (.mpd), a także standardowych strumieni MP4 i transmisji na żywo.
+*   <b>Standardowy format:</b> Wszystkie pobrane filmy są zapisywane w uniwersalnym formacie .mp4, co zapewnia maksymalną kompatybilność z dowolnym odtwarzaczem.
+*   <b>Przetwarzanie po stronie klienta:</b> Wszystkie operacje odbywają się na Twoim urządzeniu. Żadne dane nie są przesyłane na serwery zewnętrzne, dzięki czemu Twoja aktywność pozostaje prywatna.
+
+<b>Zaawansowana prywatność i sieć:</b>
+
+*   <b>Obsługa plików cookie:</b> Umożliwia korzystanie z plików cookie przeglądarki w celu uzyskania dostępu i pobierania filmów z obszarów prywatnych lub chronionych logowaniem.
+*   <b>Pełna integracja z serwerem proxy:</b> Zwiększ swoją prywatność i omiń ograniczenia sieciowe dzięki wbudowanej obsłudze serwerów proxy HTTP i SOCKS.
+*   <b>Łańcuchy proxy i bezpieczeństwo DNS:</b> Aby zapewnić maksymalną prywatność, aplikacja obsługuje łańcuchy serwerów proxy i można ją skonfigurować z wykorzystaniem szyfrowanego DNS (DoH/DoT) oraz niestandardowych serwerów.
+
+SuperX to idealne narzędzie dla użytkowników, którzy chcą kontroli nad swoimi multimediami i prywatnością. Dzięki bezpośredniemu dostępowi do strumieni pobierania oraz rozbudowanym narzędziom sieciowym zapewnia wolny i otwarty dostęp do treści wideo w internecie.

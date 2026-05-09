@@ -1,6 +1,7 @@
 package com.myAllVideoBrowser.ui.main.home.browser
 
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Build
 import android.webkit.HttpAuthHandler
 import android.webkit.RenderProcessGoneDetail
@@ -16,10 +17,10 @@ import com.myAllVideoBrowser.util.FaviconUtils
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.IVideoDetector
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTab
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabViewModel
-import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.SingleLiveEvent
 import com.myAllVideoBrowser.util.VideoUtils
@@ -27,6 +28,7 @@ import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import java.io.ByteArrayInputStream
+import androidx.core.net.toUri
 
 enum class ContentType {
     M3U8,
@@ -51,6 +53,7 @@ class CustomWebViewClient(
     private var lastSavedTitleHistory: String = ""
     private var lastRegularCheckUrl = ""
     private val regularJobsStorage: MutableMap<String, List<Disposable>> = mutableMapOf()
+    private var approvedUrl: String? = null
 
     companion object {
         fun emptyResponse(): WebResourceResponse {
@@ -206,15 +209,47 @@ class CustomWebViewClient(
     }
 
     override fun shouldOverrideUrlLoading(view: WebView, url: WebResourceRequest): Boolean {
-        return if (url.url.toString().startsWith("http") && url.isForMainFrame) {
-            if (!tabViewModel.isTabInputFocused.get()) {
-                tabViewModel.setTabTextInput(url.url.toString())
+        val newUrl = url.url.toString()
+        if (newUrl.startsWith("http") && url.isForMainFrame) {
+            if (approvedUrl == newUrl) {
+                approvedUrl = null
+                return false
             }
-            // TODO implement ask for redirection dialog based on settings or disable at all
-            false
+
+            val currentUrl = view.url
+            val currentHost = currentUrl?.toUri()?.host
+            val newHost = url.url.host
+
+            if (settingsModel.isAskRedirection.get() && currentHost != null && newHost != null && currentHost != newHost) {
+                showRedirectionDialog(view, newUrl, newHost)
+                return true
+            }
+
+            if (!tabViewModel.isTabInputFocused.get()) {
+                tabViewModel.setTabTextInput(newUrl)
+            }
+            return false
         } else {
-            true
+            return true
         }
+    }
+
+    private fun showRedirectionDialog(view: WebView, newUrl: String, newHost: String) {
+        val context = view.context
+        MaterialAlertDialogBuilder(context)
+            .setTitle(context.getString(R.string.redirection_dialog_title))
+            .setMessage("${context.getString(R.string.redirection_dialog_message)} $newHost")
+            .setPositiveButton(context.getString(R.string.yes)) { _, _ ->
+                approvedUrl = newUrl
+                view.loadUrl(newUrl)
+            }
+            .setNegativeButton(context.getString(R.string.no), null)
+            .setNeutralButton(context.getString(R.string.dontshow)) { _, _ ->
+                settingsModel.setIsAskRedirection(false)
+                approvedUrl = newUrl
+                view.loadUrl(newUrl)
+            }
+            .show()
     }
 
     override fun onPageFinished(view: WebView, url: String) {

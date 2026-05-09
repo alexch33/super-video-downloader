@@ -6,6 +6,7 @@ kotlinxCoroutinesRx3 = "1.10.2"
 ksp = "2.2.10-2.0.2"
 
 # AndroidX Core
+activity = "1.13.0"
 appcompat = "1.7.1"
 material = "1.13.0"
 constraintlayout = "2.2.1"
@@ -111,6 +112,7 @@ ksp-plugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin
 kotlin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "kotlin" }
 
 # AndroidX Core
+activity = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }

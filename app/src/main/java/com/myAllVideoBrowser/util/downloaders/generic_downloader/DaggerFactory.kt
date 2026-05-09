@@ -1,17 +1,17 @@
 package com.myAllVideoBrowser.util.downloaders.generic_downloader
 
 import android.content.Context
-import androidx.work.CoroutineWorker
+import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.data.repository.ProgressRepository
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.NotificationsHelper
 import com.myAllVideoBrowser.util.SharedPrefHelper
-import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorker
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
+import com.myAllVideoBrowser.util.proxy_utils.ProxyWorker
 import javax.inject.Inject
 
 
@@ -26,10 +26,9 @@ class DaggerWorkerFactory @Inject constructor(
 
     override fun createWorker(
         appContext: Context, workerClassName: String, workerParameters: WorkerParameters
-    ): CoroutineWorker? {
+    ): ListenableWorker? {
 
-        val workerKlass =
-            Class.forName(workerClassName).asSubclass(GenericDownloadWorker::class.java)
+        val workerKlass = Class.forName(workerClassName).asSubclass(ListenableWorker::class.java)
         val constructor =
             workerKlass.getDeclaredConstructor(Context::class.java, WorkerParameters::class.java)
         val instance = constructor.newInstance(appContext, workerParameters)
@@ -42,6 +41,9 @@ class DaggerWorkerFactory @Inject constructor(
                 instance.notificationsHelper = notificationsHelper
                 instance.proxyController = proxyController
                 instance.proxyOkHttpClient = okHttpProxyClient
+            }
+            is ProxyWorker -> {
+                instance.sharedPrefHelper = sharedPrefHelper
             }
         }
 

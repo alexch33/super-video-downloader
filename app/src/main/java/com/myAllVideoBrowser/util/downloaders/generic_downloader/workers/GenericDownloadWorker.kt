@@ -9,7 +9,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
-import com.myAllVideoBrowser.util.proxy_utils.ProxyService
+import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
@@ -71,10 +71,10 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
         return suspendCoroutine { continuation ->
             setWorkContinuation(continuation)
             try {
-                if (!ProxyService.isRunning) {
-                    AppLogger.d("ProxyService is not running.")
+                if (!ProxyManager.isProxyRunning()) {
+                    AppLogger.d("Proxy process is not running.")
                 } else {
-                    AppLogger.d("ProxyService is running.")
+                    AppLogger.d("Proxy process is running.")
                 }
 
                 val task = getTaskFromInput()

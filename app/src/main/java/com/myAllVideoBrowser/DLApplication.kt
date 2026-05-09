@@ -1,9 +1,11 @@
 package com.myAllVideoBrowser
 
-import android.content.Context
-import android.content.Intent
-import android.os.Build
+import android.app.ActivityManager
+import android.app.ActivityManager.RunningAppProcessInfo
 import androidx.work.Configuration
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import com.myAllVideoBrowser.di.component.DaggerAppComponent
 import com.myAllVideoBrowser.util.AppLogger
@@ -11,7 +13,7 @@ import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
-import com.myAllVideoBrowser.util.proxy_utils.ProxyService
+import com.myAllVideoBrowser.util.proxy_utils.ProxyWorker
 import com.tencent.mmkv.MMKV
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
@@ -29,10 +31,7 @@ import javax.inject.Inject
 open class DLApplication : DaggerApplication() {
     companion object {
         const val DEBUG_TAG: String = "YOUTUBE_DL_DEBUG_TAG"
-        var isProxyServiceStarted = false
     }
-
-    private lateinit var androidInjector: AndroidInjector<out DaggerApplication>
 
     @Inject
     lateinit var workerFactory: DaggerWorkerFactory
@@ -43,19 +42,21 @@ open class DLApplication : DaggerApplication() {
     @Inject
     lateinit var fileUtil: FileUtil
 
-    override fun attachBaseContext(base: Context?) {
-        super.attachBaseContext(base)
+    private lateinit var appComponent: AndroidInjector<DLApplication>
 
-        androidInjector = DaggerAppComponent.builder().application(this).build()
+    override fun applicationInjector(): AndroidInjector<out DaggerApplication> {
+        if (!::appComponent.isInitialized) {
+            ContextUtils.initApplicationContext(this)
+            appComponent = DaggerAppComponent.builder()
+                .application(this)
+                .build()
+        }
+
+        return appComponent
     }
-
-    public override fun applicationInjector(): AndroidInjector<out DaggerApplication> =
-        androidInjector
 
     override fun onCreate() {
         super.onCreate()
-
-        ContextUtils.initApplicationContext(applicationContext)
 
         initializeFileUtils()
 
@@ -79,6 +80,8 @@ open class DLApplication : DaggerApplication() {
 
             initializeYoutubeDl()
             updateYoutubeDL()
+
+            startProxyWorker()
         }
     }
 
@@ -110,26 +113,25 @@ open class DLApplication : DaggerApplication() {
         }
     }
 
-    fun startProxyService() {
+    fun startProxyWorker() {
         val isProxyOn = sharedPrefHelper.getIsProxyOn()
         val isDohOn = sharedPrefHelper.getIsDohOn()
-        if (isProxyServiceStarted || !(isProxyOn || isDohOn)) {
-            AppLogger.i("Proxy service is already running or not enabled")
+        if (!(isProxyOn || isDohOn)) {
+            AppLogger.i("Proxy not enabled in settings, skipping WorkManager enqueue")
+            WorkManager.getInstance(this).cancelUniqueWork(ProxyWorker.WORK_NAME)
             return
         }
-        AppLogger.i("Proxy service is starting...")
 
-        val serviceIntent = Intent(this, ProxyService::class.java)
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent)
-            } else {
-                startService(serviceIntent)
-            }
-            isProxyServiceStarted = true
-        } catch (e: Throwable) {
-            AppLogger.e("Failed to start ProxyService: ${e.message}")
-        }
+        AppLogger.i("Enqueuing ProxyWorker...")
+
+        val workRequest = OneTimeWorkRequestBuilder<ProxyWorker>()
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniqueWork(
+            ProxyWorker.WORK_NAME,
+            ExistingWorkPolicy.REPLACE,
+            workRequest
+        )
     }
-
 }

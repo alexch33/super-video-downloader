@@ -57,14 +57,13 @@
             android:theme="@style/AppTheme" />
 
         <service
-            android:name="com.myAllVideoBrowser.util.proxy_utils.ProxyService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse" />
-
-        <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="dataSync"
-            tools:node="merge" />
+            android:foregroundServiceType="dataSync|specialUse"
+            tools:node="merge">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Proxy service for network privacy" />
+        </service>
 
         <provider
             android:name="androidx.core.content.FileProvider"

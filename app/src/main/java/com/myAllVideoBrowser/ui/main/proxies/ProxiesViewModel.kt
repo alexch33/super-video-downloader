@@ -1,17 +1,18 @@
 package com.myAllVideoBrowser.ui.main.proxies
 
-import android.content.Intent
-import android.os.Build
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
 import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.DnsStampHelper
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
-import com.myAllVideoBrowser.util.proxy_utils.ProxyService
-import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyHop
+import com.myAllVideoBrowser.util.proxy_utils.ProxyWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -70,7 +71,7 @@ class ProxiesViewModel @Inject constructor(
             proxiesList.set(usersProxy.toMutableList())
             realProxyCount.set(usersProxy.count { it != Proxy.noProxy() })
             isProxyOn.set(sharedPrefHelper.getIsProxyOn())
-            updateChain(usersProxy.toList())
+            updateChain()
         }
     }
 
@@ -79,7 +80,7 @@ class ProxiesViewModel @Inject constructor(
             isSecureDnsOn.set(isOn)
             sharedPrefHelper.setIsDohOn(isOn)
             proxyController.updateProxyState()
-            updateChain(proxiesList.get() ?: emptyList())
+            updateChain()
         }
     }
 
@@ -92,7 +93,7 @@ class ProxiesViewModel @Inject constructor(
             }
             proxyController.updateProxyState()
             if (isSecureDnsOn.get() == true) {
-                updateChain(proxiesList.get() ?: emptyList())
+                updateChain()
             }
         }
     }
@@ -102,7 +103,7 @@ class ProxiesViewModel @Inject constructor(
             val url = customDnsUrl.get() ?: ""
             sharedPrefHelper.saveCustomDnsUrl(url)
             if (isSecureDnsOn.get() == true && selectedDnsProvider.get() == SecureDnsProvider.CUSTOM) {
-                updateChain(proxiesList.get() ?: emptyList())
+                updateChain()
             }
         }
     }
@@ -128,7 +129,7 @@ class ProxiesViewModel @Inject constructor(
             sharedPrefHelper.setIsProxyOn(false)
             proxyController.updateProxyState()
             isProxyOn.set(false)
-            updateChain(listOf(Proxy.noProxy()))
+            updateChain()
         }
     }
 
@@ -137,63 +138,33 @@ class ProxiesViewModel @Inject constructor(
             sharedPrefHelper.setIsProxyOn(true)
             proxyController.updateProxyState()
             isProxyOn.set(true)
-            updateChain(sharedPrefHelper.getUserProxyChain().toList())
+            updateChain()
         }
     }
 
-    fun shutdownProxyService() {
-        val intent =
-            Intent(ContextUtils.getApplicationContext(), ProxyService::class.java).apply {
-                action = ProxyService.ACTION_STOP
-            }
-        ContextUtils.getApplicationContext().stopService(intent)
+    fun shutdownProxyWorker() {
+        WorkManager.getInstance(ContextUtils.getApplicationContext())
+            .cancelUniqueWork(ProxyWorker.WORK_NAME)
     }
 
-    private fun updateChain(proxies: List<Proxy>) {
-        val useProxy = isProxyOn.get() == true
-        val useDns = isSecureDnsOn.get() == true
+    private fun updateChain() {
+        val useProxy = sharedPrefHelper.getIsProxyOn()
+        val useDns = sharedPrefHelper.getIsDohOn()
 
         if (!useProxy && !useDns) {
-            shutdownProxyService()
+            shutdownProxyWorker()
             return
         }
 
-        val proxyHops = if (useProxy) {
-            proxies.filter { it != Proxy.noProxy() }.map { proxy ->
-                ProxyHop(
-                    type = proxy.type.name.lowercase(),
-                    address = proxy.host,
-                    port = proxy.port.toInt(),
-                    username = proxy.user.takeIf { it.isNotBlank() },
-                    password = proxy.password.takeIf { it.isNotBlank() }
-                )
-            }
-        } else {
-            emptyList()
-        }
+        val workRequest = OneTimeWorkRequestBuilder<ProxyWorker>()
+            .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+            .build()
 
-        val dnsUrl: String? = if (useDns) {
-            val provider = selectedDnsProvider.get()
-            if (provider == SecureDnsProvider.CUSTOM) {
-                provider.getCleanUrl(customDnsUrl.get())
-            } else {
-                provider?.getCleanUrl()
-            }
-        } else {
-            null
-        }
-
-        val intent = Intent(ContextUtils.getApplicationContext(), ProxyService::class.java).apply {
-            action = ProxyService.ACTION_START_OR_UPDATE
-            putExtra(ProxyService.EXTRA_PROXY_HOPS, ArrayList(proxyHops))
-            putExtra(ProxyService.EXTRA_DNS_URL, dnsUrl)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            ContextUtils.getApplicationContext().startForegroundService(intent)
-        } else {
-            ContextUtils.getApplicationContext().startService(intent)
-        }
+        WorkManager.getInstance(ContextUtils.getApplicationContext()).enqueueUniqueWork(
+            ProxyWorker.WORK_NAME,
+            ExistingWorkPolicy.REPLACE,
+            workRequest
+        )
     }
 
 
@@ -211,7 +182,7 @@ class ProxiesViewModel @Inject constructor(
             realProxyCount.set(cleanedList.count { it != Proxy.noProxy() })
             proxyController.updateProxyState()
             if (isProxyOn.get() == true) {
-                updateChain(cleanedList)
+                updateChain()
             }
         }
     }

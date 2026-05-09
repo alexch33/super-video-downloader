@@ -51,6 +51,7 @@ class SharedPrefHelper @Inject constructor(
         private const val IS_USE_LEGACY_M3U8_DETECTION = "IS_USE_LEGACY_M3U8_DETECTION"
 
         private const val IS_DRM_ENABLED = "IS_DRM_ENABLED"
+        private const val IS_ASK_REDIRECTION = "IS_ASK_REDIRECTION"
     }
 
     private val gson = Gson()
@@ -375,13 +376,20 @@ class SharedPrefHelper @Inject constructor(
         }
     }
 
-    // In SharedPrefHelper.kt
     fun getIsDrmEnabled(): Boolean {
         return sharedPreferences.getBoolean(IS_DRM_ENABLED, false)
     }
 
     fun setIsDrmEnabled(isEnabled: Boolean) {
         sharedPreferences.edit { putBoolean(IS_DRM_ENABLED, isEnabled) }
+    }
+
+    fun getIsAskRedirection(): Boolean {
+        return sharedPreferences.getBoolean(IS_ASK_REDIRECTION, false)
+    }
+
+    fun setIsAskRedirection(isAsk: Boolean) {
+        sharedPreferences.edit { putBoolean(IS_ASK_REDIRECTION, isAsk) }
     }
 
 }

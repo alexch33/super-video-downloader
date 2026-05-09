@@ -19,7 +19,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.widget.ViewPager2
-import com.myAllVideoBrowser.DLApplication
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.ActivityMainBinding
 import com.myAllVideoBrowser.ui.component.adapter.MainAdapter
@@ -75,8 +74,6 @@ class MainActivity : BaseActivity() {
 
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE)
         super.onCreate(savedInstanceState)
-
-        (applicationContext as? DLApplication)?.startProxyService()
 
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
@@ -235,11 +232,11 @@ class MainActivity : BaseActivity() {
             settingsViewModel.isLockPortrait.removeOnPropertyChangedCallback(
                 screenOrientationCallback
             )
-            val isDownloadingNow = progressViewModel.progressInfos.get()
+            val isNoActiveDownloadsNow = progressViewModel.progressInfos.get()
                 ?.find { it.downloadStatus == VideoTaskState.DOWNLOADING || it.downloadStatus == VideoTaskState.PREPARE || it.downloadStatus == VideoTaskState.PENDING } == null
-            if (isDownloadingNow) {
-                AppLogger.d("No active downloads, shutdown local proxy service...")
-                proxiesViewModel.shutdownProxyService()
+            if (isNoActiveDownloadsNow) {
+                AppLogger.d("No active downloads, shutdown local proxy worker...")
+                proxiesViewModel.shutdownProxyWorker()
             }
             progressViewModel.stop()
         }

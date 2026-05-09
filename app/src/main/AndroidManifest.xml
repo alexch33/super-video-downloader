@@ -57,19 +57,13 @@
             android:theme="@style/AppTheme" />
 
         <service
-            android:name=".util.proxy_utils.ProxyService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync|specialUse"
+            tools:node="merge">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Proxy service for network privacy" />
         </service>
-
-        <service
-            android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="dataSync"
-            tools:node="merge" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

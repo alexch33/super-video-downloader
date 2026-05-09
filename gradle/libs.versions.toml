@@ -1,5 +1,6 @@
 [versions]
 # Android and Gradle
+conscryptAndroid = "2.5.3"
 gradlePlugin = "8.13.2"
 kotlin = "2.2.10"
 kotlinxCoroutinesRx3 = "1.10.2"
@@ -103,6 +104,7 @@ goVersion = "1.25.0"
 
 [libraries]
 # Android and Gradle
+conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "conscryptAndroid" }
 gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "gradlePlugin" }
 kotlin-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk7", version.ref = "kotlin" }

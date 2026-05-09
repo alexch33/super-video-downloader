@@ -225,6 +225,9 @@ dependencies {
     implementation(libs.coreSplashscreen)
     implementation(libs.legacySupportV4)
 
+    // should fix ssl crashes on old devices
+    implementation(libs.conscrypt.android)
+
     // Kotlin
     implementation(libs.kotlin.stdlib)
 

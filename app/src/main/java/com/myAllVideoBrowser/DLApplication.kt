@@ -24,7 +24,9 @@ import io.reactivex.rxjava3.plugins.RxJavaPlugins
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.conscrypt.Conscrypt
 import java.io.File
+import java.security.Security
 import javax.inject.Inject
 
 
@@ -64,6 +66,15 @@ open class DLApplication : DaggerApplication() {
         val ctx = applicationContext
 
         MMKV.initialize(this)
+
+        // this should fix native ssl crash on old devices
+        try {
+            val provider = Conscrypt.newProvider()
+            Security.insertProviderAt(provider, 1)
+            AppLogger.i("Conscrypt provider initialized successfully")
+        } catch (e: Throwable) {
+            AppLogger.e("Failed to insert Conscrypt provider: ${e.message}")
+        }
 
         WorkManager.initialize(
             ctx, Configuration.Builder().setWorkerFactory(workerFactory).build()

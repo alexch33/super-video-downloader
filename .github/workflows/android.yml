@@ -78,8 +78,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: true
-          body: "32 bit arch support fix\nCrashes fixes"
+          prerelease: false
+          body: "Local proxy moved to WorkManager(background crashes fix)\nAsk Redirection option added\nEdge to Edge support added"
           draft: false
           make_latest: true
           tag_name: ${{ github.ref_name }}

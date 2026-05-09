@@ -25,6 +25,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="?attr/colorSurface"
         android:gravity="center"
         android:orientation="vertical">
 
@@ -34,9 +35,11 @@
             android:layout_weight="1">
 
             <com.google.android.material.appbar.AppBarLayout
-                android:id="@id/appBarLayout"
+                android:id="@+id/appBarLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                app:elevation="0dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
@@ -44,34 +47,29 @@
                 <com.google.android.material.appbar.MaterialToolbar
                     android:id="@+id/materialToolbar"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    app:contentInsetStart="0dp">
 
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/browser_home_menu_container"
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_marginEnd="@dimen/padding_small"
-                        android:elevation="0dp"
-                        android:shadowColor="@android:color/transparent"
-                        app:cardBackgroundColor="@android:color/transparent"
-                        app:cardCornerRadius="8dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintVertical_bias="0.0"
-                        app:strokeColor="@android:color/transparent">
+                        android:layout_height="match_parent">
 
-                        <androidx.appcompat.widget.AppCompatImageView
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/browser_home_menu_button"
-                            android:layout_width="49dp"
-                            android:layout_height="49dp"
-                            android:layout_gravity="end"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginEnd="8dp"
                             android:contentDescription="@string/menu"
                             android:onClick="@{() -> browserMenuListener.onBrowserMenuClicked()}"
-                            android:padding="@dimen/padding_small"
-                            app:srcCompat="@drawable/ic_more_24dp"
-                            tools:ignore="VectorDrawableCompat" />
-                    </com.google.android.material.card.MaterialCardView>
+                            app:icon="@drawable/ic_more_24dp"
+                            app:iconTint="?attr/colorOnSurface"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
                 </com.google.android.material.appbar.MaterialToolbar>
 
             </com.google.android.material.appbar.AppBarLayout>
@@ -79,42 +77,45 @@
 
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/home_et_search"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
                 android:layout_marginStart="24dp"
                 android:layout_marginEnd="24dp"
-                android:layout_marginBottom="@dimen/padding_normal"
                 android:background="@drawable/round_corner"
-                android:elevation="5dp"
+                android:drawableStart="@drawable/search_24px"
+                android:drawablePadding="16dp"
+                android:drawableTint="?attr/colorOnSurfaceVariant"
+                android:hint="@string/browser_search_hint"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:singleLine="true"
+                android:textColor="?attr/colorOnSurface"
+                android:textColorHint="?attr/colorOnSurfaceVariant"
+                android:textSize="@dimen/text_medium"
                 android:focusable="@{viewModel.isSearchInputFocused}"
                 android:focusableInTouchMode="@{viewModel.isSearchInputFocused}"
-                android:hint="@string/browser_search_hint"
-                android:maxWidth="450dp"
                 android:onClick="@{() -> viewModel.changeSearchFocus(true)}"
-                android:paddingStart="@dimen/padding_normal"
-                android:paddingEnd="@dimen/padding_normal"
-                android:singleLine="true"
                 android:text="@{viewModel.searchTextInput}"
-                android:textSize="@dimen/text_small"
                 app:items="@{viewModel.listSuggestions}"
-                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/go_button"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
-                app:layout_constraintVertical_bias="0.476" />
+                app:layout_constraintVertical_chainStyle="packed"
+                app:layout_constraintWidth_max="500dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/go_button"
-                android:layout_width="150dp"
-                android:layout_height="50dp"
-                android:layout_margin="@dimen/padding_normal"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:minWidth="120dp"
                 android:text="@string/go"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/home_et_search"
-                app:layout_constraintVertical_bias="0.0" />
+                app:layout_constraintTop_toBottomOf="@+id/home_et_search" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -122,23 +123,15 @@
             android:id="@+id/top_pages_grid"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_gravity="center"
             android:layout_weight="1"
+            android:clipToPadding="false"
             android:gravity="center"
-            android:horizontalSpacing="4dp"
+            android:horizontalSpacing="8dp"
             android:numColumns="4"
-            android:padding="4dp"
-            android:verticalSpacing="4dp"
+            android:padding="16dp"
+            android:verticalSpacing="16dp"
             app:items="@{mainVModel.bookmarksList}" />
 
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="16dp"
-            android:layout_gravity="bottom|center"
-            android:gravity="center">
-
-        </LinearLayout>
     </LinearLayout>
 
 </layout>

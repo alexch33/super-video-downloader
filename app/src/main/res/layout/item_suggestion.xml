@@ -19,22 +19,26 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:onClick="@{() -> listener.onItemClicked(suggestion)}">
 
         <com.google.android.material.textview.MaterialTextView
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             android:id="@+id/tv_suggestion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:drawableStart="@drawable/search_24px"
-            android:drawablePadding="@dimen/padding_small"
+            android:drawablePadding="16dp"
+            android:drawableTint="?attr/colorOnSurfaceVariant"
             android:gravity="center_vertical"
             android:maxLines="2"
-            android:onClick="@{() -> listener.onItemClicked(suggestion)}"
-            android:padding="@dimen/padding_small"
-            android:textSize="@dimen/text_small"
-            tools:text="@{suggestion.content}" />
+            android:padding="16dp"
+            android:text="@{suggestion.content}"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="@dimen/text_medium"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="How to download videos" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

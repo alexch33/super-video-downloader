@@ -144,5 +144,5 @@
     <string name="redirection_dialog_message">This site is redirecting you to another domain Do you want to continue?:</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
-
+    <string name="tabs">Tabs</string>
 </resources>

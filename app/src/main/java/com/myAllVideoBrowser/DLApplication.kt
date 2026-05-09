@@ -42,14 +42,21 @@ open class DLApplication : DaggerApplication() {
     @Inject
     lateinit var fileUtil: FileUtil
 
-    public override fun applicationInjector(): AndroidInjector<out DaggerApplication> {
-        return DaggerAppComponent.builder().application(this).build()
+    private lateinit var appComponent: AndroidInjector<DLApplication>
+
+    override fun applicationInjector(): AndroidInjector<out DaggerApplication> {
+        if (!::appComponent.isInitialized) {
+            ContextUtils.initApplicationContext(this)
+            appComponent = DaggerAppComponent.builder()
+                .application(this)
+                .build()
+        }
+
+        return appComponent
     }
 
     override fun onCreate() {
         super.onCreate()
-
-        ContextUtils.initApplicationContext(applicationContext)
 
         initializeFileUtils()
 

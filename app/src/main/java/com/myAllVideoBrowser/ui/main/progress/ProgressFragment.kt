@@ -1,7 +1,6 @@
 package com.myAllVideoBrowser.ui.main.progress
 
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -12,7 +11,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
-import com.google.android.material.color.MaterialColors
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentProgressBinding
 import com.myAllVideoBrowser.ui.component.adapter.ProgressAdapter
@@ -22,9 +20,7 @@ import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.home.MainViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import javax.inject.Inject
-import androidx.core.view.get
 
-//@OpenForTesting
 class ProgressFragment : BaseFragment() {
 
     companion object {
@@ -52,13 +48,6 @@ class ProgressFragment : BaseFragment() {
         progressViewModel = mainActivity.progressViewModel
         progressAdapter = ProgressAdapter(emptyList(), progressListener)
 
-        val isDark = mainActivity.settingsViewModel.isDarkMode.get()
-        val color = if (isDark) {
-            MaterialColors.getColor(requireContext(), R.attr.editTextColor, Color.YELLOW)
-        } else {
-            null
-        }
-
         dataBinding = FragmentProgressBinding.inflate(inflater, container, false).apply {
             val managerL =
                 WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
@@ -66,9 +55,6 @@ class ProgressFragment : BaseFragment() {
             this.viewModel = progressViewModel
             this.rvProgress.layoutManager = managerL
             this.rvProgress.adapter = progressAdapter
-            if (color != null) {
-                this.ivEmptyIcon.setBackgroundColor(color)
-            }
         }
 
         return dataBinding.root
@@ -94,15 +80,13 @@ class ProgressFragment : BaseFragment() {
     }
 
     private fun showPopupMenu(view: View, downloadId: Long) {
-        val myView = fixPopup(dataBinding.anchor, view)
-
         val menuCandidate =
             progressViewModel.progressInfos.get()?.find { it.downloadId == downloadId }
 
-        val popupMenu = PopupMenu(myView.context, myView)
+        val popupMenu = PopupMenu(view.context, view)
         popupMenu.menuInflater.inflate(R.menu.menu_progress, popupMenu.menu)
 
-        popupMenu.menu[3].isVisible = menuCandidate?.isLive == true
+        popupMenu.menu.findItem(R.id.item_stop_save)?.isVisible = menuCandidate?.isLive == true
 
         popupMenu.setForceShowIcon(true)
         popupMenu.show()

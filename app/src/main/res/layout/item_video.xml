@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
@@ -20,79 +19,85 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_video"
+        style="?attr/materialCardViewElevatedStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="4dp"
-        android:layout_marginHorizontal="8dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginVertical="6dp"
         android:clickable="true"
         android:focusable="true"
         android:onClick="@{() -> videoListener.onItemClicked(localVideo)}"
+        app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+        app:cardCornerRadius="16dp"
         app:strokeWidth="0dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="@dimen/padding_normal">
+            android:padding="12dp">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/iv_thumbnail"
-                android:layout_width="@dimen/video_icon_size"
-                android:layout_height="@dimen/video_icon_size"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
                 android:adjustViewBounds="true"
+                android:background="?attr/colorSurfaceVariant"
                 android:scaleType="centerCrop"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:shapeAppearanceOverlay="@style/customImageViewRounded" />
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.rounded" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tv_name"
-                android:layout_width="129dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="@dimen/padding_normal"
-                android:textAlignment="viewStart"
-                android:maxLines="3"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="8dp"
+                android:ellipsize="end"
+                android:maxLines="2"
                 android:text="@{localVideo.name}"
-                android:textSize="@dimen/text_medium"
+                android:textAlignment="viewStart"
                 app:layout_constraintBottom_toTopOf="@id/tv_size"
-                app:layout_constraintLeft_toRightOf="@id/iv_thumbnail"
+                app:layout_constraintEnd_toStartOf="@+id/iv_more_container"
+                app:layout_constraintStart_toEndOf="@id/iv_thumbnail"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_chainStyle="packed"
-                tools:text="File name" />
+                tools:text="Video_file_name_very_long_title_example.mp4" />
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tv_size"
+                style="@style/TextAppearance.Material3.BodySmall"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/padding_normal"
-                android:layout_marginTop="@dimen/padding_small"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="4dp"
                 android:text="@{localVideo.size}"
-                android:textSize="@dimen/text_medium"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toRightOf="@id/iv_thumbnail"
+                app:layout_constraintEnd_toStartOf="@+id/iv_more_container"
+                app:layout_constraintStart_toEndOf="@id/iv_thumbnail"
                 app:layout_constraintTop_toBottomOf="@id/tv_name"
-                tools:text="File size" />
+                tools:text="12.5 MB" />
 
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/iv_more"
-                app:cardBackgroundColor="@android:color/transparent"
-                app:strokeColor="@android:color/transparent"
-                android:elevation="0dp"
-                android:shadowColor="@android:color/transparent"
-                app:cardCornerRadius="8dp"
+            <FrameLayout
+                android:id="@+id/iv_more_container"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.0"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-                <androidx.appcompat.widget.AppCompatImageView
-                    android:layout_width="49dp"
-                    android:layout_height="49dp"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <com.google.android.material.button.MaterialButton
+                    style="@style/Widget.Material3.Button.IconButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
                     android:onClick="@{(view) -> videoListener.onMenuClicked(view, localVideo)}"
-                    android:padding="@dimen/padding_small"
-                    app:srcCompat="@drawable/ic_more_24dp"
-                    tools:ignore="VectorDrawableCompat" />
-            </com.google.android.material.card.MaterialCardView>
+                    app:icon="@drawable/ic_more_24dp"
+                    app:iconTint="?attr/colorOnSurfaceVariant" />
+            </FrameLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>

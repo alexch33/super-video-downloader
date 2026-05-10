@@ -1,7 +1,6 @@
 package com.myAllVideoBrowser.ui.component.adapter
 
 import android.content.Context
-import android.graphics.Color
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
@@ -16,7 +15,6 @@ import com.bumptech.glide.annotation.GlideModule
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.module.AppGlideModule
 import com.bumptech.glide.request.RequestOptions
-import com.google.android.material.color.MaterialColors
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.model.LocalVideo
 import com.myAllVideoBrowser.databinding.ItemVideoBinding
@@ -46,13 +44,10 @@ class VideoAdapter(
 
         fun bind(localVideo: LocalVideo, videoListener: VideoListener) {
             val size = getScreenResolution(itemView.context)
-            val color =
-                MaterialColors.getColor(itemView.context, R.attr.colorSurfaceVariant, Color.YELLOW)
 
             with(binding) {
                 this.localVideo = localVideo
                 this.videoListener = videoListener
-                this.cardVideo.setCardBackgroundColor(color)
                 Glide.with(this@VideoViewHolder.itemView.context).load(localVideo.uri).fitCenter()
                     .error(R.drawable.ic_video_24dp)
                     .placeholder(R.drawable.ic_video_24dp)

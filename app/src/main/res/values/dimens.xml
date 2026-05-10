@@ -45,4 +45,7 @@
     <dimen name="settings_divider_size">2dp</dimen>
     <dimen name="settings_icon_size">50dp</dimen>
 
+    <dimen name="stroke_small">1dp</dimen>
+    <dimen name="stroke_normal">2dp</dimen>
+
 </resources>

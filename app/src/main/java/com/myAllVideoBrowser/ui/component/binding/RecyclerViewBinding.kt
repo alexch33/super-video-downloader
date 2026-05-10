@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser.ui.component.binding
 
-import VideoInfoAdapter
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.myAllVideoBrowser.data.local.model.LocalVideo

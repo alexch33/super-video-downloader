@@ -1,5 +1,5 @@
-import com.myAllVideoBrowser.ui.component.adapter.CandidatesListRecyclerViewAdapter
-import com.myAllVideoBrowser.ui.component.adapter.DownloadTabListener
+package com.myAllVideoBrowser.ui.component.adapter
+
 import android.annotation.SuppressLint
 import android.text.Editable
 import android.text.TextWatcher

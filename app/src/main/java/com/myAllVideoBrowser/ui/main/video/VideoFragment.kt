@@ -38,6 +38,7 @@ import com.myAllVideoBrowser.util.IntentUtil
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -199,6 +200,7 @@ class VideoFragment : BaseFragment() {
                     val target = File(targetDir, video.name)
 
                     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                        videoViewModel.isLoading.set(true)
                         try {
                             val isSuccess =
                                 fileUtil.moveMedia(requireContext(), video.uri, target.toUri())
@@ -215,6 +217,8 @@ class VideoFragment : BaseFragment() {
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
+                        } finally {
+                            videoViewModel.isLoading.set(false)
                         }
                     }
                     true
@@ -239,10 +243,18 @@ class VideoFragment : BaseFragment() {
     }
 
     private fun isVideoInHiddenFolderFolder(video: LocalVideo): Boolean {
-        val downloadsDir =
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val videoParentDir = video.uri.toFile().parentFile
-        return videoParentDir != null && videoParentDir.absolutePath != downloadsDir.absolutePath
+        if (video.uri.scheme != "file") {
+            return false
+        }
+
+        return try {
+            val downloadsDir =
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val videoParentDir = video.uri.toFile().parentFile
+            videoParentDir != null && videoParentDir.absolutePath != downloadsDir.absolutePath
+        } catch (e: Exception) {
+            false
+        }
     }
 
 
@@ -251,13 +263,17 @@ class VideoFragment : BaseFragment() {
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         context?.let {
             val fileSupported = fileUtil.isFileApiSupportedByUri(it, localVideo.uri)
-            if (fileSupported) {
-                val videoUri = FileProvider.getUriForFile(
-                    requireContext(),
-                    requireContext().applicationContext.packageName + ".provider",
-                    localVideo.uri.toFile()
-                )
-                intent.setDataAndType(videoUri, "video/mp4")
+            if (fileSupported && localVideo.uri.scheme == "file") {
+                try {
+                    val videoUri = FileProvider.getUriForFile(
+                        requireContext(),
+                        requireContext().applicationContext.packageName + ".provider",
+                        localVideo.uri.toFile()
+                    )
+                    intent.setDataAndType(videoUri, "video/mp4")
+                } catch (e: Exception) {
+                    intent.setDataAndType(localVideo.uri, "video/mp4")
+                }
             } else {
                 intent.setDataAndType(localVideo.uri, "video/mp4")
             }

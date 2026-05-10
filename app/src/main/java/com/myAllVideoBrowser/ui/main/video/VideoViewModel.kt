@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.ui.main.video
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toFile
+import androidx.databinding.ObservableBoolean
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
 //import com.allVideoDownloaderXmaster.OpenForTesting
@@ -30,6 +31,7 @@ class VideoViewModel @Inject constructor(
     }
 
     var localVideos: ObservableField<MutableList<LocalVideo>> = ObservableField(mutableListOf())
+    var isLoading: ObservableBoolean = ObservableBoolean(false)
 
     val renameErrorEvent = SingleLiveEvent<Int>()
     val shareEvent = SingleLiveEvent<Uri>()

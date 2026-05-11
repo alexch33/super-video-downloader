@@ -78,7 +78,6 @@
     <string name="video_move_downloads">Przenieś do folderu pobranych</string>
     <string name="media_move_error">Błąd podczas przenoszenia multimediów</string>
     <string name="media_move_success">Przenoszenie multimediów powiodło się</string>
-    <string name="drm_permission_title">Zezwalaj na treść chronioną</string>
     <string name="allow">Zezwól</string>
     <string name="block">Odmów</string>
     <string name="add_proxy">Dodaj serwer proxy</string>

@@ -153,10 +153,13 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             manager.createNotificationChannel(serviceChannel)
         }
 
+        val proxyString = applicationContext.getString(R.string.proxy)
+        val dnsString = applicationContext.getString(R.string.secure_dns)
+
         return NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-            .setContentTitle("Proxy Service")
-            .setContentText("Local proxy/dns is running...")
-            .setSmallIcon(R.drawable.wifi_proxy_icon24)
+            .setContentTitle(proxyString)
+            .setContentText("$proxyString / $dnsString")
+            .setSmallIcon(R.drawable.domino_mask_24px)
             .setOngoing(true)
             .build()
     }

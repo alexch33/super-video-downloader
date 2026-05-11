@@ -1,6 +1,6 @@
 package com.myAllVideoBrowser.ui.main.home.browser.detectedVideos
 
-import VideoInfoAdapter
+import com.myAllVideoBrowser.ui.component.adapter.VideoInfoAdapter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -43,12 +43,13 @@ class DetectedVideosTabFragment : BaseFragment() {
         if (detectedVideosTabViewModel == null || candidateFormatListener == null) {
             Toast.makeText(context, "Something went wrong, try again.", Toast.LENGTH_SHORT).show()
             parentFragmentManager.popBackStack()
+            return View(context)
         }
 
         val adapter = detectedVideosTabViewModel?.let {
             candidateFormatListener?.let { it1 ->
                 VideoInfoAdapter(
-                    detectedVideosTabViewModel?.detectedVideosList?.get()?.toList() ?: emptyList(),
+                    it.detectedVideosList.get()?.toList() ?: emptyList(),
                     it,
                     it1,
                     appUtil,
@@ -59,26 +60,25 @@ class DetectedVideosTabFragment : BaseFragment() {
         layoutMngr = WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
         binding = FragmentDetectedVideosTabBinding.inflate(inflater, container, false).apply {
-            title.text = getString(
-                R.string.found_videos_from,
-                detectedVideosTabViewModel?.webTabModel?.getTabTextInput()?.get()
-            ).split("?").firstOrNull()
-            detectedVideosTabContainer.setBackgroundColor(getThemeBackgroundColor())
+            val url = detectedVideosTabViewModel?.webTabModel?.getTabTextInput()?.get()
+            title.text = if (!url.isNullOrEmpty()) {
+                getString(R.string.found_videos_from, url).split("?").firstOrNull()
+            } else {
+                getString(R.string.title_video)
+            }
+            
             viewModel = detectedVideosTabViewModel
             videoInfoList.layoutManager = layoutMngr
             videoInfoList.isNestedScrollingEnabled = true
             videoInfoList.adapter = adapter
             dialogListener = candidateFormatListener
 
-
             ViewCompat.setOnApplyWindowInsetsListener(this.root) { v, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
-
-                this.bottomBar.setPadding(0, 0, 0, (systemBars.bottom * 1.3).toInt())
+                this.bottomBar.minimumHeight = systemBars.bottom * 3
                 insets
             }
-
         }
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {

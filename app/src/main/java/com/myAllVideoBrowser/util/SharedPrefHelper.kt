@@ -6,6 +6,8 @@ import android.os.Build
 import com.google.gson.Gson
 import com.myAllVideoBrowser.data.local.GeneratedProxyCreds
 import com.myAllVideoBrowser.data.local.model.Proxy
+import java.text.SimpleDateFormat
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
@@ -45,12 +47,12 @@ class SharedPrefHelper @Inject constructor(
         private const val IS_INTERRUPT_INTERCEPTED_RESOURCES =
             "IS_INTERRUPT_INTERCEPTED_RESOURCES"
         private const val GENERATED_CREDENTIALS = "GENERATED_CREDENTIALS"
+        private const val CREDENTIALS_TIMESTAMP = "CREDENTIALS_TIMESTAMP"
         private const val IS_DOH_ON = "IS_DOH_ON"
         private const val SELECTED_DNS_PROVIDER = "SELECTED_DNS_PROVIDER"
         private const val CUSTOM_DNS_URL = "CUSTOM_DNS_URL"
         private const val IS_USE_LEGACY_M3U8_DETECTION = "IS_USE_LEGACY_M3U8_DETECTION"
 
-        private const val IS_DRM_ENABLED = "IS_DRM_ENABLED"
         private const val IS_ASK_REDIRECTION = "IS_ASK_REDIRECTION"
     }
 
@@ -311,6 +313,29 @@ class SharedPrefHelper @Inject constructor(
         return sharedPreferences.getBoolean(IS_INTERRUPT_INTERCEPTED_RESOURCES, false)
     }
 
+    private fun getLastCredsTimestamp(): Long {
+        return sharedPreferences.getLong(CREDENTIALS_TIMESTAMP, 0)
+    }
+
+    private fun saveCredsTimestamp(timestamp: Long) {
+        sharedPreferences.edit {
+            putLong(CREDENTIALS_TIMESTAMP, timestamp)
+        }
+    }
+
+    private fun isTimeToRegenerate(): Boolean {
+        val lastTimestamp = getLastCredsTimestamp()
+        if (lastTimestamp == 0L) {
+            return true
+        }
+
+        val threeDaysInMs = 3L * 24 * 60 * 60 * 1000
+        val now = System.currentTimeMillis()
+        val diff = now - lastTimestamp
+
+        return diff >= threeDaysInMs
+    }
+
     fun setGeneratedCreds(creds: GeneratedProxyCreds) {
         sharedPreferences.edit {
             putString(GENERATED_CREDENTIALS, creds.toJson())
@@ -328,10 +353,18 @@ class SharedPrefHelper @Inject constructor(
                 setGeneratedCreds(newCreds)
                 return newCreds
             }
+
+            if (isTimeToRegenerate()) {
+                val newCreds = GeneratedProxyCreds.generateProxyCredentials()
+                setGeneratedCreds(newCreds)
+                saveCredsTimestamp(System.currentTimeMillis())
+                return newCreds
+            }
             saved
         } else {
             val initialCreds = GeneratedProxyCreds.generateProxyCredentials()
             setGeneratedCreds(initialCreds)
+            saveCredsTimestamp(System.currentTimeMillis())
             initialCreds
         }
     }
@@ -374,14 +407,6 @@ class SharedPrefHelper @Inject constructor(
         sharedPreferences.edit {
             putBoolean(IS_USE_LEGACY_M3U8_DETECTION, isUse)
         }
-    }
-
-    fun getIsDrmEnabled(): Boolean {
-        return sharedPreferences.getBoolean(IS_DRM_ENABLED, false)
-    }
-
-    fun setIsDrmEnabled(isEnabled: Boolean) {
-        sharedPreferences.edit { putBoolean(IS_DRM_ENABLED, isEnabled) }
     }
 
     fun getIsAskRedirection(): Boolean {

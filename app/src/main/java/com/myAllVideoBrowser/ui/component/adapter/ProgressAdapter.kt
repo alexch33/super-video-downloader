@@ -1,7 +1,6 @@
 package com.myAllVideoBrowser.ui.component.adapter
 
 import android.content.Context
-import android.graphics.Color
 import android.util.DisplayMetrics
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -12,7 +11,6 @@ import android.view.WindowManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
-import com.google.android.material.color.MaterialColors
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.databinding.ItemProgressBinding
@@ -42,13 +40,9 @@ class ProgressAdapter(
             val thumbnail = progressInfo.thumbnail
             val placeholder = R.drawable.ic_video_24dp
             val size = getScreenResolution(itemView.context)
-            val color =
-                MaterialColors.getColor(itemView.context, R.attr.colorSurfaceVariant, Color.YELLOW)
 
             with(binding)
             {
-                this.cardProgress.setCardBackgroundColor(color)
-
                 this.progressInfo = progressInfo
                 this.progressListener = progressListener
                 this.downloadId = progressInfo.downloadId

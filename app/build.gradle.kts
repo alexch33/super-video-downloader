@@ -115,8 +115,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 222
-        versionName = "0.8.16.4"
+        versionCode = 228
+        versionName = "0.8.17"
 
         if (splitApks) {
             splits {
@@ -224,6 +224,9 @@ dependencies {
     implementation(libs.coreKtx)
     implementation(libs.coreSplashscreen)
     implementation(libs.legacySupportV4)
+
+    // should fix ssl crashes on old devices
+    implementation(libs.conscrypt.android)
 
     // Kotlin
     implementation(libs.kotlin.stdlib)

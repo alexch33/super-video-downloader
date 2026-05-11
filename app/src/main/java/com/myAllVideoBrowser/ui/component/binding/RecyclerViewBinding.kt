@@ -21,6 +21,14 @@ object RecyclerViewBinding {
         }
     }
 
+    @BindingAdapter("app:selectedTab")
+    @JvmStatic
+    fun RecyclerView.setSelectedWebTab(index: Int) {
+        with(adapter as WebTabsAdapter?) {
+            this?.setSelectedTab(index)
+        }
+    }
+
     @BindingAdapter("app:items")
     @JvmStatic
     fun RecyclerView.setTopPages(items: List<PageInfo>) {

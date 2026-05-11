@@ -162,20 +162,21 @@ class VideoServiceSuperX(
                 // Heuristic to guess height from URL if not available
                 val inferredHeight =
                     manifest.baseUri.substringAfterLast('-').substringBefore('.').toIntOrNull()
-                        ?: 480
+                val formatString =
+                    if (inferredHeight == null) "hls-unknown" else "hls-${inferredHeight}p"
 
                 formats.add(
                     VideoFormatEntity(
                         formatId = "hls-media",
-                        format = "hls-${inferredHeight}p",
-                        formatNote = "${inferredHeight}p",
+                        format = formatString,
+                        formatNote = formatString,
                         ext = "mp4",
                         vcodec = "unknown",
                         acodec = "unknown",
                         url = manifest.baseUri,
                         manifestUrl = manifest.baseUri,
                         httpHeaders = headers,
-                        height = inferredHeight,
+                        height = inferredHeight ?: 480,
                         width = 0,
                         duration = duration
                     )

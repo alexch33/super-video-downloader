@@ -141,7 +141,7 @@ class CandidatesListRecyclerViewAdapter(
                 if (parts.size >= 2) {
                     val type = parts[0].uppercase() // "MPD" or "HLS"
                     val resolution = parts[1] // "1080p" or "audio"
-                    if (resolution.contains("p")) {
+                    if (resolution.contains("p") || resolution.contains("unknown")) {
                         "$type ${resolution.uppercase()}" // "MPD 1080P"
                     } else {
                         "$type Audio" // "HLS Audio"

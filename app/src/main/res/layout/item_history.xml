@@ -94,18 +94,17 @@
                 app:layout_constraintEnd_toStartOf="@id/iv_more"
                 app:layout_constraintTop_toTopOf="@id/tv_link" />
 
-            <androidx.appcompat.widget.AppCompatImageView
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/iv_more"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:onClick="@{(view) -> historyListener.onMenuClicked(view, historyItem.id)}"
-                android:padding="8dp"
+                app:icon="@drawable/ic_more_gray_24dp"
+                app:iconTint="?attr/colorOnSurfaceVariant"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_more_gray_24dp"
-                app:tint="?attr/colorOnSurfaceVariant" />
+                app:layout_constraintTop_toTopOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>

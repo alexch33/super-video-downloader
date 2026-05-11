@@ -169,12 +169,11 @@
                 android:layout_height="match_parent"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/webview_container"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginBottom="@dimen/home_bottom_bar_size"
-                    android:orientation="horizontal" />
+                    android:layout_marginBottom="@dimen/home_bottom_bar_size" />
 
                 <FrameLayout
                     android:layout_width="3dp"

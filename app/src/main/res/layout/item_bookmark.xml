@@ -58,7 +58,7 @@
                 android:maxLines="1"
                 android:text="@{bookmarkItem.name}"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-                app:layout_constraintEnd_toStartOf="@id/iv_more"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/favicon"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="Title" />
@@ -77,18 +77,6 @@
                 app:layout_constraintStart_toStartOf="@id/tv_title"
                 app:layout_constraintTop_toBottomOf="@id/tv_title"
                 tools:text="https://www.imdb.com" />
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/iv_more"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:alpha="0.6"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_more_gray_24dp"
-                tools:ignore="VectorDrawableCompat" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>

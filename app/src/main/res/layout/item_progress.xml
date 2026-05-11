@@ -58,7 +58,7 @@
                 android:ellipsize="end"
                 android:maxLines="2"
                 android:text="@{progressInfo.title}"
-                app:layout_constraintEnd_toStartOf="@+id/ip_more_container"
+                app:layout_constraintEnd_toStartOf="@+id/iv_more"
                 app:layout_constraintStart_toEndOf="@id/iv_thumbnail"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="Video title example that might be long" />
@@ -106,22 +106,16 @@
                 app:layout_constraintTop_toBottomOf="@+id/iv_thumbnail"
                 tools:text="[download] 0.3% of ~ 49.94MiB at 438.62KiB/s ETA 04:41" />
 
-            <FrameLayout
-                android:id="@+id/ip_more_container"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/iv_more"
+                style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:onClick="@{(view) -> progressListener.onMenuClicked(view, downloadId)}"
+                app:icon="@drawable/ic_more_24dp"
+                app:iconTint="?attr/colorOnSurfaceVariant"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.Material3.Button.IconButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:onClick="@{(view) -> progressListener.onMenuClicked(view, downloadId)}"
-                    app:icon="@drawable/ic_more_24dp"
-                    app:iconTint="?attr/colorOnSurfaceVariant" />
-            </FrameLayout>
+                app:layout_constraintTop_toTopOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

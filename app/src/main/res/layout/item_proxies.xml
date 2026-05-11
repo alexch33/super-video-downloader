@@ -22,62 +22,59 @@
         android:layout_marginTop="8dp"
         app:cardCornerRadius="16dp">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
             android:padding="16dp">
 
-            <LinearLayout
-                android:layout_width="0dp"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_type"
+                style="@style/Widget.Material3.Chip.Suggestion"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.chip.Chip
-                        style="@style/Widget.Material3.Chip.Suggestion"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:text="@{proxy.type.name()}"
-                        app:chipMinHeight="32dp"
-                        tools:text="SOCKS5" />
-
-                    <com.google.android.material.textview.MaterialTextView
-                        android:id="@+id/item_host"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@{proxy.host + ':' + proxy.port}"
-                        android:textAppearance="?attr/textAppearanceTitleMedium"
-                        tools:text="192.168.1.1:8080" />
-
-                </LinearLayout>
-
-                <com.google.android.material.textview.MaterialTextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text='@{proxy.user.empty ? "No Authentication" : "Auth: " + proxy.user}'
-                    android:textAppearance="?attr/textAppearanceBodySmall"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    tools:text="Auth: user" />
-
-            </LinearLayout>
+                android:text="@{proxy.type.name()}"
+                app:chipMinHeight="32dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="SOCKS5" />
 
             <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/item_host"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@{proxy.host + ':' + proxy.port}"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                app:layout_constraintBottom_toBottomOf="@id/chip_type"
+                app:layout_constraintEnd_toStartOf="@+id/tv_country"
+                app:layout_constraintStart_toEndOf="@id/chip_type"
+                app:layout_constraintTop_toTopOf="@id/chip_type"
+                tools:text="192.168.1.1:8080" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tv_auth"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text='@{proxy.user.empty ? "No Authentication" : "Auth: " + proxy.user}'
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                app:layout_constraintEnd_toStartOf="@+id/tv_country"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/chip_type"
+                tools:text="Auth: user" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tv_country"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="8dp"
                 android:text="@{proxy.countryCode}"
                 android:textAppearance="?attr/textAppearanceLabelLarge"
                 android:textColor="?attr/colorSecondary"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/removeProxyButton"
+                app:layout_constraintTop_toTopOf="parent"
                 tools:text="US" />
 
             <com.google.android.material.button.MaterialButton
@@ -87,7 +84,11 @@
                 android:layout_height="wrap_content"
                 android:onClick="@{() -> proxiesListener.onProxyRemoveClicked(proxy)}"
                 app:icon="@drawable/delete_forever_24px"
-                app:iconTint="?attr/colorError" />
-        </LinearLayout>
+                app:iconTint="?attr/colorError"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>
 </layout>

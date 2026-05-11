@@ -86,39 +86,40 @@
                     android:layout_marginHorizontal="16dp"
                     android:layout_marginTop="16dp">
 
-                    <LinearLayout
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
                         android:padding="16dp">
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/tv_secure_dns_title"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                            android:text="@string/secure_dns"
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            app:layout_constraintBottom_toBottomOf="@id/turn_secure_dns"
+                            app:layout_constraintEnd_toStartOf="@id/turn_secure_dns"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="@id/turn_secure_dns" />
 
-                            <com.google.android.material.textview.MaterialTextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="@string/secure_dns"
-                                android:textAppearance="?attr/textAppearanceTitleMedium" />
-
-                            <com.google.android.material.materialswitch.MaterialSwitch
-                                android:id="@+id/turn_secure_dns"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:checked="@{viewModel.isSecureDnsOn}"
-                                android:onCheckedChanged="@{(view, isChecked) -> viewModel.setSecureDnsState(isChecked)}" />
-                        </LinearLayout>
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/turn_secure_dns"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="@{viewModel.isSecureDnsOn}"
+                            android:onCheckedChanged="@{(view, isChecked) -> viewModel.setSecureDnsState(isChecked)}"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
 
                         <RadioGroup
                             android:id="@+id/secureDnsProviderRadioGroup"
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:visibility="@{viewModel.isSecureDnsOn ? View.VISIBLE : View.GONE}">
+                            android:visibility="@{viewModel.isSecureDnsOn ? View.VISIBLE : View.GONE}"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/turn_secure_dns">
 
                             <com.google.android.material.radiobutton.MaterialRadioButton
                                 android:id="@+id/cloudflareRadioButton"
@@ -158,42 +159,42 @@
 
                         </RadioGroup>
 
-                        <LinearLayout
-                            android:id="@+id/customDnsContainer"
-                            android:layout_width="match_parent"
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/customDnsInputLayout"
+                            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal"
-                            android:visibility="@{viewModel.selectedDnsProvider == SecureDnsProvider.CUSTOM &amp;&amp; viewModel.isSecureDnsOn ? View.VISIBLE : View.GONE}">
+                            android:hint="@string/dns_custom_url_hint"
+                            android:visibility="@{viewModel.selectedDnsProvider == SecureDnsProvider.CUSTOM &amp;&amp; viewModel.isSecureDnsOn ? View.VISIBLE : View.GONE}"
+                            app:errorEnabled="true"
+                            app:layout_constraintEnd_toStartOf="@+id/saveCustomDnsButton"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/secureDnsProviderRadioGroup">
 
-                            <com.google.android.material.textfield.TextInputLayout
-                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                                android:layout_width="0dp"
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/customDnsEditText"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:hint="@string/dns_custom_url_hint"
-                                app:errorEnabled="true">
+                                android:inputType="textUri"
+                                android:text="@={viewModel.customDnsUrl}" />
+                        </com.google.android.material.textfield.TextInputLayout>
 
-                                <com.google.android.material.textfield.TextInputEditText
-                                    android:id="@+id/customDnsEditText"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:inputType="textUri"
-                                    android:text="@={viewModel.customDnsUrl}" />
-                            </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/saveCustomDnsButton"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginBottom="16dp"
+                            android:text="@string/save_proxy"
+                            android:visibility="@{viewModel.selectedDnsProvider == SecureDnsProvider.CUSTOM &amp;&amp; viewModel.isSecureDnsOn ? View.VISIBLE : View.GONE}"
+                            app:layout_constraintBottom_toBottomOf="@+id/customDnsInputLayout"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="@+id/customDnsInputLayout"
+                            app:layout_constraintVertical_bias="0.0" />
 
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/saveCustomDnsButton"
-                                style="@style/Widget.Material3.Button.TonalButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:layout_marginBottom="16dp"
-                                android:text="@string/save_proxy" />
-
-                        </LinearLayout>
-                    </LinearLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Add Proxy Section -->
@@ -204,25 +205,26 @@
                     android:layout_marginHorizontal="16dp"
                     android:layout_marginTop="16dp">
 
-                    <LinearLayout
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
                         android:padding="16dp">
 
                         <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/tv_add_proxy_title"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="16dp"
                             android:text="@string/add_http_proxy"
-                            android:textAppearance="?attr/textAppearanceTitleMedium" />
+                            android:textAppearance="?attr/textAppearanceTitleMedium"
+                            app:layout_constraintTop_toTopOf="parent" />
 
                         <RadioGroup
                             android:id="@+id/proxyTypeRadioGroup"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="16dp"
-                            android:orientation="horizontal">
+                            android:layout_marginTop="16dp"
+                            android:orientation="horizontal"
+                            app:layout_constraintTop_toBottomOf="@id/tv_add_proxy_title">
 
                             <com.google.android.material.radiobutton.MaterialRadioButton
                                 android:id="@+id/httpRadioButton"
@@ -244,12 +246,14 @@
                         </RadioGroup>
 
                         <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/hostInputLayout"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
+                            android:layout_marginTop="16dp"
                             android:hint="@string/host_hint"
-                            app:errorEnabled="true">
+                            app:errorEnabled="true"
+                            app:layout_constraintTop_toBottomOf="@id/proxyTypeRadioGroup">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/hostEditText"
@@ -259,12 +263,14 @@
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/portInputLayout"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
+                            android:layout_marginTop="8dp"
                             android:hint="@string/port_hint"
-                            app:errorEnabled="true">
+                            app:errorEnabled="true"
+                            app:layout_constraintTop_toBottomOf="@id/hostInputLayout">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/portEditText"
@@ -274,11 +280,13 @@
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/loginInputLayout"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="8dp"
-                            android:hint="@string/login_hint">
+                            android:layout_marginTop="8dp"
+                            android:hint="@string/login_hint"
+                            app:layout_constraintTop_toBottomOf="@id/portInputLayout">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/loginEditText"
@@ -288,11 +296,13 @@
                         </com.google.android.material.textfield.TextInputLayout>
 
                         <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/passwordInputLayout"
                             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="16dp"
+                            android:layout_marginTop="8dp"
                             android:hint="@string/password_hint"
+                            app:layout_constraintTop_toBottomOf="@id/loginInputLayout"
                             app:passwordToggleEnabled="true">
 
                             <com.google.android.material.textfield.TextInputEditText
@@ -307,9 +317,11 @@
                             style="@style/Widget.Material3.Button"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_gravity="end"
-                            android:text="@string/add_proxy" />
-                    </LinearLayout>
+                            android:layout_marginTop="16dp"
+                            android:text="@string/add_proxy"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/passwordInputLayout" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Proxy Chain Section -->

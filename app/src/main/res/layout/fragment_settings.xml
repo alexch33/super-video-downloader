@@ -138,21 +138,6 @@
                             app:dividerInsetStart="16dp" />
 
                         <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/drm_enabled_check_box"
-                            android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:checked="@{viewModel.isDrmEnabled}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsDrmEnabled(isChecked)}"
-                            android:paddingHorizontal="16dp"
-                            android:text="@string/drm_permission_title"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
-
-                        <com.google.android.material.divider.MaterialDivider
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            app:dividerInsetStart="16dp" />
-
-                        <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/ask_redirection_check_box"
                             android:layout_width="match_parent"
                             android:layout_height="64dp"

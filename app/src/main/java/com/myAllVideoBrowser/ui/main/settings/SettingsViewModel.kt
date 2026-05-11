@@ -27,7 +27,6 @@ class SettingsViewModel @Inject constructor(
     private val sharedPrefHelper: SharedPrefHelper,
 ) :
     BaseViewModel() {
-    val isDrmEnabled = ObservableBoolean(false)
     val isAskRedirection = ObservableBoolean(false)
     val regularThreadsCount = ObservableInt(1)
     val m3u8ThreadsCount = ObservableInt(4)
@@ -74,7 +73,6 @@ class SettingsViewModel @Inject constructor(
             val checkOnAudio = sharedPrefHelper.getIsCheckOnAudio()
             val videoTreshold = sharedPrefHelper.getVideoDetectionTreshold()
             val lockPortrait = sharedPrefHelper.getIsLockPortrait()
-            val drmEnabled = sharedPrefHelper.getIsDrmEnabled()
             val askRedirection = sharedPrefHelper.getIsAskRedirection()
 
             val isExternal = sharedPrefHelper.getIsExternalUse()
@@ -108,7 +106,6 @@ class SettingsViewModel @Inject constructor(
                 isCheckOnAudio.set(checkOnAudio)
                 videoDetectionTreshold.set(videoTreshold)
                 isLockPortrait.set(lockPortrait)
-                isDrmEnabled.set(drmEnabled)
                 isAskRedirection.set(askRedirection)
                 storageType.set(sType)
             }
@@ -116,15 +113,6 @@ class SettingsViewModel @Inject constructor(
     }
 
     override fun stop() {
-    }
-
-    fun setIsDrmEnabled(isEnabled: Boolean) {
-        if (isDrmEnabled.get() != isEnabled) {
-            isDrmEnabled.set(isEnabled)
-            viewModelScope.launch(Dispatchers.IO) {
-                sharedPrefHelper.setIsDrmEnabled(isEnabled)
-            }
-        }
     }
 
     fun setIsAskRedirection(isAsk: Boolean) {

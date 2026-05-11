@@ -12,6 +12,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.slider.Slider
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentSettingsBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
@@ -46,6 +47,30 @@ class SettingsFragment : BaseFragment() {
     private lateinit var settingsViewModel: SettingsViewModel
 
     private var lastSavedRegularThreadsCount = -1
+
+    private val regularThreadsListener = Slider.OnChangeListener { _, value, fromUser ->
+        if (fromUser) {
+            val progress = value.toInt()
+            settingsViewModel.setRegularThreadsCount(progress)
+
+            if (lastSavedRegularThreadsCount == 1 && progress > 1) {
+                context?.let { showDownloadWarningDialog(it) }
+            }
+            lastSavedRegularThreadsCount = progress
+        }
+    }
+
+    private val m3u8ThreadsListener = Slider.OnChangeListener { _, value, fromUser ->
+        if (fromUser) {
+            settingsViewModel.setM3u8ThreadsCount(value.toInt())
+        }
+    }
+
+    private val adsTresholdListener = Slider.OnChangeListener { _, value, fromUser ->
+        if (fromUser) {
+            settingsViewModel.setVideoDetectionTreshold(value.toInt())
+        }
+    }
 
     private val tresholdCallback = object : Observable.OnPropertyChangedCallback() {
         @SuppressLint("SetTextI18n")
@@ -110,33 +135,18 @@ class SettingsFragment : BaseFragment() {
     override fun onDestroyView() {
         settingsViewModel.stop()
         settingsViewModel.videoDetectionTreshold.removeOnPropertyChangedCallback(tresholdCallback)
+
+        dataBinding.seekBarRegular.removeOnChangeListener(regularThreadsListener)
+        dataBinding.seekBarM3u8.removeOnChangeListener(m3u8ThreadsListener)
+        dataBinding.seekBarAdsTreshold.removeOnChangeListener(adsTresholdListener)
+
         super.onDestroyView()
     }
 
     private fun setupSliderListeners() {
-        dataBinding.seekBarRegular.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) {
-                val progress = value.toInt()
-                settingsViewModel.setRegularThreadsCount(progress)
-
-                if (lastSavedRegularThreadsCount == 1 && progress > 1) {
-                    context?.let { showDownloadWarningDialog(it) }
-                }
-                lastSavedRegularThreadsCount = progress
-            }
-        }
-
-        dataBinding.seekBarM3u8.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) {
-                settingsViewModel.setM3u8ThreadsCount(value.toInt())
-            }
-        }
-
-        dataBinding.seekBarAdsTreshold.addOnChangeListener { _, value, fromUser ->
-            if (fromUser) {
-                settingsViewModel.setVideoDetectionTreshold(value.toInt())
-            }
-        }
+        dataBinding.seekBarRegular.addOnChangeListener(regularThreadsListener)
+        dataBinding.seekBarM3u8.addOnChangeListener(m3u8ThreadsListener)
+        dataBinding.seekBarAdsTreshold.addOnChangeListener(adsTresholdListener)
     }
 
     private fun handleUIEvents() {

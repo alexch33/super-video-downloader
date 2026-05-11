@@ -11,8 +11,10 @@ import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.SingleLiveEvent
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -53,36 +55,62 @@ class SettingsViewModel @Inject constructor(
 
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
-            // 2. INITIALIZE ITS VALUE FROM SHARED PREFERENCES
-            isUseLegacyM3u8Detection.set(sharedPrefHelper.getIsUseLegacyM3u8Detection())
-            isAlwaysRemuxRegularDownloads.set(sharedPrefHelper.getIsProcessDownloadFfmpeg())
-            isRemuxOnlyLiveRegularDownloads.set(sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg())
-            isForceStreamDownloading.set(sharedPrefHelper.getIsForceStreamDownload())
-            isForceStreamDetection.set(sharedPrefHelper.getIsForceStreamDetection())
-            isInterruptIntreceptedResources.set(sharedPrefHelper.getIsInterruptInterceptedResources())
-            isCheckIfEveryRequestOnM3u8.set(sharedPrefHelper.getIsCheckEveryOnM3u8())
-            isDesktopMode.set(sharedPrefHelper.getIsDesktop())
-            isShowVideoAlert.set(sharedPrefHelper.isShowVideoAlert())
-            isShowVideoActionButton.set(sharedPrefHelper.isShowActionButton())
-            isCheckEveryRequestOnVideo.set(sharedPrefHelper.isCheckEveryRequestOnVideo())
-            isFindVideoByUrl.set(sharedPrefHelper.isFindVideoByUrl())
-            isAutoDarkMode.set(sharedPrefHelper.isAutoTheme())
+            val useLegacy = sharedPrefHelper.getIsUseLegacyM3u8Detection()
+            val alwaysRemux = sharedPrefHelper.getIsProcessDownloadFfmpeg()
+            val remuxOnlyLive = sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg()
+            val forceStreamDownload = sharedPrefHelper.getIsForceStreamDownload()
+            val forceStreamDetect = sharedPrefHelper.getIsForceStreamDetection()
+            val interruptIntercepted = sharedPrefHelper.getIsInterruptInterceptedResources()
+            val checkEveryM3u8 = sharedPrefHelper.getIsCheckEveryOnM3u8()
+            val isDesktop = sharedPrefHelper.getIsDesktop()
+            val showVideoAlert = sharedPrefHelper.isShowVideoAlert()
+            val showVideoAction = sharedPrefHelper.isShowActionButton()
+            val checkEveryVideo = sharedPrefHelper.isCheckEveryRequestOnVideo()
+            val findVideoByUrl = sharedPrefHelper.isFindVideoByUrl()
+            val autoDarkMode = sharedPrefHelper.isAutoTheme()
             val isDark = sharedPrefHelper.isDarkMode()
-            setDarkMode(isDark)
-            isDarkMode.set(isDark)
-            regularThreadsCount.set(sharedPrefHelper.getRegularDownloaderThreadCount())
-            m3u8ThreadsCount.set(sharedPrefHelper.getM3u8DownloaderThreadCount())
-            isCheckOnAudio.set(sharedPrefHelper.getIsCheckOnAudio())
-            videoDetectionTreshold.set(sharedPrefHelper.getVideoDetectionTreshold())
-            isLockPortrait.set(sharedPrefHelper.getIsLockPortrait())
-            isDrmEnabled.set(sharedPrefHelper.getIsDrmEnabled())
-            isAskRedirection.set(sharedPrefHelper.getIsAskRedirection())
-            if (sharedPrefHelper.getIsExternalUse() && !sharedPrefHelper.getIsAppDirUse()) {
-                storageType.set(StorageType.SD)
-            } else if (sharedPrefHelper.getIsAppDirUse() && sharedPrefHelper.getIsExternalUse()) {
-                storageType.set(StorageType.HIDDEN_SD)
+            val regularThreads = sharedPrefHelper.getRegularDownloaderThreadCount()
+            val m3u8Threads = sharedPrefHelper.getM3u8DownloaderThreadCount()
+            val checkOnAudio = sharedPrefHelper.getIsCheckOnAudio()
+            val videoTreshold = sharedPrefHelper.getVideoDetectionTreshold()
+            val lockPortrait = sharedPrefHelper.getIsLockPortrait()
+            val drmEnabled = sharedPrefHelper.getIsDrmEnabled()
+            val askRedirection = sharedPrefHelper.getIsAskRedirection()
+
+            val isExternal = sharedPrefHelper.getIsExternalUse()
+            val isAppDir = sharedPrefHelper.getIsAppDirUse()
+            val sType = if (isExternal && !isAppDir) {
+                StorageType.SD
+            } else if (isAppDir && isExternal) {
+                StorageType.HIDDEN_SD
             } else {
-                storageType.set(StorageType.HIDDEN)
+                StorageType.HIDDEN
+            }
+
+            withContext(Dispatchers.Main) {
+                isUseLegacyM3u8Detection.set(useLegacy)
+                isAlwaysRemuxRegularDownloads.set(alwaysRemux)
+                isRemuxOnlyLiveRegularDownloads.set(remuxOnlyLive)
+                isForceStreamDownloading.set(forceStreamDownload)
+                isForceStreamDetection.set(forceStreamDetect)
+                isInterruptIntreceptedResources.set(interruptIntercepted)
+                isCheckIfEveryRequestOnM3u8.set(checkEveryM3u8)
+                isDesktopMode.set(isDesktop)
+                isShowVideoAlert.set(showVideoAlert)
+                isShowVideoActionButton.set(showVideoAction)
+                isCheckEveryRequestOnVideo.set(checkEveryVideo)
+                isFindVideoByUrl.set(findVideoByUrl)
+                isAutoDarkMode.set(autoDarkMode)
+                isDarkMode.set(isDark)
+                setDarkMode(isDark)
+                regularThreadsCount.set(regularThreads)
+                m3u8ThreadsCount.set(m3u8Threads)
+                isCheckOnAudio.set(checkOnAudio)
+                videoDetectionTreshold.set(videoTreshold)
+                isLockPortrait.set(lockPortrait)
+                isDrmEnabled.set(drmEnabled)
+                isAskRedirection.set(askRedirection)
+                storageType.set(sType)
             }
         }
     }
@@ -91,62 +119,62 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setIsDrmEnabled(isEnabled: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (isDrmEnabled.get() != isEnabled) {
-                isDrmEnabled.set(isEnabled)
+        if (isDrmEnabled.get() != isEnabled) {
+            isDrmEnabled.set(isEnabled)
+            viewModelScope.launch(Dispatchers.IO) {
                 sharedPrefHelper.setIsDrmEnabled(isEnabled)
             }
         }
     }
 
     fun setIsAskRedirection(isAsk: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (isAskRedirection.get() != isAsk) {
-                isAskRedirection.set(isAsk)
+        if (isAskRedirection.get() != isAsk) {
+            isAskRedirection.set(isAsk)
+            viewModelScope.launch(Dispatchers.IO) {
                 sharedPrefHelper.setIsAskRedirection(isAsk)
             }
         }
     }
 
     fun setUseLegacyM3u8Detection(isTurnedOn: Boolean) {
+        isUseLegacyM3u8Detection.set(isTurnedOn)
         viewModelScope.launch(Dispatchers.IO) {
-            isUseLegacyM3u8Detection.set(isTurnedOn)
             sharedPrefHelper.setIsUseLegacyM3u8Detection(isTurnedOn)
         }
     }
 
     fun setIsRemuxOnlyLiveRegularDownloads(isTurnedOn: Boolean) {
+        isRemuxOnlyLiveRegularDownloads.set(isTurnedOn)
         viewModelScope.launch(Dispatchers.IO) {
-            isRemuxOnlyLiveRegularDownloads.set(isTurnedOn)
             sharedPrefHelper.setIsProcessOnlyLiveDownloadFfmpeg(isTurnedOn)
         }
     }
 
     fun setIsRemuxOnlyRegularDownloads(isTurnedOn: Boolean) {
+        isAlwaysRemuxRegularDownloads.set(isTurnedOn)
         viewModelScope.launch(Dispatchers.IO) {
-            isAlwaysRemuxRegularDownloads.set(isTurnedOn)
             sharedPrefHelper.setIsProcessDownloadFfmpeg(isTurnedOn)
         }
     }
 
 
     fun setForceStreamDownloading(isTurnedOn: Boolean) {
+        isForceStreamDownloading.set(isTurnedOn)
         viewModelScope.launch(Dispatchers.IO) {
-            isForceStreamDownloading.set(isTurnedOn)
             sharedPrefHelper.setIsForceStreamDownload(isTurnedOn)
         }
     }
 
     fun setForceStreamDetection(isTurnedOn: Boolean) {
+        isForceStreamDetection.set(isTurnedOn)
         viewModelScope.launch(Dispatchers.IO) {
-            isForceStreamDetection.set(isTurnedOn)
             sharedPrefHelper.setIsForceStreamDetection(isTurnedOn)
         }
     }
 
     fun setIsLockPortrait(isLock: Boolean) {
+        isLockPortrait.set(isLock)
         viewModelScope.launch(Dispatchers.IO) {
-            isLockPortrait.set(isLock)
             sharedPrefHelper.setIsLockPortrait(isLock)
         }
     }
@@ -156,8 +184,8 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setIsInterruptInterceptedResources(isTurnedOn: Boolean) {
+        isInterruptIntreceptedResources.set(isTurnedOn)
         viewModelScope.launch(Dispatchers.IO) {
-            isInterruptIntreceptedResources.set(isTurnedOn)
             sharedPrefHelper.setIsInterruptInterceptedResources(isTurnedOn)
         }
     }
@@ -172,42 +200,46 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setIsFindVideoByUrl(isFind: Boolean) {
+        isFindVideoByUrl.set(isFind)
         viewModelScope.launch(Dispatchers.IO) {
-            isFindVideoByUrl.set(isFind)
             sharedPrefHelper.saveIsFindByUrl(isFind)
         }
     }
 
     fun setIsCheckIfEveryUrlOnM3u8(isCheck: Boolean) {
+        isCheckIfEveryRequestOnM3u8.set(isCheck)
         viewModelScope.launch(Dispatchers.IO) {
-            isCheckIfEveryRequestOnM3u8.set(isCheck)
             sharedPrefHelper.saveIsCheckEveryOnM3u8(isCheck)
         }
     }
 
     fun setIsCheckOnAudio(isCheck: Boolean) {
+        isCheckOnAudio.set(isCheck)
         viewModelScope.launch(Dispatchers.IO) {
-            isCheckOnAudio.set(isCheck)
             sharedPrefHelper.saveIsCheckOnAudio(isCheck)
         }
     }
 
     fun setIsAutoTheme(isChecked: Boolean) {
+        isAutoDarkMode.set(isChecked)
         viewModelScope.launch(Dispatchers.IO) {
-            isAutoDarkMode.set(isChecked)
             sharedPrefHelper.setIsAutoTheme(isChecked)
 
             val isDark = sharedPrefHelper.isDarkMode()
-            setIsDarkMode(isDark)
+            withContext(Dispatchers.Main) {
+                setIsDarkMode(isDark)
+            }
         }
     }
 
     fun setIsDarkMode(isDark: Boolean) {
+        isDarkMode.set(isDark)
         viewModelScope.launch(Dispatchers.IO) {
-            isDarkMode.set(isDark)
-            delay(300)
+            delay(10)
             sharedPrefHelper.setIsDarkMode(isDark)
-            setDarkMode(isDark)
+            withContext(Dispatchers.Main) {
+                setDarkMode(isDark)
+            }
         }
     }
 
@@ -216,16 +248,15 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setIsCheckEveryRequestOnVideo(isCheck: Boolean) {
+        isCheckEveryRequestOnVideo.set(isCheck)
         viewModelScope.launch(Dispatchers.IO) {
-            isCheckEveryRequestOnVideo.set(isCheck)
             sharedPrefHelper.saveIsCheck(isCheck)
         }
     }
 
     fun setIsDesktopMode(isDesktop: Boolean) {
+        isDesktopMode.set(isDesktop)
         viewModelScope.launch(Dispatchers.IO) {
-            isDesktopMode.set(isDesktop)
-
             sharedPrefHelper.saveIsDesktop(isDesktop)
         }
     }
@@ -239,33 +270,29 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setShowVideoAlertOn() {
+        isShowVideoAlert.set(true)
         viewModelScope.launch(Dispatchers.IO) {
-            isShowVideoAlert.set(true)
-
             sharedPrefHelper.setIsShowVideoAlert(true)
         }
     }
 
     fun setShowVideoAlertOff() {
+        isShowVideoAlert.set(false)
         viewModelScope.launch(Dispatchers.IO) {
-            isShowVideoAlert.set(false)
-
             sharedPrefHelper.setIsShowVideoAlert(false)
         }
     }
 
     fun setShowVideoActionButtonOn() {
+        isShowVideoActionButton.set(true)
         viewModelScope.launch(Dispatchers.IO) {
-            isShowVideoActionButton.set(true)
-
             sharedPrefHelper.setIsShowActionButton(true)
         }
     }
 
     fun setShowVideoActionButtonOff() {
+        isShowVideoActionButton.set(false)
         viewModelScope.launch(Dispatchers.IO) {
-            isShowVideoActionButton.set(false)
-
             sharedPrefHelper.setIsShowActionButton(false)
         }
     }
@@ -286,18 +313,26 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private var m3u8ThreadsJob: Job? = null
     fun setM3u8ThreadsCount(progress: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val finalCount = max(1, progress)
-            m3u8ThreadsCount.set(finalCount)
+        val finalCount = max(1, progress)
+        m3u8ThreadsCount.set(finalCount)
+
+        m3u8ThreadsJob?.cancel()
+        m3u8ThreadsJob = viewModelScope.launch(Dispatchers.IO) {
+            delay(10)
             sharedPrefHelper.setM3u8DownloaderThreadCount(finalCount)
         }
     }
 
+    private var regularThreadsJob: Job? = null
     fun setRegularThreadsCount(progress: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val finalCount = max(1, progress)
-            regularThreadsCount.set(finalCount)
+        val finalCount = max(1, progress)
+        regularThreadsCount.set(finalCount)
+
+        regularThreadsJob?.cancel()
+        regularThreadsJob = viewModelScope.launch(Dispatchers.IO) {
+            delay(10)
             sharedPrefHelper.setRegularDownloaderThreadCount(finalCount)
         }
     }
@@ -306,8 +341,8 @@ class SettingsViewModel @Inject constructor(
         FileUtil.IS_APP_DATA_DIR_USE = false
         FileUtil.IS_EXTERNAL_STORAGE_USE = true
 
+        storageType.set(StorageType.SD)
         viewModelScope.launch(Dispatchers.IO) {
-            storageType.set(StorageType.SD)
             sharedPrefHelper.setIsExternalUse(true)
             sharedPrefHelper.setIsAppDirUse(false)
         }
@@ -317,8 +352,8 @@ class SettingsViewModel @Inject constructor(
         FileUtil.IS_APP_DATA_DIR_USE = true
         FileUtil.IS_EXTERNAL_STORAGE_USE = false
 
+        storageType.set(StorageType.HIDDEN)
         viewModelScope.launch(Dispatchers.IO) {
-            storageType.set(StorageType.HIDDEN)
             sharedPrefHelper.setIsExternalUse(false)
             sharedPrefHelper.setIsAppDirUse(true)
         }
@@ -328,17 +363,21 @@ class SettingsViewModel @Inject constructor(
         FileUtil.IS_APP_DATA_DIR_USE = true
         FileUtil.IS_EXTERNAL_STORAGE_USE = true
 
+        storageType.set(StorageType.HIDDEN_SD)
         viewModelScope.launch(Dispatchers.IO) {
-            storageType.set(StorageType.HIDDEN_SD)
             sharedPrefHelper.setIsExternalUse(true)
             sharedPrefHelper.setIsAppDirUse(true)
         }
     }
 
+    private var videoDetectionJob: Job? = null
     fun setVideoDetectionTreshold(progress: Int) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val finalResult = max(0, progress)
-            videoDetectionTreshold.set(finalResult)
+        val finalResult = max(0, progress)
+        videoDetectionTreshold.set(finalResult)
+
+        videoDetectionJob?.cancel()
+        videoDetectionJob = viewModelScope.launch(Dispatchers.IO) {
+            delay(10)
             sharedPrefHelper.setVideoDetectionTreshold(finalResult)
         }
     }

@@ -15,10 +15,12 @@
     </data>
 
     <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.Material3.CardView.Filled"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        app:cardCornerRadius="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -40,11 +42,12 @@
                     android:orientation="horizontal">
 
                     <com.google.android.material.chip.Chip
+                        style="@style/Widget.Material3.Chip.Suggestion"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:text="@{proxy.type.name()}"
-                        app:chipMinHeight="24dp"
+                        app:chipMinHeight="32dp"
                         tools:text="SOCKS5" />
 
                     <com.google.android.material.textview.MaterialTextView
@@ -52,18 +55,18 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@{proxy.host + ':' + proxy.port}"
-                        android:textStyle="bold"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
                         tools:text="192.168.1.1:8080" />
 
                 </LinearLayout>
-
 
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text='@{proxy.user.empty ? "No Authentication" : "Auth: " + proxy.user}'
-                    android:textSize="12sp"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     tools:text="Auth: user" />
 
             </LinearLayout>
@@ -73,16 +76,18 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="8dp"
                 android:text="@{proxy.countryCode}"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                android:textColor="?attr/colorSecondary"
                 tools:text="US" />
 
-            <ImageButton
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/removeProxyButton"
+                style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackgroundBorderless"
                 android:onClick="@{() -> proxiesListener.onProxyRemoveClicked(proxy)}"
-                android:src="@drawable/delete_forever_24px"
-                app:tint="?attr/colorError" />
+                app:icon="@drawable/delete_forever_24px"
+                app:iconTint="?attr/colorError" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 </layout>

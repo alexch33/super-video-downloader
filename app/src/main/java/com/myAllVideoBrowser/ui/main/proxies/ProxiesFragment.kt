@@ -9,6 +9,7 @@ import androidx.activity.addCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.data.local.model.ProxyType
 import com.myAllVideoBrowser.databinding.FragmentProxiesBinding
@@ -66,11 +67,15 @@ class ProxiesFragment : BaseFragment() {
             this.proxiesRecyclerView.adapter = proxiesAdapter
             proxiesAdapter.setData(proxiesViewModel.proxiesList.get()?.toList() ?: emptyList())
 
+            this.toolbar.setNavigationOnClickListener {
+                requireActivity().onBackPressedDispatcher.onBackPressed()
+            }
+
             this.saveCustomDnsButton.setOnClickListener {
                 proxiesViewModel.saveCustomDns()
                 Toast.makeText(
-                    this@ProxiesFragment.context,
-                    getString(com.myAllVideoBrowser.R.string.custom_dns_saved_message),
+                    requireContext(),
+                    getString(R.string.custom_dns_saved_message),
                     Toast.LENGTH_SHORT
                 ).show()
 
@@ -111,13 +116,10 @@ class ProxiesFragment : BaseFragment() {
                     }
                 } else {
                     Toast.makeText(
-                        this@ProxiesFragment.context, "Invalid host or port", Toast.LENGTH_SHORT
+                        requireContext(), "Invalid host or port", Toast.LENGTH_SHORT
                     ).show()
                 }
             }
-
-            val color = getThemeBackgroundColor()
-            this.proxiesContainer.setBackgroundColor(color)
 
             ViewCompat.setOnApplyWindowInsetsListener(this.root) { v, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())

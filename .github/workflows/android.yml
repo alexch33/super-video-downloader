@@ -78,9 +78,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: false
-          body: "Local proxy moved to WorkManager(background crashes fix)\nAsk Redirection option added\nEdge to Edge support added"
+          prerelease: true
+          body: "Monet redesign\nUI optimizations\nDrm support removed\nConscrypt security added(Old devices crash fix)\nMove file from private folder crash fix\nLocal proxy credentials regeneration every 3 days"
           draft: false
-          make_latest: true
+          make_latest: false
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

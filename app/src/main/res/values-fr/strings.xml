@@ -120,8 +120,6 @@
     <string name="video_move_downloads">Déplacer les téléchargements</string>
     <string name="media_move_error">Erreur de déplacement de média</string>
     <string name="media_move_success">Média déplacé avec succès</string>
-    <string name="drm_permission_title">Autoriser le contenu protégé</string>
-    <string name="drm_permission_message">Ce site souhaite lire des contenus protégés par DRM (comme des films ou de la musique). L\'autorisation est nécessaire pour la lecture. Voulez-vous activer cette fonctionnalité ?</string>
     <string name="allow">Autoriser</string>
     <string name="block">Bloquer</string>
     <string name="app_name">SuperX</string>

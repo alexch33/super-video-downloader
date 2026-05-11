@@ -123,8 +123,6 @@
     <string name="video_move_downloads">다운로드 파일 이동</string>
     <string name="media_move_error">미디어 이동 오류</string>
     <string name="media_move_success">미디어 이동 성공</string>
-    <string name="drm_permission_title">보호된 콘텐츠 허용</string>
-    <string name="drm_permission_message">이 사이트에서 DRM 보호 미디어(영화, 음악 등)를 재생하려고 합니다. 재생하려면 허용이 필요합니다. 이 기능을 활성화하시겠습니까?</string>
     <string name="allow">허용</string>
     <string name="block">차단</string>
 </resources>

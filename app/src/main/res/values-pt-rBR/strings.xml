@@ -123,8 +123,6 @@
     <string name="video_move_downloads">Mover downloads</string>
     <string name="media_move_error">Erro ao mover mídia</string>
     <string name="media_move_success">Sucesso ao mover mídia</string>
-    <string name="drm_permission_title">Permitir conteúdo protegido</string>
-    <string name="drm_permission_message">Este site deseja reproduzir mídia protegida por DRM (como filmes ou música). Permitir isso é necessário para a reprodução da mídia. Deseja ativar esse recurso?</string>
     <string name="allow">Permitir</string>
     <string name="block">Bloquear</string>
 </resources>

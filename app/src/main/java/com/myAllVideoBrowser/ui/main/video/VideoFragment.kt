@@ -1,7 +1,6 @@
 package com.myAllVideoBrowser.ui.main.video
 
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.os.Environment
 import android.view.LayoutInflater
@@ -19,7 +18,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.color.MaterialColors
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.model.LocalVideo
 import com.myAllVideoBrowser.databinding.FragmentVideoBinding
@@ -38,13 +36,11 @@ import com.myAllVideoBrowser.util.IntentUtil
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 
-//@OpenForTesting
 class VideoFragment : BaseFragment() {
 
     companion object {
@@ -80,13 +76,6 @@ class VideoFragment : BaseFragment() {
         videoViewModel = ViewModelProvider(this, viewModelFactory)[VideoViewModel::class.java]
         videoAdapter = VideoAdapter(emptyList(), videoListener, fileUtil)
 
-        val isDark = mainActivity.settingsViewModel.isDarkMode.get()
-        val color = if (isDark) {
-            MaterialColors.getColor(requireContext(), R.attr.editTextColor, Color.YELLOW)
-        } else {
-            null
-        }
-
         dataBinding = FragmentVideoBinding.inflate(inflater, container, false).apply {
             val managerL =
                 WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
@@ -95,9 +84,6 @@ class VideoFragment : BaseFragment() {
             this.mainViewModel = mainActivity.mainViewModel
             this.rvVideo.layoutManager = managerL
             this.rvVideo.adapter = videoAdapter
-            if (color != null) {
-                this.ivEmptyIcon.setBackgroundColor(color)
-            }
         }
 
         videoViewModel.shareEvent.observe(viewLifecycleOwner) { uri ->
@@ -150,9 +136,8 @@ class VideoFragment : BaseFragment() {
     }
 
     private fun showPopupMenu(view: View, video: LocalVideo) {
-        val myView = fixPopup(dataBinding.anchor, view)
+        val popupMenu = PopupMenu(view.context, view)
 
-        val popupMenu = PopupMenu(myView.context, myView)
         popupMenu.menuInflater.inflate(R.menu.menu_video, popupMenu.menu)
         popupMenu.setForceShowIcon(true)
         popupMenu.menu[5].isVisible = isVideoInHiddenFolderFolder(video)
@@ -190,7 +175,6 @@ class VideoFragment : BaseFragment() {
                 }
 
                 R.id.item_open_in_folder -> {
-//                    file.parent?.let { intentUtil.openVideoFolder(view.context, it) }
                     true
                 }
 

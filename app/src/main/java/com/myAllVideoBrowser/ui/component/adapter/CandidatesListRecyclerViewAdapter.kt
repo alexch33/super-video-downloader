@@ -1,14 +1,11 @@
 package com.myAllVideoBrowser.ui.component.adapter
 
 import android.annotation.SuppressLint
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.databinding.ObservableField
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.color.MaterialColors
-import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.VideoFormatEntity
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.databinding.DownloadCandidateItemBinding
@@ -79,11 +76,6 @@ class CandidatesListRecyclerViewAdapter(
         with(holder.binding) {
             val selected = selectedFormat.get()?.get(downloadCandidates.id)
 
-            val color = MaterialColors.getColor(
-                this.root.context, R.attr.colorSurfaceVariant, Color.YELLOW
-            )
-            this.cardItem.setCardBackgroundColor(color)
-
             this.videoInfo = downloadCandidates
             this.downloadCandidate = candidate
             this.isCandidateSelected = candidate == selected
@@ -149,7 +141,7 @@ class CandidatesListRecyclerViewAdapter(
                 if (parts.size >= 2) {
                     val type = parts[0].uppercase() // "MPD" or "HLS"
                     val resolution = parts[1] // "1080p" or "audio"
-                    if (resolution.contains("p")) {
+                    if (resolution.contains("p") || resolution.contains("unknown")) {
                         "$type ${resolution.uppercase()}" // "MPD 1080P"
                     } else {
                         "$type Audio" // "HLS Audio"

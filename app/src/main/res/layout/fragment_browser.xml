@@ -3,17 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
-
         <variable
             name="viewModel"
             type="com.myAllVideoBrowser.ui.main.home.browser.BrowserViewModel" />
-
     </data>
 
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="?attr/colorSurface">
 
         <com.myAllVideoBrowser.ui.main.home.browser.CustomViewPager2
             android:id="@+id/view_pager"
@@ -22,20 +21,40 @@
             app:currentItem="@{viewModel.currentTab}"
             app:items="@{viewModel.tabs}" />
 
-        <LinearLayout
-            android:id="@+id/drawer_layout_content"
-            android:layout_width="match_parent"
+        <com.google.android.material.navigation.NavigationView
+            android:id="@+id/navigation_view"
+            android:layout_width="320dp"
             android:layout_height="match_parent"
-            android:layout_gravity="start"
-            android:orientation="vertical">
+            android:layout_gravity="start">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/tabs_list"
+            <LinearLayout
+                android:id="@+id/drawer_layout_content"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:items="@{viewModel.tabs}" />
+                android:orientation="vertical"
+                android:paddingTop="16dp">
 
-        </LinearLayout>
+                <com.google.android.material.textview.MaterialTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="16dp"
+                    android:text="@string/app_name"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/tabs_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingBottom="16dp"
+                    app:items="@{viewModel.tabs}"
+                    app:selectedTab="@{viewModel.currentTab}" />
+
+            </LinearLayout>
+        </com.google.android.material.navigation.NavigationView>
 
     </androidx.drawerlayout.widget.DrawerLayout>
 

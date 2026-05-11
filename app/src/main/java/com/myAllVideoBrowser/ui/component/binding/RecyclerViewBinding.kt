@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser.ui.component.binding
 
-import VideoInfoAdapter
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.myAllVideoBrowser.data.local.model.LocalVideo
@@ -19,6 +18,14 @@ object RecyclerViewBinding {
     fun RecyclerView.setWebTabs(tabs: List<WebTab>) {
         with(adapter as WebTabsAdapter?) {
             this?.let { setData(tabs) }
+        }
+    }
+
+    @BindingAdapter("app:selectedTab")
+    @JvmStatic
+    fun RecyclerView.setSelectedWebTab(index: Int) {
+        with(adapter as WebTabsAdapter?) {
+            this?.setSelectedTab(index)
         }
     }
 

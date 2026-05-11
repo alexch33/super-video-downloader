@@ -6,6 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.addCallback
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.myAllVideoBrowser.data.local.room.entity.PageInfo
@@ -56,11 +58,22 @@ class BookmarksFragment : BaseFragment() {
             this.mainVModel = mainModel
             this.bookmarksList.layoutManager = layoutManager
             this.bookmarksList.adapter = bookmarksAdapter
+            this.toolbar.setNavigationOnClickListener {
+                parentFragmentManager.popBackStack()
+            }
             itemTouchHelper.attachToRecyclerView(this.bookmarksList)
         }
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             parentFragmentManager.popBackStack()
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(this.dataBinding.root) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+
+            dataBinding.bookmarksList.setPadding(8, 8, 8, systemBars.bottom * 3)
+            insets
         }
 
         return dataBinding.root

@@ -2,7 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".ui.main.home.browser.homeTab.BrowserHomeFragment">
+    tools:context=".ui.main.home.browser.webTab.WebTabFragment">
 
     <data>
 
@@ -30,7 +30,7 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:background="?attr/colorSurface">
 
         <FrameLayout
             android:id="@+id/customView"
@@ -41,176 +41,147 @@
         <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:id="@+id/containerBrowser"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipChildren="false"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
             <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/app_bar"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                app:elevation="0dp">
 
                 <com.google.android.material.appbar.MaterialToolbar
                     android:id="@+id/toolbar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    app:contentInsetStart="0dp"
                     app:layout_scrollFlags="scroll|enterAlways|snap">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="fill_horizontal"
-                        android:orientation="horizontal">
+                        android:layout_height="wrap_content"
+                        android:paddingVertical="8dp">
 
                         <LinearLayout
                             android:id="@+id/buttons_block"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingStart="4dp"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent">
 
-                            <com.google.android.material.imageview.ShapeableImageView
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/iv_close_tab"
-                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:adjustViewBounds="true"
-                                android:contentDescription="@string/home"
-                                android:foreground="?android:attr/selectableItemBackground"
+                                style="@style/Widget.Material3.Button.IconButton"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
                                 android:onClick="@{() -> browserMenuListener.onTabCloseClicked()}"
-                                android:padding="@dimen/padding_small"
-                                android:scaleType="centerCrop"
-                                app:shapeAppearanceOverlay="@style/customImageViewRounded"
-                                app:srcCompat="@drawable/tab_close_24px"
-                                tools:ignore="VectorDrawableCompat" />
+                                app:icon="@drawable/tab_close_24px"
+                                app:iconTint="?attr/colorOnSurface" />
 
-                            <com.google.android.material.imageview.ShapeableImageView
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/iv_go_back"
+                                style="@style/Widget.Material3.Button.IconButton"
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
-                                android:adjustViewBounds="true"
-                                android:contentDescription="@string/home"
-                                android:foreground="?android:attr/selectableItemBackground"
                                 android:onClick="@{() -> browserMenuListener.onBrowserBackClicked()}"
-                                android:padding="@dimen/padding_small"
-                                android:scaleType="centerCrop"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:shapeAppearanceOverlay="@style/customImageViewRounded"
-                                app:srcCompat="@drawable/arrow_back24px"
-                                tools:ignore="VectorDrawableCompat" />
+                                app:icon="@drawable/arrow_back24px"
+                                app:iconTint="?attr/colorOnSurface" />
 
-                            <com.google.android.material.imageview.ShapeableImageView
+                            <com.google.android.material.button.MaterialButton
                                 android:id="@+id/iv_go_forward"
-                                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                                style="@style/Widget.Material3.Button.IconButton"
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
-                                android:adjustViewBounds="true"
-                                android:contentDescription="@string/home"
-                                android:foreground="?android:attr/selectableItemBackground"
                                 android:onClick="@{() -> browserMenuListener.onBrowserForwardClicked()}"
-                                android:padding="@dimen/padding_small"
-                                android:scaleType="centerCrop"
-                                app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent"
-                                app:shapeAppearanceOverlay="@style/customImageViewRounded"
-                                app:srcCompat="@drawable/arrow_forward24px"
-                                tools:ignore="VectorDrawableCompat" />
+                                app:icon="@drawable/arrow_forward24px"
+                                app:iconTint="?attr/colorOnSurface" />
                         </LinearLayout>
 
                         <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                            android:id="@id/et_search"
+                            android:id="@+id/et_search"
                             android:layout_width="0dp"
-                            android:layout_height="50dp"
-                            android:layout_weight="1"
+                            android:layout_height="48dp"
+                            android:layout_marginHorizontal="8dp"
+                            android:background="@drawable/round_corner"
                             android:focusable="@{viewModel.isTabInputFocused}"
                             android:focusableInTouchMode="@{viewModel.isTabInputFocused}"
                             android:hint="@string/browser_search_hint"
-                            android:maxWidth="480dp"
                             android:onClick="@{() -> viewModel.changeTabFocus(true)}"
-                            android:paddingStart="@dimen/padding_small"
-                            android:paddingEnd="@dimen/browser_title_padding"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="48dp"
                             android:singleLine="true"
                             android:text="@{viewModel.getTabTextInput()}"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textColorHint="?attr/colorOnSurfaceVariant"
                             android:textSize="@dimen/text_small"
                             app:items="@{viewModel.listTabSuggestions}"
-                            app:layout_constraintEnd_toStartOf="@+id/browser_menu_container"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@+id/browser_menu_button"
                             app:layout_constraintStart_toEndOf="@+id/buttons_block"
                             app:layout_constraintTop_toTopOf="parent" />
 
-                        <com.google.android.material.imageview.ShapeableImageView
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/iv_close_refresh"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:adjustViewBounds="true"
-                            android:foreground="?android:attr/selectableItemBackground"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="4dp"
                             android:onClick="@{() -> viewModel.isShowProgress() ? browserMenuListener.onBrowserStopClicked() : browserMenuListener.onBrowserReloadClicked()}"
-                            android:padding="@dimen/padding_small"
-                            android:scaleType="centerCrop"
-                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:icon="@{viewModel.progressIcon}"
+                            app:iconTint="?attr/colorOnSurfaceVariant"
+                            app:layout_constraintBottom_toBottomOf="@+id/et_search"
                             app:layout_constraintEnd_toEndOf="@+id/et_search"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintVertical_bias="0.466"
-                            app:shapeAppearanceOverlay="@style/customImageViewRounded"
-                            app:srcCompat="@{viewModel.progressIcon}"
-                            tools:ignore="VectorDrawableCompat" />
+                            app:layout_constraintTop_toTopOf="@+id/et_search" />
 
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/browser_menu_container"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="@dimen/padding_small"
-                            android:elevation="0dp"
-                            android:shadowColor="@android:color/transparent"
-                            app:cardBackgroundColor="@android:color/transparent"
-                            app:cardCornerRadius="8dp"
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/browser_menu_button"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="4dp"
+                            android:onClick="@{() -> browserMenuListener.onBrowserMenuClicked()}"
+                            app:icon="@drawable/ic_more_24dp"
+                            app:iconTint="?attr/colorOnSurface"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintRight_toRightOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintVertical_bias="0.0"
-                            app:strokeColor="@android:color/transparent">
-
-                            <androidx.appcompat.widget.AppCompatImageView
-                                android:id="@+id/browser_menu_button"
-                                android:layout_width="49dp"
-                                android:layout_height="49dp"
-                                android:background="?attr/selectableItemBackground"
-                                android:contentDescription="@string/menu"
-                                android:onClick="@{() -> browserMenuListener.onBrowserMenuClicked()}"
-                                android:padding="@dimen/padding_small"
-                                app:srcCompat="@drawable/ic_more_24dp"
-                                tools:ignore="VectorDrawableCompat" />
-                        </com.google.android.material.card.MaterialCardView>
+                            app:layout_constraintTop_toTopOf="parent" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
                 </com.google.android.material.appbar.MaterialToolbar>
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="3dp"
+                    android:progress="@{viewModel.progress}"
+                    android:progressTint="?attr/colorPrimary"
+                    android:visibility="@{viewModel.isShowProgress ? View.VISIBLE : View.GONE}" />
 
             </com.google.android.material.appbar.AppBarLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/webview_container"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_marginBottom="@dimen/home_bottom_bar_size"
-                    android:orientation="horizontal" />
+                    android:layout_marginBottom="@dimen/home_bottom_bar_size" />
 
                 <FrameLayout
                     android:layout_width="3dp"
-                    android:layout_height="700dp"
+                    android:layout_height="match_parent"
                     android:visibility="@{(videoTabVModel.hasCheckLoadingsM3u8() || videoTabVModel.hasCheckLoadingsRegular()) ? View.VISIBLE : View.GONE }"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent">
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
 
                     <ProgressBar
                         style="@android:style/Widget.ProgressBar.Horizontal"
@@ -221,23 +192,11 @@
                         android:rotation="90" />
                 </FrameLayout>
 
-
                 <FrameLayout
                     android:id="@+id/fullscreen_container"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:visibility="gone" />
-
-                <ProgressBar
-                    android:id="@+id/progressBar"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/browser_progress_size"
-                    android:background="@android:color/transparent"
-                    android:progress="@{viewModel.progress}"
-                    android:progressDrawable="@drawable/progress_load_data"
-                    android:visibility="@{viewModel.isShowProgress ? View.VISIBLE : View.GONE}"
-                    app:layout_constraintTop_toTopOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -245,49 +204,36 @@
                 android:id="@+id/floating_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_margin="16dp"
                 android:layout_gravity="bottom|end"
-                android:background="@android:color/transparent"
-                android:backgroundTint="@android:color/transparent"
-                android:clickable="true"
-                android:focusable="true"
-                android:focusedByDefault="false"
-                android:foregroundGravity="center"
-                android:translationZ="20dp"
-                android:visibility="@{settingsViewModel.getVideoButtonState() ? View.VISIBLE : View.GONE}"
-                app:layout_anchorGravity="center">
+                android:visibility="@{settingsViewModel.getVideoButtonState() ? View.VISIBLE : View.GONE}">
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/fab"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Rounded"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_margin="@dimen/padding_large"
-                    android:backgroundTint="@color/colorPrimary"
+                    android:layout_margin="24dp"
                     android:contentDescription="@string/open_download_dialog_or_restart"
                     android:onClick="@{() -> videoTabVModel.showVideoInfo()}"
-                    android:src="@{videoTabVModel.getDownloadBtnIcon()}"
-                    app:borderWidth="0dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    tools:ignore="ContentDescription" />
+                    app:backgroundTint="?attr/colorPrimaryContainer"
+                    app:srcCompat="@{videoTabVModel.getDownloadBtnIcon()}"
+                    app:tint="?attr/colorOnPrimaryContainer" />
 
-                <ImageView
+                <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/loadingWavy"
-                    android:layout_width="57dp"
-                    android:layout_height="57dp"
-                    android:layout_margin="@dimen/padding_large"
-                    android:layout_marginEnd="6dp"
-                    android:background="@drawable/round_corner"
-                    android:backgroundTint="@android:color/transparent"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
                     android:contentDescription="@string/loading_image_view"
-                    android:focusable="false"
-                    android:translationZ="@dimen/padding_small"
+                    android:translationZ="12dp"
                     android:visibility="@{videoTabVModel.getDownloadBtnIcon() == R.drawable.invisible_24px ? View.VISIBLE : View.GONE}"
-                    app:layout_constraintBottom_toBottomOf="@+id/fab"
-                    app:layout_constraintEnd_toEndOf="@+id/fab"
-                    app:layout_constraintStart_toStartOf="@+id/fab"
-                    app:layout_constraintTop_toTopOf="@+id/fab" />
+                    app:layout_constraintBottom_toBottomOf="@id/fab"
+                    app:layout_constraintEnd_toEndOf="@id/fab"
+                    app:layout_constraintStart_toStartOf="@id/fab"
+                    app:layout_constraintTop_toTopOf="@id/fab"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Rounded" />
             </com.myAllVideoBrowser.ui.component.widget.MovableContainer>
+
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
     </FrameLayout>
 

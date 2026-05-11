@@ -48,4 +48,10 @@ object ImageBinding {
     fun setImageResource(imageView: ImageView, resource: Int) {
         imageView.setImageResource(resource)
     }
+
+    @BindingAdapter("app:srcCompat")
+    @JvmStatic
+    fun setSrcCompatResource(imageView: ImageView, resource: Int) {
+        imageView.setImageResource(resource)
+    }
 }

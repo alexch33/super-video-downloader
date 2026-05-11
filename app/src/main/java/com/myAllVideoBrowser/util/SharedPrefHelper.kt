@@ -53,7 +53,6 @@ class SharedPrefHelper @Inject constructor(
         private const val CUSTOM_DNS_URL = "CUSTOM_DNS_URL"
         private const val IS_USE_LEGACY_M3U8_DETECTION = "IS_USE_LEGACY_M3U8_DETECTION"
 
-        private const val IS_DRM_ENABLED = "IS_DRM_ENABLED"
         private const val IS_ASK_REDIRECTION = "IS_ASK_REDIRECTION"
     }
 
@@ -408,14 +407,6 @@ class SharedPrefHelper @Inject constructor(
         sharedPreferences.edit {
             putBoolean(IS_USE_LEGACY_M3U8_DETECTION, isUse)
         }
-    }
-
-    fun getIsDrmEnabled(): Boolean {
-        return sharedPreferences.getBoolean(IS_DRM_ENABLED, false)
-    }
-
-    fun setIsDrmEnabled(isEnabled: Boolean) {
-        sharedPreferences.edit { putBoolean(IS_DRM_ENABLED, isEnabled) }
     }
 
     fun getIsAskRedirection(): Boolean {

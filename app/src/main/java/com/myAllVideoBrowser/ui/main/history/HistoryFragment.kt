@@ -57,10 +57,8 @@ class HistoryFragment : BaseFragment() {
 
         historyAdapter = HistoryAdapter(emptyList(), historyListener)
         searchHistoryAdapter = HistorySearchAdapter(emptyList(), searchHistoryListener)
-        val color = getThemeBackgroundColor()
 
         dataBinding = FragmentHistoryBinding.inflate(inflater, container, false).apply {
-            this.historyContainer.setBackgroundColor(color)
             val historyManagerLayout =
                 WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, true)
             historyManagerLayout.stackFromEnd = true
@@ -81,7 +79,11 @@ class HistoryFragment : BaseFragment() {
             }
         }
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
-            parentFragmentManager.popBackStack()
+            if (dataBinding.searchHistoryView.isShowing) {
+                dataBinding.searchHistoryView.hide()
+            } else {
+                parentFragmentManager.popBackStack()
+            }
         }
         return dataBinding.root
     }
@@ -115,11 +117,13 @@ class HistoryFragment : BaseFragment() {
         override fun onHistoryOpenClicked(view: View, id: String) {
             AppLogger.d("SEARCH: onHistoryOpenClicked  $id")
 
-            // TODO duplicate code from historyListener
             historyModel.historyItems.get()?.find {
                 it.id == id
             }.let {
                 it?.let { item ->
+                    if (dataBinding.searchHistoryView.isShowing) {
+                        dataBinding.searchHistoryView.hide()
+                    }
                     parentFragmentManager.popBackStack()
                     BrowserViewModel.instance?.openPageEvent?.value =
                         WebTab(item.url, item.title, item.faviconBitmap())

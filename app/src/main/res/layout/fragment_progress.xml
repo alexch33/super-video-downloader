@@ -47,16 +47,6 @@
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-            <FrameLayout
-                android:id="@+id/progress_native_ad_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:visibility="gone"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_progress"
                 android:layout_width="match_parent"
@@ -65,7 +55,7 @@
                 android:paddingBottom="80dp"
                 app:items="@{viewModel.progressInfos}"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/progress_native_ad_container" />
+                app:layout_constraintTop_toTopOf="parent" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/layout_empty"

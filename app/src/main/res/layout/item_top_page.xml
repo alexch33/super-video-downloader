@@ -36,7 +36,6 @@
                 android:id="@+id/img_icon"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:background="?attr/colorSurfaceVariant"
                 android:padding="8dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

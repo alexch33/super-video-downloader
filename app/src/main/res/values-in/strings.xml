@@ -123,8 +123,6 @@
     <string name="video_move_downloads">Pindah ke Unduhan</string>
     <string name="media_move_error">Kesalahan Pemindahan Media</string>
     <string name="media_move_success">Sukses memindahkan media</string>
-    <string name="drm_permission_title">Izinkan Konten Dilindungi</string>
-    <string name="drm_permission_message">Situs ini ingin memutar media yang dilindungi DRM (seperti film atau musik). Mengizinkan hal ini diperlukan untuk pemutaran. Apakah Anda ingin mengaktifkan fitur ini?</string>
     <string name="allow">Izinkan</string>
     <string name="block">Blokir</string>
 </resources>

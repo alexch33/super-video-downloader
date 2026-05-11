@@ -123,8 +123,6 @@
     <string name="video_move_downloads">移动下载</string>
     <string name="media_move_error">媒体移动错误</string>
     <string name="media_move_success">媒体移动成功</string>
-    <string name="drm_permission_title">允许受保护内容</string>
-    <string name="drm_permission_message">此站点想播放受 DRM 保护的媒体（如电影或音乐）。允许这个才能进行播放。要启用此功能吗？</string>
     <string name="allow">允许</string>
     <string name="block">拦截</string>
 </resources>

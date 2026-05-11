@@ -36,15 +36,6 @@ class WebTabsAdapter(
                 } else {
                     View.VISIBLE
                 }
-                if (webTab.getFavicon() == null && !webTab.isHome()) {
-                    val bm =
-                        AppCompatResources.getDrawable(
-                            context,
-                            R.drawable.public_24px
-                        )
-
-                    this.faviconTab.setImageDrawable(bm)
-                }
 
                 if (webTab.isHome()) {
                     val bm =
@@ -54,6 +45,19 @@ class WebTabsAdapter(
                         )
 
                     this.faviconTab.setImageDrawable(bm)
+                } else {
+                    val favicon = webTab.getFavicon()
+                    if (favicon != null) {
+                        this.faviconTab.setImageBitmap(favicon)
+                    } else {
+                        val bm =
+                            AppCompatResources.getDrawable(
+                                context,
+                                R.drawable.public_24px
+                            )
+
+                        this.faviconTab.setImageDrawable(bm)
+                    }
                 }
 
                 if (!webTab.isHome()) {

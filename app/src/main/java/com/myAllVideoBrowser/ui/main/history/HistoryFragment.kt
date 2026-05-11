@@ -9,6 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.addCallback
 import androidx.appcompat.widget.PopupMenu
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentHistoryBinding
@@ -76,6 +78,14 @@ class HistoryFragment : BaseFragment() {
             this.searchHistoryView.editText.addTextChangedListener(searchTextChangeListener)
             this.clearButton.setOnClickListener {
                 historyModel.clearHistory()
+            }
+
+            ViewCompat.setOnApplyWindowInsetsListener(this.root) { v, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
+
+                this.historyList.setPadding(8, 8, 8, systemBars.bottom * 2)
+                insets
             }
         }
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {

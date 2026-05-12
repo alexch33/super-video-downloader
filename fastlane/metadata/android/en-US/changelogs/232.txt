@@ -1,0 +1,9 @@
+### Added
+- Material design redesign
+- UI optimizations
+- DRM support removed
+- Local proxy credentials regeneration every 3 days
+### Fixed
+- Move file from private folder crash fix
+- Conscrypt security added (Old devices crash fix)
+- Minor fixes

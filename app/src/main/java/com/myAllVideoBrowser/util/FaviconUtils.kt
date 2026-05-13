@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import kotlinx.coroutines.delay
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.use
@@ -36,7 +37,9 @@ class FaviconUtils {
             )
 
             for (reqUrl in potentialUrls) {
-                val request = Request.Builder().url(reqUrl).build()
+                val safeUrl = reqUrl.toHttpUrlOrNull() ?: continue
+
+                val request = Request.Builder().url(safeUrl).build()
                 val response = okHttpClient.newCall(request).execute()
 
                 if (response.isSuccessful) {

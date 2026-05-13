@@ -17,13 +17,13 @@ class VideoUtils {
                 return ContentType.OTHER
             }
 
-            val request = Request.Builder()
-                .url(url)
-                .headers(headers ?: Headers.headersOf())
-                .get()
-                .build()
-
             return runCatching {
+                val request = Request.Builder()
+                    .url(url)
+                    .headers(headers ?: Headers.headersOf())
+                    .get()
+                    .build()
+
                 okHttpProxyClient.getProxyOkHttpClient().newCall(request).execute()
                     .use { response ->
                         val contentTypeStr = response.header("Content-Type")

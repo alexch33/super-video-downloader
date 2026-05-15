@@ -11,6 +11,7 @@ import com.myAllVideoBrowser.data.remote.service.VideoServiceSuperX
 import com.myAllVideoBrowser.data.remote.service.VideoServiceLocal
 import com.myAllVideoBrowser.di.qualifier.ApplicationContext
 import com.myAllVideoBrowser.util.Memory
+import com.myAllVideoBrowser.util.ProxyRetryInterceptor
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import dagger.Module
@@ -49,6 +50,7 @@ class NetworkModule {
     fun provideOkHttpClient(cookieJar: PersistentCookieJar): OkHttpClient {
         return OkHttpClient.Builder()
             .cookieJar(cookieJar)
+            .addInterceptor(ProxyRetryInterceptor())
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)

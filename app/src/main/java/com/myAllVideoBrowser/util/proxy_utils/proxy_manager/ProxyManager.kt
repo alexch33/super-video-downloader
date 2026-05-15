@@ -2,6 +2,7 @@ package com.myAllVideoBrowser.util.proxy_utils.proxy_manager
 
 import android.util.Log
 import com.myAllVideoBrowser.DLApplication.Companion.DEBUG_TAG
+import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.v2ray.V2Ray
 import java.io.Serializable
 
@@ -137,7 +138,7 @@ object ProxyManager {
             val result = V2Ray.XrayRun(xrayJsonConfig)
             if (result == 0L) {
                 Log.i(TAG, "V2Ray proxy chain started successfully on port $localPort")
-                return true
+                return waitForProxy(localPort)
             } else {
                 Log.e(TAG, "V2Ray.XrayRun returned a non-zero error code: $result")
                 return false
@@ -165,5 +166,21 @@ object ProxyManager {
             Log.w(TAG, "Could not check V2Ray status, assuming not running.", e)
             false
         }
+    }
+
+    private fun waitForProxy(port: Int, timeoutMs: Long = 2000): Boolean {
+        val startTime = System.currentTimeMillis()
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            try {
+                java.net.Socket("127.0.0.1", port).use {
+                    Log.i(TAG, "Proxy port $port is verified active.")
+                    return true
+                }
+            } catch (e: Exception) {
+                Thread.sleep(50)
+            }
+        }
+        Log.e(TAG, "Proxy started but port $port never became reachable.")
+        return false
     }
 }

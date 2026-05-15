@@ -370,7 +370,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsDohOn(): Boolean {
-        return sharedPreferences.getBoolean(IS_DOH_ON, true)
+        return sharedPreferences.getBoolean(IS_DOH_ON, false)
     }
 
     fun setIsDohOn(isOn: Boolean) {

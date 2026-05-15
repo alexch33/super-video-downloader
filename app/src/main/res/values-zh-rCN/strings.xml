@@ -125,4 +125,10 @@
     <string name="media_move_success">媒体移动成功</string>
     <string name="allow">允许</string>
     <string name="block">拦截</string>
+    <string name="ask_redirection_title">请求重定向</string>
+    <string name="redirection_dialog_title">重定向</string>
+    <string name="redirection_dialog_message">此站点正将你重定向到另一个域名。要继续吗？：</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="tabs">标签页</string>
 </resources>

@@ -126,4 +126,10 @@
     <string name="ads_detection_treshold">Rozmiar wykrywanych reklam:</string>
     <string name="get_started_guide">Cześć ;–) Aby wykryć film, przejdź do niego w przeglądarce, kliknij Odtwórz i poczekaj, aż zostanie wykryty (może to potrwać od 5 do 50 sekund)\n 1. Możesz zmienić rozmiar wykrywanych reklam w ustawieniach\n 2. Niektóre filmy pobrane w trybie wielowątkowym są uszkodzone. W takich sytuacjach do pobierania należy używać jednego wątku.\n\n Aby pobrać film:\n \n 1. Naciśnij przycisk, w oknie dialogowym wybierz rozdzielczość (jeśli jest dostępna) i naciśnij kolorowy przycisk \n \n 2. Kliknij przycisk Odtwórz w odtwarzaczu na stronie zawierającej film. Po tym powinien zostać wykryty. \n \nJeśli nie, spróbuj odświeżyć filmy na stronie z filmami lub odświeżyć stronę i spróbuj ponownie.\nJeśli nie zadziała, napisz do mnie e-maila.\n \n \n Po pobraniu film będzie dostępny w aplikacji. \n</string>
     <string name="instruction">Cześć ;–) \n Aby wykryć film, przejdź do niego w przeglądarce, kliknij Odtwórz i poczekaj, aż zostanie wykryty (może to potrwać od 5 do 50 sekund)\n 1. Możesz zmienić rozmiar wykrywanych reklam w ustawieniach \n 2. Wykrywanie filmu nie działa w przypadku niektórych witryn internetowych w trybie mobilnym. Jeśli film nie jest wykrywany w trybie mobilnym, użyj wersji komputerowej\n Jeśli nie, spróbuj odświeżyć filmy na stronie z filmami lub odświeżyć stronę i spróbuj ponownie.\n Jeśli nie zadziała, napisz do mnie e-maila.\n \n\n Aby pobrać film:\n \n 1. Naciśnij przycisk Pobierz, na wyświetlonym ekranie wybierz rozdzielczość, jeśli jest dostępna \n \n 2. Naciśnij przycisk pobierania. \n \n \n Po pobraniu film będzie dostępny w aplikacji. \n</string>
+    <string name="yes">Tak</string>
+    <string name="no">Nie</string>
+    <string name="tabs">Karty</string>
+    <string name="redirection_dialog_title">Przekierowanie</string>
+    <string name="redirection_dialog_message">Ta strona przekieruje Cię do innej domeny. Czy chcesz kontynuować?</string>
+    <string name="ask_redirection_title">Pytanie o przekierowanie</string>
 </resources>

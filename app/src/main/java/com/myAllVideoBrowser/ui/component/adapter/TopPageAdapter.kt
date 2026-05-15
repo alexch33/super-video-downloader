@@ -9,10 +9,10 @@ import android.widget.ArrayAdapter
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.color.MaterialColors
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.PageInfo
 import com.myAllVideoBrowser.databinding.ItemTopPageBinding
-import com.myAllVideoBrowser.ui.main.home.browser.BrowserViewModel
 import com.myAllVideoBrowser.util.ContextUtils
 
 class TopPageAdapter(
@@ -38,9 +38,12 @@ class TopPageAdapter(
                     ContextUtils.getApplicationContext(), R.drawable.ic_browser
                 )
                 drawable?.setColorFilter(
-                    ContextUtils.getApplicationContext().resources.getColor(
-                        R.color.color_gray_2
-                    ), PorterDuff.Mode.MULTIPLY
+                    MaterialColors.getColor(
+                        context,
+                        com.google.android.material.R.attr.colorOnSurfaceVariant,
+                        android.graphics.Color.GRAY
+                    ),
+                    PorterDuff.Mode.SRC_IN
                 )
                 this?.imgIcon?.setImageDrawable(drawable)
             }
@@ -50,7 +53,6 @@ class TopPageAdapter(
         return binding!!.root
     }
 
-    // TODO bullshit
     override fun getItemId(position: Int) = try {
         pageInfos[position].hashCode().toLong()
     } catch (e: Exception) {

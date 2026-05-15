@@ -27,7 +27,6 @@ class SplashActivity : BaseActivity() {
     private lateinit var dataBinding: ActivitySplashBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         splashViewModel = ViewModelProvider(this, viewModelFactory)[SplashViewModel::class.java]

@@ -96,7 +96,7 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         if (success) {
             AppLogger.i("Proxy successfully started by Worker.")
             try {
-                while (true) {
+                while (!isStopped) {
                     delay(10000)
                     if (!ProxyManager.isProxyRunning()) {
                         AppLogger.w("Proxy process died, attempting to restart...")
@@ -113,7 +113,7 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             return Result.failure()
         }
 
-        return Result.success()
+        return if (isStopped) Result.retry() else Result.success()
     }
 
     private fun createForegroundInfo(): ForegroundInfo {

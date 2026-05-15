@@ -21,6 +21,7 @@
     <string name="progress_menu_pause">пауза</string>
     <string name="progress_menu_resume">продолжить</string>
     <string name="download_link_label">URL видео</string>
+    <string name="view">Смотреть</string>
     <string name="paste">Вставить</string>
     <string name="history">История</string>
     <string name="share_link">Поделиться ссылкой</string>

@@ -145,7 +145,8 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                 applicationContext.getString(R.string.proxy_service_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Channel for the background proxy worker."
+                description =
+                    applicationContext.getString(R.string.proxy_service_channel_description)
             }
 
             val manager =

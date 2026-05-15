@@ -42,28 +42,31 @@ class NotificationsHelper(private val context: Context) {
 
         when (task.taskState) {
             VideoTaskState.PREPARE -> {
-                builder.setSubText("prepare").setProgress(0, 0, true)
+                builder.setSubText(context.resources.getString(R.string.download_preparing))
+                    .setProgress(0, 0, true)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
                 builder.addAction(createPauseBroadcastMessage(task.mId))
                 builder.addAction(createCancelBroadcastMessage(task.mId))
             }
 
             VideoTaskState.PENDING -> {
-                builder.setSubText("pending").setProgress(0, 0, true)
+                builder.setSubText(context.resources.getString(R.string.download_pending))
+                    .setProgress(0, 0, true)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
                 builder.addAction(createPauseBroadcastMessage(task.mId))
                 builder.addAction(createCancelBroadcastMessage(task.mId))
             }
 
             VideoTaskState.DOWNLOADING -> {
-                builder.setSubText("downloading...").setProgress(100, taskPercent.toInt(), false)
+                builder.setSubText(context.resources.getString(R.string.download_downloading))
+                    .setProgress(100, taskPercent.toInt(), false)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download)
                 builder.addAction(createPauseBroadcastMessage(task.mId))
                 builder.addAction(createCancelBroadcastMessage(task.mId))
             }
 
             VideoTaskState.PAUSE -> {
-                builder.setSubText("pause")
+                builder.setSubText(context.resources.getString(R.string.download_paused))
                 builder.setProgress(100, taskPercent.toInt(), false)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download)
                 builder.addAction(createResumeBroadcastMessage(task.mId))
@@ -77,7 +80,8 @@ class NotificationsHelper(private val context: Context) {
                 val actionWatchIntent = notificationIntentWatch(task.fileName)
 
                 builder.setContentIntent(actionWatchIntent)
-                builder.setSubText("success!!!").setProgress(0, 0, false)
+                builder.setSubText(context.resources.getString(R.string.download_success))
+                    .setProgress(0, 0, false)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
                 builder.addAction(actionOpenInApp).addAction(actionWatch)
             }
@@ -86,8 +90,9 @@ class NotificationsHelper(private val context: Context) {
                 builder.clearActions()
                 val action = notificationActionOpen(true)
 
-                builder.setSubText("Error")
-                builder.setContentText("Failed " + task.errorMessage)
+                val errorText = context.resources.getString(R.string.download_error)
+                builder.setSubText(errorText)
+                builder.setContentText("$errorText " + task.errorMessage)
                     .setProgress(100, taskPercent.toInt(), false)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
                 builder.addAction(action)
@@ -95,7 +100,7 @@ class NotificationsHelper(private val context: Context) {
             }
 
             VideoTaskState.CANCELED -> {
-                builder.setSubText("Canceled")
+                builder.setSubText(context.resources.getString(R.string.download_canceled))
                 builder.setProgress(0, 0, false)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download)
             }
@@ -227,9 +232,8 @@ class NotificationsHelper(private val context: Context) {
             val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance)
             channel.setSound(null, null)
 
-            val channelName =
-                context.getString(com.myAllVideoBrowser.R.string.app_download_channel_id)
-            channel.description = channelName
+            channel.description =
+                context.getString(R.string.app_download_channel_description)
             // Add the channel
             notificationManager.createNotificationChannel(channel)
         }

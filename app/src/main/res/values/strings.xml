@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_icon">app icon</string>
     <string name="app_name">SuperX</string>
     <string name="browser_search_hint">Search in DuckDuckGo or enter url</string>
 
@@ -24,18 +23,17 @@
 
     <string name="progress_empty_message">You are not downloading any video.</string>
 
-    <string name="settings_general" translatable="false">GENERAL</string>
+    <string name="settings_general">General</string>
     <string name="settings_videos_folder">Videos folder</string>
-    <string name="settings_folder_path" translatable="false">folder path</string>
     <string name="settings_clear_browser_cookies">Clear browser cookies</string>
     <string name="settings_message_open_folder">You don\'t have any file explorer app installed on your device</string>
     <string name="progress_menu_cancel">Cancel</string>
-    <string name="app_download_channel_id" translatable="false">download_channel_id</string>
+    <string name="app_download_channel_description">Background Download channel</string>
     <string name="all_text_cancel">Cancel</string>
     <string name="progress_menu_pause">pause</string>
     <string name="progress_menu_resume">resume</string>
     <string name="download_link_label">Video Url</string>
-    <string name="view" translatable="false">View</string>
+    <string name="view">View</string>
     <string name="paste">paste</string>
     <string name="history">History</string>
     <string name="share_link">Share Link</string>
@@ -114,7 +112,7 @@
     <string name="force_stream_detection">Force Stream Detection(Detection urls with body content length -1, sometimes used for regular live streams)</string>
     <string name="is_always_remux_regular_downloads">Postprocessing for all regular downloads</string>
     <string name="is_remux_only_live_regular_downloads">Postprocessing for only live downloads</string>
-    <string name="is_interrupt_intrecepted_resources">Interrupt intrecepted media content for browser</string>
+    <string name="is_interrupt_intrecepted_resources">Interrupt intercepted media content for browser</string>
     <string name="add_proxy">Add Proxy</string>
     <string name="current_proxy_chain">Current proxy chain</string>
     <string name="add_http_proxy">Add http proxy</string>
@@ -127,7 +125,8 @@
     <string name="doh_quad9">Quad9 DOH</string>
     <string name="doh_ad_guard">Adguard DOH</string>
     <string name="custom_dns_saved_message">Custom DNS saved</string>
-    <string name="proxy_service_channel_name" translatable="false">proxy channel</string>
+    <string name="proxy_service_channel_name">Background proxy</string>
+    <string name="proxy_service_channel_description">Background proxy worker.</string>
     <string name="settings_detection">Detection Settings</string>
     <string name="settings_downloading">Downloading Settings</string>
     <string name="use_legacy_m3u8_detection">Use legacy m3u8/mpd detection(by youtube-dlp)</string>
@@ -142,5 +141,14 @@
     <string name="redirection_dialog_message">This site is redirecting you to another domain Do you want to continue?:</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
-    <string name="tabs">Tabs</string>
+    <string name="download_preparing">preparing</string>
+    <string name="download_pending">pending</string>
+    <string name="download_downloading">downloading…</string>
+    <string name="download_paused">paused</string>
+    <string name="download_success">Success!!!</string>
+    <string name="download_error">Error</string>
+    <string name="download_canceled">Canceled</string>
+    <string name="browser_tab">Browser</string>
+    <string name="progress_tab">Progress</string>
+    <string name="video_tab">Video</string>
 </resources>

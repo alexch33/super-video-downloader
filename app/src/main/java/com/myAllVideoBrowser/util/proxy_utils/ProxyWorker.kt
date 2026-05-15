@@ -156,10 +156,11 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
 
         val proxyString = applicationContext.getString(R.string.proxy)
         val dnsString = applicationContext.getString(R.string.secure_dns)
+        val additionalInfo = applicationContext.getString(R.string.can_be_turned_off)
 
         return NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setContentTitle(proxyString)
-            .setContentText("$proxyString / $dnsString")
+            .setContentText("$proxyString / $dnsString : $additionalInfo")
             .setSmallIcon(R.drawable.domino_mask_24px)
             .setOngoing(true)
             .build()

@@ -22,7 +22,7 @@
         android:id="@+id/proxies_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?attr/colorSurface"
+        android:background="?attr/colorSurfaceContainer"
         tools:context=".ui.main.proxies.ProxiesFragment">
 
         <com.google.android.material.appbar.AppBarLayout
@@ -34,6 +34,7 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
+                android:background="?attr/colorSurfaceContainer"
                 app:navigationIcon="@drawable/arrow_back24px"
                 app:title="@string/proxy"
                 app:titleTextAppearance="?attr/textAppearanceTitleLarge">
@@ -42,6 +43,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_gravity="end"
+                    android:background="?attr/colorSurfaceContainer"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:paddingEnd="16dp">
@@ -69,6 +71,7 @@
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="?attr/colorSurface"
             android:clipToPadding="false"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 

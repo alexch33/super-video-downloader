@@ -27,6 +27,7 @@ class MovableContainer @JvmOverloads constructor(
     private var dY = 0f
 
     private fun init() {
+        clipToOutline = true;
         setOnTouchListener(this)
     }
 

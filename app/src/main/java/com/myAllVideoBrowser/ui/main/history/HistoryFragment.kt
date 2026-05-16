@@ -84,7 +84,7 @@ class HistoryFragment : BaseFragment() {
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
 
-                this.historyList.setPadding(8, 8, 8, systemBars.bottom * 2)
+                this.historyList.setPadding(8, 8, 8, systemBars.bottom)
                 insets
             }
         }

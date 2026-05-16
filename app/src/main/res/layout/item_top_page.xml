@@ -4,13 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-
         <import type="android.view.View" />
-
         <variable
             name="pageInfo"
             type="com.myAllVideoBrowser.data.local.room.entity.PageInfo" />
-
         <variable
             name="listener"
             type="com.myAllVideoBrowser.ui.component.adapter.TopPageAdapter.TopPagesListener" />
@@ -22,7 +19,7 @@
         android:clickable="true"
         android:focusable="true"
         android:onClick="@{() -> listener.onItemClicked(pageInfo)}"
-        app:cardBackgroundColor="@android:color/transparent"
+        app:cardBackgroundColor="?attr/colorSurface"
         app:cardElevation="0dp"
         app:rippleColor="?attr/colorControlHighlight"
         app:strokeWidth="0dp">

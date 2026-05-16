@@ -5,26 +5,18 @@
         android:id="@+id/tab_browser"
         android:enabled="true"
         android:icon="@drawable/tab_group_24px"
-        android:title="Browser"
+        android:title="@string/browser_tab"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/tab_progress"
         android:enabled="true"
         android:icon="@drawable/downloading_24px"
-        android:title="Progress"
+        android:title="@string/progress_tab"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/tab_video"
         android:enabled="true"
         android:icon="@drawable/video_library_24px"
-        android:title="Video"
-        app:showAsAction="ifRoom" />
-
-    <item
-        android:id="@+id/tab_settings"
-        android:enabled="true"
-        android:icon="@drawable/media_link_24px"
-        android:title="Video Url"
-        android:visible="false"
+        android:title="@string/video_tab"
         app:showAsAction="ifRoom" />
 </menu>

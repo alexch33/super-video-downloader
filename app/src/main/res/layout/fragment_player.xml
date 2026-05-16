@@ -14,7 +14,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/black"
+        android:background="?attr/colorSurfaceContainer"
         android:orientation="vertical">
 
         <androidx.media3.ui.PlayerView
@@ -45,11 +45,11 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/black_15"
+            android:background="?attr/colorSurfaceContainer"
             app:layout_constraintTop_toTopOf="parent"
             app:navigationIcon="@drawable/ic_arrow_back_white_24dp"
             app:title="@{viewModel.videoName}"
-            app:titleTextColor="@android:color/white" />
+            app:titleTextColor="?attr/colorOnSurface" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

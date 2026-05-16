@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser.util
 
-import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
@@ -11,6 +10,7 @@ import com.google.common.net.InternetDomainName
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import okhttp3.Headers
 import okhttp3.Headers.Companion.toHeaders
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.io.File
 import java.net.HttpURLConnection
@@ -24,13 +24,13 @@ object CookieUtils {
     val chromeDefaultPathApi28Less =
         "${ContextUtils.getApplicationContext().filesDir.parentFile}/app_webview/"
 
-    fun webResourceRequestToOkHttpRequest(webResourceRequest: WebResourceRequest): Request {
-        val url = webResourceRequest.url.toString()
+    fun webResourceRequestToOkHttpRequest(webResourceRequest: WebResourceRequest): Request? {
+        val url = webResourceRequest.url.toString().toHttpUrlOrNull() ?: return null
         val method = webResourceRequest.method
         val headers = webResourceRequest.requestHeaders.toHeaders()
 
         val cookieManager = CookieManager.getInstance()
-        val cookies = cookieManager.getCookie(url)
+        val cookies = cookieManager.getCookie(url.toString())
 
         val requestBuilder = Request.Builder()
             .url(url)

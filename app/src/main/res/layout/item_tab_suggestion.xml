@@ -20,12 +20,15 @@
         android:id="@+id/tv_suggestion"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
         android:drawableStart="@drawable/public_24px"
         android:drawablePadding="@dimen/padding_small"
+        android:drawableTint="?attr/colorOnSurfaceVariant"
         android:gravity="center_vertical"
         android:maxLines="2"
         android:onClick="@{() -> listener.onItemClicked(suggestion)}"
         android:padding="@dimen/padding_small"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="@dimen/text_small"
         tools:text="https://www.google.com" />
 

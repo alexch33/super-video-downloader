@@ -29,8 +29,7 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?attr/colorSurface">
+        android:layout_height="match_parent">
 
         <FrameLayout
             android:id="@+id/customView"
@@ -47,7 +46,7 @@
                 android:id="@+id/app_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
+                android:background="?attr/colorSurfaceContainer"
                 app:elevation="0dp">
 
                 <com.google.android.material.appbar.MaterialToolbar
@@ -204,21 +203,21 @@
                 android:id="@+id/floating_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="16dp"
                 android:layout_gravity="bottom|end"
+                android:layout_margin="16dp"
+                android:background="@drawable/rounded_bg"
+                android:outlineProvider="background"
                 android:visibility="@{settingsViewModel.getVideoButtonState() ? View.VISIBLE : View.GONE}">
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                     android:id="@+id/fab"
-                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Rounded"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="24dp"
                     android:contentDescription="@string/open_download_dialog_or_restart"
                     android:onClick="@{() -> videoTabVModel.showVideoInfo()}"
-                    app:backgroundTint="?attr/colorPrimaryContainer"
-                    app:srcCompat="@{videoTabVModel.getDownloadBtnIcon()}"
-                    app:tint="?attr/colorOnPrimaryContainer" />
+                    app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Rounded"
+                    app:srcCompat="@{videoTabVModel.getDownloadBtnIcon()}" />
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/loadingWavy"

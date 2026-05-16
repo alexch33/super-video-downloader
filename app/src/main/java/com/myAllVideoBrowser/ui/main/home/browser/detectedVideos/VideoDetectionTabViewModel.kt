@@ -288,7 +288,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                             info.title = hlsTitle
                         }
                         pushNewVideoInfoToAll(info)
-                    } else if (info.id.isEmpty()) {
+                    } else {
                         setButtonState(DownloadButtonStateCanNotDownload())
                     }
                 }

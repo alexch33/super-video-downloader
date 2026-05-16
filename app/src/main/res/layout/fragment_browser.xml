@@ -11,8 +11,7 @@
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?attr/colorSurface">
+        android:layout_height="match_parent">
 
         <com.myAllVideoBrowser.ui.main.home.browser.CustomViewPager2
             android:id="@+id/view_pager"

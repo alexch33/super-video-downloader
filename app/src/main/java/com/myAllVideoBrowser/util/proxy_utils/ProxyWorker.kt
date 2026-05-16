@@ -96,7 +96,7 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         if (success) {
             AppLogger.i("Proxy successfully started by Worker.")
             try {
-                while (true) {
+                while (!isStopped) {
                     delay(10000)
                     if (!ProxyManager.isProxyRunning()) {
                         AppLogger.w("Proxy process died, attempting to restart...")
@@ -113,7 +113,7 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             return Result.failure()
         }
 
-        return Result.success()
+        return if (isStopped) Result.retry() else Result.success()
     }
 
     private fun createForegroundInfo(): ForegroundInfo {
@@ -145,7 +145,8 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                 applicationContext.getString(R.string.proxy_service_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Channel for the background proxy worker."
+                description =
+                    applicationContext.getString(R.string.proxy_service_channel_description)
             }
 
             val manager =
@@ -155,10 +156,11 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
 
         val proxyString = applicationContext.getString(R.string.proxy)
         val dnsString = applicationContext.getString(R.string.secure_dns)
+        val additionalInfo = applicationContext.getString(R.string.can_be_turned_off)
 
         return NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setContentTitle(proxyString)
-            .setContentText("$proxyString / $dnsString")
+            .setContentText("$proxyString / $dnsString : $additionalInfo")
             .setSmallIcon(R.drawable.domino_mask_24px)
             .setOngoing(true)
             .build()

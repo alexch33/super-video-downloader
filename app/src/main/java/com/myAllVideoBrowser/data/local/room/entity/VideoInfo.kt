@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers.Companion.toHeaders
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
@@ -188,8 +189,9 @@ class DownloadUrlsConverter {
             val headers =
                 Json.parseToJsonElement(jsonMap[HEADERS].toString()).jsonObject.toMutableMap<String, Any>()
 
+            val urlToAdd = jsonMap[URL_KEY].toString().toHttpUrlOrNull() ?: continue
             resultList.add(
-                Request.Builder().url(jsonMap[URL_KEY].toString())
+                Request.Builder().url(urlToAdd)
                     .headers(headers.map { it.key to it.value.toString() }.toMap().toHeaders())
                     .method(
                         jsonMap[METHOD].toString(),

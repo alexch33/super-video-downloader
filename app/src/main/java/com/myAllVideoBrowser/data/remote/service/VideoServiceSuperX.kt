@@ -9,6 +9,7 @@ import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
 import com.myAllVideoBrowser.util.hls_parser.MpdPlaylistParser
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import okhttp3.Headers.Companion.toHeaders
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.io.IOException
 import java.time.Duration
@@ -321,7 +322,7 @@ class VideoServiceSuperX(
         headers: Map<String, String>
     ): HlsPlaylistParser.MediaPlaylist? {
         // Find the first variant that has a valid URL.
-        val firstVariantUrl = manifest.variants.firstOrNull()?.url ?: return null
+        val firstVariantUrl = (manifest.variants.firstOrNull()?.url)?.toHttpUrlOrNull() ?: return null
 
         return try {
             val request =
@@ -333,7 +334,7 @@ class VideoServiceSuperX(
                 return null
             }
             // Parse the content of the child playlist.
-            val mediaPlaylist = HlsPlaylistParser.parse(content, firstVariantUrl)
+            val mediaPlaylist = HlsPlaylistParser.parse(content, firstVariantUrl.toString())
             mediaPlaylist as? HlsPlaylistParser.MediaPlaylist
         } catch (e: Exception) {
             AppLogger.e("Failed to fetch child media playlist: $firstVariantUrl ${e.printStackTrace()}")

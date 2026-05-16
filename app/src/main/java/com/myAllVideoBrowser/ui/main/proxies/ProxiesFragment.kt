@@ -125,7 +125,7 @@ class ProxiesFragment : BaseFragment() {
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
 
-                dataBinding.bottomBar.setPadding(0, 0, 0, (systemBars.bottom * 1.3).toInt())
+                dataBinding.bottomBar.setPadding(0, 0, 0, systemBars.bottom)
                 insets
             }
         }

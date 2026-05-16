@@ -13,7 +13,7 @@ object BottomNavigationViewBinding {
             0 -> R.id.tab_browser
             1 -> R.id.tab_progress
             2 -> R.id.tab_video
-            else -> R.id.tab_settings
+            else -> R.id.tab_video
         }
     }
 }

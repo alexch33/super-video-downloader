@@ -131,4 +131,17 @@
     <string name="redirection_dialog_title">Przekierowanie</string>
     <string name="redirection_dialog_message">Ta strona przekieruje Cię do innej domeny. Czy chcesz kontynuować?</string>
     <string name="ask_redirection_title">Pytanie o przekierowanie</string>
+    <string name="settings_general">Ogólne</string>
+    <string name="proxy_service_channel_name">Serwer proxy w tle</string>
+    <string name="download_preparing">Przygotowywanie</string>
+    <string name="download_error">Błąd</string>
+    <string name="download_canceled">Anulowano</string>
+    <string name="progress_tab">Postęp</string>
+    <string name="video_tab">Wideo</string>
+    <string name="can_be_turned_off">Można wyłączyć w ustawieniach proxy</string>
+    <string name="download_downloading">Pobieranie…</string>
+    <string name="download_paused">Zatrzymano</string>
+    <string name="download_success">Sukces!!!</string>
+    <string name="browser_tab">Przeglądarka</string>
+    <string name="download_pending">Oczekiwanie</string>
 </resources>

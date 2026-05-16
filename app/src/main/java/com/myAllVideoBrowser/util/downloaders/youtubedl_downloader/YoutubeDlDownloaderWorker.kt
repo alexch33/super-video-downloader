@@ -92,6 +92,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         if (taskId != null) {
             YoutubeDL.getInstance().destroyProcessById(taskId)
 
+            destroyChildProcesses()
+
             val partsFolder = fileUtil.tmpDir.resolve(taskId)
             val firstPart = partsFolder.listFiles()?.firstOrNull()
 
@@ -685,5 +687,56 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun hideNotifications(taskId: String) {
         notificationsHelper.hideNotification(taskId.hashCode())
         notificationsHelper.hideNotification(taskId.hashCode() + 1)
+    }
+
+    private fun destroyChildProcesses(): Boolean {
+        return try {
+            val myPid = android.os.Process.myPid().toString()
+            val pids = File("/proc").listFiles()?.filter { it.name.all { c -> c.isDigit() } }
+                ?: emptyList()
+
+            // Step 1: Find all direct children of our app (Python/yt-dlp)
+            val childrenOfApp = mutableListOf<String>()
+            pids.forEach { pidFile ->
+                val statusFile = File(pidFile, "status")
+                if (statusFile.exists()) {
+                    val lines = statusFile.readLines()
+                    val ppid =
+                        lines.find { it.startsWith("PPid:") }?.split("\\s+".toRegex())?.getOrNull(1)
+                    if (ppid == myPid) childrenOfApp.add(pidFile.name)
+                }
+            }
+
+            // Step 2: Find all processes whose PPid is in childrenOfApp OR whose name matches ffmpeg
+            var killedAny = false
+            pids.forEach { pidFile ->
+                try {
+                    val statusFile = File(pidFile, "status")
+                    if (statusFile.exists()) {
+                        val lines = statusFile.readLines()
+                        val ppid = lines.find { it.startsWith("PPid:") }?.split("\\s+".toRegex())
+                            ?.getOrNull(1)
+                        val name = lines.find { it.startsWith("Name:") }?.split("\\s+".toRegex())
+                            ?.getOrNull(1)
+
+                        // Kill if:
+                        // 1. Parent is our app
+                        // 2. Parent is one of our children (grandchild)
+                        // 3. Name contains ffmpeg/python and PPid is 1 (orphaned downloader)
+                        if (ppid == myPid ||
+                            childrenOfApp.contains(ppid) ||
+                            ((name?.contains("ffmpeg") == true || name?.contains("python") == true) && ppid == "1")
+                        ) {
+                            android.os.Process.sendSignal(pidFile.name.toInt(), 9) // SIGKILL
+                            killedAny = true
+                        }
+                    }
+                } catch (_: Exception) {
+                }
+            }
+            killedAny
+        } catch (_: Exception) {
+            false
+        }
     }
 }

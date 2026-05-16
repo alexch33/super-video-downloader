@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Proxy connection error on restart fix\nMonet implemented(dynamic colors)\nUI fixes\nCrashes fixes\nStrings for translations fix"
+          body: "youtube-dlp live stream download bug fix\nYoutube-dlp update channel changed to master\nDns proxy turned off by default"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

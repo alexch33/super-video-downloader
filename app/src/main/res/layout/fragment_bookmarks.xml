@@ -38,15 +38,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingBottom="85dp"
+            android:layout_marginBottom="120dp"
             app:items="@{mainVModel.bookmarksList}"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
-
-        <LinearLayout
-            android:id="@+id/bottom_bar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

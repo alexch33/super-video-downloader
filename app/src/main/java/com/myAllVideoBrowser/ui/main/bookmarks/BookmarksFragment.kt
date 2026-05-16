@@ -72,7 +72,7 @@ class BookmarksFragment : BaseFragment() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
 
-            dataBinding.bookmarksList.setPadding(8, 8, 8, systemBars.bottom * 3)
+            dataBinding.bookmarksList.setPadding(8, 8, 8, systemBars.bottom)
             insets
         }
 

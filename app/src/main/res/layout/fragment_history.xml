@@ -66,10 +66,19 @@
                 android:paddingBottom="16dp"
                 android:visibility="@{viewModel.isLoadingHistory() ? View.GONE : View.VISIBLE}"
                 app:items="@{viewModel.historyItems}"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/bottom_bar"
+                app:layout_constraintEnd_toStartOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/clear_button" />
+
+            <LinearLayout
+                android:id="@+id/bottom_bar"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/history_list" />
 
             <com.google.android.material.progressindicator.CircularProgressIndicator
                 style="@style/Widget.Material3.CircularProgressIndicator"

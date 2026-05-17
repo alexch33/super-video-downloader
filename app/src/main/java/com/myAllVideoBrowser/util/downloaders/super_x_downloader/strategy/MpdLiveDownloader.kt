@@ -358,7 +358,7 @@ class MpdLiveDownloader(
             }
 
             if (hasVideo && (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true)) {
-                add("-c:v"); add("libx264"); add("-preset"); add("veryfast"); add("-crf"); add("23"); add(
+                add("-c:v"); add("libx264"); add("-preset"); add("ultrafast"); add("-crf"); add("26"); add(
                     "-pix_fmt"
                 ); add("yuv420p")
                 if (hasAudio) add("-c:a"); add("copy")

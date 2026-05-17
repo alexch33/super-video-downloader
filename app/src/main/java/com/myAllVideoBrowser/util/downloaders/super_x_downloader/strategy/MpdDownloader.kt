@@ -233,6 +233,12 @@ class MpdDownloader(
             })
 
         val finalOutputFile = downloadDir.resolve("merged_output.mp4")
+        val mergeFlagFile = downloadDir.resolve("merge_in_progress.flag")
+
+        if (finalOutputFile.exists() && !mergeFlagFile.exists()) {
+            return@coroutineScope finalOutputFile
+        }
+
         val mergeSession =
             mergeMpdSegments(
                 downloadDir,
@@ -261,7 +267,9 @@ class MpdDownloader(
                 )
             }
 
-        if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
+        if (ReturnCode.isSuccess(mergeSession.returnCode)) {
+            mergeFlagFile.delete()
+        } else {
             throw IOException("FFmpeg failed to merge MPD segments. Log: ${mergeSession.allLogsAsString}")
         }
         finalOutputFile
@@ -595,7 +603,7 @@ class MpdDownloader(
             }
 
             if (hasVideo && (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true)) {
-                add("-c:v"); add("libx264"); add("-preset"); add("veryfast"); add("-crf"); add("23"); add(
+                add("-c:v"); add("libx264"); add("-preset"); add("ultrafast"); add("-crf"); add("26"); add(
                     "-pix_fmt"
                 ); add("yuv420p")
                 if (hasAudio) add("-c:a"); add("copy")

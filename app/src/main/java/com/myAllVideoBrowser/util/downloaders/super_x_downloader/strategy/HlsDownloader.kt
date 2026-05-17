@@ -67,20 +67,24 @@ class HlsDownloader(
 
             // --- Download Initialization Segments (for fMP4) ---
             if (isVideoFmp4) {
-                val initSegment = (videoSegments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
+                val initSegment =
+                    (videoSegments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
                 val initFile = downloadDir.resolve("init_video.mp4")
                 if (!initFile.exists() || initFile.length() == 0L) {
                     AppLogger.d("HLS (fMP4): Downloading video init segment from ${initSegment.url}")
-                    val downloadedBytes = segmentDownloader.download(initSegment.url, initFile, "HLS-Init", 0)
+                    val downloadedBytes =
+                        segmentDownloader.download(initSegment.url, initFile, "HLS-Init", 0)
                     hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
                 }
             }
             if (isAudioFmp4) {
-                val initSegment = (audioSegments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
+                val initSegment =
+                    (audioSegments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
                 val initFile = downloadDir.resolve("init_audio.mp4")
                 if (!initFile.exists() || initFile.length() == 0L) {
                     AppLogger.d("HLS (fMP4): Downloading audio init segment from ${initSegment.url}")
-                    val downloadedBytes = segmentDownloader.download(initSegment.url, initFile, "HLS-Init", 1)
+                    val downloadedBytes =
+                        segmentDownloader.download(initSegment.url, initFile, "HLS-Init", 1)
                     hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
                 }
             }
@@ -199,6 +203,13 @@ class HlsDownloader(
 
             AppLogger.d("HLS: All segments downloaded successfully. Starting merge.")
             val finalOutputFile = downloadDir.resolve("merged_output.mp4")
+            val mergeFlagFile = downloadDir.resolve("merge_in_progress.flag")
+
+            if (finalOutputFile.exists() && !mergeFlagFile.exists()) {
+                return@withContext finalOutputFile
+            }
+
+            mergeFlagFile.createNewFile()
 
             // 4. Merge all segments using FFmpeg
             val mergeSession = DownloaderUtils.mergeHlsSegments(
@@ -216,7 +227,9 @@ class HlsDownloader(
                         });
                 }
             )
-            if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
+            if (ReturnCode.isSuccess(mergeSession.returnCode)) {
+                mergeFlagFile.delete()
+            } else {
                 throw IOException("FFmpeg failed to merge segments. Return code: ${mergeSession.returnCode}. Logs: ${mergeSession.allLogsAsString}")
             }
 

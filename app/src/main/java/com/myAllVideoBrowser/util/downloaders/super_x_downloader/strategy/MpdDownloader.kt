@@ -233,6 +233,12 @@ class MpdDownloader(
             })
 
         val finalOutputFile = downloadDir.resolve("merged_output.mp4")
+        val mergeFlagFile = downloadDir.resolve("merge_in_progress.flag")
+
+        if (finalOutputFile.exists() && !mergeFlagFile.exists()) {
+            return@coroutineScope finalOutputFile
+        }
+
         val mergeSession =
             mergeMpdSegments(
                 downloadDir,
@@ -261,7 +267,9 @@ class MpdDownloader(
                 )
             }
 
-        if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
+        if (ReturnCode.isSuccess(mergeSession.returnCode)) {
+            mergeFlagFile.delete()
+        } else {
             throw IOException("FFmpeg failed to merge MPD segments. Log: ${mergeSession.allLogsAsString}")
         }
         finalOutputFile

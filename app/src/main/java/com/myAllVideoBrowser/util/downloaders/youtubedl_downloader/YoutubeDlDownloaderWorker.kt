@@ -17,6 +17,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Generic
 import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FileUtil
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader.DownloaderActions
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import com.yausername.youtubedl_android.YoutubeDLResponse
@@ -52,7 +53,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     @Volatile
     var time = 0L
 
-    override fun afterDone() {
+    override suspend fun afterDone() {
+        super.afterDone()
         monitorProcessDisposable?.dispose()
     }
 

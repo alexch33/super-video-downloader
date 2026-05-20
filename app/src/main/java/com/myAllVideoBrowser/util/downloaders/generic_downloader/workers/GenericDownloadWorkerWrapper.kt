@@ -9,17 +9,20 @@ import androidx.core.app.NotificationCompat
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.data.repository.ProgressRepository
+import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.NotificationsHelper
 import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.downloaders.SystemDownloadManager
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import io.reactivex.rxjava3.disposables.Disposable
 import javax.inject.Inject
 
-open class GenericDownloadWorkerWrapper(
+abstract class GenericDownloadWorkerWrapper(
     appContext: Context, workerParams: WorkerParameters
 ) : GenericDownloadWorker(appContext, workerParams) {
     @Inject
@@ -40,6 +43,9 @@ open class GenericDownloadWorkerWrapper(
     @Inject
     lateinit var sharedPrefHelper: SharedPrefHelper
 
+    @Inject
+    lateinit var systemDownloadManager: SystemDownloadManager
+
     private var disposable: Disposable? = null
 
     // Delay of showing final notification after setForegroundAsync(),
@@ -48,6 +54,15 @@ open class GenericDownloadWorkerWrapper(
 
     @Volatile
     private var isForegroundSet = false
+
+    override suspend fun onTaskFinished(taskId: String) {
+        val progressInfo = progressRepository.getProgressInfos().blockingFirst()
+            .firstOrNull { it.id == taskId }
+        AppLogger.d("onTaskFinished ${inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)} \n---: $progressInfo")
+        if (progressInfo != null && (progressInfo.downloadStatus == VideoTaskState.SUCCESS || progressInfo.downloadStatus == VideoTaskState.ERROR)) {
+            systemDownloadManager.onTaskFinished(taskId)
+        }
+    }
 
     fun showNotificationFinal(id: Int, notification: NotificationCompat.Builder) {
         Handler(Looper.getMainLooper()).postDelayed({

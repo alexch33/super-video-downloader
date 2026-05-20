@@ -13,7 +13,7 @@ import java.util.zip.Inflater
 import androidx.core.content.edit
 
 
-abstract class GenericDownloader {
+abstract class GenericDownloader : IDownloader {
     companion object {
         private var instance: GenericDownloader? = null
 
@@ -44,6 +44,13 @@ abstract class GenericDownloader {
 
                     override fun getWorkRequest(id: String): OneTimeWorkRequest.Builder {
                         throw UnsupportedOperationException("getWorkRequest not implemented")
+                    }
+
+                    override fun stopAndSaveDownload(
+                        context: Context,
+                        videoInfo: VideoInfo
+                    ) {
+                        throw UnsupportedOperationException("stopAndSaveDownload not implemented")
                     }
                 }
             }
@@ -86,7 +93,7 @@ abstract class GenericDownloader {
 
     abstract fun getWorkRequest(id: String): OneTimeWorkRequest.Builder
 
-    open fun startDownload(context: Context, videoInfo: VideoInfo) {
+    override fun startDownload(context: Context, videoInfo: VideoInfo) {
         val downloadWork = getWorkRequest(videoInfo.id)
 
         val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
@@ -101,7 +108,7 @@ abstract class GenericDownloader {
 
     }
 
-    open fun cancelDownload(context: Context, videoInfo: VideoInfo, removeFile: Boolean) {
+    override fun cancelDownload(context: Context, videoInfo: VideoInfo, removeFile: Boolean) {
         val downloadWork = getWorkRequest(videoInfo.id)
         val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.CANCEL)
@@ -115,7 +122,7 @@ abstract class GenericDownloader {
         )
     }
 
-    open fun pauseDownload(context: Context, videoInfo: VideoInfo) {
+    override fun pauseDownload(context: Context, videoInfo: VideoInfo) {
         val downloadWork = getWorkRequest(videoInfo.id)
 
         val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
@@ -129,7 +136,7 @@ abstract class GenericDownloader {
         )
     }
 
-    open fun resumeDownload(context: Context, videoInfo: VideoInfo) {
+    override fun resumeDownload(context: Context, videoInfo: VideoInfo) {
         val downloadWork = getWorkRequest(videoInfo.id)
 
         val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
@@ -141,6 +148,10 @@ abstract class GenericDownloader {
             videoInfo,
             downloadWork.build()
         )
+    }
+
+    override fun isWorkScheduled(context: Context, uniqueWorkName: String): Boolean {
+        return Companion.isWorkScheduled(context, uniqueWorkName)
     }
 
     fun saveStringToSharedPreferences(
@@ -231,4 +242,3 @@ abstract class GenericDownloader {
     }
 
 }
-

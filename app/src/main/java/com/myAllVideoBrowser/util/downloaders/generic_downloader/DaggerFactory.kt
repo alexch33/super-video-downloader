@@ -8,6 +8,7 @@ import com.myAllVideoBrowser.data.repository.ProgressRepository
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.NotificationsHelper
 import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.downloaders.SystemDownloadManager
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
@@ -21,7 +22,8 @@ class DaggerWorkerFactory @Inject constructor(
     private val notificationsHelper: NotificationsHelper,
     private val proxyController: CustomProxyController,
     private val okHttpProxyClient: OkHttpProxyClient,
-    private val sharedPrefHelper: SharedPrefHelper
+    private val sharedPrefHelper: SharedPrefHelper,
+    private val systemDownloadManager: SystemDownloadManager
 ) : WorkerFactory() {
 
     override fun createWorker(
@@ -41,6 +43,7 @@ class DaggerWorkerFactory @Inject constructor(
                 instance.notificationsHelper = notificationsHelper
                 instance.proxyController = proxyController
                 instance.proxyOkHttpClient = okHttpProxyClient
+                instance.systemDownloadManager = systemDownloadManager
             }
             is ProxyWorker -> {
                 instance.sharedPrefHelper = sharedPrefHelper

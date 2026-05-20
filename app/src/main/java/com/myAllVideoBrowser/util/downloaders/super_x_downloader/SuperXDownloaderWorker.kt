@@ -39,6 +39,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     @Volatile
     private lateinit var taskId: String
 
+    private var lastProgressUpdateTime = 0L
+
     override fun handleAction(
         action: String, task: VideoTaskItem, headers: Map<String, String>, isFileRemove: Boolean
     ) {
@@ -876,27 +878,34 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         isOnMerge: Boolean = false
     ) {
         if (getDone()) return
-        val isLIve = isLIve || task.isLive
+
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastProgressUpdateTime < 2000) {
+            return
+        }
+        lastProgressUpdateTime = currentTime
+
+        val isLiveLocal = isLIve || task.isLive
         if (isOnMerge) {
             showProgress(task.clone(), progress)
             saveProgress(
                 task.mId,
                 progress,
                 VideoTaskState.PREPARE,
-                isLive = isLIve,
+                isLive = isLiveLocal,
                 infoLine = task.lineInfo
             )
             return
         }
         showProgress(task, progress)
 
-        if (isSizeEstimated || isLIve) {
+        if (isSizeEstimated || isLiveLocal) {
             saveProgress(
                 task.mId,
                 progress,
                 VideoTaskState.DOWNLOADING,
-                isLive = isLIve,
-                infoLine = if (isLIve) "Live Recording" else "Downloading..."
+                isLive = isLiveLocal,
+                infoLine = if (isLiveLocal) "Live Recording" else "Downloading..."
             )
         }
     }

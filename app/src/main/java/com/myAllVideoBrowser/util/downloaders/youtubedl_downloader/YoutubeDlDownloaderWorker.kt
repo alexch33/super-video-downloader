@@ -36,7 +36,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         const val IS_FINISHED_DOWNLOAD_ACTION_ERROR_KEY = "IS_FINISHED_DOWNLOAD_ACTION_ERROR_KEY"
         const val DOWNLOAD_FILENAME_KEY = "download_filename"
         const val IS_FINISHED_DOWNLOAD_ACTION_KEY = "action"
-        private const val UPDATE_INTERVAL = 1000
+        private const val UPDATE_INTERVAL = 2000
     }
 
     private lateinit var tmpFile: File
@@ -342,6 +342,9 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun configureYoutubedlRequest(
         request: YoutubeDLRequest, vFormat: VideoFormatEntity, fileName: String, isContinue: Boolean
     ) {
+        request.addOption("--no-warnings")
+        request.addOption("--quiet")
+
         request.addOption("--progress")
 
         val threadsCount = sharedPrefHelper.getM3u8DownloaderThreadCount()

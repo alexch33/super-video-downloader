@@ -78,9 +78,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: false
-          body: "FFmpeg merge process performance optimization\nyoutube-dlp live stream download bug fix\nYoutube-dlp update channel changed to master\nDns proxy turned off by default\nProxy connection error on restart fix\nMonet implemented(dynamic colors)\nUI fixes\nCrashes fixes"
+          prerelease: true
+          body: "Downloaders performance && memory optimization\nMax threads count settings based on CPU cores\nCrashes fixes"
           draft: false
-          make_latest: true
+          make_latest: false
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

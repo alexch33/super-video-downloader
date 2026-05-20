@@ -46,6 +46,9 @@ open class GenericDownloadWorkerWrapper(
     // without it final notification not shown
     private val finalNotificationDelay = 2000L
 
+    @Volatile
+    private var isForegroundSet = false
+
     fun showNotificationFinal(id: Int, notification: NotificationCompat.Builder) {
         Handler(Looper.getMainLooper()).postDelayed({
             notificationsHelper.showNotification(Pair(id, notification))
@@ -53,20 +56,22 @@ open class GenericDownloadWorkerWrapper(
     }
 
     fun showLongRunningNotificationAsync(id: Int, notification: NotificationCompat.Builder) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            setForegroundAsync(
+        if (!isForegroundSet) {
+            val foregroundInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ForegroundInfo(
                     id, // taskId.hashcode()
                     notification.build(), FOREGROUND_SERVICE_TYPE_DATA_SYNC
                 )
-            )
-        } else {
-            setForegroundAsync(
+            } else {
                 ForegroundInfo(
                     id, // taskId.hashcode()
                     notification.build()
                 )
-            )
+            }
+            setForegroundAsync(foregroundInfo)
+            isForegroundSet = true
+        } else {
+            notificationsHelper.showNotification(Pair(id, notification))
         }
     }
 

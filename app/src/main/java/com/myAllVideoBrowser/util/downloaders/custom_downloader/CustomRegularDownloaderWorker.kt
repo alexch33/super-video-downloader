@@ -30,7 +30,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
 
     companion object {
-        private const val PROGRESS_UPDATE_INTERVAL = 1000
+        private const val PROGRESS_UPDATE_INTERVAL = 2000
     }
 
     override fun handleAction(

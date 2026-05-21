@@ -144,14 +144,24 @@ class HlsLiveDownloader(
                     val keyFile = downloadDir.resolve("video_encryption.key")
                     if (!keyFile.exists() || keyFile.length() == 0L) {
                         AppLogger.d("HLS: Downloading video encryption key from ${key.uri}")
-                        DownloaderUtils.downloadKey(httpClient, key.uri, keyFile, headers.toHeaders())
+                        DownloaderUtils.downloadKey(
+                            httpClient,
+                            key.uri,
+                            keyFile,
+                            headers.toHeaders()
+                        )
                     }
                 }
                 (allAudioSegments.firstOrNull() as? HlsPlaylistParser.UrlMediaSegment)?.encryptionKey?.let { key ->
                     val keyFile = downloadDir.resolve("audio_encryption.key")
                     if (!keyFile.exists() || keyFile.length() == 0L) {
                         AppLogger.d("HLS: Downloading audio encryption key from ${key.uri}")
-                        DownloaderUtils.downloadKey(httpClient, key.uri, keyFile, headers.toHeaders())
+                        DownloaderUtils.downloadKey(
+                            httpClient,
+                            key.uri,
+                            keyFile,
+                            headers.toHeaders()
+                        )
                     }
                 }
 
@@ -217,6 +227,27 @@ class HlsLiveDownloader(
             ?.let { (it as? HlsPlaylistParser.UrlMediaSegment)?.initializationSegment != null } == true
         val videoExt = if (isVideoFmp4) "m4s" else "ts"
         val audioExt = if (isAudioFmp4) "m4s" else "ts"
+
+        // --- Download Initialization Segments (for fMP4) ---
+        if (isVideoFmp4) {
+            val initSegment =
+                (videoSegments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
+            val initFile = downloadDir.resolve("init_video.mp4")
+            if (!initFile.exists() || initFile.length() == 0L) {
+                AppLogger.d("HLS (fMP4): Downloading video init segment from ${initSegment.url}")
+                segmentDownloader.download(initSegment.url, initFile, "HLS-Init", 0)
+            }
+        }
+        if (isAudioFmp4) {
+            val initSegment =
+                (audioSegments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
+            val initFile = downloadDir.resolve("init_audio.mp4")
+            if (!initFile.exists() || initFile.length() == 0L) {
+                AppLogger.d("HLS (fMP4): Downloading audio init segment from ${initSegment.url}")
+                segmentDownloader.download(initSegment.url, initFile, "HLS-Init", 1)
+            }
+        }
+
 
         for (segment in videoSegments) {
             val index = allVideoSegments.indexOf(segment)

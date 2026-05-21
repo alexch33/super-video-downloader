@@ -1,6 +1,11 @@
 package com.myAllVideoBrowser.util.downloaders
 
 import android.content.Context
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.myAllVideoBrowser.data.local.VideoMetadataManager
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.AppLogger
@@ -14,6 +19,7 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.myAllVideoBrowser.util.ContextUtils
+import com.myAllVideoBrowser.util.Memory
 
 @Singleton
 class SystemDownloadManager @Inject constructor(
@@ -86,6 +92,11 @@ class SystemDownloadManager @Inject constructor(
         AppLogger.d("SystemDownloadManager: checkQueue. Active: ${downloadingFiles.size}, Max: $maxSimultaneous")
 
         if (downloadingFiles.size < maxSimultaneous) {
+            if (Memory.isMemoryCritical(context)) {
+                AppLogger.w("SystemDownloadManager: Memory is critical. Postponing queue.")
+                return
+            }
+
             val pendingFiles =
                 tmpDir.listFiles { _, name -> name.endsWith(PENDING_EXT) } ?: emptyArray()
             pendingFiles.sortBy { it.lastModified() }
@@ -111,12 +122,26 @@ class SystemDownloadManager @Inject constructor(
     }
 
     fun onTaskFinished(taskId: String, isSuccess: Boolean) {
+        val context = ContextUtils.getApplicationContext()
+
         AppLogger.d("SystemDownloadManager: task finished $taskId")
         if (isSuccess) {
             VideoMetadataManager.deleteVideoInfo(taskId)
         }
         removeFlagFiles(taskId)
-        checkQueue(ContextUtils.getApplicationContext())
+        val queueRequest = OneTimeWorkRequestBuilder<QueueWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+            )
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "SYSTEM_DOWNLOAD_QUEUE_CHECK",
+            ExistingWorkPolicy.REPLACE,
+            queueRequest
+        )
     }
 
     private fun getFlagFile(taskId: String, extension: String): File? {

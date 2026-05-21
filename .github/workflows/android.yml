@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Downloaders performance && memory optimization\nMax threads count settings based on CPU cores\nCrashes fixes"
+          body: "Max download tasks count configuration added\nLive streams download fixes\nCrashes fixes"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

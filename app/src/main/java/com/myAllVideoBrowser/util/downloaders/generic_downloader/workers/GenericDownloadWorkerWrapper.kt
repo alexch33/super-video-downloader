@@ -60,7 +60,10 @@ abstract class GenericDownloadWorkerWrapper(
             .firstOrNull { it.id == taskId }
         AppLogger.d("onTaskFinished ${inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)} \n---: $progressInfo")
         if (progressInfo != null && (progressInfo.downloadStatus == VideoTaskState.SUCCESS || progressInfo.downloadStatus == VideoTaskState.ERROR)) {
-            systemDownloadManager.onTaskFinished(taskId)
+            systemDownloadManager.onTaskFinished(
+                taskId,
+                progressInfo.downloadStatus == VideoTaskState.SUCCESS
+            )
         }
     }
 

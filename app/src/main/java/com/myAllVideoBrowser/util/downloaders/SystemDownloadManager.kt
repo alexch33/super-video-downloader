@@ -36,6 +36,7 @@ class SystemDownloadManager @Inject constructor(
 
     override fun startDownload(context: Context, videoInfo: VideoInfo) {
         AppLogger.d("SystemDownloadManager: startDownload ${videoInfo.id}")
+        VideoMetadataManager.saveVideoInfo(videoInfo.id, videoInfo)
         createFlagFile(videoInfo.id, PENDING_EXT)
         checkQueue(context)
     }
@@ -55,6 +56,7 @@ class SystemDownloadManager @Inject constructor(
     override fun cancelDownload(context: Context, videoInfo: VideoInfo, removeFile: Boolean) {
         AppLogger.d("SystemDownloadManager: cancelDownload ${videoInfo.id}")
         getDownloader(videoInfo).cancelDownload(context, videoInfo, removeFile)
+        VideoMetadataManager.deleteVideoInfo(videoInfo.id)
         removeFlagFiles(videoInfo.id)
         checkQueue(context)
     }
@@ -62,6 +64,7 @@ class SystemDownloadManager @Inject constructor(
     override fun stopAndSaveDownload(context: Context, videoInfo: VideoInfo) {
         AppLogger.d("SystemDownloadManager: stopAndSave ${videoInfo.id}")
         getDownloader(videoInfo).stopAndSaveDownload(context, videoInfo)
+        VideoMetadataManager.deleteVideoInfo(videoInfo.id)
         removeFlagFiles(videoInfo.id)
         checkQueue(context)
     }
@@ -107,8 +110,11 @@ class SystemDownloadManager @Inject constructor(
         }
     }
 
-    fun onTaskFinished(taskId: String) {
+    fun onTaskFinished(taskId: String, isSuccess: Boolean) {
         AppLogger.d("SystemDownloadManager: task finished $taskId")
+        if (isSuccess) {
+            VideoMetadataManager.deleteVideoInfo(taskId)
+        }
         removeFlagFiles(taskId)
         checkQueue(ContextUtils.getApplicationContext())
     }

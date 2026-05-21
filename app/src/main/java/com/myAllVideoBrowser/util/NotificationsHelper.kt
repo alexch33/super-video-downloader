@@ -61,7 +61,11 @@ class NotificationsHelper(private val context: Context) {
                 builder.setSubText(context.resources.getString(R.string.download_downloading))
                     .setProgress(100, taskPercent.toInt(), false)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download)
-                builder.addAction(createPauseBroadcastMessage(task.mId))
+                if (task.isLive) {
+                    builder.addAction(createStopAndSaveBroadcastMessage(task.mId))
+                } else {
+                    builder.addAction(createPauseBroadcastMessage(task.mId))
+                }
                 builder.addAction(createCancelBroadcastMessage(task.mId))
             }
 
@@ -183,6 +187,18 @@ class NotificationsHelper(private val context: Context) {
             android.R.drawable.stat_sys_download_done,
             context.resources.getString(R.string.progress_menu_cancel),
             createActionIntent(intent, taskId.hashCode())
+        )
+    }
+
+    private fun createStopAndSaveBroadcastMessage(taskId: String): NotificationCompat.Action {
+        val intent = Intent(context, NotificationReceiver::class.java)
+        intent.putExtra(NotificationReceiver.TASK_ID, taskId)
+        intent.action = NotificationReceiver.ACTION_STOP_AND_SAVE
+
+        return NotificationCompat.Action(
+            android.R.drawable.stat_sys_download_done,
+            context.resources.getString(R.string.progress_menu_stop_and_save),
+            createActionIntent(intent, taskId.hashCode())!!
         )
     }
 

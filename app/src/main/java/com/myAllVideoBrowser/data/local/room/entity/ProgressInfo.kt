@@ -61,6 +61,7 @@ data class ProgressInfo(
             VideoTaskState.PREPARE -> "prepare"
             VideoTaskState.ENOSPC -> "failed"
             VideoTaskState.ERROR -> "failed"
+            VideoTaskState.ENQUEUE -> "enqueued"
             else -> "undefined"
         }
 

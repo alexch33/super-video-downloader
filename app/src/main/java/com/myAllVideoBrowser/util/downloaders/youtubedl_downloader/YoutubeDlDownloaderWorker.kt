@@ -159,7 +159,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
         configureYoutubedlRequest(request, vFormat, taskTitle, isContinue)
 
-        showProgress(taskId, taskTitle, 0, "Starting...", tmpFile)
+        showProgress(taskId, taskTitle, 0, "Starting...", tmpFile, false)
         saveProgress(
             taskId,
             line = LineInfo(taskId, 0.0, 0.0, sourceLine = "Starting..."),
@@ -269,7 +269,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                         taskId, lineInfo, task
                     ).blockingFirst(Unit)
                     showProgress(
-                        taskId, task.title, pr.toInt(), line, tmpFile
+                        taskId, task.title, pr.toInt(), line, tmpFile, false
                     )
 
                     if (!fileUtil.isFreeSpaceAvailable()) {
@@ -432,6 +432,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                         downloaded.toDouble(),
                                         sourceLine = "Downloading live stream...downloaded: $downloadedTmpFolderSize, press stop and save, to stop downloading and save downloaded at any time...!"
                                     ), task.also { item ->
+                                        item.setIsLive(true)
                                         item.taskState = VideoTaskState.DOWNLOADING
                                         item.lineInfo = downloadedTmpFolderSize
                                         item.downloadSize = downloaded
@@ -442,7 +443,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                     task.title,
                                     99,
                                     "Downloading Live Stream... $downloadedTmpFolderSize",
-                                    tmpFile
+                                    tmpFile,
+                                    true
                                 )
                             }
                         }
@@ -555,11 +557,12 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     }
 
     private fun showProgress(
-        taskId: String, name: String, progress: Int, line: String, tmpFile: File
+        taskId: String, name: String, progress: Int, line: String, tmpFile: File, isLive: Boolean
     ) {
         val text = line.replace(tmpFile.toString(), "")
 
         val taskItem = VideoTaskItem("").also {
+            it.setIsLive(isLive)
             it.mId = taskId
             it.fileName = name
             it.taskState = VideoTaskState.DOWNLOADING

@@ -11,6 +11,7 @@ import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader.DownloaderActions
 import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
+import kotlinx.coroutines.delay
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
@@ -73,7 +74,7 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     }
 
     override suspend fun doWork(): Result {
-        return suspendCoroutine { continuation ->
+        val result = suspendCoroutine { continuation ->
             setWorkContinuation(continuation)
             try {
                 if (!ProxyManager.isProxyRunning()) {
@@ -105,9 +106,12 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
                 AppLogger.e("Unexpected error: $e")
                 continuation.resume(Result.failure())
             }
-        }.also {
-            afterDone()
         }
+
+        afterDone()
+        delay(10)
+
+        return result
     }
 
     private fun loadHeaders(taskId: String): Map<String, String> {

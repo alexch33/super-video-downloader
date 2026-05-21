@@ -17,6 +17,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Generic
 import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FileUtil
+import com.myAllVideoBrowser.util.Memory
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import com.yausername.youtubedl_android.YoutubeDLResponse
@@ -280,6 +281,16 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
                         return@execute
                     }
+
+                    if (Memory.isMemoryCritical(applicationContext)) {
+                        finishWork(task.also {
+                            it.mId = taskId
+                            it.taskState = VideoTaskState.ERROR
+                            it.errorMessage = "OOM error"
+                        })
+
+                        return@execute
+                    }
                 }
             }
         }.doOnError {
@@ -445,6 +456,25 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                     tmpFile,
                                     true
                                 )
+                                if (!fileUtil.isFreeSpaceAvailable()) {
+                                    handleOomError(taskId)
+                                    finishWork(task.also {
+                                        it.setIsLive(true)
+                                        it.mId = taskId
+                                        it.taskState = VideoTaskState.ERROR
+                                        it.errorMessage = "Not enough space"
+                                    })
+                                }
+
+                                if (Memory.isMemoryCritical(applicationContext)) {
+                                    handleOomError(taskId)
+                                    finishWork(task.also {
+                                        it.setIsLive(true)
+                                        it.mId = taskId
+                                        it.taskState = VideoTaskState.ERROR
+                                        it.errorMessage = "OOM error"
+                                    })
+                                }
                             }
                         }
                     }
@@ -693,6 +723,12 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun hideNotifications(taskId: String) {
         notificationsHelper.hideNotification(taskId.hashCode())
         notificationsHelper.hideNotification(taskId.hashCode() + 1)
+    }
+
+    private fun handleOomError(taskId: String) {
+        YoutubeDL.getInstance().destroyProcessById(taskId)
+
+        destroyChildProcesses()
     }
 
     private fun destroyChildProcesses(): Boolean {

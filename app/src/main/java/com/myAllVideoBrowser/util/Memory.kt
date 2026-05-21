@@ -15,11 +15,46 @@ object Memory {
         return (memoryClass * 1024L * 1024L * size).toLong()
     }
 
-    fun isMemoryCritical(): Boolean {
+    fun isMemoryCritical(context: Context): Boolean {
+        val am =
+            context.applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+                ?: return false
+
+        // 1. Check System-wide Memory (for yt-dlp native process)
+        val memoryInfo = ActivityManager.MemoryInfo()
+        am.getMemoryInfo(memoryInfo)
+
+        // If the OS has already flagged 'lowMemory', stop immediately.
+        if (memoryInfo.lowMemory) return true
+
+        // 2. Check Java Heap Usage
         val runtime = Runtime.getRuntime()
         val usedMemory = runtime.totalMemory() - runtime.freeMemory()
-        val maxMemory = runtime.maxMemory()
 
-        return usedMemory.toDouble() / maxMemory.toDouble() > MEMORY_CRITICAL_THRESHOLD
+        // Use the actual runtime max memory as the source of truth for the heap limit
+        val maxHeapBytes = runtime.maxMemory()
+
+        val isHeapCritical = if (maxHeapBytes > 0) {
+            (usedMemory.toDouble() / maxHeapBytes.toDouble()) > MEMORY_CRITICAL_THRESHOLD
+        } else {
+            false
+        }
+
+        // 3. Check System RAM (Native space for yt-dlp)
+        val availableRamMb = memoryInfo.availMem / (1024 * 1024)
+        val isSystemRamCritical = availableRamMb < 64
+
+        val heapRatio =
+            if (maxHeapBytes > 0) usedMemory.toDouble() / maxHeapBytes.toDouble() else 0.0
+        AppLogger.d(
+            "isMemoryCritical: heap=$isHeapCritical (${
+                String.format(
+                    "%.2f",
+                    heapRatio
+                )
+            }), system=$isSystemRamCritical (avail=${availableRamMb}MB)"
+        )
+
+        return isHeapCritical || isSystemRamCritical
     }
 }

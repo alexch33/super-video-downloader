@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
+import com.google.android.material.slider.Slider
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentProgressBinding
 import com.myAllVideoBrowser.ui.component.adapter.ProgressAdapter
@@ -18,6 +19,7 @@ import com.myAllVideoBrowser.ui.component.adapter.ProgressListener
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.home.MainViewModel
+import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import javax.inject.Inject
 
@@ -37,6 +39,8 @@ class ProgressFragment : BaseFragment() {
 
     private lateinit var mainViewModel: MainViewModel
 
+    private lateinit var settingsViewModel: SettingsViewModel
+
     private lateinit var dataBinding: FragmentProgressBinding
 
     private lateinit var progressAdapter: ProgressAdapter
@@ -46,6 +50,7 @@ class ProgressFragment : BaseFragment() {
     ): View {
         mainViewModel = mainActivity.mainViewModel
         progressViewModel = mainActivity.progressViewModel
+        settingsViewModel = mainActivity.settingsViewModel
         progressAdapter = ProgressAdapter(emptyList(), progressListener)
 
         dataBinding = FragmentProgressBinding.inflate(inflater, container, false).apply {
@@ -53,8 +58,17 @@ class ProgressFragment : BaseFragment() {
                 WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             this.mainViewModel = mainActivity.mainViewModel
             this.viewModel = progressViewModel
+            this.settingsViewModel = mainActivity.settingsViewModel
             this.rvProgress.layoutManager = managerL
             this.rvProgress.adapter = progressAdapter
+
+            val coreCount = Runtime.getRuntime().availableProcessors()
+            this.simsCountSlider.valueTo = coreCount.toFloat()
+
+            this.simsCountSlider.addOnChangeListener(simsThreadsListener)
+            val simsText =
+                getString(R.string.simultaneous_downloads_count) + " ${settingsViewModel?.downloadsCount?.get()}"
+            this.simDownloadsCount.text = simsText
         }
 
         return dataBinding.root
@@ -63,6 +77,18 @@ class ProgressFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         handleDownloadVideoEvent()
+    }
+
+    override fun onDestroy() {
+        this.dataBinding.simsCountSlider.removeOnChangeListener(simsThreadsListener)
+        super.onDestroy()
+    }
+
+    private val simsThreadsListener = Slider.OnChangeListener { _, value, fromUser ->
+        if (fromUser) {
+            val downloadsCount = value.toInt()
+            settingsViewModel.setSimulationsCount(downloadsCount)
+        }
     }
 
     private fun handleDownloadVideoEvent() {

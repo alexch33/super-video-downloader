@@ -54,6 +54,7 @@ class SharedPrefHelper @Inject constructor(
         private const val IS_USE_LEGACY_M3U8_DETECTION = "IS_USE_LEGACY_M3U8_DETECTION"
 
         private const val IS_ASK_REDIRECTION = "IS_ASK_REDIRECTION"
+        private const val MAX_SIMULTANEOUS_DOWNLOADS = "MAX_SIMULTANEOUS_DOWNLOADS"
     }
 
     private val gson = Gson()
@@ -417,4 +418,13 @@ class SharedPrefHelper @Inject constructor(
         sharedPreferences.edit { putBoolean(IS_ASK_REDIRECTION, isAsk) }
     }
 
+    fun getMaxSimultaneousDownloads(): Int {
+        return sharedPreferences.getInt(MAX_SIMULTANEOUS_DOWNLOADS, 1)
+    }
+
+    fun setMaxSimultaneousDownloads(count: Int) {
+        sharedPreferences.edit {
+            putInt(MAX_SIMULTANEOUS_DOWNLOADS, count)
+        }
+    }
 }

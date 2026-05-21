@@ -11,12 +11,18 @@
             type="com.myAllVideoBrowser.ui.main.progress.ProgressViewModel" />
 
         <variable
+            name="settingsViewModel"
+            type="com.myAllVideoBrowser.ui.main.settings.SettingsViewModel" />
+
+        <variable
             name="mainViewModel"
             type="com.myAllVideoBrowser.ui.main.home.MainViewModel" />
 
         <variable
             name="adapter"
             type="com.myAllVideoBrowser.ui.component.adapter.ProgressAdapter" />
+
+        <import type="com.myAllVideoBrowser.R" />
 
     </data>
 
@@ -30,6 +36,31 @@
             android:layout_height="wrap_content"
             android:background="?attr/colorSurfaceContainer"
             app:elevation="0dp">
+
+            <LinearLayout
+                android:id="@+id/sims_count"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/sim_downloads_count"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@{(context.getString(R.string.simultaneous_downloads_count) + settingsViewModel.downloadsCount)}"
+                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/sims_count_slider"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stepSize="1"
+                    android:valueFrom="1"
+                    android:valueTo="8" />
+            </LinearLayout>
+
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/toolbar"

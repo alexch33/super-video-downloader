@@ -47,7 +47,7 @@ object SuperXDownloader : GenericDownloader() {
         }
     }
 
-    fun stopAndSaveDownload(context: Context, videoInfo: VideoInfo) {
+    override fun stopAndSaveDownload(context: Context, videoInfo: VideoInfo) {
         val downloadWork = getWorkRequest(videoInfo.id)
         val downloaderData =
             getDownloadDataFromVideoInfo(videoInfo)

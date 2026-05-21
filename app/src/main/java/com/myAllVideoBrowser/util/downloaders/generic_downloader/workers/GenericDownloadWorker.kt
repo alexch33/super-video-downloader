@@ -9,6 +9,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader.DownloaderActions
 import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import java.io.File
 import java.io.IOException
@@ -18,8 +19,12 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+interface DownloadWorkerListener {
+    suspend fun onTaskFinished(taskId: String)
+}
+
 abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerParameters) :
-    CoroutineWorker(appContext, workerParams) {
+    CoroutineWorker(appContext, workerParams), DownloadWorkerListener {
     @Volatile
     private lateinit var continuation: Continuation<Result>
     private val fileDir: String = File(
@@ -126,8 +131,16 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
         } ?: emptyMap()
     }
 
-    open fun afterDone() {
-
+    open suspend fun afterDone() {
+        AppLogger.d("AFTER DONE ${inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)}")
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
+        val isActionTask =
+            taskId?.endsWith(DownloaderActions.PAUSE) == true || taskId?.endsWith(DownloaderActions.CANCEL) == true || taskId?.endsWith(
+                DownloaderActions.RESUME
+            ) == true || taskId?.endsWith(DownloaderActions.STOP_SAVE_ACTION) == true
+        if (taskId != null && !isActionTask) {
+            onTaskFinished(taskId)
+        }
     }
 
     @Synchronized

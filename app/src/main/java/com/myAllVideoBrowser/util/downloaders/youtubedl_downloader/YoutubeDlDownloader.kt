@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 
 object YoutubeDlDownloader : GenericDownloader() {
 
-    fun stopAndSaveDownload(context: Context, videoInfo: VideoInfo) {
+    override fun stopAndSaveDownload(context: Context, videoInfo: VideoInfo) {
         val downloadWork = getWorkRequest(videoInfo.id)
         val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.STOP_SAVE_ACTION)

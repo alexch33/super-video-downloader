@@ -109,8 +109,6 @@ class ProgressViewModel @Inject constructor(
     fun downloadVideo(context: Context?, videoInfo: VideoInfo?) {
         viewModelScope.launch(singleThreadExecutor) {
             videoInfo?.let {
-                VideoMetadataManager.saveVideoInfo(it.id, it)
-
                 val progressInfo = ProgressInfo(
                     id = it.id,
                     downloadId = it.id.hashCode().toLong(),
@@ -140,7 +138,6 @@ class ProgressViewModel @Inject constructor(
     private suspend fun deleteProgressInfo(progressInfo: ProgressInfo) {
         withContext(Dispatchers.IO) {
             progressRepository.deleteProgressInfo(progressInfo)
-            VideoMetadataManager.deleteVideoInfo(progressInfo.id)
         }
     }
 

@@ -20,6 +20,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import io.reactivex.rxjava3.disposables.Disposable
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 abstract class GenericDownloadWorkerWrapper(
@@ -64,6 +65,7 @@ abstract class GenericDownloadWorkerWrapper(
                 taskId,
                 progressInfo.downloadStatus == VideoTaskState.SUCCESS
             )
+            delay(10)
         }
     }
 

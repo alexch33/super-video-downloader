@@ -345,7 +345,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         request: YoutubeDLRequest, vFormat: VideoFormatEntity, fileName: String, isContinue: Boolean
     ) {
         request.addOption("--no-warnings")
-        request.addOption("--quiet")
 
         request.addOption("--progress")
 

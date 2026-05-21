@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Max download tasks count configuration added\nLive streams download fixes\nCrashes fixes"
+          body: "Check queue QueueWorker (fixed download tasks queue from background)"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

@@ -8,6 +8,7 @@ import com.myAllVideoBrowser.data.repository.ProgressRepository
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.NotificationsHelper
 import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.downloaders.QueueWorker
 import com.myAllVideoBrowser.util.downloaders.SystemDownloadManager
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
@@ -47,6 +48,10 @@ class DaggerWorkerFactory @Inject constructor(
             }
             is ProxyWorker -> {
                 instance.sharedPrefHelper = sharedPrefHelper
+            }
+
+            is QueueWorker -> {
+                instance.systemDownloadManager = systemDownloadManager
             }
         }
 

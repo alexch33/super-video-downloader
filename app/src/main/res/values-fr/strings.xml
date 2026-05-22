@@ -99,7 +99,7 @@
     <string name="bookmarks_list">Signets</string>
     <string name="is_auto_dark">Mode thème automatique</string>
     <string name="check_every_request_on_audio">Vérifier chaque requête pour l’audio</string>
-    <string name="go">GO</string>
+    <string name="go">Y aller</string>
     <string name="force_stream_downloading">Forcer le téléchargement du flux (pour les flux en direct classiques, hors M3U8 ou MPD)</string>
     <string name="force_stream_detection">Forcer la détection des flux (détection des URL avec une longueur de contenu -1, parfois utilisée pour les flux en direct classiques)</string>
     <string name="is_always_remux_regular_downloads">Post‑traitement pour tous les téléchargements classiques</string>
@@ -125,4 +125,25 @@
     <string name="app_name">SuperX</string>
     <string name="doh_quad9">Quad9 DoH</string>
     <string name="doh_ad_guard">Adguard DoH</string>
+    <string name="settings_general">Général</string>
+    <string name="app_download_channel_description">Chaîne de téléchargement en arrière-plan</string>
+    <string name="view">Voir</string>
+    <string name="proxy_service_channel_name">Proxy d\'arrière-plan</string>
+    <string name="proxy_service_channel_description">Travailleur proxy en arrière-plan.</string>
+    <string name="ask_redirection_title">Demander une redirection</string>
+    <string name="redirection_dialog_title">Rédirection</string>
+    <string name="redirection_dialog_message">Ce site vous redirige vers un autre domaine. Voulez-vous continuer ?:</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+    <string name="download_preparing">préparation</string>
+    <string name="download_pending">en attente</string>
+    <string name="download_downloading">téléchargement…</string>
+    <string name="download_paused">Pause</string>
+    <string name="download_success">Succès !</string>
+    <string name="download_error">Erreur</string>
+    <string name="download_canceled">Annulé</string>
+    <string name="browser_tab">Navigateur</string>
+    <string name="progress_tab">Progression</string>
+    <string name="video_tab">Vidéo</string>
+    <string name="can_be_turned_off">Peut être désactivé dans les paramètres du proxy</string>
 </resources>

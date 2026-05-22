@@ -811,11 +811,16 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         } else {
             // --- Regular VOD Progress ---
             taskItem.apply {
-                lineInfo = "Downloading: ${taskItem.fileName}"
+                val calculatedPercent =
+                    getPercentFromBytes(progress.currentBytes, progress.totalBytes)
+                val taskPercent =
+                    if (taskItem.percentFromBytes == 0F) calculatedPercent else taskItem.percentFromBytes
+                lineInfo = taskItem.lineInfo
+                    ?: "Downloading: ${String.format("%.2f", taskPercent)}% ${taskItem.fileName}"
                 taskState = VideoTaskState.DOWNLOADING
                 totalSize = progress.totalBytes
                 downloadSize = progress.currentBytes
-                percent = getPercentFromBytes(downloadSize, totalSize)
+                percent = calculatedPercent
             }
         }
         val notificationData = notificationsHelper.createNotificationBuilder(taskItem)
@@ -897,7 +902,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             )
             return
         }
-        showProgress(task, progress)
+        showProgress(task.clone(), progress)
 
         if (isSizeEstimated || isLiveLocal) {
             saveProgress(

@@ -20,6 +20,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.Memory
+import java.util.concurrent.TimeUnit
 
 @Singleton
 class SystemDownloadManager @Inject constructor(
@@ -130,11 +131,7 @@ class SystemDownloadManager @Inject constructor(
         }
         removeFlagFiles(taskId)
         val queueRequest = OneTimeWorkRequestBuilder<QueueWorker>()
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
-            )
+            .setInitialDelay(500, TimeUnit.MILLISECONDS)
             .build()
 
         WorkManager.getInstance(context).enqueueUniqueWork(

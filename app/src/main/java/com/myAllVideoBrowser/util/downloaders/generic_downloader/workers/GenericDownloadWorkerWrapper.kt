@@ -20,7 +20,6 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import io.reactivex.rxjava3.disposables.Disposable
-import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 abstract class GenericDownloadWorkerWrapper(
@@ -56,6 +55,9 @@ abstract class GenericDownloadWorkerWrapper(
     @Volatile
     private var isForegroundSet = false
 
+    @Volatile
+    private var lastForegroundUpdateTime = 0L
+
     override suspend fun onTaskFinished(taskId: String) {
         val progressInfo = progressRepository.getProgressInfos().blockingFirst()
             .firstOrNull { it.id == taskId }
@@ -75,7 +77,8 @@ abstract class GenericDownloadWorkerWrapper(
     }
 
     fun showLongRunningNotificationAsync(id: Int, notification: NotificationCompat.Builder) {
-        if (!isForegroundSet) {
+        val currentTime = System.currentTimeMillis()
+        if (!isForegroundSet || (currentTime - lastForegroundUpdateTime > 20000)) {
             val foregroundInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ForegroundInfo(
                     id, // taskId.hashcode()
@@ -89,6 +92,7 @@ abstract class GenericDownloadWorkerWrapper(
             }
             setForegroundAsync(foregroundInfo)
             isForegroundSet = true
+            lastForegroundUpdateTime = currentTime
         } else {
             notificationsHelper.showNotification(Pair(id, notification))
         }

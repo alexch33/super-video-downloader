@@ -419,7 +419,10 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getMaxSimultaneousDownloads(): Int {
-        return sharedPreferences.getInt(MAX_SIMULTANEOUS_DOWNLOADS, 1)
+        return sharedPreferences.getInt(
+            MAX_SIMULTANEOUS_DOWNLOADS,
+            Runtime.getRuntime().availableProcessors()
+        )
     }
 
     fun setMaxSimultaneousDownloads(count: Int) {

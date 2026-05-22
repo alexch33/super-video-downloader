@@ -63,7 +63,7 @@ class NotificationsHelper(private val context: Context) {
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download)
                 if (task.isLive) {
                     builder.addAction(createStopAndSaveBroadcastMessage(task.mId))
-                } else {
+                } else if (!task.lineInfo.contains("merging", true)) {
                     builder.addAction(createPauseBroadcastMessage(task.mId))
                 }
                 builder.addAction(createCancelBroadcastMessage(task.mId))

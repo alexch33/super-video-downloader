@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Check queue QueueWorker (fixed download tasks queue from background)"
+          body: "Changes since 0.8.17.3:\nDownloads queue\nSimultaneous count setting added to progress tab\nStop and save buttons for notifications for live streams\nDownloaders performance && memory optimization\nMax threads count settings based on CPU cores\nMemory state check in youtube-dlp downloader and downloader manager check queue\nFmp4 live stream download fix (initializationSegment for HlsLiveDownloader)\nUI fixes\nCrashes fixes\nMinor fixes"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

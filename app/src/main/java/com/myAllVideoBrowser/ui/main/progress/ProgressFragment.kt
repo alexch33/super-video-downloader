@@ -64,6 +64,7 @@ class ProgressFragment : BaseFragment() {
 
             val coreCount = Runtime.getRuntime().availableProcessors()
             this.simsCountSlider.valueTo = coreCount.toFloat()
+            this.simsCountSlider.value = settingsViewModel?.downloadsCount?.get()?.toFloat() ?: 1f
 
             this.simsCountSlider.addOnChangeListener(simsThreadsListener)
             val simsText =

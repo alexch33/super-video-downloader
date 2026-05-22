@@ -17,6 +17,7 @@ import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentSettingsBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
+import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.IntentUtil
 import com.myAllVideoBrowser.util.SystemUtil
@@ -26,6 +27,7 @@ class SettingsFragment : BaseFragment() {
 
     companion object {
         fun newInstance() = SettingsFragment()
+        private const val ABSOLUTE_MAX_THREADS = 16
     }
 
     @Inject
@@ -124,10 +126,17 @@ class SettingsFragment : BaseFragment() {
 
         settingsViewModel.start()
 
+        val coreCount = Runtime.getRuntime().availableProcessors()
+        val maxThreads = coreCount.coerceIn(1, ABSOLUTE_MAX_THREADS).toFloat()
+
+        dataBinding.seekBarRegular.valueTo = maxThreads
+        dataBinding.seekBarM3u8.valueTo = maxThreads
+
         lastSavedRegularThreadsCount = settingsViewModel.regularThreadsCount.get()
-        dataBinding.seekBarRegular.value = lastSavedRegularThreadsCount.coerceIn(1, 16).toFloat()
+        dataBinding.seekBarRegular.value =
+            lastSavedRegularThreadsCount.coerceIn(1, maxThreads.toInt()).toFloat()
         dataBinding.seekBarM3u8.value =
-            settingsViewModel.m3u8ThreadsCount.get().coerceIn(1, 16).toFloat()
+            settingsViewModel.m3u8ThreadsCount.get().coerceIn(1, maxThreads.toInt()).toFloat()
         dataBinding.seekBarAdsTreshold.value =
             settingsViewModel.videoDetectionTreshold.get().toFloat().coerceIn(0f, 52428800f)
     }

@@ -40,9 +40,9 @@
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
             <LinearLayout
-                android:background="?attr/colorSurface"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="?attr/colorSurface"
                 android:orientation="vertical"
                 android:paddingHorizontal="16dp"
                 android:paddingBottom="32dp">
@@ -172,6 +172,21 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
+
+                        <com.google.android.material.divider.MaterialDivider
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:dividerInsetStart="16dp" />
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/is_interrupt_intrecepted_resources"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:checked="@{viewModel.isInterruptIntreceptedResources}"
+                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsInterruptInterceptedResources(isChecked)}"
+                            android:padding="16dp"
+                            android:text="@string/is_interrupt_intrecepted_resources"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/show_video_alert_check_box"
@@ -383,20 +398,6 @@
                             android:text="@string/is_remux_only_live_regular_downloads"
                             android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
-                        <com.google.android.material.divider.MaterialDivider
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            app:dividerInsetStart="16dp" />
-
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_interrupt_intrecepted_resources"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:checked="@{viewModel.isInterruptIntreceptedResources}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsInterruptInterceptedResources(isChecked)}"
-                            android:padding="16dp"
-                            android:text="@string/is_interrupt_intrecepted_resources"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"

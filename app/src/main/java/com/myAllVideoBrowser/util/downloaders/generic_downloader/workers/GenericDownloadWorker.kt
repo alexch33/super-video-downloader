@@ -9,7 +9,9 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader.DownloaderActions
 import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
+import kotlinx.coroutines.delay
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
@@ -18,8 +20,12 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
+interface DownloadWorkerListener {
+    suspend fun onTaskFinished(taskId: String)
+}
+
 abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerParameters) :
-    CoroutineWorker(appContext, workerParams) {
+    CoroutineWorker(appContext, workerParams), DownloadWorkerListener {
     @Volatile
     private lateinit var continuation: Continuation<Result>
     private val fileDir: String = File(
@@ -68,7 +74,7 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     }
 
     override suspend fun doWork(): Result {
-        return suspendCoroutine { continuation ->
+        val result = suspendCoroutine { continuation ->
             setWorkContinuation(continuation)
             try {
                 if (!ProxyManager.isProxyRunning()) {
@@ -100,9 +106,11 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
                 AppLogger.e("Unexpected error: $e")
                 continuation.resume(Result.failure())
             }
-        }.also {
-            afterDone()
         }
+
+        afterDone()
+
+        return result
     }
 
     private fun loadHeaders(taskId: String): Map<String, String> {
@@ -126,8 +134,16 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
         } ?: emptyMap()
     }
 
-    open fun afterDone() {
-
+    open suspend fun afterDone() {
+        AppLogger.d("AFTER DONE ${inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)}")
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
+        val isActionTask =
+            taskId?.endsWith(DownloaderActions.PAUSE) == true || taskId?.endsWith(DownloaderActions.CANCEL) == true || taskId?.endsWith(
+                DownloaderActions.RESUME
+            ) == true || taskId?.endsWith(DownloaderActions.STOP_SAVE_ACTION) == true
+        if (taskId != null && !isActionTask) {
+            onTaskFinished(taskId)
+        }
     }
 
     @Synchronized

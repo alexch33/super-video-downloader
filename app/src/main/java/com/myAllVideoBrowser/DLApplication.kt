@@ -22,6 +22,7 @@ import io.reactivex.rxjava3.plugins.RxJavaPlugins
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.OkHttp
 import org.conscrypt.Conscrypt
 import java.io.File
 import java.security.Security
@@ -57,6 +58,12 @@ open class DLApplication : DaggerApplication() {
 
     override fun onCreate() {
         super.onCreate()
+
+        try {
+            OkHttp.initialize(this)
+        } catch (e: Throwable) {
+            AppLogger.e("Failed to initialize OkHttp: ${e.message}")
+        }
 
         initializeFileUtils()
 

@@ -30,7 +30,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
 
     companion object {
-        private const val PROGRESS_UPDATE_INTERVAL = 1000
+        private const val PROGRESS_UPDATE_INTERVAL = 2000
     }
 
     override fun handleAction(
@@ -253,14 +253,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         }
     }
 
-    private fun getProgressInfo(taskState: Int): String {
-        return when (taskState) {
-            VideoTaskState.PAUSE -> "PAUSED"
-            VideoTaskState.CANCELED -> "CANCELED"
-            else -> "ERROR"
-        }
-    }
-
     private fun startDownload(taskItem: VideoTaskItem, headers: Map<String, String>) {
         AppLogger.d("Start download regular: $taskItem headers: $headers")
         val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)!!
@@ -401,10 +393,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         CustomFileDownloader.cancel(tmpFile)
 
         getContinuation().resume(Result.success())
-//        finishWork(task.also {
-//            it.mId = taskId
-//            it.taskState = VideoTaskState.CANCELED
-//        })
     }
 
     private fun pauseTask(task: VideoTaskItem) {
@@ -420,10 +408,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         CustomFileDownloader.pause(tmpFile)
 
         getContinuation().resume(Result.success())
-//        finishWork(task.also {
-//            it.mId = taskId
-//            it.taskState = VideoTaskState.PAUSE
-//        })
     }
 
     private fun stopAndSave(task: VideoTaskItem) {

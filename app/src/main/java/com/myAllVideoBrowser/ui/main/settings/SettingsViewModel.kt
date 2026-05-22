@@ -47,6 +47,7 @@ class SettingsViewModel @Inject constructor(
     val isRemuxOnlyLiveRegularDownloads = ObservableBoolean(false)
     val isInterruptIntreceptedResources = ObservableBoolean(false)
     val isUseLegacyM3u8Detection = ObservableBoolean(false)
+    val queueSize = ObservableInt(1)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
     private val isCheckEveryRequestOnVideo = ObservableBoolean(true)
@@ -54,6 +55,7 @@ class SettingsViewModel @Inject constructor(
 
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
+            val simDownloadsCount = sharedPrefHelper.getMaxSimultaneousDownloads()
             val useLegacy = sharedPrefHelper.getIsUseLegacyM3u8Detection()
             val alwaysRemux = sharedPrefHelper.getIsProcessDownloadFfmpeg()
             val remuxOnlyLive = sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg()
@@ -86,6 +88,7 @@ class SettingsViewModel @Inject constructor(
             }
 
             withContext(Dispatchers.Main) {
+                queueSize.set(simDownloadsCount)
                 isUseLegacyM3u8Detection.set(useLegacy)
                 isAlwaysRemuxRegularDownloads.set(alwaysRemux)
                 isRemuxOnlyLiveRegularDownloads.set(remuxOnlyLive)
@@ -298,6 +301,20 @@ class SettingsViewModel @Inject constructor(
             } else {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             }
+        }
+    }
+
+    private var simThreadsJob: Job? = null
+    fun setSimulationsCount(count: Int) {
+        val coreCount = Runtime.getRuntime().availableProcessors()
+        val simDownloadsCount = count.coerceIn(1, coreCount)
+
+        queueSize.set(simDownloadsCount)
+
+        simThreadsJob?.cancel()
+        simThreadsJob = viewModelScope.launch(Dispatchers.IO) {
+            delay(10)
+            sharedPrefHelper.setMaxSimultaneousDownloads(simDownloadsCount)
         }
     }
 

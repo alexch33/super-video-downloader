@@ -17,6 +17,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Generic
 import com.google.gson.Gson
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FileUtil
+import com.myAllVideoBrowser.util.Memory
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import com.yausername.youtubedl_android.YoutubeDLResponse
@@ -36,7 +37,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         const val IS_FINISHED_DOWNLOAD_ACTION_ERROR_KEY = "IS_FINISHED_DOWNLOAD_ACTION_ERROR_KEY"
         const val DOWNLOAD_FILENAME_KEY = "download_filename"
         const val IS_FINISHED_DOWNLOAD_ACTION_KEY = "action"
-        private const val UPDATE_INTERVAL = 1000
+        private const val UPDATE_INTERVAL = 2000
     }
 
     private lateinit var tmpFile: File
@@ -52,7 +53,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     @Volatile
     var time = 0L
 
-    override fun afterDone() {
+    override suspend fun afterDone() {
+        super.afterDone()
         monitorProcessDisposable?.dispose()
     }
 
@@ -157,7 +159,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
         configureYoutubedlRequest(request, vFormat, taskTitle, isContinue)
 
-        showProgress(taskId, taskTitle, 0, "Starting...", tmpFile)
+        showProgress(taskId, taskTitle, 0, "Starting...", tmpFile, false)
         saveProgress(
             taskId,
             line = LineInfo(taskId, 0.0, 0.0, sourceLine = "Starting..."),
@@ -267,7 +269,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                         taskId, lineInfo, task
                     ).blockingFirst(Unit)
                     showProgress(
-                        taskId, task.title, pr.toInt(), line, tmpFile
+                        taskId, task.title, pr.toInt(), line, tmpFile, false
                     )
 
                     if (!fileUtil.isFreeSpaceAvailable()) {
@@ -275,6 +277,16 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                             it.mId = taskId
                             it.taskState = VideoTaskState.ERROR
                             it.errorMessage = "Not enough space"
+                        })
+
+                        return@execute
+                    }
+
+                    if (Memory.isMemoryCritical(applicationContext)) {
+                        finishWork(task.also {
+                            it.mId = taskId
+                            it.taskState = VideoTaskState.ERROR
+                            it.errorMessage = "OOM error"
                         })
 
                         return@execute
@@ -342,6 +354,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun configureYoutubedlRequest(
         request: YoutubeDLRequest, vFormat: VideoFormatEntity, fileName: String, isContinue: Boolean
     ) {
+        request.addOption("--no-warnings")
+
         request.addOption("--progress")
 
         val threadsCount = sharedPrefHelper.getM3u8DownloaderThreadCount()
@@ -428,6 +442,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                         downloaded.toDouble(),
                                         sourceLine = "Downloading live stream...downloaded: $downloadedTmpFolderSize, press stop and save, to stop downloading and save downloaded at any time...!"
                                     ), task.also { item ->
+                                        item.setIsLive(true)
                                         item.taskState = VideoTaskState.DOWNLOADING
                                         item.lineInfo = downloadedTmpFolderSize
                                         item.downloadSize = downloaded
@@ -438,8 +453,28 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                     task.title,
                                     99,
                                     "Downloading Live Stream... $downloadedTmpFolderSize",
-                                    tmpFile
+                                    tmpFile,
+                                    true
                                 )
+                                if (!fileUtil.isFreeSpaceAvailable()) {
+                                    handleOomError(taskId)
+                                    finishWork(task.also {
+                                        it.setIsLive(true)
+                                        it.mId = taskId
+                                        it.taskState = VideoTaskState.ERROR
+                                        it.errorMessage = "Not enough space"
+                                    })
+                                }
+
+                                if (Memory.isMemoryCritical(applicationContext)) {
+                                    handleOomError(taskId)
+                                    finishWork(task.also {
+                                        it.setIsLive(true)
+                                        it.mId = taskId
+                                        it.taskState = VideoTaskState.ERROR
+                                        it.errorMessage = "OOM error"
+                                    })
+                                }
                             }
                         }
                     }
@@ -551,11 +586,12 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     }
 
     private fun showProgress(
-        taskId: String, name: String, progress: Int, line: String, tmpFile: File
+        taskId: String, name: String, progress: Int, line: String, tmpFile: File, isLive: Boolean
     ) {
         val text = line.replace(tmpFile.toString(), "")
 
         val taskItem = VideoTaskItem("").also {
+            it.setIsLive(isLive)
             it.mId = taskId
             it.fileName = name
             it.taskState = VideoTaskState.DOWNLOADING
@@ -687,6 +723,12 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun hideNotifications(taskId: String) {
         notificationsHelper.hideNotification(taskId.hashCode())
         notificationsHelper.hideNotification(taskId.hashCode() + 1)
+    }
+
+    private fun handleOomError(taskId: String) {
+        YoutubeDL.getInstance().destroyProcessById(taskId)
+
+        destroyChildProcesses()
     }
 
     private fun destroyChildProcesses(): Boolean {

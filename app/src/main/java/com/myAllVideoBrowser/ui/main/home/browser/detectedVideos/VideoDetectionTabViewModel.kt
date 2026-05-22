@@ -246,9 +246,9 @@ open class VideoDetectionTabViewModel @Inject constructor(
             return
         }
 
-        val loadings = m3u8LoadingList.get()?.toMutableSet()
-        loadings?.add(resourceRequest.url.toString())
-        m3u8LoadingList.set(loadings?.toMutableSet())
+        val loadings = m3u8LoadingList.get()?.toMutableSet() ?: mutableSetOf()
+        loadings.add(resourceRequest.url.toString())
+        m3u8LoadingList.set(loadings.toMutableSet())
         if (detectedVideosList.get()?.isEmpty() == true) {
             setButtonState(DownloadButtonStateLoading())
         }
@@ -277,9 +277,9 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
                 emitter.onComplete()
             }.doOnTerminate {
-                val loadings2 = m3u8LoadingList.get()?.toMutableSet()
-                loadings2?.remove(resourceRequest.url.toString())
-                m3u8LoadingList.set(loadings2?.toMutableSet())
+                val loadings2 = m3u8LoadingList.get()?.toMutableSet() ?: mutableSetOf()
+                loadings2.remove(resourceRequest.url.toString())
+                m3u8LoadingList.set(loadings2.toMutableSet())
                 verifyVideoLinkJobStorage.remove(taskUrl)
             }.observeOn(baseSchedulers.computation).subscribeOn(baseSchedulers.videoService)
                 .subscribe { info ->
@@ -365,15 +365,15 @@ open class VideoDetectionTabViewModel @Inject constructor(
             if (request.url.toString().contains(".mp4")) {
                 setButtonState(DownloadButtonStateLoading())
             }
-            val loadings = regularLoadingList.get()
-            loadings?.add(request.url.toString())
-            regularLoadingList.set(loadings?.toMutableSet())
+            val loadings = regularLoadingList.get() ?: mutableSetOf()
+            loadings.add(request.url.toString())
+            regularLoadingList.set(loadings.toMutableSet())
             propagateCheckJob(uriString, headers, isCheckOnAudio, isCheckOnVideo)
             it.onComplete()
         }.subscribeOn(baseSchedulers.io).doOnComplete {
-            val loadings = regularLoadingList.get()
-            loadings?.remove(request.url.toString())
-            regularLoadingList.set(loadings?.toMutableSet())
+            val loadings = regularLoadingList.get() ?: mutableSetOf()
+            loadings.remove(request.url.toString())
+            regularLoadingList.set(loadings.toMutableSet())
         }.onErrorComplete().doOnError {
             AppLogger.d("Checking ERROR... $clearedUrl")
         }.subscribe()

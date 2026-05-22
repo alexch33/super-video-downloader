@@ -21,6 +21,9 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
     @Inject
     lateinit var progressRepository: ProgressRepository
 
+    @Inject
+    lateinit var systemDownloadManager: SystemDownloadManager
+
     private val receiverScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -52,6 +55,10 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
                     handleCancel(context, progressInfo, videoInfo)
                 }
 
+                ACTION_STOP_AND_SAVE -> {
+                    handleStopAndSave(context, progressInfo, videoInfo)
+                }
+
                 else -> {
                     AppLogger.d("ACTION NOT SUPPORTED ${intent.action}")
                 }
@@ -59,91 +66,32 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
         }
     }
 
+    private fun handleStopAndSave(context: Context, task: ProgressInfo, videoInfo: VideoInfo) {
+        AppLogger.d("HANDLE STOP AND SAVE $task")
+        systemDownloadManager.stopAndSaveDownload(context, videoInfo)
+    }
+
     private fun handleCancel(context: Context, task: ProgressInfo, videoInfo: VideoInfo) {
         AppLogger.d("HANDLE CANCEL $task")
-        VideoMetadataManager.deleteVideoInfo(videoInfo.id)
-
-        when (val downloaderType = getTaskType(videoInfo)) {
-            DOWNLOADER_YOUTUBE_DL -> {
-                YoutubeDlDownloader.cancelDownload(context, videoInfo, true)
-                progressRepository.deleteProgressInfo(task)
-            }
-
-            DOWNLOADER_REGULAR -> {
-                CustomRegularDownloader.cancelDownload(context, videoInfo, true)
-                progressRepository.deleteProgressInfo(task)
-            }
-
-            DOWNLOADER_SUPER_XD -> {
-                SuperXDownloader.cancelDownload(context, videoInfo, true)
-            }
-
-            else -> {
-                AppLogger.d("Unexpected downloader type: $downloaderType")
-            }
-        }
+        progressRepository.deleteProgressInfo(task)
+        systemDownloadManager.cancelDownload(context, videoInfo, true)
     }
 
     private fun handleResume(context: Context, task: VideoInfo) {
         AppLogger.d("HANDLE RESUME $task")
-        when (val downloaderType = getTaskType(task)) {
-            DOWNLOADER_YOUTUBE_DL -> {
-                YoutubeDlDownloader.resumeDownload(context, task)
-            }
-
-            DOWNLOADER_REGULAR -> {
-                CustomRegularDownloader.resumeDownload(context, task)
-            }
-
-
-            DOWNLOADER_SUPER_XD -> {
-                SuperXDownloader.resumeDownload(context, task)
-            }
-
-            else -> {
-                AppLogger.d("Unexpected downloader type: $downloaderType")
-            }
-        }
+        systemDownloadManager.resumeDownload(context, task)
     }
 
     private fun handlePause(context: Context, task: VideoInfo) {
         AppLogger.d("HANDLE PAUSE $task")
-        when (val downloaderType = getTaskType(task)) {
-            DOWNLOADER_YOUTUBE_DL -> {
-                YoutubeDlDownloader.pauseDownload(context, task)
-            }
-
-            DOWNLOADER_REGULAR -> {
-                CustomRegularDownloader.pauseDownload(context, task)
-            }
-
-            DOWNLOADER_SUPER_XD -> {
-                SuperXDownloader.pauseDownload(context, task)
-            }
-
-            else -> {
-                AppLogger.d("Unexpected downloader type: $downloaderType")
-            }
-        }
-    }
-
-    private fun getTaskType(videoInfo: VideoInfo): String {
-        return if (videoInfo.isRegularDownload) {
-            DOWNLOADER_REGULAR
-        } else if (videoInfo.isDetectedBySuperX) {
-            DOWNLOADER_SUPER_XD
-        } else {
-            DOWNLOADER_YOUTUBE_DL
-        }
+        systemDownloadManager.pauseDownload(context, task)
     }
 
     companion object {
-        const val DOWNLOADER_SUPER_XD = "DOWNLOADER_SUPER_XD"
-        const val DOWNLOADER_YOUTUBE_DL = "DOWNLOADER_YOUTUBE_DL"
-        const val DOWNLOADER_REGULAR = "DOWNLOADER_REGULAR"
         const val TASK_ID = "TASK_ID"
         const val ACTION_PAUSE = "ACTION_PAUSE"
         const val ACTION_RESUME = "ACTION_RESUME"
         const val ACTION_CANCEL = "ACTION_CANCEL"
+        const val ACTION_STOP_AND_SAVE = "ACTION_STOP_AND_SAVE"
     }
 }

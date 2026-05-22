@@ -44,16 +44,16 @@ object Memory {
         val availableRamMb = memoryInfo.availMem / (1024 * 1024)
         val isSystemRamCritical = availableRamMb < 64
 
-        val heapRatio =
-            if (maxHeapBytes > 0) usedMemory.toDouble() / maxHeapBytes.toDouble() else 0.0
-        AppLogger.d(
-            "isMemoryCritical: heap=$isHeapCritical (${
-                String.format(
-                    "%.2f",
-                    heapRatio
-                )
-            }), system=$isSystemRamCritical (avail=${availableRamMb}MB)"
-        )
+//        val heapRatio =
+//            if (maxHeapBytes > 0) usedMemory.toDouble() / maxHeapBytes.toDouble() else 0.0
+//        AppLogger.d(
+//            "isMemoryCritical: heap=$isHeapCritical (${
+//                String.format(
+//                    "%.2f",
+//                    heapRatio
+//                )
+//            }), system=$isSystemRamCritical (avail=${availableRamMb}MB)"
+//        )
 
         return isHeapCritical || isSystemRamCritical
     }

@@ -78,9 +78,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: true
-          body: "Fixed interrupting background job when enqueued few tasks\nQueue initial slider position fixed\nShow percents for hls/mpd downloads in notifications\nHide pause button for merging stage for custom hls/mpd downloaders"
+          prerelease: false
+          body: "Since 0.8.13.3:\nFmp4 live stream download fix (initializationSegment for HlsLiveDownloader)\nDownloads queue added\nDownloaders performance && memory optimization\nmemory state check and kill download processes for prevent OOM crashes\nUI fixes\nMax threads count settings based on CPU cores\nCrashes fixes"
           draft: false
-          make_latest: false
+          make_latest: true
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

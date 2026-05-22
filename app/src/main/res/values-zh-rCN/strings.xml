@@ -131,4 +131,20 @@
     <string name="yes">是</string>
     <string name="no">否</string>
     <string name="tabs">标签页</string>
+    <string name="settings_general">一般</string>
+    <string name="app_download_channel_description">后台下载通道</string>
+    <string name="view">查看</string>
+    <string name="proxy_service_channel_name">后台代理</string>
+    <string name="proxy_service_channel_description">后台代理 worker。</string>
+    <string name="download_preparing">正在准备</string>
+    <string name="download_pending">待下载</string>
+    <string name="download_downloading">下载中…</string>
+    <string name="download_paused">已暂停</string>
+    <string name="download_success">成功!!!</string>
+    <string name="download_error">错误</string>
+    <string name="download_canceled">已取消</string>
+    <string name="browser_tab">浏览器</string>
+    <string name="progress_tab">进度</string>
+    <string name="video_tab">视频</string>
+    <string name="can_be_turned_off">可在代理设置中关闭</string>
 </resources>

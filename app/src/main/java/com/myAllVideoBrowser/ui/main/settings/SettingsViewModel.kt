@@ -47,7 +47,7 @@ class SettingsViewModel @Inject constructor(
     val isRemuxOnlyLiveRegularDownloads = ObservableBoolean(false)
     val isInterruptIntreceptedResources = ObservableBoolean(false)
     val isUseLegacyM3u8Detection = ObservableBoolean(false)
-    val downloadsCount = ObservableInt(1)
+    val queueSize = ObservableInt(1)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
     private val isCheckEveryRequestOnVideo = ObservableBoolean(true)
@@ -88,7 +88,7 @@ class SettingsViewModel @Inject constructor(
             }
 
             withContext(Dispatchers.Main) {
-                downloadsCount.set(simDownloadsCount)
+                queueSize.set(simDownloadsCount)
                 isUseLegacyM3u8Detection.set(useLegacy)
                 isAlwaysRemuxRegularDownloads.set(alwaysRemux)
                 isRemuxOnlyLiveRegularDownloads.set(remuxOnlyLive)
@@ -309,7 +309,7 @@ class SettingsViewModel @Inject constructor(
         val coreCount = Runtime.getRuntime().availableProcessors()
         val simDownloadsCount = count.coerceIn(1, coreCount)
 
-        downloadsCount.set(simDownloadsCount)
+        queueSize.set(simDownloadsCount)
 
         simThreadsJob?.cancel()
         simThreadsJob = viewModelScope.launch(Dispatchers.IO) {

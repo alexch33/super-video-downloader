@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
+import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -45,6 +46,18 @@ class ProgressFragment : BaseFragment() {
 
     private lateinit var progressAdapter: ProgressAdapter
 
+    private val queueSizeCallback = object :
+        Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(
+            sender: Observable?,
+            propertyId: Int
+        ) {
+            val currentSize = settingsViewModel.queueSize.get()
+            this@ProgressFragment.dataBinding.simsCountSlider.value =
+                currentSize.coerceIn(1, Runtime.getRuntime().availableProcessors()).toFloat()
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -64,11 +77,10 @@ class ProgressFragment : BaseFragment() {
 
             val coreCount = Runtime.getRuntime().availableProcessors()
             this.simsCountSlider.valueTo = coreCount.toFloat()
-            this.simsCountSlider.value = settingsViewModel?.downloadsCount?.get()?.toFloat() ?: 1f
-
+            this.simsCountSlider.value = settingsViewModel?.queueSize?.get()?.toFloat() ?: 1f
             this.simsCountSlider.addOnChangeListener(simsThreadsListener)
             val simsText =
-                getString(R.string.simultaneous_downloads_count) + " ${settingsViewModel?.downloadsCount?.get()}"
+                getString(R.string.simultaneous_downloads_count) + " ${settingsViewModel?.queueSize?.get()}"
             this.simDownloadsCount.text = simsText
         }
 
@@ -78,10 +90,12 @@ class ProgressFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         handleDownloadVideoEvent()
+        this.settingsViewModel.queueSize.addOnPropertyChangedCallback(queueSizeCallback)
     }
 
     override fun onDestroy() {
         this.dataBinding.simsCountSlider.removeOnChangeListener(simsThreadsListener)
+        this.settingsViewModel.queueSize.removeOnPropertyChangedCallback(queueSizeCallback)
         super.onDestroy()
     }
 

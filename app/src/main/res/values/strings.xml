@@ -152,6 +152,6 @@
     <string name="progress_tab">Progress</string>
     <string name="video_tab">Video</string>
     <string name="can_be_turned_off">Can be turned off in proxy settings</string>
-    <string name="simultaneous_downloads_count">Simultaneous downloads:</string>
+    <string name="queue_downloads_size">Download\'s queue size:  </string>
     <string name="progress_menu_stop_and_save">Stop and Save</string>
 </resources>

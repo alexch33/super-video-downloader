@@ -175,7 +175,8 @@
                     android:layout_marginBottom="@dimen/home_bottom_bar_size" />
 
                 <FrameLayout
-                    android:layout_width="3dp"
+                    android:layout_width="4dp"
+                    android:layout_margin="1dp"
                     android:layout_height="match_parent"
                     android:visibility="@{(videoTabVModel.hasCheckLoadingsM3u8() || videoTabVModel.hasCheckLoadingsRegular()) ? View.VISIBLE : View.GONE }"
                     app:layout_constraintBottom_toBottomOf="parent"

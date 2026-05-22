@@ -48,7 +48,7 @@
                     android:id="@+id/sim_downloads_count"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@{(context.getString(R.string.simultaneous_downloads_count) + settingsViewModel.queueSize)}"
+                    android:text="@{(context.getString(R.string.queue_downloads_size) + settingsViewModel.queueSize)}"
                     android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
 
 

@@ -80,7 +80,7 @@ class ProgressFragment : BaseFragment() {
             this.simsCountSlider.value = settingsViewModel?.queueSize?.get()?.toFloat() ?: 1f
             this.simsCountSlider.addOnChangeListener(simsThreadsListener)
             val simsText =
-                getString(R.string.simultaneous_downloads_count) + " ${settingsViewModel?.queueSize?.get()}"
+                getString(R.string.queue_downloads_size) + " ${settingsViewModel?.queueSize?.get()}"
             this.simDownloadsCount.text = simsText
         }
 

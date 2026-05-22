@@ -109,7 +109,6 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
         }
 
         afterDone()
-        delay(10)
 
         return result
     }

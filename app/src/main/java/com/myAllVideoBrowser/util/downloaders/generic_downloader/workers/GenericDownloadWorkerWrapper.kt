@@ -65,7 +65,6 @@ abstract class GenericDownloadWorkerWrapper(
                 taskId,
                 progressInfo.downloadStatus == VideoTaskState.SUCCESS
             )
-            delay(10)
         }
     }
 

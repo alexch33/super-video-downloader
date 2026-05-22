@@ -781,6 +781,11 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     }
 
     private fun showProgress(taskItem: VideoTaskItem, progress: Progress) {
+        if (getDone()) {
+            AppLogger.d("SuperX: Ignoring progress update for ${taskItem.mId} because worker is already done.")
+            return
+        }
+
         val isLive = inputData.getBoolean(GenericDownloader.Constants.IS_LIVE, false)
 
         if (isLive) {
@@ -824,7 +829,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             }
         }
         val notificationData = notificationsHelper.createNotificationBuilder(taskItem)
-        showLongRunningNotificationAsync(notificationData.first, notificationData.second)
+
+        if (!getDone()) {
+            showLongRunningNotificationAsync(notificationData.first, notificationData.second)
+        }
     }
 
     private fun saveProgress(

@@ -10,6 +10,7 @@ import okhttp3.Request
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 
 object DownloaderUtils {
 
@@ -126,12 +127,14 @@ object DownloaderUtils {
 
         val latch = CountDownLatch(1)
         lateinit var finalSession: FFmpegSession
+        val isFinished = AtomicBoolean(false)
 
         // 1. Execute FFmpeg asynchronously
         val session = FFmpegKit.executeAsync(
             arguments.joinToString(" "),
             { completedSession -> // This callback runs when the command finishes
                 finalSession = completedSession
+                isFinished.set(true)
                 // If the command failed, log the reason.
                 if (!ReturnCode.isSuccess(completedSession.returnCode)) {
                     AppLogger.e("FFmpeg merge failed with return code ${completedSession.returnCode}. Log: ${completedSession.allLogsAsString}")
@@ -144,7 +147,7 @@ object DownloaderUtils {
             },
             { statistics ->
                 // 2. This is the statistics callback for progress
-                if (onMergeProgress != null && totalDurationSeconds > 0) {
+                if (!isFinished.get() && onMergeProgress != null && totalDurationSeconds > 0) {
                     val totalDurationMillis = (totalDurationSeconds * 1000).toLong()
                     val currentTimeMillis = statistics.time
                     if (currentTimeMillis > 0) {
@@ -178,7 +181,12 @@ object DownloaderUtils {
      * @throws IOException if the download fails.
      */
     @Throws(IOException::class)
-    fun downloadKey(httpClient: OkHttpClient, uri: String, keyFile: File, headers: okhttp3.Headers) {
+    fun downloadKey(
+        httpClient: OkHttpClient,
+        uri: String,
+        keyFile: File,
+        headers: okhttp3.Headers
+    ) {
         try {
             val request = Request.Builder().url(uri).headers(headers).build()
             httpClient.newCall(request).execute()

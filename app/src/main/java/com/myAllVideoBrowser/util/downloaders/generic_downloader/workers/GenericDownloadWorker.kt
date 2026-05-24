@@ -11,7 +11,6 @@ import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader.DownloaderActions
 import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
-import kotlinx.coroutines.delay
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
@@ -41,15 +40,26 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
         action: String, task: VideoTaskItem, headers: Map<String, String>, isFileRemove: Boolean
     )
 
-    open fun fixFileName(fileName: String): String {
-        val currentFile = File(fileName)
-        if (!currentFile.exists()) return fileName
+    open fun fixFileName(fileName: String, isAudioOnlyExtract: Boolean): String {
+        var currentFile = File(fileName)
+        if (!currentFile.exists()) {
+            if (isAudioOnlyExtract && currentFile.extension != "mp3") {
+                currentFile = File(currentFile.parent, "${currentFile.nameWithoutExtension}.mp3")
+                if (!currentFile.exists()) {
+                    return currentFile.absolutePath
+                }
+            }
+        }
 
         var counter = 1
         var fixedFileName: File
+        var ext = File(fileName).extension
+        if (isAudioOnlyExtract) {
+            ext = "mp3"
+        }
         do {
             fixedFileName =
-                File(currentFile.parent, "${currentFile.nameWithoutExtension}_cp$counter.mp4")
+                File(currentFile.parent, "${currentFile.nameWithoutExtension}_cp$counter.$ext")
             counter++
         } while (fixedFileName.exists())
 

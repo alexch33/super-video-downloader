@@ -299,103 +299,96 @@ class MpdDownloader(
         controller: FileBasedDownloadController,
         onProgress: (progress: Progress) -> Unit
     ): File = coroutineScope {
-        val videoTempFile = downloadDir.resolve("video_stream.mp4")
-        val audioTempFile = downloadDir.resolve("audio_stream.mp4")
+        // Combined files used as input for FFmpeg
+        val videoCombined = downloadDir.resolve("video_combined.mp4")
+        val audioCombined = downloadDir.resolve("audio_combined.mp4")
         val finalFile = downloadDir.resolve("merged_output.mp4")
+
+        // Clean up legacy files
+        videoCombined.delete()
+        audioCombined.delete()
+
+        val videoDownloaded = AtomicLong(0)
+        val audioDownloaded = AtomicLong(0)
+        val videoTotal = AtomicLong(0)
+        val audioTotal = AtomicLong(0)
 
         val jobs = mutableListOf<Deferred<*>>()
 
-        // Launch video download if it exists
-        videoRep?.baseUrls?.takeIf { it.isNotEmpty() }?.let { urls ->
-            val job = async {
-                downloadFileWithCustomDownloader(
-                    urls,
-                    videoTempFile,
-                    headers,
-                    controller
-                ) { downloaded, total ->
-                    launch {
-                        progressMutex.withLock {
-                            videoProgress = Progress(downloaded, total)
-                            onProgress(
-                                Progress(
-                                    videoProgress.currentBytes + audioProgress.currentBytes,
-                                    videoProgress.totalBytes + audioProgress.totalBytes
-                                )
-                            )
-                        }
+        // --- Video Logic ---
+        videoRep?.let { rep ->
+            jobs.add(async {
+                val videoParts = mutableListOf<File>()
+                rep.baseUrls.takeIf { it.isNotEmpty() }?.let { urls ->
+                    val dataFile = downloadDir.resolve("video_data_base.mp4")
+                    dataFile.delete()
+                    downloadFileWithCustomDownloader(urls, dataFile, headers, controller) { dl, tot ->
+                        videoDownloaded.set(dl)
+                        videoTotal.set(tot)
+                        onProgress(Progress(videoDownloaded.get() + audioDownloaded.get(), videoTotal.get() + audioTotal.get()))
                     }
+                    if (dataFile.exists() && dataFile.length() > 0) videoParts.add(dataFile)
                 }
-            }
-            jobs.add(job)
+
+                if (videoParts.isNotEmpty()) {
+                    manualConcat(videoParts, videoCombined) { }
+                    videoParts.forEach { it.delete() }
+                }
+            })
         }
 
-        // Launch audio download if it exists
-        audioRep?.baseUrls?.takeIf { it.isNotEmpty() }?.let { urls ->
-            val job = async {
-                downloadFileWithCustomDownloader(
-                    urls,
-                    audioTempFile,
-                    headers,
-                    controller
-                ) { downloaded, total ->
-                    launch {
-                        progressMutex.withLock {
-                            audioProgress = Progress(downloaded, total)
-                            onProgress(
-                                Progress(
-                                    videoProgress.currentBytes + audioProgress.currentBytes,
-                                    videoProgress.totalBytes + audioProgress.totalBytes
-                                )
-                            )
-                        }
+        // --- Audio Logic ---
+        audioRep?.let { rep ->
+            jobs.add(async {
+                val audioParts = mutableListOf<File>()
+                rep.baseUrls.takeIf { it.isNotEmpty() }?.let { urls ->
+                    val dataFile = downloadDir.resolve("audio_data_base.mp4")
+                    dataFile.delete()
+                    downloadFileWithCustomDownloader(urls, dataFile, headers, controller) { dl, tot ->
+                        audioDownloaded.set(dl)
+                        audioTotal.set(tot)
+                        onProgress(Progress(videoDownloaded.get() + audioDownloaded.get(), videoTotal.get() + audioTotal.get()))
                     }
+                    if (dataFile.exists() && dataFile.length() > 0) audioParts.add(dataFile)
                 }
-            }
-            jobs.add(job)
+
+                if (audioParts.isNotEmpty()) {
+                    manualConcat(audioParts, audioCombined) { }
+                    audioParts.forEach { it.delete() }
+                }
+            })
         }
 
         jobs.awaitAll()
-        if (controller.isInterrupted()) throw CancellationException("Download interrupted.")
+        if (controller.isInterrupted()) throw CancellationException("Interrupted")
 
-        AppLogger.d("MPD (BaseURL): All stream downloads complete. Merging...")
-        val totalDurationSeconds = videoRep?.segments?.sumOf { it.durationSeconds }
-            ?: audioRep?.segments?.sumOf { it.durationSeconds } ?: 0.0
+        // --- FFmpeg Merge ---
+        val totalDuration = videoRep?.segments?.sumOf { it.durationSeconds } ?: 0.0
 
-        onMergeProgress(
-            Progress(
-                0,
-                videoTempFile.length() + audioTempFile.length()
-            ),
-            task.apply {
-                this.lineInfo = "Merging... 0%"
-                this.taskState = VideoTaskState.PREPARE
-            }
-        )
-        val totalBytesDownloaded = videoProgress.totalBytes + audioProgress.totalBytes;
         val mergeSession = mergeBaseUrlStreams(
-            videoTempFile,
-            audioTempFile.takeIf { it.exists() },
+            videoCombined,
+            audioCombined.takeIf { it.exists() && it.length() > 0 },
             finalFile.absolutePath,
-            totalDurationSeconds = totalDurationSeconds,
+            totalDurationSeconds = totalDuration,
             onMergeProgress = { percentage ->
-                onMergeProgress(
-                    Progress(totalBytesDownloaded * percentage / 100, totalBytesDownloaded),
-                    task.apply {
-                        this.lineInfo = "Merging... $percentage%"
-                        this.taskState = VideoTaskState.PREPARE
-                    }
-                )
+                onMergeProgress(Progress(0, 100), task.apply {
+                    this.lineInfo = "Merging... $percentage%"
+                    this.taskState = VideoTaskState.PREPARE
+                })
             },
             audioCodec = audioRep?.codecs
         )
+
         if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
-            throw IOException("FFmpeg failed to merge BaseURL streams. Log: ${mergeSession.allLogsAsString}")
+            AppLogger.e("FFmpeg Fail: ${mergeSession.allLogsAsString}")
+            throw IOException("FFmpeg failed to merge BaseURL streams.")
         }
-        videoTempFile.delete()
-        audioTempFile.delete()
+
+        videoCombined.delete()
+        audioCombined.delete()
         finalFile
     }
+
 
     /**
      * Wraps the legacy CustomFileDownloader in a pausable/cancellable coroutine.
@@ -407,12 +400,17 @@ class MpdDownloader(
         controller: FileBasedDownloadController,
         onProgress: (downloadedBytes: Long, totalBytes: Long) -> Unit
     ) = suspendCancellableCoroutine { continuation ->
+        val monitorJob = Job()
+        val monitorScope = CoroutineScope(Dispatchers.Default + monitorJob)
+
         val listener = object : DownloadListener {
             override fun onSuccess() {
+                monitorJob.cancel()
                 if (continuation.isActive) continuation.resume(Unit)
             }
 
             override fun onFailure(e: Throwable) {
+                monitorJob.cancel()
                 if (continuation.isActive) continuation.resumeWithException(e)
             }
 
@@ -441,14 +439,23 @@ class MpdDownloader(
         )
         downloader.download()
 
-        CoroutineScope(continuation.context).launch {
-            while (isActive) { // Check `isActive` of this new scope
-                if (controller.isInterrupted()) {
-                    CustomFileDownloader.pause(outputFile)
-                    break
+        monitorScope.launch {
+            try {
+                while (isActive) {
+                    if (controller.isInterrupted()) {
+                        CustomFileDownloader.pause(outputFile)
+                        break
+                    }
+                    delay(500)
                 }
-                delay(500)
+            } finally {
+
             }
+        }
+
+        continuation.invokeOnCancellation {
+            monitorJob.cancel()
+            CustomFileDownloader.pause(outputFile)
         }
     }
 

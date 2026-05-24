@@ -37,13 +37,15 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param onMergeProgress A callback to update progress when merging begins.
  * @param threadCount The number of parallel downloads for segments or chunks.
  * @param videoCodec The video codec to check for compatibility.
+ * @param isAudioOnlyExtract If true, extract audio only during merge and skip video download if possible.
  */
 class MpdDownloader(
     private val httpClient: OkHttpClient,
     private val getMpdRepresentations: suspend (url: String, headers: Map<String, String>) -> Pair<MpdPlaylistParser.MpdRepresentation?, MpdPlaylistParser.MpdRepresentation?>,
     private val onMergeProgress: (progress: Progress, task: VideoTaskItem) -> Unit,
     private val threadCount: Int,
-    private val videoCodec: String?
+    private val videoCodec: String?,
+    private val isAudioOnlyExtract: Boolean = false
 ) : ManifestDownloader {
 
     // Mutex to protect progress updates from concurrent BaseURL downloads
@@ -106,13 +108,21 @@ class MpdDownloader(
         task: VideoTaskItem,
         headers: Map<String, String>,
         downloadDir: File,
-        videoRep: MpdPlaylistParser.MpdRepresentation?, // Changed from List<Segment>
-        audioRep: MpdPlaylistParser.MpdRepresentation?, // Changed from List<Segment>
+        videoRepRaw: MpdPlaylistParser.MpdRepresentation?,
+        audioRep: MpdPlaylistParser.MpdRepresentation?,
         controller: FileBasedDownloadController,
         onProgress: (progress: Progress) -> Unit
     ): File = coroutineScope {
         val totalBytesDownloaded = AtomicLong(0)
         val segmentsCompleted = AtomicLong(0)
+
+        // Optimization: Skip video segments if audio-only is requested and separate audio exists.
+        val videoRep = if (isAudioOnlyExtract && audioRep?.segments?.isNotEmpty() == true) {
+            AppLogger.d("MPD: Audio-only requested and separate audio track found. Skipping video track download.")
+            null
+        } else {
+            videoRepRaw
+        }
 
         val videoSegments = videoRep?.segments
         val audioSegments = audioRep?.segments
@@ -240,8 +250,8 @@ class MpdDownloader(
         onMergeProgress(
             Progress(0, totalBytesDownloaded.get()),
             task.apply {
-                this.lineInfo = "Merging... 0%"
-                this.taskState = VideoTaskState.PREPARE
+                this.setLineInfo("Merging... 0%")
+                this.setTaskState(VideoTaskState.PREPARE)
             })
 
         val finalOutputFile = downloadDir.resolve("merged_output.mp4")
@@ -273,8 +283,8 @@ class MpdDownloader(
                         totalBytesDownloaded.get()
                     ),
                     task.apply {
-                        this.lineInfo = message
-                        this.taskState = VideoTaskState.PREPARE
+                        this.setLineInfo(message)
+                        this.setTaskState(VideoTaskState.PREPARE)
                     }
                 )
             }
@@ -294,101 +304,116 @@ class MpdDownloader(
         task: VideoTaskItem,
         headers: Map<String, String>,
         downloadDir: File,
-        videoRep: MpdPlaylistParser.MpdRepresentation?,
+        videoRepRaw: MpdPlaylistParser.MpdRepresentation?,
         audioRep: MpdPlaylistParser.MpdRepresentation?,
         controller: FileBasedDownloadController,
         onProgress: (progress: Progress) -> Unit
     ): File = coroutineScope {
-        // Combined files used as input for FFmpeg
-        val videoCombined = downloadDir.resolve("video_combined.mp4")
-        val audioCombined = downloadDir.resolve("audio_combined.mp4")
+        val videoTempFile = downloadDir.resolve("video_stream.mp4")
+        val audioTempFile = downloadDir.resolve("audio_stream.mp4")
         val finalFile = downloadDir.resolve("merged_output.mp4")
 
-        // Clean up legacy files
-        videoCombined.delete()
-        audioCombined.delete()
-
-        val videoDownloaded = AtomicLong(0)
-        val audioDownloaded = AtomicLong(0)
-        val videoTotal = AtomicLong(0)
-        val audioTotal = AtomicLong(0)
+        // Optimization: Skip video download if audio-only is requested and separate audio exists.
+        val videoRep = if (isAudioOnlyExtract && audioRep?.baseUrls?.isNotEmpty() == true) {
+            AppLogger.d("MPD: Audio-only requested and separate audio file found. Skipping video track download.")
+            null
+        } else {
+            videoRepRaw
+        }
 
         val jobs = mutableListOf<Deferred<*>>()
 
-        // --- Video Logic ---
-        videoRep?.let { rep ->
-            jobs.add(async {
-                val videoParts = mutableListOf<File>()
-                rep.baseUrls.takeIf { it.isNotEmpty() }?.let { urls ->
-                    val dataFile = downloadDir.resolve("video_data_base.mp4")
-                    dataFile.delete()
-                    downloadFileWithCustomDownloader(urls, dataFile, headers, controller) { dl, tot ->
-                        videoDownloaded.set(dl)
-                        videoTotal.set(tot)
-                        onProgress(Progress(videoDownloaded.get() + audioDownloaded.get(), videoTotal.get() + audioTotal.get()))
+        // Launch video download if it exists
+        videoRep?.baseUrls?.takeIf { it.isNotEmpty() }?.let { urls ->
+            val job = async {
+                downloadFileWithCustomDownloader(
+                    urls,
+                    videoTempFile,
+                    headers,
+                    controller
+                ) { downloaded, total ->
+                    launch {
+                        progressMutex.withLock {
+                            videoProgress = Progress(downloaded, total)
+                            onProgress(
+                                Progress(
+                                    videoProgress.currentBytes + audioProgress.currentBytes,
+                                    videoProgress.totalBytes + audioProgress.totalBytes
+                                )
+                            )
+                        }
                     }
-                    if (dataFile.exists() && dataFile.length() > 0) videoParts.add(dataFile)
                 }
-
-                if (videoParts.isNotEmpty()) {
-                    manualConcat(videoParts, videoCombined) { }
-                    videoParts.forEach { it.delete() }
-                }
-            })
+            }
+            jobs.add(job)
         }
 
-        // --- Audio Logic ---
-        audioRep?.let { rep ->
-            jobs.add(async {
-                val audioParts = mutableListOf<File>()
-                rep.baseUrls.takeIf { it.isNotEmpty() }?.let { urls ->
-                    val dataFile = downloadDir.resolve("audio_data_base.mp4")
-                    dataFile.delete()
-                    downloadFileWithCustomDownloader(urls, dataFile, headers, controller) { dl, tot ->
-                        audioDownloaded.set(dl)
-                        audioTotal.set(tot)
-                        onProgress(Progress(videoDownloaded.get() + audioDownloaded.get(), videoTotal.get() + audioTotal.get()))
+        // Launch audio download if it exists
+        audioRep?.baseUrls?.takeIf { it.isNotEmpty() }?.let { urls ->
+            val job = async {
+                downloadFileWithCustomDownloader(
+                    urls,
+                    audioTempFile,
+                    headers,
+                    controller
+                ) { downloaded, total ->
+                    launch {
+                        progressMutex.withLock {
+                            audioProgress = Progress(downloaded, total)
+                            onProgress(
+                                Progress(
+                                    videoProgress.currentBytes + audioProgress.currentBytes,
+                                    videoProgress.totalBytes + audioProgress.totalBytes
+                                )
+                            )
+                        }
                     }
-                    if (dataFile.exists() && dataFile.length() > 0) audioParts.add(dataFile)
                 }
-
-                if (audioParts.isNotEmpty()) {
-                    manualConcat(audioParts, audioCombined) { }
-                    audioParts.forEach { it.delete() }
-                }
-            })
+            }
+            jobs.add(job)
         }
 
         jobs.awaitAll()
-        if (controller.isInterrupted()) throw CancellationException("Interrupted")
+        if (controller.isInterrupted()) throw CancellationException("Download interrupted.")
 
-        // --- FFmpeg Merge ---
-        val totalDuration = videoRep?.segments?.sumOf { it.durationSeconds } ?: 0.0
+        AppLogger.d("MPD (BaseURL): All stream downloads complete. Merging...")
+        val totalDurationSeconds = videoRep?.segments?.sumOf { it.durationSeconds }
+            ?: audioRep?.segments?.sumOf { it.durationSeconds } ?: 0.0
 
+        onMergeProgress(
+            Progress(
+                0,
+                videoTempFile.length() + audioTempFile.length()
+            ),
+            task.apply {
+                this.setLineInfo("Merging... 0%")
+                this.setTaskState(VideoTaskState.PREPARE)
+            }
+        )
+        val totalBytesDownloaded = videoProgress.totalBytes + audioProgress.totalBytes;
         val mergeSession = mergeBaseUrlStreams(
-            videoCombined,
-            audioCombined.takeIf { it.exists() && it.length() > 0 },
+            videoTempFile.takeIf { it.exists() && it.length() > 0 } ?: File(""),
+            audioTempFile.takeIf { it.exists() && it.length() > 0 },
             finalFile.absolutePath,
-            totalDurationSeconds = totalDuration,
+            totalDurationSeconds = totalDurationSeconds,
             onMergeProgress = { percentage ->
-                onMergeProgress(Progress(0, 100), task.apply {
-                    this.lineInfo = "Merging... $percentage%"
-                    this.taskState = VideoTaskState.PREPARE
-                })
+                onMergeProgress(
+                    Progress(totalBytesDownloaded * percentage / 100, totalBytesDownloaded),
+                    task.apply {
+                        this.setLineInfo("Merging... $percentage%")
+                        this.setTaskState(VideoTaskState.PREPARE)
+                    }
+                )
             },
             audioCodec = audioRep?.codecs
         )
-
         if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
-            AppLogger.e("FFmpeg Fail: ${mergeSession.allLogsAsString}")
-            throw IOException("FFmpeg failed to merge BaseURL streams.")
+            throw IOException("FFmpeg failed to merge BaseURL streams. Log: ${mergeSession.allLogsAsString}")
         }
-
-        videoCombined.delete()
-        audioCombined.delete()
+        videoTempFile.delete()
+        audioTempFile.delete()
         finalFile
     }
-
 
     /**
      * Wraps the legacy CustomFileDownloader in a pausable/cancellable coroutine.
@@ -400,17 +425,12 @@ class MpdDownloader(
         controller: FileBasedDownloadController,
         onProgress: (downloadedBytes: Long, totalBytes: Long) -> Unit
     ) = suspendCancellableCoroutine { continuation ->
-        val monitorJob = Job()
-        val monitorScope = CoroutineScope(Dispatchers.Default + monitorJob)
-
         val listener = object : DownloadListener {
             override fun onSuccess() {
-                monitorJob.cancel()
                 if (continuation.isActive) continuation.resume(Unit)
             }
 
             override fun onFailure(e: Throwable) {
-                monitorJob.cancel()
                 if (continuation.isActive) continuation.resumeWithException(e)
             }
 
@@ -439,23 +459,14 @@ class MpdDownloader(
         )
         downloader.download()
 
-        monitorScope.launch {
-            try {
-                while (isActive) {
-                    if (controller.isInterrupted()) {
-                        CustomFileDownloader.pause(outputFile)
-                        break
-                    }
-                    delay(500)
+        CoroutineScope(continuation.context).launch {
+            while (isActive) { // Check `isActive` of this new scope
+                if (controller.isInterrupted()) {
+                    CustomFileDownloader.pause(outputFile)
+                    break
                 }
-            } finally {
-
+                delay(500)
             }
-        }
-
-        continuation.invokeOnCancellation {
-            monitorJob.cancel()
-            CustomFileDownloader.pause(outputFile)
         }
     }
 
@@ -519,7 +530,7 @@ class MpdDownloader(
         AppLogger.d("MPD: Concatenation finished. Starting FFmpeg merge.")
 
         val mergeSession = mergeBaseUrlStreams(
-            tempVideoFile,
+            tempVideoFile.takeIf { it.exists() && it.length() > 0 } ?: File(""),
             tempAudioFile.takeIf { it.exists() && it.length() > 0 },
             finalOutputPath,
             totalDurationSeconds,
@@ -542,11 +553,11 @@ class MpdDownloader(
     ): FFmpegSession {
         val arguments = mutableListOf<String>()
 
-        if (videoFile.exists()) {
+        if (videoFile.exists() && videoFile.length() > 0) {
             arguments.addAll(listOf("-i", videoFile.absolutePath))
         }
 
-        audioFile?.takeIf { it.exists() }?.let {
+        audioFile?.takeIf { it.exists() && it.length() > 0 }?.let {
             arguments.addAll(listOf("-i", it.absolutePath))
         }
 
@@ -555,8 +566,8 @@ class MpdDownloader(
         }
         arguments.add(0, "-y")
 
-        val hasVideo = videoFile.exists()
-        val hasAudio = audioFile?.exists() == true
+        val hasVideo = videoFile.exists() && videoFile.length() > 0
+        val hasAudio = audioFile?.exists() == true && audioFile.length() > 0
 
         addCommonMergeArguments(arguments, hasVideo, hasAudio, finalOutputPath, audioCodec)
 
@@ -604,37 +615,50 @@ class MpdDownloader(
         audioCodec: String? = null
     ) {
         arguments.apply {
-            when {
-                hasVideo && hasAudio -> {
-                    // Map video from the first input (0) and audio from the second (1).
-                    // This is now applied to both segment and base URL merges.
-                    add("-map"); add("0:v:0?"); add("-map"); add("1:a:0?")
-                }
-                // This case might not be strictly necessary if you always have one input
-                // when there's only one stream, but it's good for robustness.
-                hasVideo -> {
-                    add("-map"); add("0:v:0?")
-                }
-
-                hasAudio -> {
+            if (isAudioOnlyExtract) {
+                add("-vn")
+                if (hasAudio && hasVideo) {
+                    add("-map"); add("1:a:0?")
+                } else {
                     add("-map"); add("0:a:0?")
                 }
-            }
-
-            if (hasVideo && (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true)) {
-                add("-c:v"); add("libx264"); add("-preset"); add("ultrafast"); add("-crf"); add("26"); add(
-                    "-pix_fmt"
-                ); add("yuv420p")
-                if (hasAudio) add("-c:a"); add("copy")
+                add("-c:a"); add("libmp3lame")
+                add("-q:a"); add("2")
             } else {
-                add("-c"); add("copy")
-            }
+                when {
+                    hasVideo && hasAudio -> {
+                        // Map video from the first input (0) and audio from the second (1).
+                        // This is now applied to both segment and base URL merges.
+                        add("-map"); add("0:v:0?"); add("-map"); add("1:a:0?")
+                    }
+                    // This case might not be strictly necessary if you always have one input
+                    // when there's only one stream, but it's good for robustness.
+                    hasVideo -> {
+                        add("-map"); add("0:v:0?")
+                    }
 
-            if (hasAudio && audioCodec?.contains("aac", ignoreCase = true) == true) {
-                add("-bsf:a"); add("aac_adtstoasc")
-            }
+                    hasAudio -> {
+                        add("-map"); add("0:a:0?")
+                    }
+                }
 
-            add("-movflags"); add("+faststart")
+                if (hasVideo && (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true)) {
+                    add("-c:v"); add("libx264"); add("-preset"); add("ultrafast"); add("-crf"); add("26"); add(
+                        "-pix_fmt"
+                    ); add("yuv420p")
+                    if (hasAudio) add("-c:a"); add("copy")
+                } else {
+                    add("-c"); add("copy")
+                }
+
+                if (hasAudio && audioCodec?.contains("aac", ignoreCase = true) == true) {
+                    add("-bsf:a"); add("aac_adtstoasc")
+                }
+                
+                if (finalOutputPath.endsWith(".mp4", true) || finalOutputPath.endsWith(".mov", true)) {
+                    add("-movflags"); add("+faststart")
+                }
+            }
 
             add("-y"); add(finalOutputPath)
         }

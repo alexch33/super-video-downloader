@@ -156,6 +156,11 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 isProcessFfmpeg = isOnlyLive && item.isLive
             }
 
+            val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+            if (isAudioOnlyExtract) {
+                isProcessFfmpeg = true
+            }
+
             var processedUri: Uri? = null
 
             val isFlv = item.isLive && item.url.contains(".flv", ignoreCase = true)
@@ -174,7 +179,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 AppLogger.d("IS FLV: $isFlv")
                 // The FfmpegProcessor call is now correctly blocking this thread
                 processedUri = FfmpegProcessor.getInstance()
-                    .processDownload(sourcePath.toUri(), isFlv) { percents ->
+                    .processDownload(sourcePath.toUri(), isFlv, isAudioOnlyExtract) { percents ->
                         val percentInt = percents
                         if (percentInt in 1..99) {
                             val currentProgress = Progress(

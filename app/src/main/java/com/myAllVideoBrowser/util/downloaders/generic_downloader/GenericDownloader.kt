@@ -75,6 +75,7 @@ abstract class GenericDownloader : IDownloader {
             const val SELECTED_FORMAT_ID = "SELECTED_FORMAT_ID"
             const val IS_LIVE = "IS_LIVE"
             const val VIDEO_CODEC = "VIDEO_CODEC"
+            const val IS_AUDIO_ONLY_EXTRACT = "IS_AUDIO_ONLY_EXTRACT"
         }
     }
 

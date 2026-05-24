@@ -21,19 +21,14 @@ import java.util.concurrent.atomic.AtomicLong
  * Download strategy for VOD (Video on Demand) HLS playlists.
  * This class is responsible for parsing the playlist, downloading all segments in parallel,
  * and merging them into a final file using FFmpeg.
- *
- * @param httpClient The OkHttpClient to be used for network requests.
- * @param getMediaSegments A function reference to parse the HLS manifest and get segments.
- * @param onMergeProgress A callback to update progress when merging begins.
- * @param threadCount The maximum number of segments to download in parallel.
- * @param videoCodec The video codec of the stream, used to determine if re-encoding is needed.
  */
 class HlsDownloader(
     private val httpClient: OkHttpClient,
     private val getMediaSegments: suspend (url: String, headers: Map<String, String>) -> Pair<List<HlsPlaylistParser.MediaSegment>?, List<HlsPlaylistParser.MediaSegment>?>,
     private val onMergeProgress: (progress: Progress, task: VideoTaskItem) -> Unit,
     private val threadCount: Int,
-    private val videoCodec: String?
+    private val videoCodec: String?,
+    private val isAudioOnlyExtract: Boolean = false
 ) : ManifestDownloader {
 
     override suspend fun download(
@@ -48,7 +43,16 @@ class HlsDownloader(
             val hlsSegmentsCompleted = AtomicInteger(0)
 
             // 1. Get the list of media segments by calling the provided function
-            val (videoSegments, audioSegments) = getMediaSegments(task.url, headers)
+            val (videoSegmentsRaw, audioSegments) = getMediaSegments(task.url, headers)
+
+            // Optimization: If audio-only is requested and separate audio tracks exist,
+            // we don't need to download the video track at all.
+            val videoSegments = if (isAudioOnlyExtract && !audioSegments.isNullOrEmpty()) {
+                AppLogger.d("HLS: Audio-only extract requested and separate audio track found. Skipping video segments.")
+                null
+            } else {
+                videoSegmentsRaw
+            }
 
             if (videoSegments.isNullOrEmpty() && audioSegments.isNullOrEmpty()) {
                 throw IOException("No media segments found in HLS playlist for the selected format.")
@@ -66,7 +70,7 @@ class HlsDownloader(
             val segmentDownloader = SegmentDownloader(httpClient, headers, controller)
 
             // --- Download Initialization Segments (for fMP4) ---
-            if (isVideoFmp4) {
+            if (isVideoFmp4 && !videoSegments.isNullOrEmpty()) {
                 val initSegment =
                     (videoSegments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
                 val initFile = downloadDir.resolve("init_video.mp4")
@@ -77,7 +81,7 @@ class HlsDownloader(
                     hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
                 }
             }
-            if (isAudioFmp4) {
+            if (isAudioFmp4 && !audioSegments.isNullOrEmpty()) {
                 val initSegment =
                     (audioSegments.first() as HlsPlaylistParser.UrlMediaSegment).initializationSegment!!
                 val initFile = downloadDir.resolve("init_audio.mp4")
@@ -118,20 +122,18 @@ class HlsDownloader(
                 segmentFile.exists() && segmentFile.length() > 0
             } ?: emptyList()
 
-            val initialVideoSize = alreadyDownloadedVideo.sumOf {
-                downloadDir.resolve(
-                    "segment_${
-                        "%05d".format(videoSegments!!.indexOf(it))
-                    }.$videoExt"
-                ).length()
-            }
-            val initialAudioSize = alreadyDownloadedAudio.sumOf {
-                downloadDir.resolve(
-                    "audio_segment_${
-                        "%05d".format(audioSegments!!.indexOf(it))
-                    }.$audioExt"
-                ).length()
-            }
+            val initialVideoSize = if (videoSegments != null) {
+                alreadyDownloadedVideo.sumOf {
+                    downloadDir.resolve("segment_${"%05d".format(videoSegments.indexOf(it))}.$videoExt").length()
+                }
+            } else 0L
+
+            val initialAudioSize = if (audioSegments != null) {
+                alreadyDownloadedAudio.sumOf {
+                    downloadDir.resolve("audio_segment_${"%05d".format(audioSegments.indexOf(it))}.$audioExt").length()
+                }
+            } else 0L
+
             val initialTotalDownloaded = initialVideoSize + initialAudioSize
             val initialSegmentsCompleted = alreadyDownloadedVideo.size + alreadyDownloadedAudio.size
 
@@ -216,7 +218,8 @@ class HlsDownloader(
             });
 
             AppLogger.d("HLS: All segments downloaded successfully. Starting merge.")
-            val finalOutputFile = downloadDir.resolve("merged_output.mp4")
+            val extension = if (isAudioOnlyExtract) "mp3" else "mp4"
+            val finalOutputFile = downloadDir.resolve("merged_output.$extension")
             val mergeFlagFile = downloadDir.resolve("merge_in_progress.flag")
 
             if (finalOutputFile.exists() && !mergeFlagFile.exists()) {
@@ -232,11 +235,12 @@ class HlsDownloader(
                 audioSegments,
                 finalOutputFile.absolutePath,
                 videoCodec,
+                isAudioOnlyExtract,
                 onMergeProgress = { percentage ->
                     onMergeProgress(
                         Progress(finalDownloadedBytes * percentage / 100, finalDownloadedBytes),
                         task.apply {
-                            this.lineInfo = "Merging segments... $percentage"
+                            this.lineInfo = "Merging segments... $percentage%"
                             this.taskState = VideoTaskState.PREPARE
                         });
                 }

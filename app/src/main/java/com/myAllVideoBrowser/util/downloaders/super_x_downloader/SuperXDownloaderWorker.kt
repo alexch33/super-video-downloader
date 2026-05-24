@@ -771,7 +771,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     fileName = fileName.substringBeforeLast(".") + ".mp3"
                 }
 
-                val targetPath = fixFileName(File(fileUtil.folderDir, fileName).path)
+                val targetPath = fixFileName(
+                    File(fileUtil.folderDir, fileName).path,
+                    isAudioOnlyExtract
+                )
                 val from = sourcePath.toUri()
                 val to = File(targetPath).toUri()
                 AppLogger.d("MOVING FILE $from to -> $to")

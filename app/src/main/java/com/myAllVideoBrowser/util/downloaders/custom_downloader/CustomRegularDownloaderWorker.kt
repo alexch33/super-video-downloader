@@ -119,8 +119,14 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             return
         }
 
+        val isAudioOnlyExtract =
+            inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+
         AppLogger.d("handleSuccessfulDownload started for item: ${item.mId}")
-        val target = fixFileName(File(fileUtil.folderDir, File(outputFileName!!).name).path)
+        val target = fixFileName(
+            File(fileUtil.folderDir, File(outputFileName!!).name).path,
+            isAudioOnlyExtract
+        )
 
         var isPreprocessed = false
 
@@ -156,7 +162,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 isProcessFfmpeg = isOnlyLive && item.isLive
             }
 
-            val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
             if (isAudioOnlyExtract) {
                 isProcessFfmpeg = true
             }
@@ -267,7 +272,10 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val tmpDir = fileUtil.tmpDir.resolve(taskId).apply { mkdirs() }
         outputFileName = tmpDir.resolve(taskItem.fileName).toString()
         val fixedHeaders = decodeCookieHeader(headers)
-        updateProgressInfoAndStartDownload(taskItem, taskId, url, fixedHeaders)
+        updateProgressInfoAndStartDownload(taskItem.also {
+            it.taskState = VideoTaskState.DOWNLOADING
+            it.lineInfo = "Strting..."
+        }, taskId, url, fixedHeaders)
     }
 
     private fun updateProgressInfoAndStartDownload(

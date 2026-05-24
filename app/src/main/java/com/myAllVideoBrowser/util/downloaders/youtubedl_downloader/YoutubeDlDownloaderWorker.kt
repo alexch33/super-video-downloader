@@ -43,7 +43,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private lateinit var tmpFile: File
     private var isLiveCounter: Int = 0
     private var isDownloadOk: Boolean = false
-    private var isDownloadJustStarted: Boolean = false
     private var monitorProcessDisposable: Disposable? = null
     private var progressCached = 0
     private var downloadJobDisposable: Disposable? = null
@@ -248,9 +247,16 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     ) {
         downloadJobDisposable = Observable.fromCallable<YoutubeDLResponse> {
             YoutubeDL.getInstance().execute(request, taskId) { pr, _, line ->
-                if (line.contains("[download] Destination:")) {
-                    isDownloadJustStarted = true
+                if (Memory.isMemoryCritical(applicationContext)) {
+                    handleOomError(taskId)
+                    finishWork(task.also {
+                        it.mId = taskId
+                        it.taskState = VideoTaskState.ERROR
+                        it.errorMessage = "OOM error"
+                    })
+                    return@execute
                 }
+
                 if (line.contains(Regex("""\[download] {3}\d+"""))) {
                     isDownloadOk = true
                 }
@@ -293,16 +299,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                             it.mId = taskId
                             it.taskState = VideoTaskState.ERROR
                             it.errorMessage = "Not enough space"
-                        })
-
-                        return@execute
-                    }
-
-                    if (Memory.isMemoryCritical(applicationContext)) {
-                        finishWork(task.also {
-                            it.mId = taskId
-                            it.taskState = VideoTaskState.ERROR
-                            it.errorMessage = "OOM error"
                         })
 
                         return@execute
@@ -370,7 +366,16 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun configureYoutubedlRequest(
         request: YoutubeDLRequest, vFormat: VideoFormatEntity, fileName: String, isContinue: Boolean
     ) {
+        val isLive = inputData.getBoolean(GenericDownloader.Constants.IS_LIVE, false)
+        // disable logs for live stream to prevent OOM error
+        if (isLive) {
+            request.addOption("--quiet")
+        }
+
         request.addOption("--no-warnings")
+        request.addOption("--no-playlist")
+        request.addOption("--newline")
+        request.addOption("--progress-delta", "2")
 
         request.addOption("--progress")
 
@@ -445,7 +450,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                             return@subscribe
                         }
 
-                        if (isDownloadJustStarted && !isDownloadOk) {
+                        if (!isDownloadOk) {
                             ++isLiveCounter
                             if (isLiveCounter > 2) {
                                 isLiveCounter = 3

@@ -98,6 +98,7 @@ abstract class GenericDownloader : IDownloader {
 
         val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.DOWNLOAD)
+        downloaderData.putBoolean(Constants.IS_LIVE, videoInfo.isLive)
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(

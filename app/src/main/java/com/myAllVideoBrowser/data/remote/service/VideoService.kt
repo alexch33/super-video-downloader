@@ -87,6 +87,7 @@ open class VideoServiceLocal(
             val videoDuration = json.optLong("duration", 0L)
             val videoThumbnail = json.optString("thumbnail", "")
             val videoExt = json.optString("ext", MP4_EXT)
+            val isLiveStream = json.optBoolean("is_live")
 
             val formats = mutableListOf<VideoFormatEntity>()
             val formatsArray = json.optJSONArray("formats")
@@ -156,6 +157,7 @@ open class VideoServiceLocal(
                     this.originalUrl = originalUrl
                     downloadUrls = if (isM3u8OrMpd) emptyList() else listOf(url)
                     isRegularDownload = false
+                    isLive = isLiveStream
                 }
             )
         } catch (e: Throwable) {

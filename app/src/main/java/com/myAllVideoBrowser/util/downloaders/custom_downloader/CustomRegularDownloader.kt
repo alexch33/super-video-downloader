@@ -122,6 +122,7 @@ object CustomRegularDownloader : GenericDownloader() {
 
         data.putString(Constants.TITLE_KEY, videoInfo.title)
         data.putString(Constants.FILENAME_KEY, fileName)
+        data.putBoolean(Constants.IS_AUDIO_ONLY_EXTRACT, videoInfo.isAudioOnlyExtract)
 
         return data
     }
@@ -131,4 +132,3 @@ object CustomRegularDownloader : GenericDownloader() {
             .setBackoffCriteria(BackoffPolicy.LINEAR, 10, TimeUnit.SECONDS).addTag(id)
     }
 }
-

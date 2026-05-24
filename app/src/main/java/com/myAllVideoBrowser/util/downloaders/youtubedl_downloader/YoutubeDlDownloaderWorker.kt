@@ -382,7 +382,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         val threadsCount = sharedPrefHelper.getM3u8DownloaderThreadCount()
         request.addOption("-N", threadsCount)
 
-        val isAudioOnly = vFormat.vcodec == "none" && vFormat.acodec != "none"
+        val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+        val isAudioOnly = (vFormat.vcodec == "none" && vFormat.acodec != "none") || isAudioOnlyExtract
 
         if (isAudioOnly) {
             request.addOption("--audio-quality", "0")

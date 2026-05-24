@@ -99,12 +99,21 @@
                 app:layout_constraintTop_toBottomOf="@id/typeTextView"
                 tools:text="Download Size: 12.5 MB" />
 
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/audio_only_checkbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Only Audio"
+                android:checked="@{videoInfo.isAudioOnlyExtract}"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/sizeTextView" />
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/candidatesList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                app:layout_constraintTop_toBottomOf="@id/sizeTextView"
+                app:layout_constraintTop_toBottomOf="@id/audio_only_checkbox"
                 tools:listitem="@android:layout/simple_list_item_1" />
 
             <com.google.android.material.button.MaterialButton

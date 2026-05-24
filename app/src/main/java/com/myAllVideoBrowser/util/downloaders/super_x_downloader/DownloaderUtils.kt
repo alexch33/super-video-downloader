@@ -27,6 +27,7 @@ object DownloaderUtils {
         audioSegments: List<HlsPlaylistParser.MediaSegment>?,
         finalOutputPath: String,
         videoCodec: String?,
+        isAudioOnlyExtract: Boolean = false,
         onMergeProgress: ((percentage: Int) -> Unit)? = null
     ): FFmpegSession {
         val arguments = mutableListOf<String>()
@@ -94,33 +95,54 @@ object DownloaderUtils {
             val hasVideo = !videoSegments.isNullOrEmpty()
             val hasAudio = !audioSegments.isNullOrEmpty()
 
-            when {
-                hasVideo && hasAudio -> {
-                    add("-map"); add("0:v?"); add("-map"); add("1:a?")
-                }
+            add("-y") // Overwrite output file
 
-                hasVideo -> {
-                    add("-map"); add("0")
-                }
-
-                hasAudio -> {
+            if (isAudioOnlyExtract) {
+                add("-vn")
+                if (hasAudio && hasVideo) {
+                    add("-map"); add("1:a?")
+                } else {
                     add("-map"); add("0:a?")
                 }
-            }
-
-            if (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true) {
-                add("-c:v"); add("libx264")
-                add("-preset"); add("ultrafast")
-                add("-crf"); add("26")
-                add("-pix_fmt"); add("yuv420p")
-                if (hasAudio) add("-c:a"); add("copy")
+                add("-c:a"); add("libmp3lame")
+                add("-q:a"); add("2")
+                // NO aac_adtstoasc or faststart for MP3
             } else {
-                add("-c"); add("copy")
+                when {
+                    hasVideo && hasAudio -> {
+                        add("-map"); add("0:v?"); add("-map"); add("1:a?")
+                    }
+
+                    hasVideo -> {
+                        add("-map"); add("0")
+                    }
+
+                    hasAudio -> {
+                        add("-map"); add("0:a?")
+                    }
+                }
+
+                if (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true) {
+                    add("-c:v"); add("libx264")
+                    add("-preset"); add("ultrafast")
+                    add("-crf"); add("26")
+                    add("-pix_fmt"); add("yuv420p")
+                    if (hasAudio) add("-c:a"); add("copy")
+                } else {
+                    add("-c"); add("copy")
+                }
+
+                // Bitstream filter is only needed (and only supports) AAC in TS containers when copying to MP4
+                if (!isVideoFmp4 && !isAudioFmp4) {
+                    add("-bsf:a"); add("aac_adtstoasc")
+                }
+
+                if (finalOutputPath.endsWith(".mp4", true) || finalOutputPath.endsWith(".mov", true)) {
+                    add("-movflags"); add("+faststart")
+                }
             }
 
-            add("-bsf:a"); add("aac_adtstoasc")
-            add("-movflags"); add("+faststart")
-            add("-y"); add(finalOutputPath)
+            add(finalOutputPath)
         }
 
         AppLogger.d("DownloaderUtils: Executing HLS merge with arguments: $arguments")
@@ -192,7 +214,7 @@ object DownloaderUtils {
             httpClient.newCall(request).execute()
                 .use { response ->
                     if (!response.isSuccessful) throw IOException("Failed to download key file. HTTP ${response.code}")
-                    response.body.use { keyFile.writeBytes(it.bytes()) }
+                    response.body?.use { keyFile.writeBytes(it.bytes()) }
                     AppLogger.d("HLS: Encryption key downloaded to ${keyFile.absolutePath}")
                 }
         } catch (e: Exception) {
@@ -271,7 +293,7 @@ object DownloaderUtils {
         val playlistFile = hlsTmpDir.resolve(finalPlaylistName)
 
         if (isEncrypted) {
-            AppLogger.d("HLS: Encryption detected for $filePrefix. Method: ${key.method}")
+            AppLogger.d("HLS: Encryption detected for $filePrefix. Method: ${key!!.method}")
             val keyFile = hlsTmpDir.resolve(keyFileName)
             if (!keyFile.exists() || keyFile.length() == 0L) {
                 throw IOException("Encryption key file not found: ${keyFile.absolutePath}")
@@ -283,7 +305,7 @@ object DownloaderUtils {
                 appendLine("#EXTM3U")
                 appendLine("#EXT-X-VERSION:3")
                 appendLine("#EXT-X-TARGETDURATION:10") // A default value, FFmpeg is robust to this.
-                appendLine("#EXT-X-KEY:METHOD=${key.method},URI=\"$keyFileName\"")
+                appendLine("#EXT-X-KEY:METHOD=${key!!.method},URI=\"$keyFileName\"")
             }
 
             segments.forEachIndexed { index, segment ->

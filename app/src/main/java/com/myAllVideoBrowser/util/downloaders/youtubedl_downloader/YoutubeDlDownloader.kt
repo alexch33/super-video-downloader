@@ -42,6 +42,7 @@ object YoutubeDlDownloader : GenericDownloader() {
 
         data.putString(Constants.ORIGIN_KEY, videoInfo.originalUrl)
         data.putString(Constants.TASK_ID_KEY, videoInfo.id)
+        data.putBoolean(Constants.IS_AUDIO_ONLY_EXTRACT, videoInfo.isAudioOnlyExtract)
 
         if (videoInfo.formats.formats.firstOrNull() != null && videoInfo.formats.formats.isNotEmpty()) {
             val stringifiedFormatEntity =
@@ -65,4 +66,3 @@ object YoutubeDlDownloader : GenericDownloader() {
             .setBackoffCriteria(BackoffPolicy.LINEAR, 10, TimeUnit.SECONDS)
     }
 }
-

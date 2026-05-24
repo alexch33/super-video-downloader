@@ -27,12 +27,14 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param getMpdRepresentations A function to parse the MPD manifest and find the correct video/audio streams.
  * @param onMergeProgress A callback to update progress when merging begins.
  * @param videoCodec The video codec to check for compatibility.
+ * @param isAudioOnlyExtract If true, extract audio only during merge and skip video download if possible.
  */
 class MpdLiveDownloader(
     private val httpClient: OkHttpClient,
     private val getMpdRepresentations: suspend (url: String, headers: Map<String, String>) -> Pair<MpdPlaylistParser.MpdRepresentation?, MpdPlaylistParser.MpdRepresentation?>,
     private val onMergeProgress: (progress: Progress, task: VideoTaskItem) -> Unit,
-    private val videoCodec: String?
+    private val videoCodec: String?,
+    private val isAudioOnlyExtract: Boolean = false
 ) : ManifestDownloader {
     override suspend fun download(
         task: VideoTaskItem,
@@ -55,8 +57,16 @@ class MpdLiveDownloader(
             try {
                 // 1. Initial Manifest Parse and Init Segment Download
                 val (initialVideoRep, initialAudioRep) = getMpdRepresentations(task.url, headers)
+                
+                // If audio-only is requested and separate audio tracks exist, we can skip video entirely.
+                val skipVideo = isAudioOnlyExtract && initialAudioRep != null
+                
                 downloadInitSegments(
-                    initialVideoRep, initialAudioRep, downloadDir, controller, headers
+                    if (skipVideo) null else initialVideoRep, 
+                    initialAudioRep, 
+                    downloadDir, 
+                    controller, 
+                    headers
                 )
 
                 // 2. Start Recording Loop
@@ -77,9 +87,12 @@ class MpdLiveDownloader(
                         (it * 1000).toLong().coerceAtLeast(1000L)
                     } ?: updateInterval
 
-                    val newVideoSegments =
-                        videoRep?.segments?.filter { downloadedSegmentUrls.add(it.url) }
-                            ?: emptyList()
+                    val newVideoSegments = if (skipVideo) {
+                        emptyList()
+                    } else {
+                        videoRep?.segments?.filter { downloadedSegmentUrls.add(it.url) } ?: emptyList()
+                    }
+
                     val newAudioSegments =
                         audioRep?.segments?.filter { downloadedSegmentUrls.add(it.url) }
                             ?: emptyList()
@@ -105,9 +118,11 @@ class MpdLiveDownloader(
                         AppLogger.d("MPD (Live): No new segments found.")
                     }
 
-                    if (videoRep?.manifest?.type == "static" || audioRep?.manifest?.type == "static") {
-                        AppLogger.d("MPD (Live): Stream type changed to 'static'. Ending recording.")
-                        break
+                    if ((videoRep?.manifest?.type == "static" || skipVideo) && (audioRep?.manifest?.type == "static" || audioRep == null)) {
+                         if (videoRep?.manifest?.type == "static" || audioRep?.manifest?.type == "static") {
+                             AppLogger.d("MPD (Live): Stream type changed to 'static'. Ending recording.")
+                             break
+                         }
                     }
 
                     interruptibleDelay(updateInterval, controller)
@@ -260,11 +275,12 @@ class MpdLiveDownloader(
         }
 
         val videoFileToMerge = tempVideoFile.takeIf { it.exists() && it.length() > 0 }
-            ?: throw IOException("Video was expected but concatenated file is missing or empty.")
+            ?: tempAudioFile.takeIf { it.exists() && it.length() > 0 } // Fallback to audio if no video
+            ?: throw IOException("No captured segments found to merge.")
 
         val mergeSession = mergeBaseUrlStreams(
             videoFileToMerge,
-            tempAudioFile.takeIf { it.exists() && it.length() > 0 },
+            if (videoFileToMerge == tempAudioFile) null else tempAudioFile.takeIf { it.exists() && it.length() > 0 },
             finalOutputPath,
             totalDurationSeconds,
             onProgress
@@ -284,10 +300,10 @@ class MpdLiveDownloader(
     ): FFmpegSession {
         val arguments = mutableListOf<String>()
 
-        if (videoFile.exists()) {
+        if (videoFile.exists() && videoFile.length() > 0) {
             arguments.addAll(listOf("-i", videoFile.absolutePath))
         }
-        audioFile?.takeIf { it.exists() }?.let {
+        audioFile?.takeIf { it.exists() && it.length() > 0 }?.let {
             arguments.addAll(listOf("-i", it.absolutePath))
         }
         if (arguments.isEmpty()) {
@@ -343,30 +359,47 @@ class MpdLiveDownloader(
         isSegmentMerge: Boolean
     ) {
         arguments.apply {
-            when {
-                hasVideo && hasAudio -> {
-                    add("-map"); add("0:v:0?"); add("-map"); add("1:a:0?")
-                }
-
-                hasVideo -> {
-                    add("-map"); add("0:v:0?")
-                }
-
-                hasAudio -> {
+            if (isAudioOnlyExtract) {
+                add("-vn")
+                if (hasAudio && hasVideo) {
+                    add("-map"); add("1:a:0?")
+                } else {
                     add("-map"); add("0:a:0?")
                 }
-            }
-
-            if (hasVideo && (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true)) {
-                add("-c:v"); add("libx264"); add("-preset"); add("ultrafast"); add("-crf"); add("26"); add(
-                    "-pix_fmt"
-                ); add("yuv420p")
-                if (hasAudio) add("-c:a"); add("copy")
+                add("-c:a"); add("libmp3lame")
+                add("-q:a"); add("2")
+                // NO aac_adtstoasc or faststart for MP3
             } else {
-                add("-c"); add("copy")
-            }
-            if (!isSegmentMerge) {
-                add("-bsf:a"); add("aac_adtstoasc"); add("-movflags"); add("+faststart")
+                when {
+                    hasVideo && hasAudio -> {
+                        add("-map"); add("0:v:0?"); add("-map"); add("1:a:0?")
+                    }
+
+                    hasVideo -> {
+                        add("-map"); add("0:v:0?")
+                    }
+
+                    hasAudio -> {
+                        add("-map"); add("0:a:0?")
+                    }
+                }
+
+                if (hasVideo && (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true)) {
+                    add("-c:v"); add("libx264"); add("-preset"); add("ultrafast"); add("-crf"); add("26"); add(
+                        "-pix_fmt"
+                    ); add("yuv420p")
+                    if (hasAudio) add("-c:a"); add("copy")
+                } else {
+                    add("-c"); add("copy")
+                }
+
+                if (!isSegmentMerge) {
+                    add("-bsf:a"); add("aac_adtstoasc")
+                }
+                
+                if (finalOutputPath.endsWith(".mp4", true) || finalOutputPath.endsWith(".mov", true)) {
+                    add("-movflags"); add("+faststart")
+                }
             }
             add("-y"); add(finalOutputPath)
         }

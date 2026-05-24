@@ -103,12 +103,28 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
             if (firstPart != null && firstPart.exists()) {
                 try {
+                    val data = notificationsHelper.createNotificationBuilder(task.also {
+                        it.taskState =
+                            VideoTaskState.PREPARE
+                        it.lineInfo = "Saving...."
+                    })
+                    showLongRunningNotificationAsync(data.first, data.second)
                     val moved =
                         fileUtil.moveMedia(applicationContext, firstPart.toUri(), dist.toUri())
                     if (moved) {
-                        finishWork(task.also { it.taskState = VideoTaskState.SUCCESS })
+                        task.also {
+                            it.taskState =
+                                VideoTaskState.SUCCESS
+                            it.lineInfo = "Success"
+                        }
+                        finishWork(task)
                     } else {
-                        finishWork(task.also { it.taskState = VideoTaskState.ERROR })
+                        task.also {
+                            it.taskState =
+                                VideoTaskState.ERROR
+                            it.lineInfo = "ERROR while saving"
+                        }
+                        finishWork(task)
                     }
                 } catch (e: Throwable) {
                     finishWork(task.also { it.taskState = VideoTaskState.ERROR })

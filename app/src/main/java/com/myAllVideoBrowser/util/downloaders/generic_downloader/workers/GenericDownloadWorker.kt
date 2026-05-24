@@ -168,8 +168,9 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
 }
 
 
-class Progress(var currentBytes: Long, var totalBytes: Long) : Serializable {
+class Progress(var currentBytes: Long, var totalBytes: Long, var info: String = "") :
+    Serializable {
     override fun toString(): String {
-        return "Progress{currentBytes=$currentBytes, totalBytes=$totalBytes}"
+        return "Progress{currentBytes=$currentBytes, totalBytes=$totalBytes, info=$info}"
     }
 }

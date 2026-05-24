@@ -139,11 +139,13 @@ class HlsDownloader(
             hlsSegmentsCompleted.set(initialSegmentsCompleted)
 
             if (initialSegmentsCompleted > 0) {
-                AppLogger.d("HLS Resumed: ${alreadyDownloadedVideo.size}/${videoSegments?.size ?: 0} video and ${alreadyDownloadedAudio.size}/${audioSegments?.size ?: 0} audio segments already present.")
+                val info =
+                    "HLS Resumed: ${alreadyDownloadedVideo.size}/${videoSegments?.size ?: 0} video and ${alreadyDownloadedAudio.size}/${audioSegments?.size ?: 0} audio segments already present."
+                AppLogger.d(info)
                 if (initialSegmentsCompleted < totalSegmentsToDownload) {
                     val avgSegmentSize = initialTotalDownloaded / initialSegmentsCompleted
                     val estimatedOverallTotal = avgSegmentSize * totalSegmentsToDownload
-                    onProgress(Progress(initialTotalDownloaded, estimatedOverallTotal))
+                    onProgress(Progress(initialTotalDownloaded, estimatedOverallTotal, info))
                 }
             }
 
@@ -164,7 +166,13 @@ class HlsDownloader(
 
                     val avgSegmentSize = if (completed > 0) totalDownloaded / completed else 0
                     val estimatedTotal = avgSegmentSize * totalSegmentsToDownload
-                    onProgress(Progress(totalDownloaded, estimatedTotal))
+                    onProgress(
+                        Progress(
+                            totalDownloaded,
+                            estimatedTotal,
+                            "Segments downloaded: $completed / ${videoSegments.size + (audioSegments?.size ?: 0)}"
+                        )
+                    )
                 }
                 downloadJobs.add(job)
             }
@@ -182,7 +190,13 @@ class HlsDownloader(
 
                     val avgSegmentSize = if (completed > 0) totalDownloaded / completed else 0
                     val estimatedTotal = avgSegmentSize * totalSegmentsToDownload
-                    onProgress(Progress(totalDownloaded, estimatedTotal))
+                    onProgress(
+                        Progress(
+                            totalDownloaded,
+                            estimatedTotal,
+                            "Segments downloaded: $completed / ${(videoSegments?.size ?: 0) + audioSegments.size}"
+                        )
+                    )
                 }
                 downloadJobs.add(job)
             }

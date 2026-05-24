@@ -195,7 +195,13 @@ class MpdDownloader(
                 val totalDownloaded = totalBytesDownloaded.addAndGet(downloadedBytes)
                 val estimatedTotal =
                     if (completed > 0) (totalDownloaded / completed) * totalSegmentsToDownload else 0
-                onProgress(Progress(totalDownloaded, estimatedTotal))
+                onProgress(
+                    Progress(
+                        totalDownloaded,
+                        estimatedTotal,
+                        "Segments download: $completed/$totalSegmentsToDownload"
+                    )
+                )
             }
             downloadJobs.add(job)
         }
@@ -213,7 +219,13 @@ class MpdDownloader(
                 val totalDownloaded = totalBytesDownloaded.addAndGet(downloadedBytes)
                 val estimatedTotal =
                     if (completed > 0) (totalDownloaded / completed) * totalSegmentsToDownload else 0
-                onProgress(Progress(totalDownloaded, estimatedTotal))
+                onProgress(
+                    Progress(
+                        totalDownloaded,
+                        estimatedTotal,
+                        "Segments download: $completed/$totalSegmentsToDownload"
+                    )
+                )
             }
             downloadJobs.add(job)
         }

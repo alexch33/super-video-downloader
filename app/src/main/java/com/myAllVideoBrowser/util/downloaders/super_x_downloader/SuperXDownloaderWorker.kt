@@ -109,6 +109,11 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
         val isLive = inputData.getBoolean(GenericDownloader.Constants.IS_LIVE, false)
 
+        onProgress(
+            Progress(0L, 0L, "Starting..."),
+            task.also { it.taskState = VideoTaskState.PREPARE },
+            isSizeEstimated = true
+        )
         // Check if the URL is a playlist
         if (isHlsPlaylist()) {
             AppLogger.d("HLS Playlist detected. Starting advanced parsing flow.")
@@ -898,6 +903,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         }
         lastProgressUpdateTime = currentTime
 
+        if (progress.info.isNotEmpty()) {
+            task.also { it.lineInfo = progress.info }
+        }
+
         val isLiveLocal = isLIve || task.isLive
         if (isOnMerge) {
             showProgress(task.clone(), progress)
@@ -913,12 +922,17 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         showProgress(task.clone(), progress)
 
         if (isSizeEstimated || isLiveLocal) {
+            val infoString = if (!isLiveLocal && progress.info.isNotEmpty()) {
+                progress.info
+            } else {
+                "Downloading..."
+            }
             saveProgress(
                 task.mId,
                 progress,
                 VideoTaskState.DOWNLOADING,
                 isLive = isLiveLocal,
-                infoLine = if (isLiveLocal) "Live Recording" else "Downloading..."
+                infoLine = if (isLiveLocal) "Live Recording" else infoString
             )
         }
     }

@@ -20,6 +20,8 @@ import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
 import com.myAllVideoBrowser.util.hls_parser.MpdPlaylistParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Request
@@ -39,7 +41,14 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     @Volatile
     private lateinit var taskId: String
 
+    private val workerScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     private var lastProgressUpdateTime = 0L
+
+    override fun onDownloadStopped() {
+        workerScope.cancel()
+        AppLogger.d("SuperX: Worker stopped, scope cancelled for task ${if (::taskId.isInitialized) taskId else "unknown"}")
+    }
 
     override fun handleAction(
         action: String, task: VideoTaskItem, headers: Map<String, String>, isFileRemove: Boolean
@@ -148,7 +157,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val controller = FileBasedDownloadController(hlsTmpDir)
         controller.start()
 
-        CoroutineScope(Dispatchers.IO).launch {
+        workerScope.launch {
             try {
                 val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
                 
@@ -301,7 +310,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val controller = FileBasedDownloadController(mpdTmpDir)
         controller.start()
 
-        CoroutineScope(Dispatchers.IO).launch {
+        workerScope.launch {
             try {
                 // 1. Instantiate the MpdDownloader strategy
                 val mpdDownloader = MpdDownloader(
@@ -378,7 +387,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val controller = FileBasedDownloadController(mpdTmpDir)
         controller.start()
 
-        CoroutineScope(Dispatchers.IO).launch {
+        workerScope.launch {
             try {
                 // 1. Instantiate the MpdLiveDownloader strategy
                 val liveDownloader = MpdLiveDownloader(
@@ -549,7 +558,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         controller.start()
 
         // The worker's main coroutine scope will manage the lifecycle of the download.
-        CoroutineScope(Dispatchers.IO).launch {
+        workerScope.launch {
             try {
                 // 1. Instantiate the HlsDownloader strategy with its dependencies.
                 val hlsDownloader = HlsDownloader(

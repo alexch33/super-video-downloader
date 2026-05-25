@@ -313,10 +313,6 @@ class MpdDownloader(
             videoRepRaw
         }
 
-        // Clean up legacy files
-        videoCombined.delete()
-        audioCombined.delete()
-
         val videoDownloaded = AtomicLong(0)
         val audioDownloaded = AtomicLong(0)
         val videoTotal = AtomicLong(0)
@@ -330,7 +326,6 @@ class MpdDownloader(
                 val videoParts = mutableListOf<File>()
                 rep.baseUrls.takeIf { it.isNotEmpty() }?.let { urls ->
                     val dataFile = downloadDir.resolve("video_data_base")
-                    dataFile.delete()
                     downloadFileWithCustomDownloader(
                         urls,
                         dataFile,
@@ -362,7 +357,6 @@ class MpdDownloader(
                 val audioParts = mutableListOf<File>()
                 rep.baseUrls.takeIf { it.isNotEmpty() }?.let { urls ->
                     val dataFile = downloadDir.resolve("audio_data_base")
-                    dataFile.delete()
                     downloadFileWithCustomDownloader(
                         urls,
                         dataFile,

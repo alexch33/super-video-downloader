@@ -96,7 +96,6 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
             setWorkContinuation(continuation)
             
             continuation.invokeOnCancellation {
-                AppLogger.d("Download cancelled>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
                 onDownloadStopped()
             }
 

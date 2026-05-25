@@ -321,7 +321,7 @@ class CustomFileDownloader(
     private fun downloadChunk(
         range: LongRange, fileChannel: FileChannel, offset: Long, chunkIndex: Int
     ) {
-        val chunkFile = File(file.parentFile, "chunk_$chunkIndex")
+        val chunkFile = File(file.parentFile, "${file.nameWithoutExtension}_chunk_$chunkIndex")
         val isResume = !chunkFile.createNewFile()
         var bytesCopied = 0L
         if (isResume) {

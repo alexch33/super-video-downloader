@@ -353,41 +353,45 @@ class CustomFileDownloader(
         val req = if (threadCount == 1) {
             getOkRequestRange(range.first + bytesCopied, null)
         } else getOkRequestRange(range.first + bytesCopied, range.last)
-        val res = client.newCall(req).execute()
+        client.newCall(req).execute().use { res ->
 
-        if (res.body.contentLength() == -1L) {
-            throw IOException("Content Length Not Found")
-        }
+            if (res.body.contentLength() == -1L) {
+                throw IOException("Content Length Not Found")
+            }
 
-        val inputStream = res.body.byteStream()
-        val buffer = ByteArray(Helper.DOWNLOAD_BUFFER_SIZE)
+            val inputStream = res.body.byteStream()
+            val buffer = ByteArray(Helper.DOWNLOAD_BUFFER_SIZE)
 
-        copiedBytesChunks[chunkIndex] = bytesCopied
-        totalBytesChunks[chunkIndex] = res.body.contentLength()
+            copiedBytesChunks[chunkIndex] = bytesCopied
+            totalBytesChunks[chunkIndex] = res.body.contentLength()
 
-        var bytesRead = 0
+            var bytesRead = 0
 
-        RandomAccessFile(chunkFile, "rw").channel.use { chunkChannel ->
-            inputStream.use { urlStream ->
-                while (!isSaved.get() && !isPaused.get() && !isCanceled.get() && (urlStream.read(
-                        buffer
-                    ).also { bytesRead = it }) >= 0
-                ) {
-                    fileChannel.write(ByteBuffer.wrap(buffer, 0, bytesRead), offset + bytesCopied)
-                    bytesCopied += bytesRead
-                    chunkChannel.write(ByteBuffer.wrap("$bytesCopied".toByteArray()), 0)
-                    this.onChunkProgressUpdate(
-                        bytesCopied, totalBytesChunks[chunkIndex], chunkIndex
-                    )
-                }
-                if (Helper.isPaused(file)) {
-                    throw Exception(PAUSE_ACTION)
-                }
-                if (Helper.isSave(file)) {
-                    throw Exception(STOPPED_AND_SAVE_ACTION)
-                }
-                if (Helper.isCanceled(file)) {
-                    throw Exception(CANCELED_ACTION)
+            RandomAccessFile(chunkFile, "rw").channel.use { chunkChannel ->
+                inputStream.use { urlStream ->
+                    while (!isSaved.get() && !isPaused.get() && !isCanceled.get() && (urlStream.read(
+                            buffer
+                        ).also { bytesRead = it }) >= 0
+                    ) {
+                        fileChannel.write(
+                            ByteBuffer.wrap(buffer, 0, bytesRead),
+                            offset + bytesCopied
+                        )
+                        bytesCopied += bytesRead
+                        chunkChannel.write(ByteBuffer.wrap("$bytesCopied".toByteArray()), 0)
+                        this.onChunkProgressUpdate(
+                            bytesCopied, totalBytesChunks[chunkIndex], chunkIndex
+                        )
+                    }
+                    if (Helper.isPaused(file)) {
+                        throw Exception(PAUSE_ACTION)
+                    }
+                    if (Helper.isSave(file)) {
+                        throw Exception(STOPPED_AND_SAVE_ACTION)
+                    }
+                    if (Helper.isCanceled(file)) {
+                        throw Exception(CANCELED_ACTION)
+                    }
                 }
             }
         }

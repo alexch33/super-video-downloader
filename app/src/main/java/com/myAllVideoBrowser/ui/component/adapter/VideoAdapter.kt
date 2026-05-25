@@ -26,6 +26,14 @@ class VideoAdapter(
     private val fileUtil: FileUtil
 ) : RecyclerView.Adapter<VideoAdapter.VideoViewHolder>() {
 
+    var isSelectionMode = false
+        set(value) {
+            field = value
+            notifyDataSetChanged()
+        }
+
+    val selectedItems = mutableSetOf<Long>()
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoViewHolder {
         val binding = DataBindingUtil.inflate<ItemVideoBinding>(
             LayoutInflater.from(parent.context), R.layout.item_video, parent, false
@@ -37,23 +45,35 @@ class VideoAdapter(
     override fun getItemCount() = localVideos.size
 
     override fun onBindViewHolder(holder: VideoViewHolder, position: Int) =
-        holder.bind(localVideos[position], videoListener)
+        holder.bind(localVideos[position], videoListener, isSelectionMode, selectedItems.contains(localVideos[position].id))
 
-    class VideoViewHolder(var binding: ItemVideoBinding, var fileUtil: FileUtil) :
+    inner class VideoViewHolder(var binding: ItemVideoBinding, var fileUtil: FileUtil) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(localVideo: LocalVideo, videoListener: VideoListener) {
+        fun bind(localVideo: LocalVideo, videoListener: VideoListener, selectionMode: Boolean, isSelected: Boolean) {
             val size = getScreenResolution(itemView.context)
 
             with(binding) {
                 this.localVideo = localVideo
                 this.videoListener = videoListener
+                this.isSelectionMode = selectionMode
+                this.isSelected = isSelected
+
                 Glide.with(this@VideoViewHolder.itemView.context).load(localVideo.uri).fitCenter()
                     .error(R.drawable.ic_video_24dp)
                     .placeholder(R.drawable.ic_video_24dp)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .apply(RequestOptions().override(size.first / 8, size.second / 8))
                     .into(this.ivThumbnail)
+
+                root.setOnLongClickListener {
+                    videoListener.onItemLongClicked(localVideo)
+                    true
+                }
+
+                cbSelect.setOnClickListener {
+                    videoListener.onItemSelected(localVideo, cbSelect.isChecked)
+                }
 
                 executePendingBindings()
             }
@@ -76,11 +96,33 @@ class VideoAdapter(
         this.localVideos = localVideos
         notifyDataSetChanged()
     }
+
+    fun selectAll() {
+        selectedItems.clear()
+        selectedItems.addAll(localVideos.map { it.id })
+        notifyDataSetChanged()
+    }
+
+    fun deselectAll() {
+        selectedItems.clear()
+        notifyDataSetChanged()
+    }
+
+    fun toggleSelection(id: Long) {
+        if (selectedItems.contains(id)) {
+            selectedItems.remove(id)
+        } else {
+            selectedItems.add(id)
+        }
+        notifyDataSetChanged()
+    }
 }
 
 interface VideoListener {
     fun onItemClicked(localVideo: LocalVideo)
     fun onMenuClicked(view: View, localVideo: LocalVideo)
+    fun onItemLongClicked(localVideo: LocalVideo)
+    fun onItemSelected(localVideo: LocalVideo, isSelected: Boolean)
 }
 
 @GlideModule

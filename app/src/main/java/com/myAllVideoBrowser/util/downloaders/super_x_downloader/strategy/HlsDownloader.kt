@@ -2,6 +2,7 @@ package com.myAllVideoBrowser.util.downloaders.super_x_downloader.strategy
 
 import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
@@ -124,13 +125,15 @@ class HlsDownloader(
 
             val initialVideoSize = if (videoSegments != null) {
                 alreadyDownloadedVideo.sumOf {
-                    downloadDir.resolve("segment_${"%05d".format(videoSegments.indexOf(it))}.$videoExt").length()
+                    downloadDir.resolve("segment_${"%05d".format(videoSegments.indexOf(it))}.$videoExt")
+                        .length()
                 }
             } else 0L
 
             val initialAudioSize = if (audioSegments != null) {
                 alreadyDownloadedAudio.sumOf {
-                    downloadDir.resolve("audio_segment_${"%05d".format(audioSegments.indexOf(it))}.$audioExt").length()
+                    downloadDir.resolve("audio_segment_${"%05d".format(audioSegments.indexOf(it))}.$audioExt")
+                        .length()
                 }
             } else 0L
 
@@ -167,12 +170,14 @@ class HlsDownloader(
                     val totalDownloaded = hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
 
                     val avgSegmentSize = if (completed > 0) totalDownloaded / completed else 0
-                    val estimatedTotal = avgSegmentSize * totalSegmentsToDownload
+                    val totalToDownload = avgSegmentSize * totalSegmentsToDownload
+
                     onProgress(
-                        Progress(
+                        createDownloadProgress(
                             totalDownloaded,
-                            estimatedTotal,
-                            "Segments downloaded: $completed / ${videoSegments.size + (audioSegments?.size ?: 0)}"
+                            totalToDownload,
+                            completed,
+                            totalSegmentsToDownload
                         )
                     )
                 }
@@ -187,16 +192,19 @@ class HlsDownloader(
                         downloadDir.resolve("audio_segment_${"%05d".format(index)}.$audioExt")
                     val downloadedBytes =
                         segmentDownloader.download(segment.url, outputFile, "HLS-Audio", index)
-                    val completed = hlsSegmentsCompleted.incrementAndGet()
+                    val completedSegments = hlsSegmentsCompleted.incrementAndGet()
                     val totalDownloaded = hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
 
-                    val avgSegmentSize = if (completed > 0) totalDownloaded / completed else 0
-                    val estimatedTotal = avgSegmentSize * totalSegmentsToDownload
+                    val avgSegmentSize =
+                        if (completedSegments > 0) totalDownloaded / completedSegments else 0
+                    val totalToDownloaded = avgSegmentSize * totalSegmentsToDownload
+
                     onProgress(
-                        Progress(
+                        createDownloadProgress(
                             totalDownloaded,
-                            estimatedTotal,
-                            "Segments downloaded: $completed / ${(videoSegments?.size ?: 0) + audioSegments.size}"
+                            totalToDownloaded,
+                            completedSegments,
+                            totalSegmentsToDownload
                         )
                     )
                 }
@@ -254,5 +262,22 @@ class HlsDownloader(
             AppLogger.d("HLS: Merge completed successfully.")
             finalOutputFile
         }
+    }
+
+    private fun createDownloadProgress(
+        currentTotalDownloaded: Long,
+        totalToDownloaded: Long,
+        completedSegments: Int,
+        totalSegments: Int
+    ): Progress {
+        val currentReadable = FileUtil.getFileSizeReadable(currentTotalDownloaded.toDouble())
+        val totalReadable = FileUtil.getFileSizeReadable(totalToDownloaded.toDouble())
+
+        val percents = completedSegments / totalSegments.toDouble() * 100
+        return Progress(
+            currentTotalDownloaded,
+            totalToDownloaded,
+            "${String.format("%.2f", percents)}% ${currentReadable}/${totalReadable} segments: $completedSegments / $totalSegments"
+        )
     }
 }

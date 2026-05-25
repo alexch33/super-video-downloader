@@ -190,7 +190,7 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     }
 }
 
-
+// info field overrides infoLine for VideoTaskItem
 class Progress(var currentBytes: Long, var totalBytes: Long, var info: String = "") :
     Serializable {
     override fun toString(): String {

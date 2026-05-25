@@ -10,6 +10,8 @@ import com.myAllVideoBrowser.util.downloaders.custom_downloader.DownloadListener
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
+import com.myAllVideoBrowser.util.downloaders.super_x_downloader.DownloaderUtils
+import com.myAllVideoBrowser.util.downloaders.super_x_downloader.DownloaderUtils.calculateEta
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.SegmentDownloader
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.control.FileBasedDownloadController
 import com.myAllVideoBrowser.util.hls_parser.MpdPlaylistParser
@@ -107,6 +109,7 @@ class MpdDownloader(
     ): File = coroutineScope {
         val totalBytesDownloaded = AtomicLong(0)
         val segmentsCompleted = AtomicLong(0)
+        val startTime = System.currentTimeMillis()
 
         // Optimization: Skip video segments if audio-only is requested and separate audio exists.
         val videoRep = if (isAudioOnlyExtract && audioRep?.segments?.isNotEmpty() == true) {
@@ -197,12 +200,16 @@ class MpdDownloader(
                 val totalDownloaded = totalBytesDownloaded.addAndGet(downloadedBytes)
                 val estimatedTotal =
                     if (completed > 0) (totalDownloaded / completed) * totalSegmentsToDownload else 0
+                val progress = DownloaderUtils.createSegmentsDownloadProgress(
+                    totalDownloaded,
+                    estimatedTotal,
+                    completed.toInt(),
+                    totalSegmentsToDownload,
+                    startTime,
+                    true
+                )
                 onProgress(
-                    Progress(
-                        totalDownloaded,
-                        estimatedTotal,
-                        "Segments download: $completed/$totalSegmentsToDownload"
-                    )
+                    progress
                 )
             }
             downloadJobs.add(job)
@@ -221,13 +228,16 @@ class MpdDownloader(
                 val totalDownloaded = totalBytesDownloaded.addAndGet(downloadedBytes)
                 val estimatedTotal =
                     if (completed > 0) (totalDownloaded / completed) * totalSegmentsToDownload else 0
-                onProgress(
-                    Progress(
-                        totalDownloaded,
-                        estimatedTotal,
-                        "Segments download: $completed/$totalSegmentsToDownload"
-                    )
+
+                val progress = DownloaderUtils.createSegmentsDownloadProgress(
+                    totalDownloaded,
+                    estimatedTotal,
+                    completed.toInt(),
+                    totalSegmentsToDownload,
+                    startTime,
+                    true
                 )
+                onProgress(progress)
             }
             downloadJobs.add(job)
         }
@@ -302,6 +312,8 @@ class MpdDownloader(
         controller: FileBasedDownloadController,
         onProgress: (progress: Progress) -> Unit
     ): File = coroutineScope {
+        val startTime = System.currentTimeMillis()
+
         // Combined files used as input for FFmpeg
         val videoCombined = downloadDir.resolve("video_combined")
         val audioCombined = downloadDir.resolve("audio_combined")
@@ -338,8 +350,9 @@ class MpdDownloader(
 
                         val current = videoDownloaded.get() + audioDownloaded.get()
                         val total = videoTotal.get() + audioTotal.get()
+
                         onProgress(
-                            createProgressForBaseUrlsMpd(current, total)
+                            createProgressForBaseUrlsMpd(current, total, startTime)
                         )
                     }
                     if (dataFile.exists() && dataFile.length() > 0) videoParts.add(dataFile)
@@ -370,7 +383,7 @@ class MpdDownloader(
                         val current = videoDownloaded.get() + audioDownloaded.get()
                         val total = videoTotal.get() + audioTotal.get()
                         onProgress(
-                            createProgressForBaseUrlsMpd(current, total)
+                            createProgressForBaseUrlsMpd(current, total, startTime)
                         )
                     }
                     if (dataFile.exists() && dataFile.length() > 0) audioParts.add(dataFile)
@@ -434,18 +447,23 @@ class MpdDownloader(
         finalFile
     }
 
-    private fun createProgressForBaseUrlsMpd(current: Long, total: Long): Progress {
+    private fun createProgressForBaseUrlsMpd(
+        current: Long,
+        total: Long,
+        startTime: Long
+    ): Progress {
         if (total <= 0) return Progress(current, 0, "Starting download...")
 
         val percentage = (current.toDouble() / total.toDouble()) * 100
         val formattedPercent = String.format("%.2f", percentage)
         val currentReadable = FileUtil.getFileSizeReadable(current.toDouble())
         val totalReadable = FileUtil.getFileSizeReadable(total.toDouble())
+        val eta = calculateEta(startTime, current, total)
 
         return Progress(
             current,
             total,
-            "[Downloading] $formattedPercent% ($currentReadable / $totalReadable)"
+            "[Downloading] $formattedPercent% ($currentReadable / $totalReadable) \n$eta"
         )
     }
 

@@ -26,6 +26,7 @@
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/cl_root"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -79,6 +80,7 @@
         </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/cl_content"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
@@ -86,7 +88,7 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_video"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_height="match_parent"
                 android:clipToPadding="false"
                 android:paddingBottom="80dp"
                 app:items="@{viewModel.localVideos}"

@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.model.LocalVideo
 import com.myAllVideoBrowser.databinding.FragmentVideoBinding
@@ -72,6 +73,8 @@ class VideoFragment : BaseFragment() {
 
     private lateinit var videoAdapter: VideoAdapter
 
+    private var backPressedCallback: OnBackPressedCallback? = null
+
     private val navCallback = object : Observable.OnPropertyChangedCallback() {
         override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
             if (videoAdapter.isSelectionMode) {
@@ -123,6 +126,20 @@ class VideoFragment : BaseFragment() {
     override fun onDestroyView() {
         mainActivity.mainViewModel.isBrowserCurrent.removeOnPropertyChangedCallback(navCallback)
         mainActivity.mainViewModel.currentItem.removeOnPropertyChangedCallback(navCallback)
+
+        backPressedCallback?.remove()
+        backPressedCallback = null
+
+        disposable?.dispose()
+        disposable = null
+
+        dataBinding.let {
+            it.cbSelectAll.setOnClickListener(null)
+            it.btnDeleteSelected.setOnClickListener(null)
+            it.rvVideo.setOnClickListener(null)
+            it.clContent.setOnClickListener(null)
+            it.root.setOnClickListener(null)
+        }
         super.onDestroyView()
     }
 
@@ -137,12 +154,15 @@ class VideoFragment : BaseFragment() {
         }
 
         dataBinding.btnDeleteSelected.setOnClickListener {
-            val selectedIds = videoAdapter.selectedItems.toList()
-            val videosToDelete = videoViewModel.localVideos.get()?.filter { selectedIds.contains(it.id) }
-            videosToDelete?.forEach { video ->
-                context?.let { videoViewModel.deleteVideo(it, video) }
+            showDeleteConfirmationDialog {
+                val selectedIds = videoAdapter.selectedItems.toList()
+                val videosToDelete =
+                    videoViewModel.localVideos.get()?.filter { selectedIds.contains(it.id) }
+                videosToDelete?.forEach { video ->
+                    context?.let { videoViewModel.deleteVideo(it, video) }
+                }
+                exitSelectionMode()
             }
-            exitSelectionMode()
         }
 
         val exitSelectionClickListener = View.OnClickListener {
@@ -155,7 +175,7 @@ class VideoFragment : BaseFragment() {
         dataBinding.clContent.setOnClickListener(exitSelectionClickListener)
         dataBinding.root.setOnClickListener(exitSelectionClickListener)
 
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+        backPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (videoAdapter.isSelectionMode) {
                     exitSelectionMode()
@@ -164,7 +184,19 @@ class VideoFragment : BaseFragment() {
                     requireActivity().onBackPressedDispatcher.onBackPressed()
                 }
             }
-        })
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            backPressedCallback!!
+        )
+    }
+
+    private fun showDeleteConfirmationDialog(onConfirm: () -> Unit) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.delete)
+            .setPositiveButton(R.string.delete) { _, _ -> onConfirm() }
+            .setNegativeButton(R.string.all_text_cancel, null)
+            .show()
     }
 
     private fun exitSelectionMode() {
@@ -274,7 +306,9 @@ class VideoFragment : BaseFragment() {
                 }
 
                 R.id.item_delete -> {
-                    context?.let { videoViewModel.deleteVideo(it, video) }
+                    showDeleteConfirmationDialog {
+                        context?.let { videoViewModel.deleteVideo(it, video) }
+                    }
                     true
                 }
 

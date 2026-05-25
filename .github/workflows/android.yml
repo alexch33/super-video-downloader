@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Disable logs for youtube-dlp live streams download, for preventing OOM crash when long live stream downloading\nAdded only audio extract option\nFixed Custom MPD downloader\nShow notifications for stop and save live stream for youtube-dlp"
+          body: "Disable logs for youtube-dlp live streams download, for preventing OOM crash when long live stream downloading\nPossible memory leak fix for custom downloaders\nAdded only audio extract option\nFixed Custom MPD downloader\nShow notifications for stop and save live stream for youtube-dlp"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

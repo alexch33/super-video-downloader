@@ -27,8 +27,13 @@ class FfmpegProcessor private constructor() {
             }
     }
 
-    fun processDownload(inputUri: Uri, isFlv: Boolean, onProgress: (Int) -> Unit): Uri? {
-        AppLogger.d("$TAG: processDownload started for URI: $inputUri. Is FLV: $isFlv")
+    fun processDownload(
+        inputUri: Uri,
+        isFlv: Boolean,
+        isAudioOnlyExtract: Boolean = false,
+        onProgress: (Int) -> Unit
+    ): Uri? {
+        AppLogger.d("$TAG: processDownload started for URI: $inputUri. Is FLV: $isFlv, Is Audio Only Extract: $isAudioOnlyExtract")
         val inputFile = File(inputUri.path ?: run {
             AppLogger.e("$TAG: Input URI path is null.")
             return null
@@ -42,7 +47,7 @@ class FfmpegProcessor private constructor() {
         var resultUri: Uri? = null
 
         val inputExtension = inputFile.extension.lowercase(java.util.Locale.ROOT)
-        val isAudioOnly = AUDIO_EXTENSIONS.contains(inputExtension)
+        val isAudioOnly = AUDIO_EXTENSIONS.contains(inputExtension) || isAudioOnlyExtract
         AppLogger.d("$TAG: Detected extension: '$inputExtension'. Is audio only: $isAudioOnly")
 
         val outputExtension = if (isAudioOnly) "mp3" else "mp4"
@@ -96,6 +101,7 @@ class FfmpegProcessor private constructor() {
 
             if (isAudioOnly) {
                 AppLogger.d("$TAG: Applying audio-only processing: Re-encoding to MP3.")
+                add("-vn") // Disable video
                 add("-c:a"); add("libmp3lame")
                 add("-q:a"); add("2")
             } else {

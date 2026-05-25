@@ -119,8 +119,14 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             return
         }
 
+        val isAudioOnlyExtract =
+            inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+
         AppLogger.d("handleSuccessfulDownload started for item: ${item.mId}")
-        val target = fixFileName(File(fileUtil.folderDir, File(outputFileName!!).name).path)
+        val target = fixFileName(
+            File(fileUtil.folderDir, File(outputFileName!!).name).path,
+            isAudioOnlyExtract
+        )
 
         var isPreprocessed = false
 
@@ -156,6 +162,10 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 isProcessFfmpeg = isOnlyLive && item.isLive
             }
 
+            if (isAudioOnlyExtract) {
+                isProcessFfmpeg = true
+            }
+
             var processedUri: Uri? = null
 
             val isFlv = item.isLive && item.url.contains(".flv", ignoreCase = true)
@@ -174,7 +184,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 AppLogger.d("IS FLV: $isFlv")
                 // The FfmpegProcessor call is now correctly blocking this thread
                 processedUri = FfmpegProcessor.getInstance()
-                    .processDownload(sourcePath.toUri(), isFlv) { percents ->
+                    .processDownload(sourcePath.toUri(), isFlv, isAudioOnlyExtract) { percents ->
                         val percentInt = percents
                         if (percentInt in 1..99) {
                             val currentProgress = Progress(
@@ -262,7 +272,10 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val tmpDir = fileUtil.tmpDir.resolve(taskId).apply { mkdirs() }
         outputFileName = tmpDir.resolve(taskItem.fileName).toString()
         val fixedHeaders = decodeCookieHeader(headers)
-        updateProgressInfoAndStartDownload(taskItem, taskId, url, fixedHeaders)
+        updateProgressInfoAndStartDownload(taskItem.also {
+            it.taskState = VideoTaskState.DOWNLOADING
+            it.lineInfo = "Strting..."
+        }, taskId, url, fixedHeaders)
     }
 
     private fun updateProgressInfoAndStartDownload(

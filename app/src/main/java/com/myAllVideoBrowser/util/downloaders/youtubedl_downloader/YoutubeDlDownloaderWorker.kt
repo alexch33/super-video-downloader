@@ -323,8 +323,11 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                 null
             }
             if (dlResponse.exitCode == 0 && finalFile != null) {
+                val isAudioOnlyExtract =
+                    inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+
                 val destinationFile = fileUtil.folderDir.resolve(finalFile.name).let {
-                    fixFileName(it.absolutePath)
+                    fixFileName(it.absolutePath, isAudioOnlyExtract)
                 }.let {
                     File(it)
                 }
@@ -382,7 +385,10 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         val threadsCount = sharedPrefHelper.getM3u8DownloaderThreadCount()
         request.addOption("-N", threadsCount)
 
-        val isAudioOnly = vFormat.vcodec == "none" && vFormat.acodec != "none"
+        val isAudioOnlyExtract =
+            inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+        val isAudioOnly =
+            (vFormat.vcodec == "none" && vFormat.acodec != "none") || isAudioOnlyExtract
 
         if (isAudioOnly) {
             request.addOption("--audio-quality", "0")

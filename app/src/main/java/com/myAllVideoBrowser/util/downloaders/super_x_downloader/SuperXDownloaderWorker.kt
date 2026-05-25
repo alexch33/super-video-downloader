@@ -150,6 +150,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+                
                 // 1. Instantiate the HlsLiveDownloader strategy
                 val liveDownloader = HlsLiveDownloader(
                     httpClient = proxyOkHttpClient.getProxyOkHttpClient(),
@@ -166,7 +168,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         )
                     },
                     videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC),
-                    mergeOnly = mergeOnly
+                    mergeOnly = mergeOnly,
+                    isAudioOnlyExtract = isAudioOnlyExtract
                 )
 
                 // 2. Execute the download. This handles the entire live recording loop.
@@ -239,6 +242,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val selectedFormatId = inputData.getString(GenericDownloader.Constants.SELECTED_FORMAT_ID)
             ?: throw IOException("No selected format ID was provided to the worker.")
 
+        val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+
         val initialPlaylist = fetchAndParse(playlistUrl)
         if (initialPlaylist !is HlsPlaylistParser.MasterPlaylist) {
             val mediaPlaylist = initialPlaylist as HlsPlaylistParser.MediaPlaylist
@@ -255,13 +260,6 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
         when {
             selectedVideoVariant != null -> {
-                val videoMediaPlaylist = fetchAndParse(selectedVideoVariant.url)
-                if (videoMediaPlaylist is HlsPlaylistParser.MediaPlaylist) {
-                    videoPlaylist = videoMediaPlaylist
-                } else {
-                    throw IOException("Expected a media playlist from variant, but got another master playlist.")
-                }
-
                 val audioGroupId = selectedVideoVariant.audioGroupId
                 if (audioGroupId != null) {
                     val audioRendition =
@@ -271,6 +269,15 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         if (audioMediaPlaylist is HlsPlaylistParser.MediaPlaylist) {
                             audioPlaylist = audioMediaPlaylist
                         }
+                    }
+                }
+
+                if (!isAudioOnlyExtract || audioPlaylist == null) {
+                    val videoMediaPlaylist = fetchAndParse(selectedVideoVariant.url)
+                    if (videoMediaPlaylist is HlsPlaylistParser.MediaPlaylist) {
+                        videoPlaylist = videoMediaPlaylist
+                    } else {
+                        throw IOException("Expected a media playlist from variant, but got another master playlist.")
                     }
                 }
             }
@@ -309,7 +316,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         )
                     },
                     threadCount = sharedPrefHelper.getM3u8DownloaderThreadCount(),
-                    videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC)
+                    videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC),
+                    isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
                 )
 
                 // 2. Execute the download. This one method handles both segment and BaseURL logic.
@@ -385,7 +393,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                             isOnMerge = true
                         )
                     },
-                    videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC)
+                    videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC),
+                    isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
                 )
 
                 // 2. Execute the download. This handles the entire live recording loop.
@@ -479,6 +488,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         if (selectedFormatId == null) {
             throw IOException("No selected format ID was provided to the worker.")
         }
+        
+        val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
 
         // 2. Find the selected video/audio representation based on the ID.
         val selectedVideoRep = videoRepresentations.find {
@@ -499,10 +510,15 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             selectedVideoRep != null -> {
                 // SCENARIO 1: A video format was selected.
                 // Use the selected video and find the best corresponding audio.
-                finalVideoRep = selectedVideoRep
-                finalAudioRep =
-                    audioRepresentations.maxByOrNull { it.bandwidth } // Always take the best audio
-                AppLogger.d("MPD: Matched VIDEO format. Will use ${finalVideoRep.height}p and find best audio.")
+                finalAudioRep = audioRepresentations.maxByOrNull { it.bandwidth } // Always take the best audio
+                
+                if (isAudioOnlyExtract && finalAudioRep != null) {
+                    finalVideoRep = null
+                    AppLogger.d("MPD: Audio-only extract requested. Skipping video representation.")
+                } else {
+                    finalVideoRep = selectedVideoRep
+                    AppLogger.d("MPD: Matched VIDEO format. Will use ${finalVideoRep.height}p and find best audio.")
+                }
             }
 
             selectedAudioRep != null -> {
@@ -548,7 +564,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         )
                     },
                     threadCount = sharedPrefHelper.getM3u8DownloaderThreadCount(),
-                    videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC)
+                    videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC),
+                    isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
                 )
 
                 // 2. Execute the download. This suspend fun handles everything.
@@ -625,6 +642,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         if (selectedFormatId == null) {
             throw IOException("No selected format ID was provided to the worker.")
         }
+        
+        val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
 
         val initialPlaylist = fetchAndParse(playlistUrl)
         if (initialPlaylist !is HlsPlaylistParser.MasterPlaylist) {
@@ -640,21 +659,13 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val selectedAudioRendition = initialPlaylist.alternateRenditions.find { rendition ->
             rendition.type == HlsPlaylistParser.RenditionType.AUDIO && "hls-audio-${rendition.groupId}-${rendition.name}" == selectedFormatId
         }
-        var videoSegments: List<HlsPlaylistParser.MediaSegment>?
+        var videoSegments: List<HlsPlaylistParser.MediaSegment>? = null
         var audioSegments: List<HlsPlaylistParser.MediaSegment>? = null
 
         // 3. Determine which segments to fetch based on the user's selection.
         when {
             selectedVideoVariant != null -> {
                 // SCENARIO 1: User selected a video stream.
-                AppLogger.d("HLS: Matched VIDEO format. Selecting variant with URL ${selectedVideoVariant.url}.")
-                val videoMediaPlaylist = fetchAndParse(selectedVideoVariant.url)
-                if (videoMediaPlaylist is HlsPlaylistParser.MediaPlaylist) {
-                    videoSegments = videoMediaPlaylist.segments
-                } else {
-                    throw IOException("Expected a media playlist from variant, but got another master playlist.")
-                }
-
                 val audioGroupId = selectedVideoVariant.audioGroupId
                 if (audioGroupId != null) {
                     val audioRendition = initialPlaylist.alternateRenditions.find {
@@ -668,6 +679,18 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                             audioSegments = audioMediaPlaylist.segments
                         }
                     }
+                }
+
+                if (!isAudioOnlyExtract || audioSegments == null) {
+                    AppLogger.d("HLS: Matched VIDEO format. Selecting variant with URL ${selectedVideoVariant.url}.")
+                    val videoMediaPlaylist = fetchAndParse(selectedVideoVariant.url)
+                    if (videoMediaPlaylist is HlsPlaylistParser.MediaPlaylist) {
+                        videoSegments = videoMediaPlaylist.segments
+                    } else {
+                        throw IOException("Expected a media playlist from variant, but got another master playlist.")
+                    }
+                } else {
+                    AppLogger.d("HLS: Audio-only requested and separate audio track found. Skipping video track download.")
                 }
             }
 
@@ -742,7 +765,16 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             }
 
             VideoTaskState.SUCCESS -> {
-                val targetPath = fixFileName(File(fileUtil.folderDir, item.fileName).path)
+                val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+                var fileName = item.fileName
+                if (isAudioOnlyExtract && !fileName.endsWith(".mp3", true)) {
+                    fileName = fileName.substringBeforeLast(".") + ".mp3"
+                }
+
+                val targetPath = fixFileName(
+                    File(fileUtil.folderDir, fileName).path,
+                    isAudioOnlyExtract
+                )
                 val from = sourcePath.toUri()
                 val to = File(targetPath).toUri()
                 AppLogger.d("MOVING FILE $from to -> $to")

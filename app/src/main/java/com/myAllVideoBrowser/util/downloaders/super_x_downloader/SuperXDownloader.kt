@@ -7,7 +7,6 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
@@ -150,6 +149,7 @@ object SuperXDownloader : GenericDownloader() {
         )
         data.putBoolean(Constants.IS_LIVE, videoInfo.isLive)
         data.putString(Constants.VIDEO_CODEC, videoInfo.formats.formats.firstOrNull()?.vcodec)
+        data.putBoolean(Constants.IS_AUDIO_ONLY_EXTRACT, videoInfo.isAudioOnlyExtract)
         return data
     }
 

@@ -102,6 +102,12 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
     }
 }
 
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE VideoInfo ADD COLUMN isAudioOnlyExtract INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 @Module
 class DatabaseModule {
 
@@ -116,7 +122,8 @@ class DatabaseModule {
             MIGRATION_5_6,
             MIGRATION_6_7,
             MIGRATION_7_8,
-            MIGRATION_8_9
+            MIGRATION_8_9,
+            MIGRATION_9_10
         ).build()
     }
 

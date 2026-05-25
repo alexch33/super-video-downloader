@@ -244,12 +244,13 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val client = proxyOkHttpClient.getProxyOkHttpClient()
         fun fetchAndParse(url: String): HlsPlaylistParser.HlsPlaylist {
             val request = Request.Builder().url(url).headers(headers.toHeaders()).build()
-            val response = client.newCall(request).execute()
-            val content = response.body.string()
-            if (!response.isSuccessful || content.isEmpty()) {
-                throw IOException("Failed to download playlist at $url. HTTP ${response.code}")
+            client.newCall(request).execute().use { response ->
+                val content = response.body.string()
+                if (!response.isSuccessful || content.isEmpty()) {
+                    throw IOException("Failed to download playlist at $url. HTTP ${response.code}")
+                }
+                return HlsPlaylistParser.parse(content, url)
             }
-            return HlsPlaylistParser.parse(content, url)
         }
 
         val selectedFormatId = inputData.getString(GenericDownloader.Constants.SELECTED_FORMAT_ID)
@@ -491,6 +492,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         if (!response.isSuccessful || content.isEmpty()) {
             throw IOException("Failed to download MPD manifest at $manifestUrl. HTTP ${response.code}")
         }
+        response.close()
+
         val manifest = MpdPlaylistParser.parse(content, manifestUrl)
 
         val videoRepresentations =
@@ -651,12 +654,13 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val client = proxyOkHttpClient.getProxyOkHttpClient()
         fun fetchAndParse(url: String): HlsPlaylistParser.HlsPlaylist {
             val request = Request.Builder().url(url).headers(headers.toHeaders()).build()
-            val response = client.newCall(request).execute()
-            val content = response.body.string()
-            if (!response.isSuccessful || content.isEmpty()) {
-                throw IOException("Failed to download playlist at $url. HTTP ${response.code}")
+            client.newCall(request).execute().use { response ->
+                val content = response.body.string()
+                if (!response.isSuccessful || content.isEmpty()) {
+                    throw IOException("Failed to download playlist at $url. HTTP ${response.code}")
+                }
+                return HlsPlaylistParser.parse(content, url)
             }
-            return HlsPlaylistParser.parse(content, url)
         }
 
         // 1. Get the selected format ID from the worker's input data.

@@ -13,8 +13,6 @@ import com.myAllVideoBrowser.util.downloaders.super_x_downloader.SegmentDownload
 import com.myAllVideoBrowser.util.downloaders.super_x_downloader.control.FileBasedDownloadController
 import com.myAllVideoBrowser.util.hls_parser.MpdPlaylistParser
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import okhttp3.OkHttpClient
 import java.io.File
 import java.io.IOException
@@ -37,7 +35,6 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param onMergeProgress A callback to update progress when merging begins.
  * @param threadCount The number of parallel downloads for segments or chunks.
  * @param videoCodec The video codec to check for compatibility.
- * @param isAudioOnlyExtract If true, extract audio only during merge and skip video download if possible.
  */
 class MpdDownloader(
     private val httpClient: OkHttpClient,
@@ -47,12 +44,6 @@ class MpdDownloader(
     private val videoCodec: String?,
     private val isAudioOnlyExtract: Boolean = false
 ) : ManifestDownloader {
-
-    // Mutex to protect progress updates from concurrent BaseURL downloads
-    private val progressMutex = Mutex()
-    private var videoProgress = Progress(0, 0)
-    private var audioProgress = Progress(0, 0)
-
     override suspend fun download(
         task: VideoTaskItem,
         headers: Map<String, String>,
@@ -309,8 +300,9 @@ class MpdDownloader(
         controller: FileBasedDownloadController,
         onProgress: (progress: Progress) -> Unit
     ): File = coroutineScope {
-        val videoTempFile = downloadDir.resolve("video_stream.mp4")
-        val audioTempFile = downloadDir.resolve("audio_stream.mp4")
+        // Combined files used as input for FFmpeg
+        val videoCombined = downloadDir.resolve("video_combined.mp4")
+        val audioCombined = downloadDir.resolve("audio_combined.mp4")
         val finalFile = downloadDir.resolve("merged_output.mp4")
 
         // Optimization: Skip video download if audio-only is requested and separate audio exists.
@@ -321,58 +313,80 @@ class MpdDownloader(
             videoRepRaw
         }
 
+        // Clean up legacy files
+        videoCombined.delete()
+        audioCombined.delete()
+
+        val videoDownloaded = AtomicLong(0)
+        val audioDownloaded = AtomicLong(0)
+        val videoTotal = AtomicLong(0)
+        val audioTotal = AtomicLong(0)
+
         val jobs = mutableListOf<Deferred<*>>()
 
-        // Launch video download if it exists
-        videoRep?.baseUrls?.takeIf { it.isNotEmpty() }?.let { urls ->
-            val job = async {
-                downloadFileWithCustomDownloader(
-                    urls,
-                    videoTempFile,
-                    headers,
-                    controller
-                ) { downloaded, total ->
-                    launch {
-                        progressMutex.withLock {
-                            videoProgress = Progress(downloaded, total)
-                            onProgress(
-                                Progress(
-                                    videoProgress.currentBytes + audioProgress.currentBytes,
-                                    videoProgress.totalBytes + audioProgress.totalBytes
-                                )
+        // --- Video Logic ---
+        videoRep?.let { rep ->
+            jobs.add(async {
+                val videoParts = mutableListOf<File>()
+                rep.baseUrls.takeIf { it.isNotEmpty() }?.let { urls ->
+                    val dataFile = downloadDir.resolve("video_data_base.mp4")
+                    dataFile.delete()
+                    downloadFileWithCustomDownloader(
+                        urls,
+                        dataFile,
+                        headers,
+                        controller
+                    ) { dl, tot ->
+                        videoDownloaded.set(dl)
+                        videoTotal.set(tot)
+                        onProgress(
+                            Progress(
+                                videoDownloaded.get() + audioDownloaded.get(),
+                                videoTotal.get() + audioTotal.get()
                             )
-                        }
+                        )
                     }
+                    if (dataFile.exists() && dataFile.length() > 0) videoParts.add(dataFile)
                 }
-            }
-            jobs.add(job)
+
+                if (videoParts.isNotEmpty()) {
+                    manualConcat(videoParts, videoCombined) { }
+                    videoParts.forEach { it.delete() }
+                }
+            })
         }
 
-        // Launch audio download if it exists
-        audioRep?.baseUrls?.takeIf { it.isNotEmpty() }?.let { urls ->
-            val job = async {
-                downloadFileWithCustomDownloader(
-                    urls,
-                    audioTempFile,
-                    headers,
-                    controller
-                ) { downloaded, total ->
-                    launch {
-                        progressMutex.withLock {
-                            audioProgress = Progress(downloaded, total)
-                            onProgress(
-                                Progress(
-                                    videoProgress.currentBytes + audioProgress.currentBytes,
-                                    videoProgress.totalBytes + audioProgress.totalBytes
-                                )
+        // --- Audio Logic ---
+        audioRep?.let { rep ->
+            jobs.add(async {
+                val audioParts = mutableListOf<File>()
+                rep.baseUrls.takeIf { it.isNotEmpty() }?.let { urls ->
+                    val dataFile = downloadDir.resolve("audio_data_base.mp4")
+                    dataFile.delete()
+                    downloadFileWithCustomDownloader(
+                        urls,
+                        dataFile,
+                        headers,
+                        controller
+                    ) { dl, tot ->
+                        audioDownloaded.set(dl)
+                        audioTotal.set(tot)
+                        onProgress(
+                            Progress(
+                                videoDownloaded.get() + audioDownloaded.get(),
+                                videoTotal.get() + audioTotal.get()
                             )
-                        }
+                        )
                     }
+                    if (dataFile.exists() && dataFile.length() > 0) audioParts.add(dataFile)
                 }
-            }
-            jobs.add(job)
-        }
 
+                if (audioParts.isNotEmpty()) {
+                    manualConcat(audioParts, audioCombined) { }
+                    audioParts.forEach { it.delete() }
+                }
+            })
+        }
         jobs.awaitAll()
         if (controller.isInterrupted()) throw CancellationException("Download interrupted.")
 
@@ -383,20 +397,21 @@ class MpdDownloader(
         onMergeProgress(
             Progress(
                 0,
-                videoTempFile.length() + audioTempFile.length()
+                videoCombined.length() + videoCombined.length()
             ),
             task.apply {
                 this.setLineInfo("Merging... 0%")
                 this.setTaskState(VideoTaskState.PREPARE)
             }
         )
-        val totalBytesDownloaded = videoProgress.totalBytes + audioProgress.totalBytes;
+
         val mergeSession = mergeBaseUrlStreams(
-            videoTempFile.takeIf { it.exists() && it.length() > 0 } ?: File(""),
-            audioTempFile.takeIf { it.exists() && it.length() > 0 },
+            videoCombined,
+            audioCombined.takeIf { it.exists() && it.length() > 0 },
             finalFile.absolutePath,
             totalDurationSeconds = totalDurationSeconds,
             onMergeProgress = { percentage ->
+                val totalBytesDownloaded = videoTotal.get() + audioTotal.get()
                 onMergeProgress(
                     Progress(totalBytesDownloaded * percentage / 100, totalBytesDownloaded),
                     task.apply {
@@ -407,11 +422,15 @@ class MpdDownloader(
             },
             audioCodec = audioRep?.codecs
         )
+
         if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
-            throw IOException("FFmpeg failed to merge BaseURL streams. Log: ${mergeSession.allLogsAsString}")
+            AppLogger.e("FFmpeg Fail: ${mergeSession.allLogsAsString}")
+            throw IOException("FFmpeg failed to merge BaseURL streams.")
         }
-        videoTempFile.delete()
-        audioTempFile.delete()
+
+        videoCombined.delete()
+        audioCombined.delete()
+
         finalFile
     }
 
@@ -425,12 +444,17 @@ class MpdDownloader(
         controller: FileBasedDownloadController,
         onProgress: (downloadedBytes: Long, totalBytes: Long) -> Unit
     ) = suspendCancellableCoroutine { continuation ->
+        val monitorJob = Job()
+        val monitorScope = CoroutineScope(Dispatchers.Default + monitorJob)
+
         val listener = object : DownloadListener {
             override fun onSuccess() {
+                monitorJob.cancel()
                 if (continuation.isActive) continuation.resume(Unit)
             }
 
             override fun onFailure(e: Throwable) {
+                monitorJob.cancel()
                 if (continuation.isActive) continuation.resumeWithException(e)
             }
 
@@ -459,14 +483,23 @@ class MpdDownloader(
         )
         downloader.download()
 
-        CoroutineScope(continuation.context).launch {
-            while (isActive) { // Check `isActive` of this new scope
-                if (controller.isInterrupted()) {
-                    CustomFileDownloader.pause(outputFile)
-                    break
+        monitorScope.launch {
+            try {
+                while (isActive) {
+                    if (controller.isInterrupted()) {
+                        CustomFileDownloader.pause(outputFile)
+                        break
+                    }
+                    delay(500)
                 }
-                delay(500)
+            } finally {
+
             }
+        }
+
+        continuation.invokeOnCancellation {
+            monitorJob.cancel()
+            CustomFileDownloader.pause(outputFile)
         }
     }
 
@@ -530,7 +563,7 @@ class MpdDownloader(
         AppLogger.d("MPD: Concatenation finished. Starting FFmpeg merge.")
 
         val mergeSession = mergeBaseUrlStreams(
-            tempVideoFile.takeIf { it.exists() && it.length() > 0 } ?: File(""),
+            tempVideoFile,
             tempAudioFile.takeIf { it.exists() && it.length() > 0 },
             finalOutputPath,
             totalDurationSeconds,
@@ -643,7 +676,9 @@ class MpdDownloader(
                 }
 
                 if (hasVideo && (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true)) {
-                    add("-c:v"); add("libx264"); add("-preset"); add("ultrafast"); add("-crf"); add("26"); add(
+                    add("-c:v"); add("libx264"); add("-preset"); add("ultrafast"); add("-crf"); add(
+                        "26"
+                    ); add(
                         "-pix_fmt"
                     ); add("yuv420p")
                     if (hasAudio) add("-c:a"); add("copy")
@@ -654,8 +689,12 @@ class MpdDownloader(
                 if (hasAudio && audioCodec?.contains("aac", ignoreCase = true) == true) {
                     add("-bsf:a"); add("aac_adtstoasc")
                 }
-                
-                if (finalOutputPath.endsWith(".mp4", true) || finalOutputPath.endsWith(".mov", true)) {
+
+                if (finalOutputPath.endsWith(".mp4", true) || finalOutputPath.endsWith(
+                        ".mov",
+                        true
+                    )
+                ) {
                     add("-movflags"); add("+faststart")
                 }
             }

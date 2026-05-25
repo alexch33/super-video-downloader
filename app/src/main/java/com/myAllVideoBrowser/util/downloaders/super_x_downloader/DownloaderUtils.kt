@@ -214,7 +214,7 @@ object DownloaderUtils {
             httpClient.newCall(request).execute()
                 .use { response ->
                     if (!response.isSuccessful) throw IOException("Failed to download key file. HTTP ${response.code}")
-                    response.body?.use { keyFile.writeBytes(it.bytes()) }
+                    response.body.use { keyFile.writeBytes(it.bytes()) }
                     AppLogger.d("HLS: Encryption key downloaded to ${keyFile.absolutePath}")
                 }
         } catch (e: Exception) {
@@ -293,7 +293,7 @@ object DownloaderUtils {
         val playlistFile = hlsTmpDir.resolve(finalPlaylistName)
 
         if (isEncrypted) {
-            AppLogger.d("HLS: Encryption detected for $filePrefix. Method: ${key!!.method}")
+            AppLogger.d("HLS: Encryption detected for $filePrefix. Method: ${key.method}")
             val keyFile = hlsTmpDir.resolve(keyFileName)
             if (!keyFile.exists() || keyFile.length() == 0L) {
                 throw IOException("Encryption key file not found: ${keyFile.absolutePath}")
@@ -305,7 +305,7 @@ object DownloaderUtils {
                 appendLine("#EXTM3U")
                 appendLine("#EXT-X-VERSION:3")
                 appendLine("#EXT-X-TARGETDURATION:10") // A default value, FFmpeg is robust to this.
-                appendLine("#EXT-X-KEY:METHOD=${key!!.method},URI=\"$keyFileName\"")
+                appendLine("#EXT-X-KEY:METHOD=${key.method},URI=\"$keyFileName\"")
             }
 
             segments.forEachIndexed { index, segment ->

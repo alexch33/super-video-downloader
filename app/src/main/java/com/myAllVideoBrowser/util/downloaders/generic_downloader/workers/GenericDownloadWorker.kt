@@ -17,7 +17,7 @@ import java.io.Serializable
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 interface DownloadWorkerListener {
     suspend fun onTaskFinished(taskId: String)
@@ -39,6 +39,14 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     abstract fun handleAction(
         action: String, task: VideoTaskItem, headers: Map<String, String>, isFileRemove: Boolean
     )
+
+    /**
+     * Hook for subclasses to perform cleanup when the worker is stopped/cancelled.
+     * This is needed because onStopped() is final in CoroutineWorker.
+     */
+    open fun onDownloadStopped() {
+        // To be overridden by subclasses
+    }
 
     open fun fixFileName(fileName: String, isAudioOnlyExtract: Boolean): String {
         var currentFile = File(fileName)
@@ -84,8 +92,14 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     }
 
     override suspend fun doWork(): Result {
-        val result = suspendCoroutine { continuation ->
+        val result = suspendCancellableCoroutine<Result> { continuation ->
             setWorkContinuation(continuation)
+            
+            continuation.invokeOnCancellation {
+                AppLogger.d("Download cancelled>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+                onDownloadStopped()
+            }
+
             try {
                 if (!ProxyManager.isProxyRunning()) {
                     AppLogger.d("Proxy process is not running.")
@@ -102,7 +116,7 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
 
                 if (action.isNullOrBlank() || task.url == null) {
                     continuation.resumeWithException(IllegalArgumentException("ACTION or TASK is null"))
-                    return@suspendCoroutine
+                    return@suspendCancellableCoroutine
                 }
 
                 handleAction(action, task, headers, isFileRemove)

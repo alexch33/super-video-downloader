@@ -4,6 +4,7 @@ import com.antonkarpenko.ffmpegkit.FFmpegKit
 import com.antonkarpenko.ffmpegkit.FFmpegSession
 import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.CustomFileDownloader
 import com.myAllVideoBrowser.util.downloaders.custom_downloader.DownloadListener
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
@@ -271,7 +272,8 @@ class MpdDownloader(
                 onMergeProgress(
                     Progress(
                         totalBytesDownloaded.get() * percentage / 100,
-                        totalBytesDownloaded.get()
+                        totalBytesDownloaded.get(),
+                        message
                     ),
                     task.apply {
                         this.setLineInfo(message)
@@ -330,15 +332,14 @@ class MpdDownloader(
                         urls,
                         dataFile,
                         headers,
-                        controller
                     ) { dl, tot ->
                         videoDownloaded.set(dl)
                         videoTotal.set(tot)
+
+                        val current = videoDownloaded.get() + audioDownloaded.get()
+                        val total = videoTotal.get() + audioTotal.get()
                         onProgress(
-                            Progress(
-                                videoDownloaded.get() + audioDownloaded.get(),
-                                videoTotal.get() + audioTotal.get()
-                            )
+                            createProgressForBaseUrlsMpd(current, total)
                         )
                     }
                     if (dataFile.exists() && dataFile.length() > 0) videoParts.add(dataFile)
@@ -361,15 +362,15 @@ class MpdDownloader(
                         urls,
                         dataFile,
                         headers,
-                        controller
                     ) { dl, tot ->
+
                         audioDownloaded.set(dl)
                         audioTotal.set(tot)
+
+                        val current = videoDownloaded.get() + audioDownloaded.get()
+                        val total = videoTotal.get() + audioTotal.get()
                         onProgress(
-                            Progress(
-                                videoDownloaded.get() + audioDownloaded.get(),
-                                videoTotal.get() + audioTotal.get()
-                            )
+                            createProgressForBaseUrlsMpd(current, total)
                         )
                     }
                     if (dataFile.exists() && dataFile.length() > 0) audioParts.add(dataFile)
@@ -391,7 +392,8 @@ class MpdDownloader(
         onMergeProgress(
             Progress(
                 0,
-                videoCombined.length() + videoCombined.length()
+                videoDownloaded.get() + audioDownloaded.get(),
+                "Merging... $1%"
             ),
             task.apply {
                 this.setLineInfo("Merging... 0%")
@@ -407,7 +409,11 @@ class MpdDownloader(
             onMergeProgress = { percentage ->
                 val totalBytesDownloaded = videoTotal.get() + audioTotal.get()
                 onMergeProgress(
-                    Progress(totalBytesDownloaded * percentage / 100, totalBytesDownloaded),
+                    Progress(
+                        totalBytesDownloaded * percentage / 100,
+                        totalBytesDownloaded,
+                        "Merging... $percentage%"
+                    ),
                     task.apply {
                         this.setLineInfo("Merging... $percentage%")
                         this.setTaskState(VideoTaskState.PREPARE)
@@ -428,6 +434,21 @@ class MpdDownloader(
         finalFile
     }
 
+    private fun createProgressForBaseUrlsMpd(current: Long, total: Long): Progress {
+        if (total <= 0) return Progress(current, 0, "Starting download...")
+
+        val percentage = (current.toDouble() / total.toDouble()) * 100
+        val formattedPercent = String.format("%.2f", percentage)
+        val currentReadable = FileUtil.getFileSizeReadable(current.toDouble())
+        val totalReadable = FileUtil.getFileSizeReadable(total.toDouble())
+
+        return Progress(
+            current,
+            total,
+            "[Downloading] $formattedPercent% ($currentReadable / $totalReadable)"
+        )
+    }
+
     /**
      * Wraps the legacy CustomFileDownloader in a pausable/cancellable coroutine.
      */
@@ -435,21 +456,19 @@ class MpdDownloader(
         urls: List<String>,
         outputFile: File,
         headers: Map<String, String>,
-        controller: FileBasedDownloadController,
         onProgress: (downloadedBytes: Long, totalBytes: Long) -> Unit
     ) = suspendCancellableCoroutine { continuation ->
-        val monitorJob = Job()
-        val monitorScope = CoroutineScope(Dispatchers.Default + monitorJob)
-
         val listener = object : DownloadListener {
             override fun onSuccess() {
-                monitorJob.cancel()
-                if (continuation.isActive) continuation.resume(Unit)
+                if (continuation.isActive) {
+                    continuation.resume(Unit)
+                }
             }
 
             override fun onFailure(e: Throwable) {
-                monitorJob.cancel()
-                if (continuation.isActive) continuation.resumeWithException(e)
+                if (continuation.isActive) {
+                    continuation.resumeWithException(e)
+                }
             }
 
             override fun onProgressUpdate(downloadedBytes: Long, totalBytes: Long) {
@@ -475,23 +494,13 @@ class MpdDownloader(
             listener,
             false
         )
-        downloader.download()
-
-        monitorScope.launch {
-            try {
-                while (isActive) {
-                    if (controller.isInterrupted()) {
-                        break
-                    }
-                    delay(500)
-                }
-            } finally {
-
-            }
+        try {
+            downloader.download()
+        } catch (e: Throwable) {
+            listener.onFailure(e)
         }
-
-        continuation.invokeOnCancellation {
-            monitorJob.cancel()
+        if (continuation.isActive) {
+            continuation.resume(Unit)
         }
     }
 

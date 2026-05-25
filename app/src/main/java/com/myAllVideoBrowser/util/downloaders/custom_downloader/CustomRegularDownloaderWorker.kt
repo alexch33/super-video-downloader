@@ -8,11 +8,13 @@ import androidx.core.net.toUri
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FfmpegProcessor
+import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
+import com.myAllVideoBrowser.util.downloaders.super_x_downloader.DownloaderUtils
 import java.io.File
 import java.net.URL
 import java.util.Date
@@ -24,6 +26,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     private var fileMovedSuccess = false
     private var outputFileName: String? = null
     private var progressCached: Progress = Progress(0, 0)
+
+    private var downloadStartTime = 0L
 
     @Volatile
     private var lastSavedTime = 0L
@@ -281,6 +285,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     private fun updateProgressInfoAndStartDownload(
         taskItem: VideoTaskItem, taskId: String, url: String, headers: Map<String, String>
     ) {
+        downloadStartTime = System.currentTimeMillis()
+
         saveProgress(taskId, Progress(0, 0), VideoTaskState.PENDING)
         val threadCount = sharedPrefHelper.getRegularDownloaderThreadCount()
         val okHttpClient = proxyOkHttpClient.getProxyOkHttpClient()
@@ -354,7 +360,14 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 progressCached = Progress(downloadedBytes, totalBytes)
                 val totalBytesFixed =
                     if (downloadedBytes > totalBytes) downloadedBytes else totalBytes
-                onProgress(Progress(downloadedBytes, totalBytesFixed), taskItem.also {
+
+                val eta = DownloaderUtils.calculateEta(
+                    downloadStartTime,
+                    downloadedBytes,
+                    totalBytesFixed
+                )
+
+                onProgress(Progress(downloadedBytes, totalBytesFixed, eta), taskItem.also {
                     it.mId = taskId
                     it.filePath = outputFileName
                 })
@@ -386,11 +399,18 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 it.fileName = outputFileName?.let { it1 -> File(it1).name } ?: downloadTask.fileName
                 it.taskState = VideoTaskState.DOWNLOADING
                 it.percent = (progress.currentBytes / progress.totalBytes * 100).toFloat()
+                if (!it.isLive) {
+                    val currentReadable =
+                        FileUtil.getFileSizeReadable(progress.currentBytes.toDouble())
+                    val totalReadable = FileUtil.getFileSizeReadable(progress.totalBytes.toDouble())
+                    it.lineInfo =
+                        "Downloading... $currentReadable / $totalReadable ${progress.info}"
+                    progress.info = it.lineInfo
+                }
             }
 
-
             showProgress(taskItem, progress)
-            saveProgress(downloadTask.mId, progress, VideoTaskState.DOWNLOADING)
+            saveProgress(downloadTask.mId, progress, VideoTaskState.DOWNLOADING, progress.info)
         }
     }
 
@@ -453,12 +473,13 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
 
     private fun showProgress(taskItem: VideoTaskItem, progress: Progress?) {
-        val text = "Downloading: ${taskItem.fileName}"
+        val etaSuffix =
+            if (!progress?.info.isNullOrEmpty() && !taskItem.isLive) " ${progress.info}" else ""
         val totalSize = progress?.totalBytes ?: 0
         val downloadSize = progress?.currentBytes ?: 0
 
         taskItem.apply {
-            lineInfo = text
+            lineInfo = etaSuffix
             taskState = VideoTaskState.DOWNLOADING
             this.totalSize = totalSize
             this.downloadSize = downloadSize

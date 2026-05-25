@@ -612,7 +612,6 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         AppLogger.d("HLS: Task $taskId is pausing gracefully.")
                         finishWork(task.also {
                             it.taskState = VideoTaskState.PAUSE
-                            it.errorMessage = "Paused"
                         })
                     }
                     // Handle other errors.

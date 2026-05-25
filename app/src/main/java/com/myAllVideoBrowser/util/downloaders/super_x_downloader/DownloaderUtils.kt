@@ -4,6 +4,8 @@ import com.antonkarpenko.ffmpegkit.FFmpegKit
 import com.antonkarpenko.ffmpegkit.FFmpegSession
 import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.FileUtil
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
 import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -137,7 +139,11 @@ object DownloaderUtils {
                     add("-bsf:a"); add("aac_adtstoasc")
                 }
 
-                if (finalOutputPath.endsWith(".mp4", true) || finalOutputPath.endsWith(".mov", true)) {
+                if (finalOutputPath.endsWith(".mp4", true) || finalOutputPath.endsWith(
+                        ".mov",
+                        true
+                    )
+                ) {
                     add("-movflags"); add("+faststart")
                 }
             }
@@ -223,6 +229,53 @@ object DownloaderUtils {
                 e
             )
         }
+    }
+
+    fun calculateEta(startTime: Long, currentBytes: Long, totalBytes: Long): String {
+        val elapsedMs = System.currentTimeMillis() - startTime
+        if (elapsedMs <= 0 || currentBytes <= 0 || totalBytes <= 0) return ""
+
+        val bytesPerMs = currentBytes.toDouble() / elapsedMs
+        val remainingBytes = totalBytes - currentBytes
+        if (remainingBytes <= 0) return ""
+
+        val remainingMs = (remainingBytes / bytesPerMs).toLong()
+        val seconds = (remainingMs / 1000) % 60
+        val minutes = (remainingMs / (1000 * 60)) % 60
+        val hours = (remainingMs / (1000 * 60 * 60))
+
+        return when {
+            hours > 0 -> "ETA:(${hours}h ${minutes}m)"
+            minutes > 0 -> "ETA:(${minutes}m ${seconds}s)"
+            else -> "ETA:(${seconds}s)"
+        }
+    }
+
+    fun createSegmentsDownloadProgress(
+        currentTotalDownloaded: Long,
+        totalToDownload: Long,
+        completedSegments: Int,
+        totalSegments: Int,
+        startTime: Long,
+        isMpd: Boolean
+    ): Progress {
+        val currentReadable = FileUtil.getFileSizeReadable(currentTotalDownloaded.toDouble())
+        val totalReadable = FileUtil.getFileSizeReadable(totalToDownload.toDouble())
+
+        val percents = completedSegments / totalSegments.toDouble() * 100
+        val etaMessage = calculateEta(startTime, currentTotalDownloaded, totalToDownload)
+        val typeString = if (isMpd) "MPD" else "HLS"
+
+        return Progress(
+            currentTotalDownloaded,
+            totalToDownload,
+            "$typeString: ${
+                String.format(
+                    "%.2f",
+                    percents
+                )
+            }% ${currentReadable}/${totalReadable} segments: $completedSegments / $totalSegments\n$etaMessage"
+        )
     }
 
     /**

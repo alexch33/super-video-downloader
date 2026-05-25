@@ -406,10 +406,10 @@ class MpdDownloader(
             Progress(
                 0,
                 videoDownloaded.get() + audioDownloaded.get(),
-                "Merging... $1%"
+                "Merging... 1%"
             ),
             task.apply {
-                this.setLineInfo("Merging... 0%")
+                this.setLineInfo("Merging... 1%")
                 this.setTaskState(VideoTaskState.PREPARE)
             }
         )

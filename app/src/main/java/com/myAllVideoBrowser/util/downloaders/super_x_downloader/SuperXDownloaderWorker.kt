@@ -39,6 +39,9 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     GenericDownloadWorkerWrapper(appContext, workerParams) {
 
     @Volatile
+    private lateinit var progressCached: Progress
+
+    @Volatile
     private lateinit var taskId: String
 
     private val workerScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -159,8 +162,9 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
         workerScope.launch {
             try {
-                val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
-                
+                val isAudioOnlyExtract =
+                    inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+
                 // 1. Instantiate the HlsLiveDownloader strategy
                 val liveDownloader = HlsLiveDownloader(
                     httpClient = proxyOkHttpClient.getProxyOkHttpClient(),
@@ -251,7 +255,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val selectedFormatId = inputData.getString(GenericDownloader.Constants.SELECTED_FORMAT_ID)
             ?: throw IOException("No selected format ID was provided to the worker.")
 
-        val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+        val isAudioOnlyExtract =
+            inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
 
         val initialPlaylist = fetchAndParse(playlistUrl)
         if (initialPlaylist !is HlsPlaylistParser.MasterPlaylist) {
@@ -326,7 +331,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     },
                     threadCount = sharedPrefHelper.getM3u8DownloaderThreadCount(),
                     videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC),
-                    isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+                    isAudioOnlyExtract = inputData.getBoolean(
+                        GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT,
+                        false
+                    )
                 )
 
                 // 2. Execute the download. This one method handles both segment and BaseURL logic.
@@ -403,7 +411,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         )
                     },
                     videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC),
-                    isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+                    isAudioOnlyExtract = inputData.getBoolean(
+                        GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT,
+                        false
+                    )
                 )
 
                 // 2. Execute the download. This handles the entire live recording loop.
@@ -497,8 +508,9 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         if (selectedFormatId == null) {
             throw IOException("No selected format ID was provided to the worker.")
         }
-        
-        val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+
+        val isAudioOnlyExtract =
+            inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
 
         // 2. Find the selected video/audio representation based on the ID.
         val selectedVideoRep = videoRepresentations.find {
@@ -519,8 +531,9 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             selectedVideoRep != null -> {
                 // SCENARIO 1: A video format was selected.
                 // Use the selected video and find the best corresponding audio.
-                finalAudioRep = audioRepresentations.maxByOrNull { it.bandwidth } // Always take the best audio
-                
+                finalAudioRep =
+                    audioRepresentations.maxByOrNull { it.bandwidth } // Always take the best audio
+
                 if (isAudioOnlyExtract && finalAudioRep != null) {
                     finalVideoRep = null
                     AppLogger.d("MPD: Audio-only extract requested. Skipping video representation.")
@@ -574,7 +587,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     },
                     threadCount = sharedPrefHelper.getM3u8DownloaderThreadCount(),
                     videoCodec = inputData.getString(GenericDownloader.Constants.VIDEO_CODEC),
-                    isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+                    isAudioOnlyExtract = inputData.getBoolean(
+                        GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT,
+                        false
+                    )
                 )
 
                 // 2. Execute the download. This suspend fun handles everything.
@@ -650,8 +666,9 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         if (selectedFormatId == null) {
             throw IOException("No selected format ID was provided to the worker.")
         }
-        
-        val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+
+        val isAudioOnlyExtract =
+            inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
 
         val initialPlaylist = fetchAndParse(playlistUrl)
         if (initialPlaylist !is HlsPlaylistParser.MasterPlaylist) {
@@ -741,7 +758,10 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         }
         AppLogger.d("FFmpeg: Finishing work for task $taskId with state ${item.taskState}")
 
-        handleTaskCompletion(item)
+        handleTaskCompletion(item.also {
+            it.downloadSize = progressCached.currentBytes
+            it.totalSize = progressCached.totalBytes
+        })
 
         val notificationData = notificationsHelper.createNotificationBuilder(item.also {
             if (item.taskState == VideoTaskState.SUCCESS) {
@@ -773,7 +793,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             }
 
             VideoTaskState.SUCCESS -> {
-                val isAudioOnlyExtract = inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+                val isAudioOnlyExtract =
+                    inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
                 var fileName = item.fileName
                 if (isAudioOnlyExtract && !fileName.endsWith(".mp3", true)) {
                     fileName = fileName.substringBeforeLast(".") + ".mp3"
@@ -819,7 +840,11 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     item.mId,
                     finalProgress,
                     item.taskState,
-                    item.errorMessage ?: "Unknown Superx Error"
+                    if (item.taskState == VideoTaskState.ERROR) {
+                        item.errorMessage ?: "Unknown Superx Error"
+                    } else {
+                        "Paused"
+                    }
                 )
             }
         }
@@ -937,6 +962,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     ) {
         if (getDone()) return
 
+        progressCached = progress
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastProgressUpdateTime < 2000) {
             return

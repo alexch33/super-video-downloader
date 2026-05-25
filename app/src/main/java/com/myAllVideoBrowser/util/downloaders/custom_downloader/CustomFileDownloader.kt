@@ -17,6 +17,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicLongArray
+import java.io.IOException
 
 interface DownloadListener {
     fun onSuccess()
@@ -60,21 +61,21 @@ class CustomFileDownloader(
 
         fun pause(fileToPause: File) {
             if (fileToPause.isDirectory) {
-                throw Error("fileToPause is directory")
+                throw IllegalArgumentException("fileToPause is directory")
             }
             File(fileToPause.parentFile, Helper.PAUSE_FILE_NAME).createNewFile()
         }
 
         fun pauseByDownloadsFolder(directoryToPause: File) {
             if (!directoryToPause.isDirectory) {
-                throw Error("fileToPause is not dir")
+                throw IllegalArgumentException("fileToPause is not dir")
             }
             File(directoryToPause.parentFile, Helper.PAUSE_FILE_NAME).createNewFile()
         }
 
         fun stopAndSave(fileToSave: File) {
             if (fileToSave.isDirectory) {
-                throw Error("fileToSave is directory")
+                throw IllegalArgumentException("fileToSave is directory")
             }
             val isPaused = Helper.isPaused(fileToSave)
             File(fileToSave.parentFile, Helper.SAVE_FILE_NAME).createNewFile()
@@ -85,14 +86,14 @@ class CustomFileDownloader(
 
         fun isPaused(fileToPause: File): Boolean {
             if (fileToPause.isDirectory) {
-                throw Error("fileToPause is directory")
+                throw IllegalArgumentException("fileToPause is directory")
             }
             return Helper.isPaused(fileToPause)
         }
 
         fun isStoppedAndSave(fileToSave: File): Boolean {
             if (fileToSave.isDirectory) {
-                throw Error("File is directory")
+                throw IllegalArgumentException("File is directory")
             }
 
             return Helper.isSave(fileToSave)
@@ -100,7 +101,7 @@ class CustomFileDownloader(
 
         fun cancel(fileToCancel: File) {
             if (fileToCancel.isDirectory) {
-                throw Error("File is directory")
+                throw IllegalArgumentException("File is directory")
             }
 
             fileToCancel.parentFile?.deleteRecursively()
@@ -108,7 +109,7 @@ class CustomFileDownloader(
 
         fun cancelByDownloadDirectory(dirToCancel: File) {
             if (!dirToCancel.isDirectory) {
-                throw Error("File is not dir")
+                throw IllegalArgumentException("File is not dir")
             }
 
             dirToCancel.deleteRecursively()
@@ -161,8 +162,6 @@ class CustomFileDownloader(
             } catch (e: Throwable) {
                 this.onFailure(e)
             }
-            this.onSuccess()
-
             return
         }
 
@@ -193,24 +192,24 @@ class CustomFileDownloader(
             }
         }
 
-        val isPaused = isPaused.get()
-        val isCanceled = isCanceled.get()
-        val isSaved = isSaved.get()
+        val isPausedLocal = isPaused.get() || Helper.isPaused(file)
+        val isCanceledLocal = isCanceled.get() || Helper.isCanceled(file)
+        val isSavedLocal = isSaved.get() || Helper.isSave(file)
 
-        if (allPartsSucceed && !isPaused) {
+        if (allPartsSucceed && !isPausedLocal && !isCanceledLocal && !isSavedLocal) {
             this.onSuccess()
-        } else if (isSaved) {
+        } else if (isSavedLocal) {
             AppLogger.d("CHUNKS STOPPED AND SAVE")
-            this.onFailure(Error(STOPPED_AND_SAVE_ACTION))
-        } else if (isPaused) {
+            this.onFailure(Exception(STOPPED_AND_SAVE_ACTION))
+        } else if (isPausedLocal) {
             AppLogger.d("CHUNKS PAUSED")
-            this.onFailure(Error(PAUSE_ACTION))
-        } else if (isCanceled) {
+            this.onFailure(Exception(PAUSE_ACTION))
+        } else if (isCanceledLocal) {
             AppLogger.d("CHUNKS CANCELED")
-            this.onFailure(Error(CANCELED_ACTION))
+            this.onFailure(Exception(CANCELED_ACTION))
         } else {
             AppLogger.d("CHUNKS ERROR")
-            this.onFailure(Error("Not All Chunks downloaded, retry"))
+            this.onFailure(Exception("Not All Chunks downloaded, retry"))
         }
     }
 
@@ -219,14 +218,13 @@ class CustomFileDownloader(
         val res = client.newCall(req).execute()
 
         if (!res.isSuccessful) {
-            this.onFailure(Exception("Failed to download file: ${res.code}"))
+            this.onFailure(IOException("Failed to download file: ${res.code}"))
             return
         }
 
         val contentLength = res.body.contentLength()
         if (contentLength == -1L) {
             AppLogger.w("Content length is unknown for single-threaded download.")
-            // Continue download even if content length is unknown, progress updates might be limited
         } else {
             totalBytesAll.set(contentLength)
         }
@@ -254,11 +252,11 @@ class CustomFileDownloader(
             }
 
             if (Helper.isPaused(file)) {
-                this.onFailure(Error(PAUSE_ACTION))
+                this.onFailure(Exception(PAUSE_ACTION))
             } else if (Helper.isSave(file)) {
-                this.onFailure(Error(STOPPED_AND_SAVE_ACTION))
+                this.onFailure(Exception(STOPPED_AND_SAVE_ACTION))
             } else if (Helper.isCanceled(file)) {
-                this.onFailure(Error(CANCELED_ACTION))
+                this.onFailure(Exception(CANCELED_ACTION))
             } else {
                 this.onSuccess()
             }
@@ -315,22 +313,27 @@ class CustomFileDownloader(
     }
 
     private fun onChunkFailure(e: Throwable, index: Chunk) {
-        AppLogger.e("Chunk $index Download Failed ${e.printStackTrace()}")
+        AppLogger.e("Chunk $index Download Failed")
+        e.printStackTrace()
         listener?.onChunkFailure(e, index)
     }
 
     private fun downloadChunk(
         range: LongRange, fileChannel: FileChannel, offset: Long, chunkIndex: Int
     ) {
-        val chunkFile = File(file.parentFile, "chunk_$chunkIndex")
+        val chunkFile = File(file.parentFile, "${file.nameWithoutExtension}_chunk_$chunkIndex")
         val isResume = !chunkFile.createNewFile()
         var bytesCopied = 0L
         if (isResume) {
-            bytesCopied = chunkFile.inputStream().use { chunkStream ->
-                chunkStream.bufferedReader().use {
-                    val text = it.readText().trim()
-                    text.toLongOrNull() ?: 0L
+            bytesCopied = try {
+                chunkFile.inputStream().use { chunkStream ->
+                    chunkStream.bufferedReader().use {
+                        val text = it.readText().trim()
+                        text.toLongOrNull() ?: 0L
+                    }
                 }
+            } catch (e: Exception) {
+                0L
             }
         }
         AppLogger.d(
@@ -353,7 +356,7 @@ class CustomFileDownloader(
         val res = client.newCall(req).execute()
 
         if (res.body.contentLength() == -1L) {
-            throw Error("Content Length Not Found")
+            throw IOException("Content Length Not Found")
         }
 
         val inputStream = res.body.byteStream()
@@ -366,11 +369,11 @@ class CustomFileDownloader(
 
         RandomAccessFile(chunkFile, "rw").channel.use { chunkChannel ->
             inputStream.use { urlStream ->
-                while (!isSaved.get() && !isPaused.get() && !isCanceled.get() && (urlStream.read( // && bytesCopied < range.last
+                while (!isSaved.get() && !isPaused.get() && !isCanceled.get() && (urlStream.read(
                         buffer
                     ).also { bytesRead = it }) >= 0
                 ) {
-                    fileChannel.write(ByteBuffer.wrap(buffer), offset + bytesCopied)
+                    fileChannel.write(ByteBuffer.wrap(buffer, 0, bytesRead), offset + bytesCopied)
                     bytesCopied += bytesRead
                     chunkChannel.write(ByteBuffer.wrap("$bytesCopied".toByteArray()), 0)
                     this.onChunkProgressUpdate(

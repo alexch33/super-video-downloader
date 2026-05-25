@@ -301,8 +301,8 @@ class MpdDownloader(
         onProgress: (progress: Progress) -> Unit
     ): File = coroutineScope {
         // Combined files used as input for FFmpeg
-        val videoCombined = downloadDir.resolve("video_combined.mp4")
-        val audioCombined = downloadDir.resolve("audio_combined.mp4")
+        val videoCombined = downloadDir.resolve("video_combined")
+        val audioCombined = downloadDir.resolve("audio_combined")
         val finalFile = downloadDir.resolve("merged_output.mp4")
 
         // Optimization: Skip video download if audio-only is requested and separate audio exists.
@@ -312,10 +312,6 @@ class MpdDownloader(
         } else {
             videoRepRaw
         }
-
-        // Clean up legacy files
-        videoCombined.delete()
-        audioCombined.delete()
 
         val videoDownloaded = AtomicLong(0)
         val audioDownloaded = AtomicLong(0)
@@ -329,8 +325,7 @@ class MpdDownloader(
             jobs.add(async {
                 val videoParts = mutableListOf<File>()
                 rep.baseUrls.takeIf { it.isNotEmpty() }?.let { urls ->
-                    val dataFile = downloadDir.resolve("video_data_base.mp4")
-                    dataFile.delete()
+                    val dataFile = downloadDir.resolve("video_data_base")
                     downloadFileWithCustomDownloader(
                         urls,
                         dataFile,
@@ -361,8 +356,7 @@ class MpdDownloader(
             jobs.add(async {
                 val audioParts = mutableListOf<File>()
                 rep.baseUrls.takeIf { it.isNotEmpty() }?.let { urls ->
-                    val dataFile = downloadDir.resolve("audio_data_base.mp4")
-                    dataFile.delete()
+                    val dataFile = downloadDir.resolve("audio_data_base")
                     downloadFileWithCustomDownloader(
                         urls,
                         dataFile,

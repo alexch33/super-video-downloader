@@ -15,6 +15,7 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.core.view.get
+import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
@@ -71,6 +72,14 @@ class VideoFragment : BaseFragment() {
 
     private lateinit var videoAdapter: VideoAdapter
 
+    private val navCallback = object : Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -85,6 +94,8 @@ class VideoFragment : BaseFragment() {
             this.mainViewModel = mainActivity.mainViewModel
             this.rvVideo.layoutManager = managerL
             this.rvVideo.adapter = videoAdapter
+            this.rvVideo.isClickable = true
+            this.clContent.isClickable = true
             this.isSelectionMode = false
             this.isAllSelected = false
         }
@@ -94,8 +105,25 @@ class VideoFragment : BaseFragment() {
         }
 
         setupSelectionControls()
+        setupNavigationObservers()
 
         return dataBinding.root
+    }
+
+    private fun setupNavigationObservers() {
+        mainActivity.mainViewModel.isBrowserCurrent.addOnPropertyChangedCallback(navCallback)
+        mainActivity.mainViewModel.currentItem.addOnPropertyChangedCallback(navCallback)
+        mainActivity.mainViewModel.openNavDrawerEvent.observe(viewLifecycleOwner) {
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        mainActivity.mainViewModel.isBrowserCurrent.removeOnPropertyChangedCallback(navCallback)
+        mainActivity.mainViewModel.currentItem.removeOnPropertyChangedCallback(navCallback)
+        super.onDestroyView()
     }
 
     private fun setupSelectionControls() {
@@ -116,6 +144,16 @@ class VideoFragment : BaseFragment() {
             }
             exitSelectionMode()
         }
+
+        val exitSelectionClickListener = View.OnClickListener {
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
+        }
+
+        dataBinding.rvVideo.setOnClickListener(exitSelectionClickListener)
+        dataBinding.clContent.setOnClickListener(exitSelectionClickListener)
+        dataBinding.root.setOnClickListener(exitSelectionClickListener)
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -158,6 +196,9 @@ class VideoFragment : BaseFragment() {
 
     private fun handleIfStartedFromNotification() {
         mainActivity.mainViewModel.openDownloadedVideoEvent.observe(viewLifecycleOwner) { downloadFilename ->
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
             disposable?.dispose()
             disposable = null
             disposable =

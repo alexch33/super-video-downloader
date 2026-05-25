@@ -481,7 +481,6 @@ class MpdDownloader(
             try {
                 while (isActive) {
                     if (controller.isInterrupted()) {
-                        CustomFileDownloader.pause(outputFile)
                         break
                     }
                     delay(500)
@@ -493,7 +492,6 @@ class MpdDownloader(
 
         continuation.invokeOnCancellation {
             monitorJob.cancel()
-            CustomFileDownloader.pause(outputFile)
         }
     }
 

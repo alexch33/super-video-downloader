@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Base64
+import androidx.core.R
 import androidx.core.net.toUri
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -467,7 +468,11 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                         "LIVE",
                                         downloaded.toDouble(),
                                         downloaded.toDouble(),
-                                        sourceLine = "Downloading live stream...downloaded: $downloadedTmpFolderSize, press stop and save, to stop downloading and save downloaded at any time...!"
+                                        sourceLine = "[RECORDING] live stream: $downloadedTmpFolderSize, ${
+                                            applicationContext.getString(
+                                                com.myAllVideoBrowser.R.string.stop_and_save_message
+                                            )
+                                        }"
                                     ), task.also { item ->
                                         item.setIsLive(true)
                                         item.taskState = VideoTaskState.DOWNLOADING
@@ -479,7 +484,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                     taskId,
                                     task.title,
                                     99,
-                                    "Downloading Live Stream... $downloadedTmpFolderSize",
+                                    "[RECORDING] $downloadedTmpFolderSize",
                                     tmpFile,
                                     true
                                 )

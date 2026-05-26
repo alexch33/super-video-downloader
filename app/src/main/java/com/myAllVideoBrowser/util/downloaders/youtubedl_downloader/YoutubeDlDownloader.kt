@@ -43,6 +43,7 @@ object YoutubeDlDownloader : GenericDownloader() {
         data.putString(Constants.ORIGIN_KEY, videoInfo.originalUrl)
         data.putString(Constants.TASK_ID_KEY, videoInfo.id)
         data.putBoolean(Constants.IS_AUDIO_ONLY_EXTRACT, videoInfo.isAudioOnlyExtract)
+        data.putBoolean(Constants.IS_LIVE, videoInfo.isLive)
 
         if (videoInfo.formats.formats.firstOrNull() != null && videoInfo.formats.formats.isNotEmpty()) {
             val stringifiedFormatEntity =

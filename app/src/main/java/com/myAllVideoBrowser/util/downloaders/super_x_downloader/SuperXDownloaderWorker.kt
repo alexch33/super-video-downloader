@@ -854,7 +854,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         }
     }
 
-    private fun showProgress(taskItem: VideoTaskItem, progress: Progress) {
+    private fun showProgress(taskItem: VideoTaskItem, progress: Progress, isOnMerge: Boolean) {
         if (getDone()) {
             AppLogger.d("SuperX: Ignoring progress update for ${taskItem.mId} because worker is already done.")
             return
@@ -875,13 +875,21 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             }
 
             taskItem.apply {
-                // Format the notification line to show "Recording..." with size and duration.
-                lineInfo = "Recording: ${
-                    Formatter.formatShortFileSize(
-                        applicationContext, progress.currentBytes
-                    )
-                } ($durationString)"
-                taskState = VideoTaskState.DOWNLOADING
+                val info = if (isOnMerge) {
+                    taskItem.lineInfo
+                } else {
+                    "[RECORDING] ${
+                        Formatter.formatShortFileSize(
+                            applicationContext, progress.currentBytes
+                        )
+                    } ($durationString)"
+                }
+                lineInfo = info
+                taskState = if (isOnMerge) {
+                    VideoTaskState.PREPARE
+                } else {
+                    VideoTaskState.DOWNLOADING
+                }
                 totalSize = 0 // Total size is unknown
                 downloadSize = progress.currentBytes
                 percent = 99F // No percentage for live streams
@@ -978,31 +986,48 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         }
 
         val isLiveLocal = isLIve || task.isLive
+        var taskLineInfo = task.lineInfo
+        if (isLiveLocal) {
+            val downloadedDuration = task.accumulatedDuration
+            val hours = TimeUnit.SECONDS.toHours(downloadedDuration)
+            val minutes = TimeUnit.SECONDS.toMinutes(downloadedDuration) % 60
+            val seconds = downloadedDuration % 60
+
+            val durationString = if (hours > 0) {
+                String.format(Locale.ENGLISH, "%d:%02d:%02d", hours, minutes, seconds)
+            } else {
+                String.format(Locale.ENGLISH, "%02d:%02d", minutes, seconds)
+            }
+
+            if (!isOnMerge) {
+                taskLineInfo = "[RECORDING] ${
+                    Formatter.formatShortFileSize(
+                        applicationContext, progress.currentBytes
+                    )
+                } ($durationString)"
+            }
+        }
+
         if (isOnMerge) {
-            showProgress(task.clone(), progress)
+            showProgress(task.clone(), progress, true)
             saveProgress(
                 task.mId,
                 progress,
                 VideoTaskState.PREPARE,
                 isLive = isLiveLocal,
-                infoLine = task.lineInfo
+                infoLine = taskLineInfo
             )
             return
         }
-        showProgress(task.clone(), progress)
+        showProgress(task.clone(), progress, false)
 
         if (isSizeEstimated || isLiveLocal) {
-            val infoString = if (!isLiveLocal && progress.info.isNotEmpty()) {
-                progress.info
-            } else {
-                "Downloading..."
-            }
             saveProgress(
                 task.mId,
                 progress,
                 VideoTaskState.DOWNLOADING,
                 isLive = isLiveLocal,
-                infoLine = if (isLiveLocal) "Live Recording" else infoString
+                infoLine = taskLineInfo
             )
         }
     }

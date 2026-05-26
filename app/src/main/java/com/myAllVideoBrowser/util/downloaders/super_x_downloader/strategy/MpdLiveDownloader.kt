@@ -57,15 +57,15 @@ class MpdLiveDownloader(
             try {
                 // 1. Initial Manifest Parse and Init Segment Download
                 val (initialVideoRep, initialAudioRep) = getMpdRepresentations(task.url, headers)
-                
+
                 // If audio-only is requested and separate audio tracks exist, we can skip video entirely.
                 val skipVideo = isAudioOnlyExtract && initialAudioRep != null
-                
+
                 downloadInitSegments(
-                    if (skipVideo) null else initialVideoRep, 
-                    initialAudioRep, 
-                    downloadDir, 
-                    controller, 
+                    if (skipVideo) null else initialVideoRep,
+                    initialAudioRep,
+                    downloadDir,
+                    controller,
                     headers
                 )
 
@@ -90,7 +90,8 @@ class MpdLiveDownloader(
                     val newVideoSegments = if (skipVideo) {
                         emptyList()
                     } else {
-                        videoRep?.segments?.filter { downloadedSegmentUrls.add(it.url) } ?: emptyList()
+                        videoRep?.segments?.filter { downloadedSegmentUrls.add(it.url) }
+                            ?: emptyList()
                     }
 
                     val newAudioSegments =
@@ -119,10 +120,10 @@ class MpdLiveDownloader(
                     }
 
                     if ((videoRep?.manifest?.type == "static" || skipVideo) && (audioRep?.manifest?.type == "static" || audioRep == null)) {
-                         if (videoRep?.manifest?.type == "static" || audioRep?.manifest?.type == "static") {
-                             AppLogger.d("MPD (Live): Stream type changed to 'static'. Ending recording.")
-                             break
-                         }
+                        if (videoRep?.manifest?.type == "static" || audioRep?.manifest?.type == "static") {
+                            AppLogger.d("MPD (Live): Stream type changed to 'static'. Ending recording.")
+                            break
+                        }
                     }
 
                     interruptibleDelay(updateInterval, controller)
@@ -150,10 +151,11 @@ class MpdLiveDownloader(
 
                 var isPreparing = true
 
+                val info = "Preparing segments... 0%"
                 onMergeProgress(
-                    Progress(0, totalBytesDownloaded), task.apply {
+                    Progress(0, totalBytesDownloaded, info), task.apply {
                         this.taskState = VideoTaskState.PREPARE
-                        this.lineInfo = "Preparing segments... 0%"
+                        this.lineInfo = info
                     })
 
                 finalOutputFile = downloadDir.resolve("merged_output.mp4")
@@ -170,8 +172,15 @@ class MpdLiveDownloader(
                     val message =
                         if (isPreparing) "Preparing segments... $percentage%" else "Merging... $percentage%"
                     onMergeProgress(
-                        Progress(totalBytesDownloaded * percentage / 100, totalBytesDownloaded),
-                        task.apply { this.lineInfo = message })
+                        Progress(
+                            totalBytesDownloaded * percentage / 100,
+                            totalBytesDownloaded,
+                            message
+                        ),
+                        task.apply {
+                            this.lineInfo = message
+                            this.taskState = VideoTaskState.PREPARE
+                        })
                 }
 
                 if (!ReturnCode.isSuccess(mergeSession.returnCode)) {
@@ -385,7 +394,9 @@ class MpdLiveDownloader(
                 }
 
                 if (hasVideo && (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true)) {
-                    add("-c:v"); add("libx264"); add("-preset"); add("ultrafast"); add("-crf"); add("26"); add(
+                    add("-c:v"); add("libx264"); add("-preset"); add("ultrafast"); add("-crf"); add(
+                        "26"
+                    ); add(
                         "-pix_fmt"
                     ); add("yuv420p")
                     if (hasAudio) add("-c:a"); add("copy")
@@ -396,8 +407,12 @@ class MpdLiveDownloader(
                 if (!isSegmentMerge) {
                     add("-bsf:a"); add("aac_adtstoasc")
                 }
-                
-                if (finalOutputPath.endsWith(".mp4", true) || finalOutputPath.endsWith(".mov", true)) {
+
+                if (finalOutputPath.endsWith(".mp4", true) || finalOutputPath.endsWith(
+                        ".mov",
+                        true
+                    )
+                ) {
                     add("-movflags"); add("+faststart")
                 }
             }

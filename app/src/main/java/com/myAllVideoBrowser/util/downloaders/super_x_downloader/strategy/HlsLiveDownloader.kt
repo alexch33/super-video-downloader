@@ -52,7 +52,7 @@ class HlsLiveDownloader(
 
             var totalBytesDownloaded = 0L
             var downloadException: Exception? = null
-            
+
             val extension = if (isAudioOnlyExtract) "mp3" else "mp4"
             lateinit var finalOutputFile: File
 
@@ -203,11 +203,12 @@ class HlsLiveDownloader(
                 }
 
                 AppLogger.d("HLS (Live): Proceeding to merge into $extension.")
+                val msg = "Merging segments..."
                 onMergeProgress(
-                    Progress(totalBytesDownloaded, totalBytesDownloaded),
+                    Progress(totalBytesDownloaded, totalBytesDownloaded, msg),
                     task.apply {
                         this.taskState = VideoTaskState.PREPARE
-                        this.lineInfo = "Merging segments..."
+                        this.lineInfo = msg
                         this.setIsLive(true)
                     })
 
@@ -224,10 +225,15 @@ class HlsLiveDownloader(
                     videoCodec = videoCodec,
                     isAudioOnlyExtract = isAudioOnlyExtract,
                     onMergeProgress = { percentage ->
+                        val msg = "Merging segments... $percentage%"
                         onMergeProgress(
-                            Progress(totalBytesDownloaded * percentage / 100, totalBytesDownloaded),
+                            Progress(
+                                totalBytesDownloaded * percentage / 100,
+                                totalBytesDownloaded,
+                                msg
+                            ),
                             task.apply {
-                                this.lineInfo = "Merging segments... $percentage%"
+                                this.lineInfo = msg
                                 this.taskState = VideoTaskState.PREPARE
                                 this.setIsLive(true)
                             });

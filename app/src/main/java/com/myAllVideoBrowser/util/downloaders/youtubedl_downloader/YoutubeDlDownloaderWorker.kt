@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Base64
-import androidx.core.R
 import androidx.core.net.toUri
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -35,6 +34,9 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     companion object {
         var isCanceled = false
 
+        @Volatile
+        var stopAndSavedIds = mutableSetOf<String>()
+
         const val IS_FINISHED_DOWNLOAD_ACTION_ERROR_KEY = "IS_FINISHED_DOWNLOAD_ACTION_ERROR_KEY"
         const val DOWNLOAD_FILENAME_KEY = "download_filename"
         const val IS_FINISHED_DOWNLOAD_ACTION_KEY = "action"
@@ -61,28 +63,39 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     override fun handleAction(
         action: String, task: VideoTaskItem, headers: Map<String, String>, isFileRemove: Boolean
     ) {
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
+        if (taskId == null) {
+            AppLogger.e("TaskID IS NULL")
+            getContinuation().resume(Result.failure())
+        }
+
         when (action) {
             GenericDownloader.DownloaderActions.DOWNLOAD -> {
                 isCanceled = false
+                stopAndSavedIds.remove(taskId)
                 startDownload(task)
             }
 
             GenericDownloader.DownloaderActions.CANCEL -> {
                 isCanceled = true
+                stopAndSavedIds.remove(taskId)
                 cancelDownload(task)
             }
 
             GenericDownloader.DownloaderActions.PAUSE -> {
                 isCanceled = false
+                stopAndSavedIds.remove(taskId)
                 pauseDownload(task)
             }
 
             GenericDownloader.DownloaderActions.RESUME -> {
+                stopAndSavedIds.remove(taskId)
                 isCanceled = false
                 resumeDownload(task)
             }
 
             GenericDownloader.DownloaderActions.STOP_SAVE_ACTION -> {
+                stopAndSavedIds.add(taskId!!)
                 stopAndSave(task)
             }
         }
@@ -519,8 +532,13 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         AppLogger.d("Download Error: $throwable \ntaskId: $taskId")
 
         finishWork(VideoTaskItem(url).also { f ->
+            val isStopAndSaved = stopAndSavedIds.contains(taskId)
+
             if (isCanceled && throwable is YoutubeDL.CanceledException) {
                 f.taskState = VideoTaskState.CANCELED
+                f.errorCode = 0
+            } else if (throwable is YoutubeDL.CanceledException && isStopAndSaved) {
+                f.taskState = VideoTaskState.PREPARE
                 f.errorCode = 0
             } else if (throwable is YoutubeDL.CanceledException) {
                 f.taskState = VideoTaskState.PAUSE

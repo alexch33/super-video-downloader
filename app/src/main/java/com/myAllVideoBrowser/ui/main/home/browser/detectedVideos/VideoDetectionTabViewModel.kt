@@ -70,6 +70,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
         ObservableField<DownloadButtonState>(DownloadButtonStateCanNotDownload())
 
     val executorReload = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    val executorPusher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
     var webTabModel: WebTabViewModel? = null
     lateinit var settingsModel: SettingsViewModel
     val detectedVideosList = ObservableField(setOf<VideoInfo>())
@@ -287,15 +289,16 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         if (info.isM3u8 && !hlsTitle.isNullOrEmpty()) {
                             info.title = hlsTitle
                         }
-                        pushNewVideoInfoToAll(info)
+                        viewModelScope.launch(executorPusher) {
+                            pushNewVideoInfoToAll(info)
+                        }
                     } else {
                         setButtonState(DownloadButtonStateCanNotDownload())
                     }
                 }
     }
 
-    @Synchronized
-    open fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
+    open suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
         if (newInfo.formats.formats.isEmpty()) {
             return
         }
@@ -645,7 +648,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     isRegularDownload = true
                 )
             )
-            video.videoInfo?.let { pushNewVideoInfoToAll(it) }
+            video.videoInfo?.let {
+                viewModelScope.launch(executorPusher) {
+                    pushNewVideoInfoToAll(it)
+                }
+            }
         } catch (e: Throwable) {
             e.printStackTrace()
         }

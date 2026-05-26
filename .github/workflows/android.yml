@@ -79,7 +79,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "HLS live stream download memory leak fix\nHLS live stream downloader optimization\nProgress tracking fixes\nETA added to all downloaders\nPerformance optimizations\nDownloaded videos selection mode added"
+          body: "Since 0.8.18.2:\n Added only audio extract option\nFixed Custom MPD downloader\nDisable logs for youtube-dlp live streams download, for preventing OOM crash when long live stream downloading\nMemory leaks fixed for custom downloaders\nProgress tracking UI fixes\n ETA added to all downloaders\n Downloaded videos selection mode added\n Performance optimizations"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

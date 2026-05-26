@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.util.downloaders.custom_downloader
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Base64
@@ -8,11 +9,13 @@ import androidx.core.net.toUri
 import androidx.work.WorkerParameters
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FfmpegProcessor
+import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
+import com.myAllVideoBrowser.util.downloaders.super_x_downloader.DownloaderUtils
 import java.io.File
 import java.net.URL
 import java.util.Date
@@ -24,6 +27,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     private var fileMovedSuccess = false
     private var outputFileName: String? = null
     private var progressCached: Progress = Progress(0, 0)
+
+    private var downloadStartTime = 0L
 
     @Volatile
     private var lastSavedTime = 0L
@@ -82,7 +87,9 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         CustomRegularDownloader.deleteHeadersStringFromSharedPreferences(applicationContext, taskId)
 
         try {
-            val notificationData = notificationsHelper.createNotificationBuilder(item)
+            val notificationData = notificationsHelper.createNotificationBuilder(item.also {
+                it.percent = progressCached.currentBytes / progressCached.totalBytes.toFloat() * 100
+            })
             showNotificationFinal(notificationData.first, notificationData.second)
 
             val result =
@@ -92,7 +99,13 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 item.taskState = VideoTaskState.ERROR
                 "Error Moving File"
             } else {
-                item.errorMessage ?: "Error"
+                val errorMsg =
+                    if (item.taskState == VideoTaskState.ERROR) {
+                        item.errorMessage
+                    } else {
+                        item.lineInfo
+                    }
+                errorMsg
             }
 
             saveProgress(item.mId, progressCached, item.taskState, progressInfo)
@@ -119,8 +132,14 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             return
         }
 
+        val isAudioOnlyExtract =
+            inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+
         AppLogger.d("handleSuccessfulDownload started for item: ${item.mId}")
-        val target = fixFileName(File(fileUtil.folderDir, File(outputFileName!!).name).path)
+        val target = fixFileName(
+            File(fileUtil.folderDir, File(outputFileName!!).name).path,
+            isAudioOnlyExtract
+        )
 
         var isPreprocessed = false
 
@@ -156,6 +175,10 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 isProcessFfmpeg = isOnlyLive && item.isLive
             }
 
+            if (isAudioOnlyExtract) {
+                isProcessFfmpeg = true
+            }
+
             var processedUri: Uri? = null
 
             val isFlv = item.isLive && item.url.contains(".flv", ignoreCase = true)
@@ -174,7 +197,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 AppLogger.d("IS FLV: $isFlv")
                 // The FfmpegProcessor call is now correctly blocking this thread
                 processedUri = FfmpegProcessor.getInstance()
-                    .processDownload(sourcePath.toUri(), isFlv) { percents ->
+                    .processDownload(sourcePath.toUri(), isFlv, isAudioOnlyExtract) { percents ->
                         val percentInt = percents
                         if (percentInt in 1..99) {
                             val currentProgress = Progress(
@@ -262,12 +285,17 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val tmpDir = fileUtil.tmpDir.resolve(taskId).apply { mkdirs() }
         outputFileName = tmpDir.resolve(taskItem.fileName).toString()
         val fixedHeaders = decodeCookieHeader(headers)
-        updateProgressInfoAndStartDownload(taskItem, taskId, url, fixedHeaders)
+        updateProgressInfoAndStartDownload(taskItem.also {
+            it.taskState = VideoTaskState.DOWNLOADING
+            it.lineInfo = "Strting..."
+        }, taskId, url, fixedHeaders)
     }
 
     private fun updateProgressInfoAndStartDownload(
         taskItem: VideoTaskItem, taskId: String, url: String, headers: Map<String, String>
     ) {
+        downloadStartTime = System.currentTimeMillis()
+
         saveProgress(taskId, Progress(0, 0), VideoTaskState.PENDING)
         val threadCount = sharedPrefHelper.getRegularDownloaderThreadCount()
         val okHttpClient = proxyOkHttpClient.getProxyOkHttpClient()
@@ -341,7 +369,14 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 progressCached = Progress(downloadedBytes, totalBytes)
                 val totalBytesFixed =
                     if (downloadedBytes > totalBytes) downloadedBytes else totalBytes
-                onProgress(Progress(downloadedBytes, totalBytesFixed), taskItem.also {
+
+                val eta = DownloaderUtils.calculateEta(
+                    downloadStartTime,
+                    downloadedBytes,
+                    totalBytesFixed
+                )
+
+                onProgress(Progress(downloadedBytes, totalBytesFixed, eta), taskItem.also {
                     it.mId = taskId
                     it.filePath = outputFileName
                 })
@@ -358,6 +393,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         }
     }
 
+    @SuppressLint("DefaultLocale")
     private fun onProgress(progress: Progress, downloadTask: VideoTaskItem) {
         if (getDone()) return
 
@@ -368,16 +404,30 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             lastSavedTime = currentTime
 
             val taskItem = VideoTaskItem(downloadTask.url).also {
+                val prcnt = progress.currentBytes.toDouble() / progress.totalBytes * 100
                 it.mId = downloadTask.mId.toString()
-                it.downloadSize = downloadTask.downloadSize
+                it.downloadSize = progress.currentBytes
+                it.totalSize = progress.totalBytes
                 it.fileName = outputFileName?.let { it1 -> File(it1).name } ?: downloadTask.fileName
                 it.taskState = VideoTaskState.DOWNLOADING
-                it.percent = (progress.currentBytes / progress.totalBytes * 100).toFloat()
+                it.percent = prcnt.toFloat()
+                if (!it.isLive) {
+                    val currentReadable =
+                        FileUtil.getFileSizeReadable(progress.currentBytes.toDouble())
+                    val totalReadable = FileUtil.getFileSizeReadable(progress.totalBytes.toDouble())
+                    it.lineInfo =
+                        "[Downloading] ${
+                            String.format(
+                                "%.2f",
+                                prcnt
+                            )
+                        }% $currentReadable / $totalReadable \n${progress.info}"
+                    progress.info = it.lineInfo
+                }
             }
 
-
             showProgress(taskItem, progress)
-            saveProgress(downloadTask.mId, progress, VideoTaskState.DOWNLOADING)
+            saveProgress(downloadTask.mId, progress, VideoTaskState.DOWNLOADING, progress.info)
         }
     }
 
@@ -440,12 +490,13 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
 
     private fun showProgress(taskItem: VideoTaskItem, progress: Progress?) {
-        val text = "Downloading: ${taskItem.fileName}"
+        val etaSuffix =
+            if (!progress?.info.isNullOrEmpty() && !taskItem.isLive) " ${progress.info}" else ""
         val totalSize = progress?.totalBytes ?: 0
         val downloadSize = progress?.currentBytes ?: 0
 
         taskItem.apply {
-            lineInfo = text
+            lineInfo = etaSuffix
             taskState = VideoTaskState.DOWNLOADING
             this.totalSize = totalSize
             this.downloadSize = downloadSize

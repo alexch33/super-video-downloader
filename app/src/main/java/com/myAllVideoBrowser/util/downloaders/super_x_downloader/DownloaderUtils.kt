@@ -4,6 +4,8 @@ import com.antonkarpenko.ffmpegkit.FFmpegKit
 import com.antonkarpenko.ffmpegkit.FFmpegSession
 import com.antonkarpenko.ffmpegkit.ReturnCode
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.FileUtil
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.Progress
 import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -27,6 +29,7 @@ object DownloaderUtils {
         audioSegments: List<HlsPlaylistParser.MediaSegment>?,
         finalOutputPath: String,
         videoCodec: String?,
+        isAudioOnlyExtract: Boolean = false,
         onMergeProgress: ((percentage: Int) -> Unit)? = null
     ): FFmpegSession {
         val arguments = mutableListOf<String>()
@@ -94,33 +97,58 @@ object DownloaderUtils {
             val hasVideo = !videoSegments.isNullOrEmpty()
             val hasAudio = !audioSegments.isNullOrEmpty()
 
-            when {
-                hasVideo && hasAudio -> {
-                    add("-map"); add("0:v?"); add("-map"); add("1:a?")
-                }
+            add("-y") // Overwrite output file
 
-                hasVideo -> {
-                    add("-map"); add("0")
-                }
-
-                hasAudio -> {
+            if (isAudioOnlyExtract) {
+                add("-vn")
+                if (hasAudio && hasVideo) {
+                    add("-map"); add("1:a?")
+                } else {
                     add("-map"); add("0:a?")
                 }
-            }
-
-            if (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true) {
-                add("-c:v"); add("libx264")
-                add("-preset"); add("ultrafast")
-                add("-crf"); add("26")
-                add("-pix_fmt"); add("yuv420p")
-                if (hasAudio) add("-c:a"); add("copy")
+                add("-c:a"); add("libmp3lame")
+                add("-q:a"); add("2")
+                // NO aac_adtstoasc or faststart for MP3
             } else {
-                add("-c"); add("copy")
+                when {
+                    hasVideo && hasAudio -> {
+                        add("-map"); add("0:v?"); add("-map"); add("1:a?")
+                    }
+
+                    hasVideo -> {
+                        add("-map"); add("0")
+                    }
+
+                    hasAudio -> {
+                        add("-map"); add("0:a?")
+                    }
+                }
+
+                if (videoCodec?.startsWith("hvc1") == true || videoCodec?.startsWith("dvh1") == true) {
+                    add("-c:v"); add("libx264")
+                    add("-preset"); add("ultrafast")
+                    add("-crf"); add("26")
+                    add("-pix_fmt"); add("yuv420p")
+                    if (hasAudio) add("-c:a"); add("copy")
+                } else {
+                    add("-c"); add("copy")
+                }
+
+                // Bitstream filter is only needed (and only supports) AAC in TS containers when copying to MP4
+                if (!isVideoFmp4 && !isAudioFmp4) {
+                    add("-bsf:a"); add("aac_adtstoasc")
+                }
+
+                if (finalOutputPath.endsWith(".mp4", true) || finalOutputPath.endsWith(
+                        ".mov",
+                        true
+                    )
+                ) {
+                    add("-movflags"); add("+faststart")
+                }
             }
 
-            add("-bsf:a"); add("aac_adtstoasc")
-            add("-movflags"); add("+faststart")
-            add("-y"); add(finalOutputPath)
+            add(finalOutputPath)
         }
 
         AppLogger.d("DownloaderUtils: Executing HLS merge with arguments: $arguments")
@@ -201,6 +229,53 @@ object DownloaderUtils {
                 e
             )
         }
+    }
+
+    fun calculateEta(startTime: Long, currentBytes: Long, totalBytes: Long): String {
+        val elapsedMs = System.currentTimeMillis() - startTime
+        if (elapsedMs <= 0 || currentBytes <= 0 || totalBytes <= 0) return ""
+
+        val bytesPerMs = currentBytes.toDouble() / elapsedMs
+        val remainingBytes = totalBytes - currentBytes
+        if (remainingBytes <= 0) return ""
+
+        val remainingMs = (remainingBytes / bytesPerMs).toLong()
+        val seconds = (remainingMs / 1000) % 60
+        val minutes = (remainingMs / (1000 * 60)) % 60
+        val hours = (remainingMs / (1000 * 60 * 60))
+
+        return when {
+            hours > 0 -> "ETA:(${hours}h ${minutes}m)"
+            minutes > 0 -> "ETA:(${minutes}m ${seconds}s)"
+            else -> "ETA:(${seconds}s)"
+        }
+    }
+
+    fun createSegmentsDownloadProgress(
+        currentTotalDownloaded: Long,
+        totalToDownload: Long,
+        completedSegments: Int,
+        totalSegments: Int,
+        startTime: Long,
+        isMpd: Boolean
+    ): Progress {
+        val currentReadable = FileUtil.getFileSizeReadable(currentTotalDownloaded.toDouble())
+        val totalReadable = FileUtil.getFileSizeReadable(totalToDownload.toDouble())
+
+        val percents = completedSegments / totalSegments.toDouble() * 100
+        val etaMessage = calculateEta(startTime, currentTotalDownloaded, totalToDownload)
+        val typeString = if (isMpd) "MPD" else "HLS"
+
+        return Progress(
+            currentTotalDownloaded,
+            totalToDownload,
+            "$typeString: ${
+                String.format(
+                    "%.2f",
+                    percents
+                )
+            }% ${currentReadable}/${totalReadable} segments: $completedSegments / $totalSegments\n$etaMessage"
+        )
     }
 
     /**

@@ -4,6 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import androidx.databinding.Observable
 import androidx.databinding.ObservableBoolean
+import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.VideoRepository
@@ -14,6 +15,8 @@ import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.Request
 import javax.inject.Inject
 
@@ -153,7 +156,9 @@ class GlobalVideoDetectionModel @Inject constructor(
                         AppLogger.d(
                             "Setting set new info state... state: $state info: $info"
                         )
-                        pushNewVideoInfoToAll(info)
+                        viewModelScope.launch(Dispatchers.IO) {
+                            pushNewVideoInfoToAll(info)
+                        }
                     }
                 } else {
                     downloadButtonState.set(DownloadButtonStateCanNotDownload())
@@ -200,7 +205,7 @@ class GlobalVideoDetectionModel @Inject constructor(
         return disposable
     }
 
-    override fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
+    override suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
         if (newInfo.formats.formats.isEmpty()) {
             return
         }

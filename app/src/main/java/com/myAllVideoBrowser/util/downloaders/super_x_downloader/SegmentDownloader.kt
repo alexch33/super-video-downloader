@@ -59,21 +59,21 @@ class SegmentDownloader(
                 AppLogger.d("$logPrefix: Downloading segment $segmentIdentifier from $segmentUrl (Attempt $attempt/$RETRY_COUNT)")
                 val request = Request.Builder().url(segmentUrl).headers(headers.toHeaders()).build()
 
-                val response = client.newCall(request).execute()
-
-                if (!response.isSuccessful) {
-                    throw IOException("Failed to download segment $segmentIdentifier. HTTP ${response.code}")
-                }
-
-                var bytesCopied = 0L
-                response.body.byteStream().use { input ->
-                    outputFile.outputStream().use { output ->
-                        bytesCopied = input.copyTo(output)
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        throw IOException("Failed to download segment $segmentIdentifier. HTTP ${response.code}")
                     }
+
+                    var bytesCopied = 0L
+                    response.body.byteStream().use { input ->
+                        outputFile.outputStream().use { output ->
+                            bytesCopied = input.copyTo(output)
+                        }
+                    }
+                    AppLogger.d("$logPrefix: Segment $segmentIdentifier downloaded successfully.")
+                    onProgress?.invoke(bytesCopied)
+                    return bytesCopied // Success, return the size
                 }
-                AppLogger.d("$logPrefix: Segment $segmentIdentifier downloaded successfully.")
-                onProgress?.invoke(bytesCopied)
-                return bytesCopied // Success, return the size
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
 

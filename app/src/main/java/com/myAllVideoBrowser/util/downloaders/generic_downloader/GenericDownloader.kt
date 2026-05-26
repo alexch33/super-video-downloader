@@ -75,6 +75,7 @@ abstract class GenericDownloader : IDownloader {
             const val SELECTED_FORMAT_ID = "SELECTED_FORMAT_ID"
             const val IS_LIVE = "IS_LIVE"
             const val VIDEO_CODEC = "VIDEO_CODEC"
+            const val IS_AUDIO_ONLY_EXTRACT = "IS_AUDIO_ONLY_EXTRACT"
         }
     }
 
@@ -98,6 +99,7 @@ abstract class GenericDownloader : IDownloader {
 
         val downloaderData = getDownloadDataFromVideoInfo(videoInfo)
         downloaderData.putString(Constants.ACTION_KEY, DownloaderActions.DOWNLOAD)
+        downloaderData.putBoolean(Constants.IS_LIVE, videoInfo.isLive)
         downloadWork.setInputData(downloaderData.build())
 
         runWorkerTask(

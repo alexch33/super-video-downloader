@@ -45,7 +45,6 @@ class NotificationsHelper(private val context: Context) {
                 builder.setSubText(context.resources.getString(R.string.download_preparing))
                     .setProgress(0, 0, true)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
-                builder.addAction(createPauseBroadcastMessage(task.mId))
                 builder.addAction(createCancelBroadcastMessage(task.mId))
             }
 
@@ -53,7 +52,6 @@ class NotificationsHelper(private val context: Context) {
                 builder.setSubText(context.resources.getString(R.string.download_pending))
                     .setProgress(0, 0, true)
                 builder.setOngoing(false).setSmallIcon(android.R.drawable.stat_sys_download_done)
-                builder.addAction(createPauseBroadcastMessage(task.mId))
                 builder.addAction(createCancelBroadcastMessage(task.mId))
             }
 

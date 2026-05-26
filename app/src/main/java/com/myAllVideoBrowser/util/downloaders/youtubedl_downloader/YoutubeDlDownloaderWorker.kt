@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.util.Base64
+import androidx.core.R
 import androidx.core.net.toUri
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -43,7 +44,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private lateinit var tmpFile: File
     private var isLiveCounter: Int = 0
     private var isDownloadOk: Boolean = false
-    private var isDownloadJustStarted: Boolean = false
     private var monitorProcessDisposable: Disposable? = null
     private var progressCached = 0
     private var downloadJobDisposable: Disposable? = null
@@ -103,12 +103,28 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
             if (firstPart != null && firstPart.exists()) {
                 try {
+                    val data = notificationsHelper.createNotificationBuilder(task.also {
+                        it.taskState =
+                            VideoTaskState.PREPARE
+                        it.lineInfo = "Saving...."
+                    })
+                    showLongRunningNotificationAsync(data.first, data.second)
                     val moved =
                         fileUtil.moveMedia(applicationContext, firstPart.toUri(), dist.toUri())
                     if (moved) {
-                        finishWork(task.also { it.taskState = VideoTaskState.SUCCESS })
+                        task.also {
+                            it.taskState =
+                                VideoTaskState.SUCCESS
+                            it.lineInfo = "Success"
+                        }
+                        finishWork(task)
                     } else {
-                        finishWork(task.also { it.taskState = VideoTaskState.ERROR })
+                        task.also {
+                            it.taskState =
+                                VideoTaskState.ERROR
+                            it.lineInfo = "ERROR while saving"
+                        }
+                        finishWork(task)
                     }
                 } catch (e: Throwable) {
                     finishWork(task.also { it.taskState = VideoTaskState.ERROR })
@@ -232,9 +248,16 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     ) {
         downloadJobDisposable = Observable.fromCallable<YoutubeDLResponse> {
             YoutubeDL.getInstance().execute(request, taskId) { pr, _, line ->
-                if (line.contains("[download] Destination:")) {
-                    isDownloadJustStarted = true
+                if (Memory.isMemoryCritical(applicationContext)) {
+                    handleOomError(taskId)
+                    finishWork(task.also {
+                        it.mId = taskId
+                        it.taskState = VideoTaskState.ERROR
+                        it.errorMessage = "OOM error"
+                    })
+                    return@execute
                 }
+
                 if (line.contains(Regex("""\[download] {3}\d+"""))) {
                     isDownloadOk = true
                 }
@@ -281,16 +304,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
                         return@execute
                     }
-
-                    if (Memory.isMemoryCritical(applicationContext)) {
-                        finishWork(task.also {
-                            it.mId = taskId
-                            it.taskState = VideoTaskState.ERROR
-                            it.errorMessage = "OOM error"
-                        })
-
-                        return@execute
-                    }
                 }
             }
         }.doOnError {
@@ -311,8 +324,11 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                 null
             }
             if (dlResponse.exitCode == 0 && finalFile != null) {
+                val isAudioOnlyExtract =
+                    inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+
                 val destinationFile = fileUtil.folderDir.resolve(finalFile.name).let {
-                    fixFileName(it.absolutePath)
+                    fixFileName(it.absolutePath, isAudioOnlyExtract)
                 }.let {
                     File(it)
                 }
@@ -354,14 +370,26 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun configureYoutubedlRequest(
         request: YoutubeDLRequest, vFormat: VideoFormatEntity, fileName: String, isContinue: Boolean
     ) {
+        val isLive = inputData.getBoolean(GenericDownloader.Constants.IS_LIVE, false)
+        // disable logs for live stream to prevent OOM error
+        if (isLive) {
+            request.addOption("--quiet")
+        }
+
         request.addOption("--no-warnings")
+        request.addOption("--no-playlist")
+        request.addOption("--newline")
+        request.addOption("--progress-delta", "2")
 
         request.addOption("--progress")
 
         val threadsCount = sharedPrefHelper.getM3u8DownloaderThreadCount()
         request.addOption("-N", threadsCount)
 
-        val isAudioOnly = vFormat.vcodec == "none" && vFormat.acodec != "none"
+        val isAudioOnlyExtract =
+            inputData.getBoolean(GenericDownloader.Constants.IS_AUDIO_ONLY_EXTRACT, false)
+        val isAudioOnly =
+            (vFormat.vcodec == "none" && vFormat.acodec != "none") || isAudioOnlyExtract
 
         if (isAudioOnly) {
             request.addOption("--audio-quality", "0")
@@ -429,7 +457,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                             return@subscribe
                         }
 
-                        if (isDownloadJustStarted && !isDownloadOk) {
+                        if (!isDownloadOk) {
                             ++isLiveCounter
                             if (isLiveCounter > 2) {
                                 isLiveCounter = 3
@@ -440,7 +468,11 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                         "LIVE",
                                         downloaded.toDouble(),
                                         downloaded.toDouble(),
-                                        sourceLine = "Downloading live stream...downloaded: $downloadedTmpFolderSize, press stop and save, to stop downloading and save downloaded at any time...!"
+                                        sourceLine = "[RECORDING] live stream: $downloadedTmpFolderSize, ${
+                                            applicationContext.getString(
+                                                com.myAllVideoBrowser.R.string.stop_and_save_message
+                                            )
+                                        }"
                                     ), task.also { item ->
                                         item.setIsLive(true)
                                         item.taskState = VideoTaskState.DOWNLOADING
@@ -452,7 +484,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                     taskId,
                                     task.title,
                                     99,
-                                    "Downloading Live Stream... $downloadedTmpFolderSize",
+                                    "[RECORDING] $downloadedTmpFolderSize",
                                     tmpFile,
                                     true
                                 )

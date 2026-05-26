@@ -65,7 +65,12 @@ data class VideoInfo(
     @ColumnInfo(name = "isDetectedBySuperX", defaultValue = "0")
     @SerializedName("isDetectedBySuperX")
     @Expose
-    var isDetectedBySuperX: Boolean = false
+    var isDetectedBySuperX: Boolean = false,
+
+    @ColumnInfo(name = "isAudioOnlyExtract", defaultValue = "0")
+    @SerializedName("isAudioOnlyExtract")
+    @Expose
+    var isAudioOnlyExtract: Boolean = false
 ) {
 
     val firstUrlToString: String
@@ -109,6 +114,7 @@ data class VideoInfo(
         if (originalUrl != other.originalUrl) return false
         if (formats != other.formats) return false
         if (isRegularDownload != other.isRegularDownload) return false
+        if (isAudioOnlyExtract != other.isAudioOnlyExtract) return false
 
         return true
     }
@@ -123,6 +129,7 @@ data class VideoInfo(
         result = 31 * result + originalUrl.hashCode()
         result = 31 * result + formats.hashCode()
         result = 31 * result + isRegularDownload.hashCode()
+        result = 31 * result + isAudioOnlyExtract.hashCode()
         return result
     }
 

@@ -154,4 +154,7 @@
     <string name="can_be_turned_off">Can be turned off in proxy settings</string>
     <string name="queue_downloads_size">Download\'s queue size:  </string>
     <string name="progress_menu_stop_and_save">Stop and Save</string>
+    <string name="select_all">Select All</string>
+    <string name="delete">Delete</string>
+    <string name="stop_and_save_message">press stop and save, to stop downloading and save downloaded at any time...!</string>
 </resources>

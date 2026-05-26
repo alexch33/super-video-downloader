@@ -15,9 +15,18 @@
             name="mainViewModel"
             type="com.myAllVideoBrowser.ui.main.home.MainViewModel" />
 
+        <variable
+            name="isSelectionMode"
+            type="Boolean" />
+
+        <variable
+            name="isAllSelected"
+            type="Boolean" />
+
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/cl_root"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -36,9 +45,42 @@
                 app:titleCentered="true"
                 app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge" />
 
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_selection_bar"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:paddingHorizontal="16dp"
+                android:visibility="@{isSelectionMode ? View.VISIBLE : View.GONE}">
+
+                <com.google.android.material.checkbox.MaterialCheckBox
+                    android:id="@+id/cb_select_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="@{isAllSelected}"
+                    android:text="@string/select_all"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_delete_selected"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/delete"
+                    android:textColor="?attr/colorError"
+                    app:icon="@drawable/delete_forever_24px"
+                    app:iconTint="?attr/colorError"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
         </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/cl_content"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
@@ -46,7 +88,7 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_video"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
+                android:layout_height="match_parent"
                 android:clipToPadding="false"
                 android:paddingBottom="80dp"
                 app:items="@{viewModel.localVideos}"

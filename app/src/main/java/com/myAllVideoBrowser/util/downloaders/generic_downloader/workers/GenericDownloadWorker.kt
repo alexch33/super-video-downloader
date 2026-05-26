@@ -11,14 +11,13 @@ import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader.DownloaderActions
 import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
-import kotlinx.coroutines.delay
 import java.io.File
 import java.io.IOException
 import java.io.Serializable
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 interface DownloadWorkerListener {
     suspend fun onTaskFinished(taskId: String)
@@ -41,15 +40,34 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
         action: String, task: VideoTaskItem, headers: Map<String, String>, isFileRemove: Boolean
     )
 
-    open fun fixFileName(fileName: String): String {
-        val currentFile = File(fileName)
-        if (!currentFile.exists()) return fileName
+    /**
+     * Hook for subclasses to perform cleanup when the worker is stopped/cancelled.
+     * This is needed because onStopped() is final in CoroutineWorker.
+     */
+    open fun onDownloadStopped() {
+        // To be overridden by subclasses
+    }
+
+    open fun fixFileName(fileName: String, isAudioOnlyExtract: Boolean): String {
+        var currentFile = File(fileName)
+        if (!currentFile.exists()) {
+            if (isAudioOnlyExtract && currentFile.extension != "mp3") {
+                currentFile = File(currentFile.parent, "${currentFile.nameWithoutExtension}.mp3")
+                if (!currentFile.exists()) {
+                    return currentFile.absolutePath
+                }
+            }
+        }
 
         var counter = 1
         var fixedFileName: File
+        var ext = File(fileName).extension
+        if (isAudioOnlyExtract) {
+            ext = "mp3"
+        }
         do {
             fixedFileName =
-                File(currentFile.parent, "${currentFile.nameWithoutExtension}_cp$counter.mp4")
+                File(currentFile.parent, "${currentFile.nameWithoutExtension}_cp$counter.$ext")
             counter++
         } while (fixedFileName.exists())
 
@@ -74,8 +92,13 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     }
 
     override suspend fun doWork(): Result {
-        val result = suspendCoroutine { continuation ->
+        val result = suspendCancellableCoroutine<Result> { continuation ->
             setWorkContinuation(continuation)
+            
+            continuation.invokeOnCancellation {
+                onDownloadStopped()
+            }
+
             try {
                 if (!ProxyManager.isProxyRunning()) {
                     AppLogger.d("Proxy process is not running.")
@@ -92,7 +115,7 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
 
                 if (action.isNullOrBlank() || task.url == null) {
                     continuation.resumeWithException(IllegalArgumentException("ACTION or TASK is null"))
-                    return@suspendCoroutine
+                    return@suspendCancellableCoroutine
                 }
 
                 handleAction(action, task, headers, isFileRemove)
@@ -167,9 +190,10 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     }
 }
 
-
-class Progress(var currentBytes: Long, var totalBytes: Long) : Serializable {
+// info field overrides infoLine for VideoTaskItem
+class Progress(var currentBytes: Long, var totalBytes: Long, var info: String = "") :
+    Serializable {
     override fun toString(): String {
-        return "Progress{currentBytes=$currentBytes, totalBytes=$totalBytes}"
+        return "Progress{currentBytes=$currentBytes, totalBytes=$totalBytes, info=$info}"
     }
 }

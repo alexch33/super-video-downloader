@@ -8,16 +8,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.annotation.OptIn
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.FileProvider
 import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.core.view.get
+import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.model.LocalVideo
 import com.myAllVideoBrowser.databinding.FragmentVideoBinding
@@ -70,6 +73,16 @@ class VideoFragment : BaseFragment() {
 
     private lateinit var videoAdapter: VideoAdapter
 
+    private var backPressedCallback: OnBackPressedCallback? = null
+
+    private val navCallback = object : Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -84,13 +97,113 @@ class VideoFragment : BaseFragment() {
             this.mainViewModel = mainActivity.mainViewModel
             this.rvVideo.layoutManager = managerL
             this.rvVideo.adapter = videoAdapter
+            this.rvVideo.isClickable = true
+            this.clContent.isClickable = true
+            this.isSelectionMode = false
+            this.isAllSelected = false
         }
 
         videoViewModel.shareEvent.observe(viewLifecycleOwner) { uri ->
             intentUtil.shareVideo(requireContext(), uri)
         }
 
+        setupSelectionControls()
+        setupNavigationObservers()
+
         return dataBinding.root
+    }
+
+    private fun setupNavigationObservers() {
+        mainActivity.mainViewModel.isBrowserCurrent.addOnPropertyChangedCallback(navCallback)
+        mainActivity.mainViewModel.currentItem.addOnPropertyChangedCallback(navCallback)
+        mainActivity.mainViewModel.openNavDrawerEvent.observe(viewLifecycleOwner) {
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        mainActivity.mainViewModel.isBrowserCurrent.removeOnPropertyChangedCallback(navCallback)
+        mainActivity.mainViewModel.currentItem.removeOnPropertyChangedCallback(navCallback)
+
+        backPressedCallback?.remove()
+        backPressedCallback = null
+
+        disposable?.dispose()
+        disposable = null
+
+        dataBinding.let {
+            it.cbSelectAll.setOnClickListener(null)
+            it.btnDeleteSelected.setOnClickListener(null)
+            it.rvVideo.setOnClickListener(null)
+            it.clContent.setOnClickListener(null)
+            it.root.setOnClickListener(null)
+        }
+        super.onDestroyView()
+    }
+
+    private fun setupSelectionControls() {
+        dataBinding.cbSelectAll.setOnClickListener {
+            if (dataBinding.cbSelectAll.isChecked) {
+                videoAdapter.selectAll()
+            } else {
+                videoAdapter.deselectAll()
+            }
+            updateSelectionState()
+        }
+
+        dataBinding.btnDeleteSelected.setOnClickListener {
+            showDeleteConfirmationDialog {
+                val selectedIds = videoAdapter.selectedItems.toList()
+                val videosToDelete =
+                    videoViewModel.localVideos.get()?.filter { selectedIds.contains(it.id) }
+                videosToDelete?.forEach { video ->
+                    context?.let { videoViewModel.deleteVideo(it, video) }
+                }
+                exitSelectionMode()
+            }
+        }
+
+        val exitSelectionClickListener = View.OnClickListener {
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
+        }
+
+        dataBinding.rvVideo.setOnClickListener(exitSelectionClickListener)
+        dataBinding.clContent.setOnClickListener(exitSelectionClickListener)
+        dataBinding.root.setOnClickListener(exitSelectionClickListener)
+
+        backPressedCallback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (videoAdapter.isSelectionMode) {
+                    exitSelectionMode()
+                } else {
+                    isEnabled = false
+                    requireActivity().onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            backPressedCallback!!
+        )
+    }
+
+    private fun showDeleteConfirmationDialog(onConfirm: () -> Unit) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.delete)
+            .setPositiveButton(R.string.delete) { _, _ -> onConfirm() }
+            .setNegativeButton(R.string.all_text_cancel, null)
+            .show()
+    }
+
+    private fun exitSelectionMode() {
+        videoAdapter.isSelectionMode = false
+        videoAdapter.deselectAll()
+        dataBinding.isSelectionMode = false
+        dataBinding.isAllSelected = false
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -115,6 +228,9 @@ class VideoFragment : BaseFragment() {
 
     private fun handleIfStartedFromNotification() {
         mainActivity.mainViewModel.openDownloadedVideoEvent.observe(viewLifecycleOwner) { downloadFilename ->
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
             disposable?.dispose()
             disposable = null
             disposable =
@@ -127,12 +243,37 @@ class VideoFragment : BaseFragment() {
 
     private val videoListener = object : VideoListener {
         override fun onItemClicked(localVideo: LocalVideo) {
-            startVideo(localVideo)
+            if (videoAdapter.isSelectionMode) {
+                videoAdapter.toggleSelection(localVideo.id)
+                updateSelectionState()
+            } else {
+                startVideo(localVideo)
+            }
         }
 
         override fun onMenuClicked(view: View, localVideo: LocalVideo) {
             showPopupMenu(view, localVideo)
         }
+
+        override fun onItemLongClicked(localVideo: LocalVideo) {
+            if (!videoAdapter.isSelectionMode) {
+                videoAdapter.isSelectionMode = true
+                videoAdapter.toggleSelection(localVideo.id)
+                dataBinding.isSelectionMode = true
+                updateSelectionState()
+            }
+        }
+
+        override fun onItemSelected(localVideo: LocalVideo, isSelected: Boolean) {
+            videoAdapter.toggleSelection(localVideo.id)
+            updateSelectionState()
+        }
+    }
+
+    private fun updateSelectionState() {
+        val totalItems = videoViewModel.localVideos.get()?.size ?: 0
+        val selectedCount = videoAdapter.selectedItems.size
+        dataBinding.isAllSelected = totalItems > 0 && selectedCount == totalItems
     }
 
     private fun showPopupMenu(view: View, video: LocalVideo) {
@@ -165,7 +306,9 @@ class VideoFragment : BaseFragment() {
                 }
 
                 R.id.item_delete -> {
-                    context?.let { videoViewModel.deleteVideo(it, video) }
+                    showDeleteConfirmationDialog {
+                        context?.let { videoViewModel.deleteVideo(it, video) }
+                    }
                     true
                 }
 

@@ -136,6 +136,12 @@ class VideoInfoAdapter(
                     candidateFormatListener
                 )
 
+                audioOnlyCheckbox.setOnCheckedChangeListener(null)
+                audioOnlyCheckbox.isChecked = info.isAudioOnlyExtract
+                audioOnlyCheckbox.setOnCheckedChangeListener { _, isChecked ->
+                    info.isAudioOnlyExtract = isChecked
+                }
+
                 dialogListener = object : DownloadTabListener {
                     override fun onCancel() {
                         candidateFormatListener.onCancel()

@@ -30,10 +30,13 @@ class NetworkModule {
 
     @Singleton
     @Provides
-    fun provideOkHttpClient(cookieJar: PersistentCookieJar): OkHttpClient {
+    fun provideOkHttpClient(
+        cookieJar: PersistentCookieJar,
+        @ApplicationContext context: Context
+    ): OkHttpClient {
         return OkHttpClient.Builder()
             .cookieJar(cookieJar)
-            .addInterceptor(ProxyRetryInterceptor())
+            .addInterceptor(ProxyRetryInterceptor(context))
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)

@@ -78,9 +78,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: false
-          body: "Since 0.8.18.2:\n Added only audio extract option\nFixed Custom MPD downloader\nDisable logs for youtube-dlp live streams download, for preventing OOM crash when long live stream downloading\nMemory leaks fixed for custom downloaders\nProgress tracking UI fixes\n ETA added to all downloaders\n Downloaded videos selection mode added\n Performance optimizations\nMinor UI fixes"
+          prerelease: true
+          body: "Build 0.8.19.3 with modified MPD downloader, it doesn't throw exceptions if MPD list marked as DRM"
           draft: false
-          make_latest: true
+          make_latest: false
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

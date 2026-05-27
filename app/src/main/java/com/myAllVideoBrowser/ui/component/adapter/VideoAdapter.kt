@@ -45,12 +45,22 @@ class VideoAdapter(
     override fun getItemCount() = localVideos.size
 
     override fun onBindViewHolder(holder: VideoViewHolder, position: Int) =
-        holder.bind(localVideos[position], videoListener, isSelectionMode, selectedItems.contains(localVideos[position].id))
+        holder.bind(
+            localVideos[position],
+            videoListener,
+            isSelectionMode,
+            selectedItems.contains(localVideos[position].id)
+        )
 
     inner class VideoViewHolder(var binding: ItemVideoBinding, var fileUtil: FileUtil) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(localVideo: LocalVideo, videoListener: VideoListener, selectionMode: Boolean, isSelected: Boolean) {
+        fun bind(
+            localVideo: LocalVideo,
+            videoListener: VideoListener,
+            selectionMode: Boolean,
+            isSelected: Boolean
+        ) {
             val size = getScreenResolution(itemView.context)
 
             with(binding) {
@@ -59,12 +69,19 @@ class VideoAdapter(
                 this.isSelectionMode = selectionMode
                 this.isSelected = isSelected
 
-                Glide.with(this@VideoViewHolder.itemView.context).load(localVideo.uri).fitCenter()
-                    .error(R.drawable.ic_video_24dp)
-                    .placeholder(R.drawable.ic_video_24dp)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .apply(RequestOptions().override(size.first / 8, size.second / 8))
-                    .into(this.ivThumbnail)
+                if (localVideo.uri.toString().contains(".mp3")) {
+                    this.ivThumbnail.setImageResource(R.drawable.audio_file_24px)
+                } else if (localVideo.uri.toString().contains(".mp4")) {
+                    Glide.with(this@VideoViewHolder.itemView.context).load(localVideo.uri)
+                        .fitCenter()
+                        .error(R.drawable.ic_video_24dp)
+                        .placeholder(R.drawable.ic_video_24dp)
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .apply(RequestOptions().override(size.first / 8, size.second / 8))
+                        .into(this.ivThumbnail)
+                } else {
+                    this.ivThumbnail.setImageResource(R.drawable.ic_video_24dp)
+                }
 
                 root.setOnLongClickListener {
                     videoListener.onItemLongClicked(localVideo)

@@ -260,7 +260,7 @@ object MpdPlaylistParser {
                 drmSchemes.add(
                     DrmScheme(
                         uuid = schemeData.uuid.toString(),
-                        licenseUrl = null,
+                        licenseUrl = schemeData.licenseServerUrl,
                         psshData = base64Pssh
                     )
                 )

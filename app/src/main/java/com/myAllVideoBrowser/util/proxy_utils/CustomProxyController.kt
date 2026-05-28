@@ -25,6 +25,9 @@ class CustomProxyController @Inject constructor(
     }
 
     fun getCurrentRunningProxy(): Proxy {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+            return Proxy.noProxy()
+        }
         return if (isProxyOn()) {
             return getLocalProxy()
         } else {
@@ -113,6 +116,10 @@ class CustomProxyController @Inject constructor(
     }
 
     private fun isProxyOn(): Boolean {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+            return false
+        }
+
         return sharedPrefHelper.getIsProxyOn() || sharedPrefHelper.getIsDohOn()
     }
 

@@ -50,6 +50,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.HistoryProvider
 import com.myAllVideoBrowser.ui.main.home.browser.PageTabProvider
 import com.myAllVideoBrowser.ui.main.home.browser.TAB_INDEX_KEY
 import com.myAllVideoBrowser.ui.main.home.browser.TabManagerProvider
+import com.myAllVideoBrowser.ui.main.home.browser.WebPostBridge
 import com.myAllVideoBrowser.ui.main.home.browser.WorkerEventProvider
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
@@ -452,6 +453,12 @@ class WebTabFragment : BaseWebTabFragment() {
                 }
             }
         }
+
+        currentWebView?.addJavascriptInterface(
+            shouldInterceptPostRequests,
+            WebPostBridge.BRIDGE_NAME
+        )
+
         fragmentWebTabBinding.webviewContainer.addView(
             webTab.getWebView(),
             LinearLayout.LayoutParams(-1, -1)
@@ -818,5 +825,17 @@ class WebTabFragment : BaseWebTabFragment() {
                 .setText(foundFormat.url).startChooser()
             return true
         }
+    }
+
+    private val shouldInterceptPostRequests = WebPostBridge { url, body ->
+        val shouldBlock =
+            url.contains("analytics") || url.contains("metrics")
+                    || body.contains("browser_fingerprint_id")
+
+        if (shouldBlock) {
+            AppLogger.d("postBridge BLOCK: $url $body")
+        }
+
+        shouldBlock // return true to block, false to allow
     }
 }

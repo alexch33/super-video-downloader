@@ -1,7 +1,6 @@
 package com.myAllVideoBrowser.ui.main.home.browser
 
 import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Build
 import android.webkit.HttpAuthHandler
 import android.webkit.RenderProcessGoneDetail
@@ -29,6 +28,53 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import java.io.ByteArrayInputStream
 import androidx.core.net.toUri
+
+val injectPostInterceptor = """
+    (function() {
+        // --- XHR Interception ---
+        const oldXHRProxy = window.XMLHttpRequest.prototype.open;
+        window.XMLHttpRequest.prototype.open = function(method, url) {
+            this._method = method;
+            this._url = url;
+            return oldXHRProxy.apply(this, arguments);
+        };
+
+        const oldSend = window.XMLHttpRequest.prototype.send;
+        window.XMLHttpRequest.prototype.send = function(body) {
+            const xhr = this;
+            if (xhr._method === 'POST' && window.${WebPostBridge.BRIDGE_NAME}) {
+                // Tell Android about the POST request
+                // We return true if we want to "Intercept" (Block) it
+                const shouldBlock = window.AndroidBridge.shouldInterceptPost(xhr._url, body ? body.toString() : "");
+                
+                if (shouldBlock) {
+                    console.log("POST Intercepted by Android: " + xhr._url);
+                    // Mimic empty response/abort
+                    return; 
+                }
+            }
+            return oldSend.apply(this, arguments);
+        };
+
+        // --- Fetch Interception ---
+        const oldFetch = window.fetch;
+        window.fetch = async function(input, init) {
+            const url = (typeof input === 'string') ? input : input.url;
+            const method = (init && init.method) ? init.method.toUpperCase() : 'GET';
+            
+            if (method === 'POST' && window.${WebPostBridge.BRIDGE_NAME}) {
+                const body = init.body ? init.body.toString() : "";
+                const shouldBlock = window.AndroidBridge.shouldInterceptPost(url, body);
+                
+                if (shouldBlock) {
+                    // Return an empty 200 response to mimic emptyResponse()
+                    return new Response('', { status: 200, statusText: 'OK' });
+                }
+            }
+            return oldFetch.apply(this, arguments);
+        };
+    })();
+    """.trimIndent()
 
 enum class ContentType {
     M3U8,
@@ -191,6 +237,8 @@ class CustomWebViewClient(
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
+
+        view.evaluateJavascript(injectPostInterceptor, null)
 
         videoAlert = null
         val pageTab = pageTabProvider.getPageTab(tabViewModel.thisTabIndex.get())

@@ -56,6 +56,8 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
                 if (!currentFile.exists()) {
                     return currentFile.absolutePath
                 }
+            } else {
+                return currentFile.absolutePath
             }
         }
 

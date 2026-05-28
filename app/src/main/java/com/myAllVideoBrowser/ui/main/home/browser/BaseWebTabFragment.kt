@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import androidx.core.view.get
+import androidx.webkit.WebViewFeature
 
 
 abstract class BaseWebTabFragment : BaseFragment() {
@@ -88,8 +89,12 @@ abstract class BaseWebTabFragment : BaseFragment() {
         popupMenu = null
 
         mainActivity.settingsViewModel.isDarkMode.removeOnPropertyChangedCallback(darkModeCallback)
-        mainActivity.settingsViewModel.isAutoDarkMode.removeOnPropertyChangedCallback(autoDarkModeCallback)
-        mainActivity.settingsViewModel.isDesktopMode.removeOnPropertyChangedCallback(desktopModeCallback)
+        mainActivity.settingsViewModel.isAutoDarkMode.removeOnPropertyChangedCallback(
+            autoDarkModeCallback
+        )
+        mainActivity.settingsViewModel.isDesktopMode.removeOnPropertyChangedCallback(
+            desktopModeCallback
+        )
         mainActivity.proxiesViewModel.isProxyOn.removeOnPropertyChangedCallback(proxyOnCallback)
 
         super.onDestroyView()
@@ -101,8 +106,7 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
     fun buildWebTabMenu(browserMenu: View, isHomeTab: Boolean) {
         if (popupMenu == null) {
-            popupMenu =
-                buildPopupMenu(browserMenu)
+            popupMenu = buildPopupMenu(browserMenu)
             val bookmarkMenuItem = popupMenu!!.menu[2]
             val shareMenuItem = popupMenu!!.menu[3]
             val desktopMenuItem = popupMenu!!.menu[4]
@@ -120,9 +124,13 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
             mainActivity.settingsViewModel.isDarkMode.addOnPropertyChangedCallback(darkModeCallback)
 
-            mainActivity.settingsViewModel.isAutoDarkMode.addOnPropertyChangedCallback(autoDarkModeCallback)
+            mainActivity.settingsViewModel.isAutoDarkMode.addOnPropertyChangedCallback(
+                autoDarkModeCallback
+            )
 
-            mainActivity.settingsViewModel.isDesktopMode.addOnPropertyChangedCallback(desktopModeCallback)
+            mainActivity.settingsViewModel.isDesktopMode.addOnPropertyChangedCallback(
+                desktopModeCallback
+            )
 
             isProxyOn.addOnPropertyChangedCallback(proxyOnCallback)
 
@@ -154,6 +162,9 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
         popupMenu.gravity = Gravity.END
         popupMenu.menuInflater.inflate(R.menu.menu_browser, popupMenu.menu)
+
+        popupMenu.menu[7].isEnabled =
+            WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)
 
         popupMenu.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {

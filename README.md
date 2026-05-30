@@ -34,6 +34,7 @@ If you want see new features, bug fixes and updates, you could support the proje
 - **Extensive Site Support**: Download videos from YouTube, Facebook, Twitter, Instagram, Dailymotion, Vimeo, and over [1000 other sites](http://rg3.github.io/youtube-dl/supportedsites.html).
 - **Advanced Stream Interception**: Intercepts and downloads complex stream types like HLS (`.m3u8`) and DASH (`.mpd`), in addition to standard `.mp4` video streams.
 - **Live Stream Downloader**: Capture and save live video streams and live audio (e.g., radio) broadcasts as they happen.
+- **High-Performance AdBlocker**: Integrated Rust-based ad-blocking engine for a cleaner browsing experience.
 - **Full-Featured Browser**: A built-in browser to easily find content, with support for history, bookmarks, and cookies.
 - **Powerful Download Manager**: Manages all your download tasks in the background.
 - **Offline Playback**: Play downloaded videos and audio offline with the integrated player.
@@ -67,10 +68,24 @@ Please help with translations using [Weblate](https://toolate.othing.xyz/project
 - **Dependency Injection**: Dagger 2
 - **Concurrency**: Coroutines & RxJava
 - **Database**: Room
-- **Networking**: OkHttp, libv2ray
+- **Networking**: OkHttp, libv2ray (Go)
+- **AdBlocker**: adblock-rust (Rust)
 
 # How to run
 A compact set of copy-paste commands to build the app on different OSes.
+
+### Prerequisites
+
+To build this project, you need the following tools installed:
+1. **JDK 21**
+2. **Android SDK & NDK** (r27d recommended)
+3. **Go 1.25.7** (for networking components)
+4. **Rust (Stable)** with Android targets:
+   ```bash
+   rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+   ```
+
+### Build Commands
 
 - Build debug APK (macOS / Linux):
 
@@ -90,6 +105,12 @@ A compact set of copy-paste commands to build the app on different OSes.
 
 ```bash
 ./gradlew :app:vendorGoDependencies
+```
+
+- Build Rust AdBlocker only:
+
+```bash
+./gradlew :app:buildRustAdblock
 ```
 
 - Clean build artifacts:

@@ -31,10 +31,6 @@ class AdBlockEngine @Inject constructor(
 
     private val pointerLock = ReentrantReadWriteLock()
 
-    init {
-        loadRules()
-    }
-
     fun loadRules() {
         engineScope.launch {
             reloadMutex.withLock {

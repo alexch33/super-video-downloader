@@ -14,6 +14,7 @@ import com.myAllVideoBrowser.ui.main.player.VideoPlayerViewModel
 import com.myAllVideoBrowser.ui.main.progress.ProgressViewModel
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
+import com.myAllVideoBrowser.ui.main.settings.adblock.AdBlockSettingsViewModel
 import com.myAllVideoBrowser.ui.main.splash.SplashViewModel
 import com.myAllVideoBrowser.ui.main.video.VideoViewModel
 import com.myAllVideoBrowser.util.ViewModelFactory
@@ -93,4 +94,9 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(VideoDetectionTabViewModel::class)
     abstract fun bindVideoDetectionDetectedViewModel(viewModel: VideoDetectionTabViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(AdBlockSettingsViewModel::class)
+    abstract fun bindAdBlockSettingsViewModel(viewModel: AdBlockSettingsViewModel): ViewModel
 }

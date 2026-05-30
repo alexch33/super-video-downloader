@@ -4,11 +4,14 @@ import android.content.Context
 import com.franmontiel.persistentcookiejar.PersistentCookieJar
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
+import com.myAllVideoBrowser.data.local.room.dao.AdBlockDao
 import com.myAllVideoBrowser.data.remote.service.ConfigService
 import com.myAllVideoBrowser.data.remote.service.VideoService
 import com.myAllVideoBrowser.data.remote.service.VideoServiceSuperX
 import com.myAllVideoBrowser.data.remote.service.VideoServiceLocal
 import com.myAllVideoBrowser.di.qualifier.ApplicationContext
+import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
+import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.ProxyRetryInterceptor
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
@@ -37,9 +40,9 @@ class NetworkModule {
         return OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .addInterceptor(ProxyRetryInterceptor(context))
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
             .build()
     }
 
@@ -72,5 +75,14 @@ class NetworkModule {
     @Provides
     fun provideCookieJar(@ApplicationContext context: Context): PersistentCookieJar {
         return PersistentCookieJar(SetCookieCache(), SharedPrefsCookiePersistor(context))
+    }
+
+    @Singleton
+    @Provides
+    fun provideAdblockerEngine(
+        @ApplicationContext context: Context,
+        adBlockDao: AdBlockDao
+    ): AdBlockEngine {
+        return AdBlockEngine(context, adBlockDao)
     }
 }

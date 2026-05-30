@@ -8,6 +8,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
 import com.myAllVideoBrowser.ui.main.progress.ProgressFragment
 import com.myAllVideoBrowser.ui.main.settings.SettingsFragment
+import com.myAllVideoBrowser.ui.main.settings.adblock.AdBlockSettingsFragment
 import com.myAllVideoBrowser.ui.main.video.VideoFragment
 import javax.inject.Inject
 
@@ -23,6 +24,8 @@ interface FragmentFactory {
     fun createWebTabFragment(): Fragment
 
     fun createDetectedVideosTabFragment(): Fragment
+
+    fun createAdBlockSettingsFragment(): Fragment
 }
 
 class FragmentFactoryImpl @Inject constructor() : FragmentFactory {
@@ -41,4 +44,6 @@ class FragmentFactoryImpl @Inject constructor() : FragmentFactory {
     override fun createWebTabFragment() = WebTabFragment.newInstance()
 
     override fun createDetectedVideosTabFragment() = DetectedVideosTabFragment.newInstance()
+
+    override fun createAdBlockSettingsFragment() = AdBlockSettingsFragment.newInstance()
 }

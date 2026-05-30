@@ -1,0 +1,12 @@
+[package]
+name = "adblock_rust_jni"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "adblock_rust_jni"
+crate-type = ["cdylib"] # for .so generation
+
+[dependencies]
+adblock = "0.12.5" # Brave's engine
+jni = "0.21.1"    # JNI bindings for Rust

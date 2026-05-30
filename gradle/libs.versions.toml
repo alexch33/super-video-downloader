@@ -51,7 +51,7 @@ archCore = "2.2.0"
 dagger = "2.59.2"
 
 # OkHttp
-okhttp = "5.2.1" #after update error: abstract classes cant be instantiated
+okhttp = "5.3.2"
 
 # Retrofit
 retrofit = "3.0.0"

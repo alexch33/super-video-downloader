@@ -157,4 +157,19 @@
     <string name="select_all">Select All</string>
     <string name="delete">Delete</string>
     <string name="stop_and_save_message">press stop and save, to stop downloading and save downloaded at any time...!</string>
+
+    <string name="adblock_lists_title">AdBlocker Lists</string>
+    <string name="add_adblock_list">Add AdBlock List</string>
+    <string name="list_name">List Name</string>
+    <string name="url">URL</string>
+    <string name="download_update">Download/Update</string>
+    <string name="builtin_list">Built-in list</string>
+    <string name="add">Add</string>
+    <string name="app_icon">App Icon</string>
+    <string name="tabs">Tabs</string>
+    <string name="add_custom_list">Add custom list</string>
+    <string name="downloading_rules">Downloading Rules...</string>
+    <string name="built_in_list">Built-in list</string>
+    <string name="not_downloaded">Not downloaded</string>
+    <string name="last_updated">Last updated</string>
 </resources>

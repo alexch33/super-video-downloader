@@ -115,8 +115,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 284
-        versionName = "0.8.19.3"
+        versionCode = 290
+        versionName = "0.8.20"
 
         if (splitApks) {
             splits {
@@ -335,6 +335,72 @@ tasks.named("coveralls") {
 }
 
 // =========================================================================
+// RUST ADBLOCK BUILD SETUP (Multi-Architecture)
+// =========================================================================
+val rustProjectDir = file("${project.rootDir}/rust_adblock") // Adjust path to your rust folder
+
+val jniLibsDir = file("src/main/jniLibs")
+
+val buildRustAdblock = tasks.register("buildRustAdblock") {
+    group = "Go Build"
+    description = "Compiles Rust Adblock library for all Android targets"
+
+    doLast {
+        val toolchainPath = "${ndkPath}/toolchains/llvm/prebuilt/${ndkPrebuiltFolder}/bin"
+        val apiLevel = "24"
+
+        archConfigs.forEach { arch ->
+            println("🦀 Compiling Rust for ${arch.abi}...")
+
+            // NDK 27 Fix: armeabi-v7a clang binary is named 'armv7a-...'
+            // but the Rust target is 'armv7-...'
+            val linkerBinary = if (arch.abi == "armeabi-v7a") {
+                "armv7a-linux-androideabi$apiLevel-clang"
+            } else {
+                "${arch.target}$apiLevel-clang"
+            }
+
+            val linkerPath = "$toolchainPath/$linkerBinary"
+
+            if (!file(linkerPath).exists()) {
+                throw GradleException("✗ Rust Linker not found at: $linkerPath\nCheck NDK version and API level.")
+            }
+
+            execOps.exec {
+                workingDir = rustProjectDir
+
+                // Map the Rust target name to the Cargo Linker environment variable
+                val envVar = "CARGO_TARGET_${arch.rustTarget.uppercase().replace("-", "_")}_LINKER"
+
+                environment(envVar, linkerPath)
+                environment("PATH", "$toolchainPath:${System.getenv("PATH")}")
+
+                environment("RUSTFLAGS", "-C link-arg=-z -C link-arg=max-page-size=16384")
+
+                commandLine("cargo", "build", "--target", arch.rustTarget, "--release")
+            }
+
+            // Copy the compiled .so to jniLibs
+            val soName = "libadblock_rust_jni.so"
+            val sourceSo = file("$rustProjectDir/target/${arch.rustTarget}/release/$soName")
+
+            // src/main/jniLibs/arm64-v8a
+            val abiDestDir = File(jniLibsDir, arch.abi)
+
+            if (sourceSo.exists()) {
+                abiDestDir.mkdirs()
+
+                // Copy to src/main/jniLibs/[ABI]/libadblock_rust_jni.so
+                sourceSo.copyTo(File(abiDestDir, soName), overwrite = true)
+                println("✓ Copied ${arch.abi} Adblock binary to ${abiDestDir.absolutePath}")
+            } else {
+                throw GradleException("✗ Rust build failed to produce $soName for ${arch.abi}")
+            }
+        }
+    }
+}
+
+// =========================================================================
 // GO REPRODUCIBLE BUILD SETUP (Multi-Architecture)
 // =========================================================================
 val execOps = project.serviceOf<ExecOperations>()
@@ -388,8 +454,8 @@ fun findNdkPath(): String {
 
     throw GradleException(
         "✗ NDK path not found. Please define one of:\n" +
-        "  1. Environment: ANDROID_NDK_HOME or ANDROID_NDK_ROOT\n" +
-        "  2. Property: ndk.dir in local.properties"
+                "  1. Environment: ANDROID_NDK_HOME or ANDROID_NDK_ROOT\n" +
+                "  2. Property: ndk.dir in local.properties"
     )
 }
 
@@ -399,16 +465,18 @@ fun validateNdkPath(ndkPath: String): String {
     if (!prebuiltToolchainsDir.exists()) {
         throw GradleException(
             "✗ NDK toolchains prebuilt directory not found at: ${prebuiltToolchainsDir}\n" +
-            "  Verify your NDK installation and configuration."
+                    "  Verify your NDK installation and configuration."
         )
     }
 
-    val prebuiltChildren = prebuiltToolchainsDir.listFiles()?.filter { it.isDirectory } ?: emptyList()
+    val prebuiltChildren =
+        prebuiltToolchainsDir.listFiles()?.filter { it.isDirectory } ?: emptyList()
     if (prebuiltChildren.isEmpty()) {
         throw GradleException("✗ No prebuilt toolchain directory found under ${prebuiltToolchainsDir}")
     }
 
-    val ndkPrebuiltFolder = (prebuiltChildren.find { it.name.contains("darwin") } ?: prebuiltChildren[0]).name
+    val ndkPrebuiltFolder =
+        (prebuiltChildren.find { it.name.contains("darwin") } ?: prebuiltChildren[0]).name
     println("✓ Using NDK prebuilt folder: $ndkPrebuiltFolder")
     return ndkPrebuiltFolder
 }
@@ -423,14 +491,15 @@ val ndkPrebuiltFolder = validateNdkPath(ndkPath)
 data class ArchConfig(
     val abi: String,
     val goArch: String,
-    val target: String
+    val target: String,
+    val rustTarget: String // Add this
 )
 
 val archConfigs = listOf(
-    ArchConfig("arm64-v8a", "arm64", "aarch64-linux-android"),
-    ArchConfig("armeabi-v7a", "arm", "armv7a-linux-androideabi"),
-    ArchConfig("x86_64", "amd64", "x86_64-linux-android"),
-    ArchConfig("x86", "386", "i686-linux-android")
+    ArchConfig("arm64-v8a", "arm64", "aarch64-linux-android", "aarch64-linux-android"),
+    ArchConfig("armeabi-v7a", "arm", "armv7a-linux-androideabi", "armv7-linux-androideabi"),
+    ArchConfig("x86_64", "amd64", "x86_64-linux-android", "x86_64-linux-android"),
+    ArchConfig("x86", "386", "i686-linux-android", "i686-linux-android")
 )
 
 // =========================================================================
@@ -446,10 +515,10 @@ fun verifyGoExecutable(builderDir: File, executablePath: String) {
     } catch (e: Exception) {
         throw GradleException(
             "✗ Go executable not found or failed to run at: $executablePath\n" +
-            "  Install Go or set:\n" +
-            "  - Environment: GO_EXECUTABLE=/path/to/go\n" +
-            "  - Property: -PGO_EXECUTABLE=/path/to/go\n" +
-            "  Error: ${e.message}"
+                    "  Install Go or set:\n" +
+                    "  - Environment: GO_EXECUTABLE=/path/to/go\n" +
+                    "  - Property: -PGO_EXECUTABLE=/path/to/go\n" +
+                    "  Error: ${e.message}"
         )
     }
 }
@@ -635,7 +704,7 @@ archConfigs.forEach { arch ->
             if (!file(compiler).exists()) {
                 throw GradleException(
                     "✗ C compiler for ${arch.abi} not found at: $compiler\n" +
-                    "  Verify NDK installation and configuration."
+                            "  Verify NDK installation and configuration."
                 )
             }
         }
@@ -693,6 +762,7 @@ archConfigs.forEach { arch ->
 project.afterEvaluate {
     tasks.named("preBuild") {
         dependsOn(copyAllGoSharedLibs)
+        dependsOn(buildRustAdblock)
     }
 
     // Add summary task for all Go builds

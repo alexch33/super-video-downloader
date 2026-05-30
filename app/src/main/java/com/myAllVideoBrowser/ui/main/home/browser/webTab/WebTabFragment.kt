@@ -52,6 +52,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.TAB_INDEX_KEY
 import com.myAllVideoBrowser.ui.main.home.browser.TabManagerProvider
 import com.myAllVideoBrowser.ui.main.home.browser.WebPostBridge
 import com.myAllVideoBrowser.ui.main.home.browser.WorkerEventProvider
+import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
@@ -87,6 +88,9 @@ class WebTabFragment : BaseWebTabFragment() {
 
     @Inject
     lateinit var okHttpProxyClient: OkHttpProxyClient
+
+    @Inject
+    lateinit var adBlockEngine: AdBlockEngine
 
     private lateinit var dataBinding: FragmentWebTabBinding
 
@@ -395,6 +399,7 @@ class WebTabFragment : BaseWebTabFragment() {
             tabManagerProvider.getUpdateTabEvent(),
             pageTabProvider,
             proxyController,
+            adBlockEngine
         )
 
         val chromeClient = CustomWebChromeClient(
@@ -828,14 +833,16 @@ class WebTabFragment : BaseWebTabFragment() {
     }
 
     private val shouldInterceptPostRequests = WebPostBridge { url, body ->
-        val shouldBlock =
-            url.contains("analytics") || url.contains("metrics")
-                    || body.contains("browser_fingerprint_id")
-
-        if (shouldBlock) {
-            AppLogger.d("postBridge BLOCK: $url $body")
+        val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
+        val isAd = isAdBlockOn &&
+                adBlockEngine.isAd(
+                    url,
+                    tabViewModel.getTabTextInput().get() ?: "",
+                    "xmlhttprequest"
+                )
+        if (isAd) {
+            AppLogger.d("AdBlock (POST): Blocked $url")
         }
-
-        shouldBlock // return true to block, false to allow
+        isAd
     }
 }

@@ -16,6 +16,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosT
 import com.myAllVideoBrowser.ui.main.progress.ProgressFragment
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesFragment
 import com.myAllVideoBrowser.ui.main.settings.SettingsFragment
+import com.myAllVideoBrowser.ui.main.settings.adblock.AdBlockSettingsFragment
 import com.myAllVideoBrowser.ui.main.video.VideoFragment
 import com.myAllVideoBrowser.util.fragment.FragmentFactory
 import com.myAllVideoBrowser.util.fragment.FragmentFactoryImpl
@@ -70,6 +71,10 @@ abstract class MainModule {
     @FragmentScoped
     @ContributesAndroidInjector
     abstract fun bindBookmarksFragment(): BookmarksFragment
+
+    @FragmentScoped
+    @ContributesAndroidInjector
+    abstract fun bindAdblockSettingsFragment(): AdBlockSettingsFragment
 
     @ActivityScoped
     @Binds

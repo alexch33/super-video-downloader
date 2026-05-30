@@ -776,6 +776,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         val notificationData = notificationsHelper.createNotificationBuilder(item.also {
             if (item.taskState == VideoTaskState.SUCCESS) {
                 it.lineInfo = "Success"
+            } else if (item.taskState == VideoTaskState.CANCELED) {
+                it.lineInfo = "Canceled"
             }
         })
         showNotificationFinal(notificationData.first, notificationData.second)

@@ -20,7 +20,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AdBlockRepository @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @field:ApplicationContext private val context: Context,
     private val adBlockDao: AdBlockDao,
     private val okHttpClient: OkHttpProxyClient,
     private val adBlockEngine: AdBlockEngine

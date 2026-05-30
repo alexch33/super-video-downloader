@@ -147,4 +147,9 @@
     <string name="progress_tab">进度</string>
     <string name="video_tab">视频</string>
     <string name="can_be_turned_off">可在代理设置中关闭</string>
+    <string name="queue_downloads_size">下载的队列大小：</string>
+    <string name="progress_menu_stop_and_save">停止并保存</string>
+    <string name="select_all">全选</string>
+    <string name="delete">删除</string>
+    <string name="stop_and_save_message">按下停止并保存来停止下载并随时保存已下载内容…！</string>
 </resources>

@@ -175,7 +175,11 @@ class FileUtil @Inject constructor() {
         if (isFileApiSupportedByUri(context, to)) {
             AppLogger.d("IS_FILE_API: TRUE -- from $from to $to")
 
-            var success = fromFile.renameTo(toFile)
+            var success = try {
+                fromFile.renameTo(toFile)
+            } catch (_: Throwable) {
+                false
+            }
 
             if (!success) {
                 AppLogger.d("renameTo failed, attempting NIO move fallback")

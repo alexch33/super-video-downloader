@@ -18,7 +18,7 @@ import kotlin.concurrent.withLock
 
 @Singleton
 class AdBlockEngine @Inject constructor(
-    @field:ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val adBlockDao: AdBlockDao,
 ) {
     private var nativeEnginePtr: Long = 0

@@ -168,21 +168,33 @@ class FileUtil @Inject constructor() {
 
     @Synchronized
     fun moveMedia(context: Context, from: Uri, to: Uri): Boolean {
+        val fromFile = from.toFile()
+        val toFile = to.toFile()
+
+
         if (isFileApiSupportedByUri(context, to)) {
             AppLogger.d("IS_FILE_API: TRUE -- from $from to $to")
-            val newFile = to.toFile()
-            var success: Boolean
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Files.move(from.toFile().toPath(), newFile.toPath())
-                success = true
-            } else {
-                success = renameWithLock(from.toFile(), newFile)
+            var success = fromFile.renameTo(toFile)
+
+            if (!success) {
+                AppLogger.d("renameTo failed, attempting NIO move fallback")
+                success = try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        Files.move(fromFile.toPath(), toFile.toPath())
+                        true
+                    } else {
+                        copyAndDeleteWithLock(fromFile, toFile)
+                    }
+                } catch (e: Exception) {
+                    AppLogger.e("Move failed: ${e.message}")
+                    false
+                }
             }
 
             if (success) {
-                AppLogger.d("File move success, triggering media scan for: ${newFile.absolutePath}")
-                scanFile(context, newFile)
+                AppLogger.d("File move success, triggering media scan: ${toFile.absolutePath}")
+                scanFile(context, toFile)
             }
             return success
         } else {
@@ -200,6 +212,25 @@ class FileUtil @Inject constructor() {
             }
         }
     }
+
+    private fun copyAndDeleteWithLock(sourceFile: File, targetFile: File): Boolean {
+        return try {
+            RandomAccessFile(sourceFile, "rw").use { raf ->
+                raf.channel.lock().use {
+                    sourceFile.inputStream().use { input ->
+                        targetFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                }
+            }
+            sourceFile.delete()
+        } catch (e: Exception) {
+            AppLogger.e("Manual copy/delete failed: ${e.message}")
+            false
+        }
+    }
+
 
     fun renameMedia(context: Context, from: Uri, newName: String): Pair<String, Uri>? {
         try {

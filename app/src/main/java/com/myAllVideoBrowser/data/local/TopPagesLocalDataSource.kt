@@ -50,8 +50,11 @@ class TopPagesLocalDataSource @Inject constructor(
     private fun getDefaultBookmarks(): List<PageInfo> {
         val defaultList = arrayListOf<PageInfo>()
 
-        defaultList.add(PageInfo(link = "https://www.imdb.com"))
+        defaultList.add(PageInfo(link = "https://adblock-tester.com"))
         defaultList.add(PageInfo(link = "https://dnscrypt.info/public-servers"))
+        defaultList.add(PageInfo(link = "https://ipleak.net"))
+
+        defaultList.add(PageInfo(link = "https://www.imdb.com"))
         defaultList.add(PageInfo(link = "https://www.dailymotion.com"))
         defaultList.add(PageInfo(link = "https://www.instagram.com"))
         defaultList.add(PageInfo(link = "https://www.twitter.com"))

@@ -5,11 +5,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.myAllVideoBrowser.DLApplication
 import com.myAllVideoBrowser.data.local.room.AppDatabase
-import com.myAllVideoBrowser.data.local.room.dao.ConfigDao
-import com.myAllVideoBrowser.data.local.room.dao.HistoryDao
-import com.myAllVideoBrowser.data.local.room.dao.PageDao
-import com.myAllVideoBrowser.data.local.room.dao.ProgressDao
-import com.myAllVideoBrowser.data.local.room.dao.VideoDao
+import com.myAllVideoBrowser.data.local.room.dao.*
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -108,6 +104,35 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
     }
 }
 
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `adblock_lists` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `name` TEXT NOT NULL, 
+                `url` TEXT, 
+                `isEnabled` INTEGER NOT NULL, 
+                `lastUpdated` INTEGER NOT NULL, 
+                `localPath` TEXT
+            )
+        """.trimIndent()
+        )
+    }
+}
+
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `adblock_lists` ADD COLUMN `isDownloaded` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
+val MIGRATION_12_13 = object : Migration(12, 13) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `adblock_lists` ADD COLUMN `isDownloadFailed` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 @Module
 class DatabaseModule {
 
@@ -123,7 +148,10 @@ class DatabaseModule {
             MIGRATION_6_7,
             MIGRATION_7_8,
             MIGRATION_8_9,
-            MIGRATION_9_10
+            MIGRATION_9_10,
+            MIGRATION_10_11,
+            MIGRATION_11_12,
+            MIGRATION_12_13
         ).build()
     }
 
@@ -146,4 +174,8 @@ class DatabaseModule {
     @Singleton
     @Provides
     fun providePageDao(database: AppDatabase): PageDao = database.pageDao()
+
+    @Singleton
+    @Provides
+    fun provideAdBlockDao(database: AppDatabase): AdBlockDao = database.adBlockDao()
 }

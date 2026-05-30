@@ -24,7 +24,7 @@ class ProxyRetryInterceptor(private val context: Context) : Interceptor {
                 val isProxyError = e.message?.contains("127.0.0.1") == true
 
                 if (isProxyError && attempt < maxTries) {
-                    Thread.sleep(500)
+                    Thread.sleep(1000)
                     continue
                 } else {
                     throw e

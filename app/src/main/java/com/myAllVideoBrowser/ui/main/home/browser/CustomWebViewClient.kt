@@ -1,7 +1,6 @@
 package com.myAllVideoBrowser.ui.main.home.browser
 
 import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Build
 import android.webkit.HttpAuthHandler
 import android.webkit.RenderProcessGoneDetail
@@ -29,6 +28,33 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import java.io.ByteArrayInputStream
 import androidx.core.net.toUri
+import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
+import com.myAllVideoBrowser.util.AppLogger
+
+val injectJsInterceptor = """
+        (function() {
+            const oldSend = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.send = function(body) {
+                if (window.AndroidBridge && window.AndroidBridge.shouldInterceptPost(this._url, body || "")) {
+                    this.abort(); // Kill the XHR
+                    return;
+                }
+                oldSend.apply(this, arguments);
+            };
+
+            const oldFetch = window.fetch;
+            window.fetch = async function(input, init) {
+                const url = typeof input === 'string' ? input : input.url;
+                const method = init?.method?.toUpperCase() || 'GET';
+                if (method === 'POST' && window.AndroidBridge) {
+                    if (window.AndroidBridge.shouldInterceptPost(url, init.body || "")) {
+                        return new Response('', { status: 200 }); // Return empty
+                    }
+                }
+                return oldFetch.apply(this, arguments);
+            };
+        })();
+    """.trimIndent()
 
 enum class ContentType {
     M3U8,
@@ -46,7 +72,8 @@ class CustomWebViewClient(
     private val okHttpProxyClient: OkHttpProxyClient,
     private val updateTabEvent: SingleLiveEvent<WebTab>,
     private val pageTabProvider: PageTabProvider,
-    private val proxyController: CustomProxyController
+    private val proxyController: CustomProxyController,
+    private val adBlockEngine: AdBlockEngine
 ) : WebViewClient() {
     var videoAlert: MaterialAlertDialogBuilder? = null
     private var lastSavedHistoryUrl: String = ""
@@ -118,6 +145,29 @@ class CustomWebViewClient(
 
         val url = request.url.toString()
 
+        val resourceType = when {
+            request.isForMainFrame -> "main_frame"
+            request.url.toString().contains(".js") -> "script"
+            request.url.toString().contains(".css") -> "stylesheet"
+            request.requestHeaders["X-Requested-With"] != null -> "xmlhttprequest"
+            request.requestHeaders["Accept"]?.contains("image") == true -> "image"
+            else -> "other"
+        }
+
+        if (settingsModel.isAdBlockOn.get()) {
+            val isAd = adBlockEngine.isAd(
+                url,
+                tabViewModel.getTabTextInput().get() ?: "",
+                resourceType
+            )
+
+            if (isAd) {
+                AppLogger.d("AdBlock (GET/Resource): Blocked $url")
+                return emptyResponse()
+            }
+        }
+
+
         val isCheckM3u8 = settingsModel.isCheckIfEveryRequestOnM3u8.get()
         val isCheckOnMp4 = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
         val isCheckOnAudio = settingsModel.isCheckOnAudio.get()
@@ -125,7 +175,7 @@ class CustomWebViewClient(
         if (isCheckOnMp4 || isCheckM3u8 || isCheckOnAudio) {
             val requestWithCookies = request.let { resourceRequest ->
                 try {
-                    CookieUtils.webResourceRequestToOkHttpRequest(request)
+                    CookieUtils.webResourceRequestToOkHttpRequest(resourceRequest)
                 } catch (_: Throwable) {
                     null
                 }
@@ -191,6 +241,8 @@ class CustomWebViewClient(
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
+
+        view.evaluateJavascript(injectJsInterceptor, null)
 
         videoAlert = null
         val pageTab = pageTabProvider.getPageTab(tabViewModel.thisTabIndex.get())

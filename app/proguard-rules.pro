@@ -6,3 +6,6 @@
 
 -keep class com.yausername.youtubedl_android.** { *; }
 -keep class org.immutables.** { *; }
+-keep class com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockNative {
+    native <methods>;
+}

@@ -17,7 +17,7 @@ import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentSettingsBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
-import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.ui.main.settings.adblock.AdBlockSettingsFragment
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.IntentUtil
 import com.myAllVideoBrowser.util.SystemUtil
@@ -124,6 +124,10 @@ class SettingsFragment : BaseFragment() {
             parentFragmentManager.popBackStack()
         }
 
+        dataBinding.toolbar.setNavigationOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
+
         settingsViewModel.start()
 
         val coreCount = Runtime.getRuntime().availableProcessors()
@@ -164,6 +168,12 @@ class SettingsFragment : BaseFragment() {
         }
         settingsViewModel.openVideoFolderEvent.observe(viewLifecycleOwner) {
             intentUtil.openVideoFolder(context, fileUtil.folderDir.path)
+        }
+        settingsViewModel.openAdBlockSettingsEvent.observe(viewLifecycleOwner) {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container_view, AdBlockSettingsFragment.newInstance())
+                .addToBackStack(null)
+                .commit()
         }
     }
 

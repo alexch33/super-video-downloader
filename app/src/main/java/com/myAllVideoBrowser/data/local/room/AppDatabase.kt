@@ -6,10 +6,10 @@ import androidx.room.TypeConverters
 import com.myAllVideoBrowser.data.local.room.dao.*
 import com.myAllVideoBrowser.data.local.room.entity.*
 
-const val DB_VERSION = 10
+const val DB_VERSION = 13
 
 @Database(
-    entities = [PageInfo::class, SupportedPage::class, VideoInfo::class, ProgressInfo::class, HistoryItem::class],
+    entities = [PageInfo::class, SupportedPage::class, VideoInfo::class, ProgressInfo::class, HistoryItem::class, AdBlockList::class],
     version = DB_VERSION,
 )
 @TypeConverters(FormatsConverter::class, DownloadUrlsConverter::class)
@@ -24,4 +24,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pageDao(): PageDao
 
     abstract fun historyDao(): HistoryDao
+
+    abstract fun adBlockDao(): AdBlockDao
 }

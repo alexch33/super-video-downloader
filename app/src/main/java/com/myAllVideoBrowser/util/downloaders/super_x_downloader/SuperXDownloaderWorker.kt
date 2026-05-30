@@ -39,7 +39,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     GenericDownloadWorkerWrapper(appContext, workerParams) {
 
     @Volatile
-    private lateinit var progressCached: Progress
+    private var progressCached: Progress? = null
 
     @Volatile
     private lateinit var taskId: String
@@ -763,8 +763,14 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         AppLogger.d("FFmpeg: Finishing work for task $taskId with state ${item.taskState}")
 
         handleTaskCompletion(item.also {
-            it.downloadSize = progressCached.currentBytes
-            it.totalSize = progressCached.totalBytes
+            val cachedCurrentBytes = progressCached?.currentBytes
+            val cachedTotalBytes = progressCached?.totalBytes
+            if (cachedCurrentBytes != null) {
+                it.downloadSize = cachedCurrentBytes
+            }
+            if (cachedTotalBytes != null) {
+                it.totalSize = cachedTotalBytes
+            }
         })
 
         val notificationData = notificationsHelper.createNotificationBuilder(item.also {

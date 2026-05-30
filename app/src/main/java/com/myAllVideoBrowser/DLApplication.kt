@@ -5,6 +5,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
+import com.myAllVideoBrowser.data.repository.AdBlockRepository
 import com.myAllVideoBrowser.di.component.DaggerAppComponent
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
@@ -42,6 +43,9 @@ open class DLApplication : DaggerApplication() {
 
     @Inject
     lateinit var fileUtil: FileUtil
+
+    @Inject
+    lateinit var adBlockRepository: AdBlockRepository
 
     private lateinit var appComponent: AndroidInjector<DLApplication>
 
@@ -98,6 +102,10 @@ open class DLApplication : DaggerApplication() {
             updateYoutubeDL()
 
             startProxyWorker()
+            
+            // AdBlock initialization: Ensure defaults exist and download enabled lists
+            adBlockRepository.checkAndPrepopulateDefaults()
+            adBlockRepository.downloadEnabledLists()
         }
     }
 

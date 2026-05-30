@@ -3,7 +3,9 @@ package com.myAllVideoBrowser.data.local.room.entity
 import androidx.room.*
 import com.google.gson.Gson
 import com.google.gson.annotations.Expose
+import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
+import com.myAllVideoBrowser.util.RequestListTypeAdapter
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers.Companion.toHeaders
@@ -14,6 +16,7 @@ import org.json.JSONObject
 import java.util.*
 
 @Entity(tableName = "VideoInfo")
+@TypeConverters(FormatsConverter::class, DownloadUrlsConverter::class)
 data class VideoInfo(
     @PrimaryKey
     @ColumnInfo(name = "id")
@@ -22,6 +25,7 @@ data class VideoInfo(
     @ColumnInfo(name = "downloadUrls")
     @SerializedName("urls")
     @Expose
+    @JsonAdapter(RequestListTypeAdapter::class)
     var downloadUrls: List<Request> = emptyList(),
 
     @ColumnInfo(name = "title")

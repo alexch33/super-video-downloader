@@ -87,7 +87,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Adblocker added, UI fixes, dependencies upgraded"
+          body: "Final file moving to destination folder optimized(rename where it possible, instead copy)\nCanceled notification text fix\n loading rules to ad block engine on app start"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

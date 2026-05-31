@@ -55,6 +55,7 @@ class SharedPrefHelper @Inject constructor(
 
         private const val IS_ASK_REDIRECTION = "IS_ASK_REDIRECTION"
         private const val MAX_SIMULTANEOUS_DOWNLOADS = "MAX_SIMULTANEOUS_DOWNLOADS"
+        private const val IS_ADBLOCK_ON = "IS_ADBLOCK_ON"
     }
 
     private val gson = Gson()
@@ -428,6 +429,16 @@ class SharedPrefHelper @Inject constructor(
     fun setMaxSimultaneousDownloads(count: Int) {
         sharedPreferences.edit {
             putInt(MAX_SIMULTANEOUS_DOWNLOADS, count)
+        }
+    }
+
+    fun getIsAdBlockOn(): Boolean {
+        return sharedPreferences.getBoolean(IS_ADBLOCK_ON, true)
+    }
+
+    fun setIsAdBlockOn(isOn: Boolean) {
+        sharedPreferences.edit {
+            putBoolean(IS_ADBLOCK_ON, isOn)
         }
     }
 }

@@ -50,7 +50,9 @@ import com.myAllVideoBrowser.ui.main.home.browser.HistoryProvider
 import com.myAllVideoBrowser.ui.main.home.browser.PageTabProvider
 import com.myAllVideoBrowser.ui.main.home.browser.TAB_INDEX_KEY
 import com.myAllVideoBrowser.ui.main.home.browser.TabManagerProvider
+import com.myAllVideoBrowser.ui.main.home.browser.WebPostBridge
 import com.myAllVideoBrowser.ui.main.home.browser.WorkerEventProvider
+import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
@@ -86,6 +88,9 @@ class WebTabFragment : BaseWebTabFragment() {
 
     @Inject
     lateinit var okHttpProxyClient: OkHttpProxyClient
+
+    @Inject
+    lateinit var adBlockEngine: AdBlockEngine
 
     private lateinit var dataBinding: FragmentWebTabBinding
 
@@ -394,6 +399,7 @@ class WebTabFragment : BaseWebTabFragment() {
             tabManagerProvider.getUpdateTabEvent(),
             pageTabProvider,
             proxyController,
+            adBlockEngine
         )
 
         val chromeClient = CustomWebChromeClient(
@@ -452,6 +458,12 @@ class WebTabFragment : BaseWebTabFragment() {
                 }
             }
         }
+
+        currentWebView?.addJavascriptInterface(
+            shouldInterceptPostRequests,
+            WebPostBridge.BRIDGE_NAME
+        )
+
         fragmentWebTabBinding.webviewContainer.addView(
             webTab.getWebView(),
             LinearLayout.LayoutParams(-1, -1)
@@ -818,5 +830,19 @@ class WebTabFragment : BaseWebTabFragment() {
                 .setText(foundFormat.url).startChooser()
             return true
         }
+    }
+
+    private val shouldInterceptPostRequests = WebPostBridge { url, body ->
+        val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
+        val isAd = isAdBlockOn &&
+                adBlockEngine.isAd(
+                    url,
+                    tabViewModel.getTabTextInput().get() ?: "",
+                    "xmlhttprequest"
+                )
+        if (isAd) {
+            AppLogger.d("AdBlock (POST): Blocked $url")
+        }
+        isAd
     }
 }

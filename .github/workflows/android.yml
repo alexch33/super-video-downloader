@@ -40,6 +40,13 @@ jobs:
           go-version: '1.25.7'
           cache: false
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+
       - name: Decode and Save Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > $GITHUB_WORKSPACE/keystore.jks
@@ -47,6 +54,7 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
       - name: Build with Gradle
         run: ./gradlew build --info
 
@@ -78,9 +86,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: false
-          body: "Since 0.8.18.2:\n Added only audio extract option\nFixed Custom MPD downloader\nDisable logs for youtube-dlp live streams download, for preventing OOM crash when long live stream downloading\nMemory leaks fixed for custom downloaders\nProgress tracking UI fixes\n ETA added to all downloaders\n Downloaded videos selection mode added\n Performance optimizations\nMinor UI fixes"
+          prerelease: true
+          body: "Final file moving to destination folder optimized(rename where it possible, instead copy)\nCanceled notification text fix\n loading rules to ad block engine on app start"
           draft: false
-          make_latest: true
+          make_latest: false
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

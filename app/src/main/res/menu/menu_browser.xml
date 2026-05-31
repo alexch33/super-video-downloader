@@ -28,6 +28,22 @@
         app:showAsAction="ifRoom|collapseActionView" />
 
     <item
+        android:id="@+id/adblock_toggle"
+        android:checkable="true"
+        android:checked="true"
+        android:icon="@drawable/shield_24px"
+        android:title="@string/ad_blocker"
+        app:showAsAction="always|collapseActionView" />
+
+    <item
+        android:id="@+id/adblock_settings"
+        android:icon="@drawable/verified_user_24px"
+        android:title="AdBlock Lists"
+        android:visible="true"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+
+    <item
         android:id="@+id/desktop_mode"
         android:checkable="true"
         android:checked="false"

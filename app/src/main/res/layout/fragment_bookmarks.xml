@@ -38,7 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:layout_marginBottom="120dp"
+            android:layout_marginBottom="16dp"
             app:items="@{mainVModel.bookmarksList}"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 

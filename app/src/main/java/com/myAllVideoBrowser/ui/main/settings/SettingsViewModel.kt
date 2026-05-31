@@ -35,6 +35,7 @@ class SettingsViewModel @Inject constructor(
 
     val clearCookiesEvent = SingleLiveEvent<Void?>()
     val openVideoFolderEvent = SingleLiveEvent<Void?>()
+    val openAdBlockSettingsEvent = SingleLiveEvent<Unit?>()
     val isDesktopMode = ObservableBoolean(false)
     val isDarkMode = ObservableBoolean(false)
     val isAutoDarkMode = ObservableBoolean(true)
@@ -47,6 +48,7 @@ class SettingsViewModel @Inject constructor(
     val isRemuxOnlyLiveRegularDownloads = ObservableBoolean(false)
     val isInterruptIntreceptedResources = ObservableBoolean(false)
     val isUseLegacyM3u8Detection = ObservableBoolean(false)
+    val isAdBlockOn = ObservableBoolean(true)
     val queueSize = ObservableInt(1)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
@@ -76,6 +78,7 @@ class SettingsViewModel @Inject constructor(
             val videoTreshold = sharedPrefHelper.getVideoDetectionTreshold()
             val lockPortrait = sharedPrefHelper.getIsLockPortrait()
             val askRedirection = sharedPrefHelper.getIsAskRedirection()
+            val adBlockOn = sharedPrefHelper.getIsAdBlockOn()
 
             val isExternal = sharedPrefHelper.getIsExternalUse()
             val isAppDir = sharedPrefHelper.getIsAppDirUse()
@@ -111,6 +114,7 @@ class SettingsViewModel @Inject constructor(
                 isLockPortrait.set(lockPortrait)
                 isAskRedirection.set(askRedirection)
                 storageType.set(sType)
+                isAdBlockOn.set(adBlockOn)
             }
         }
     }
@@ -184,6 +188,10 @@ class SettingsViewModel @Inject constructor(
 
     fun openVideoFolder() {
         openVideoFolderEvent.call()
+    }
+
+    fun openAdBlockSettings() {
+        openAdBlockSettingsEvent.call()
     }
 
     fun getIsFindVideoByUrl(): ObservableBoolean {
@@ -291,6 +299,14 @@ class SettingsViewModel @Inject constructor(
     fun setIsFirstStart(isFirstStart: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             sharedPrefHelper.setIsFirstStart(isFirstStart)
+        }
+    }
+
+
+    fun setIsAdBlockOn(isOn: Boolean) {
+        isAdBlockOn.set(isOn)
+        viewModelScope.launch(Dispatchers.IO) {
+            sharedPrefHelper.setIsAdBlockOn(isOn)
         }
     }
 

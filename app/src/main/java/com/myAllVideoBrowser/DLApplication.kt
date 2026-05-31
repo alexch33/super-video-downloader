@@ -5,7 +5,9 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
+import com.myAllVideoBrowser.data.repository.AdBlockRepository
 import com.myAllVideoBrowser.di.component.DaggerAppComponent
+import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
@@ -42,6 +44,12 @@ open class DLApplication : DaggerApplication() {
 
     @Inject
     lateinit var fileUtil: FileUtil
+
+    @Inject
+    lateinit var adBlockRepository: AdBlockRepository
+
+    @Inject
+    lateinit var adBlockEngine: AdBlockEngine
 
     private lateinit var appComponent: AndroidInjector<DLApplication>
 
@@ -89,7 +97,7 @@ open class DLApplication : DaggerApplication() {
             AppLogger.e("RxJavaError unhandled $error")
         }
 
-        CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             if (!file.exists()) {
                 file.mkdirs()
             }
@@ -98,6 +106,17 @@ open class DLApplication : DaggerApplication() {
             updateYoutubeDL()
 
             startProxyWorker()
+
+            adblockInit()
+        }
+    }
+
+    suspend fun adblockInit() {
+        adBlockRepository.checkAndPrepopulateDefaults()
+        val isAdOn = sharedPrefHelper.getIsAdBlockOn()
+        if (isAdOn) {
+            adBlockRepository.downloadEnabledLists()
+            adBlockEngine.loadRules()
         }
     }
 

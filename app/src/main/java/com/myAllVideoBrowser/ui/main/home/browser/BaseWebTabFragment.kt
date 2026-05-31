@@ -17,12 +17,13 @@ import com.myAllVideoBrowser.ui.main.history.HistoryFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesFragment
 import com.myAllVideoBrowser.ui.main.settings.SettingsFragment
+import com.myAllVideoBrowser.ui.main.settings.adblock.AdBlockSettingsFragment
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import androidx.core.view.get
+import androidx.webkit.WebViewFeature
 
 
 abstract class BaseWebTabFragment : BaseFragment() {
@@ -83,14 +84,32 @@ abstract class BaseWebTabFragment : BaseFragment() {
         }
     }
 
+    private val adBlockOnCallback = object : Observable.OnPropertyChangedCallback() {
+        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
+            if (!isAdded) {
+                return
+            }
+            lifecycleScope.launch(Dispatchers.Main) {
+                val isOn = mainActivity.settingsViewModel.isAdBlockOn.get() == true
+                popupMenu?.menu?.findItem(R.id.adblock_toggle)?.isChecked = isOn
+                mainActivity.settingsViewModel.setIsAdBlockOn(isOn)
+            }
+        }
+    }
+
     override fun onDestroyView() {
         popupMenu?.dismiss()
         popupMenu = null
 
         mainActivity.settingsViewModel.isDarkMode.removeOnPropertyChangedCallback(darkModeCallback)
-        mainActivity.settingsViewModel.isAutoDarkMode.removeOnPropertyChangedCallback(autoDarkModeCallback)
-        mainActivity.settingsViewModel.isDesktopMode.removeOnPropertyChangedCallback(desktopModeCallback)
+        mainActivity.settingsViewModel.isAutoDarkMode.removeOnPropertyChangedCallback(
+            autoDarkModeCallback
+        )
+        mainActivity.settingsViewModel.isDesktopMode.removeOnPropertyChangedCallback(
+            desktopModeCallback
+        )
         mainActivity.proxiesViewModel.isProxyOn.removeOnPropertyChangedCallback(proxyOnCallback)
+        mainActivity.settingsViewModel.isAdBlockOn.removeOnPropertyChangedCallback(adBlockOnCallback)
 
         super.onDestroyView()
     }
@@ -101,33 +120,28 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
     fun buildWebTabMenu(browserMenu: View, isHomeTab: Boolean) {
         if (popupMenu == null) {
-            popupMenu =
-                buildPopupMenu(browserMenu)
-            val bookmarkMenuItem = popupMenu!!.menu[2]
-            val shareMenuItem = popupMenu!!.menu[3]
-            val desktopMenuItem = popupMenu!!.menu[4]
-            val proxyItem = popupMenu!!.menu[7]
-            val isProxyOn = mainActivity.proxiesViewModel.isProxyOn
-            val isDarkModeItem = popupMenu!!.menu[8]
-            val isDark = mainActivity.settingsViewModel.isDarkMode.get()
-            isDarkModeItem.isChecked = isDark
+            popupMenu = buildPopupMenu(browserMenu)
+            
+            val menu = popupMenu!!.menu
+            
+            menu.findItem(R.id.bookmark).isVisible = !isHomeTab
+            menu.findItem(R.id.share_link).isVisible = !isHomeTab
+            
+            menu.findItem(R.id.adblock_toggle).isChecked = mainActivity.settingsViewModel.isAdBlockOn.get()
+            menu.findItem(R.id.desktop_mode).isChecked = mainActivity.settingsViewModel.isDesktopMode.get()
+            menu.findItem(R.id.proxies).isChecked = mainActivity.proxiesViewModel.isProxyOn.get() == true
+            
+            val isDarkModeItem = menu.findItem(R.id.is_dark)
+            isDarkModeItem.isChecked = mainActivity.settingsViewModel.isDarkMode.get()
             isDarkModeItem.isEnabled = !mainActivity.settingsViewModel.isAutoDarkMode.get()
-
-            desktopMenuItem.isChecked = mainActivity.settingsViewModel.isDesktopMode.get() == true
-            proxyItem.isChecked = isProxyOn.get() == true
 
             popupMenu!!.setForceShowIcon(true)
 
             mainActivity.settingsViewModel.isDarkMode.addOnPropertyChangedCallback(darkModeCallback)
-
             mainActivity.settingsViewModel.isAutoDarkMode.addOnPropertyChangedCallback(autoDarkModeCallback)
-
             mainActivity.settingsViewModel.isDesktopMode.addOnPropertyChangedCallback(desktopModeCallback)
-
-            isProxyOn.addOnPropertyChangedCallback(proxyOnCallback)
-
-            shareMenuItem.isVisible = !isHomeTab
-            bookmarkMenuItem.isVisible = !isHomeTab
+            mainActivity.proxiesViewModel.isProxyOn.addOnPropertyChangedCallback(proxyOnCallback)
+            mainActivity.settingsViewModel.isAdBlockOn.addOnPropertyChangedCallback(adBlockOnCallback)
         }
     }
 
@@ -148,12 +162,13 @@ abstract class BaseWebTabFragment : BaseFragment() {
     }
 
     private fun buildPopupMenu(view: View): PopupMenu {
-        val location = IntArray(2)
-        view.getLocationOnScreen(location)
         val popupMenu = PopupMenu(requireContext(), view)
 
         popupMenu.gravity = Gravity.END
         popupMenu.menuInflater.inflate(R.menu.menu_browser, popupMenu.menu)
+
+        popupMenu.menu.findItem(R.id.proxies).isEnabled =
+            WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)
 
         popupMenu.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
@@ -174,6 +189,17 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
                 R.id.bookmark -> {
                     bookmarkCurrentUrl()
+                    true
+                }
+
+                R.id.adblock_toggle -> {
+                    menuItem.isChecked = !menuItem.isChecked
+                    mainActivity.settingsViewModel.setIsAdBlockOn(menuItem.isChecked)
+                    false
+                }
+
+                R.id.adblock_settings -> {
+                    navigateToAdBlockSettings()
                     true
                 }
 
@@ -243,6 +269,24 @@ abstract class BaseWebTabFragment : BaseFragment() {
                     currentFragment.requireActivity().supportFragmentManager.beginTransaction()
                 transaction.add(it.id, SettingsFragment.newInstance())
                 transaction.addToBackStack("settings")
+                transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                transaction.commit()
+            }
+        } catch (e: ClassCastException) {
+            AppLogger.d("Can't get the fragment manager with this")
+        }
+    }
+
+    private fun navigateToAdBlockSettings() {
+        try {
+            val currentFragment = this
+            val activityFragmentContainer =
+                currentFragment.activity?.findViewById<FragmentContainerView>(R.id.fragment_container_view)
+            activityFragmentContainer?.let {
+                val transaction =
+                    currentFragment.requireActivity().supportFragmentManager.beginTransaction()
+                transaction.add(it.id, AdBlockSettingsFragment.newInstance())
+                transaction.addToBackStack("adblock_settings")
                 transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                 transaction.commit()
             }

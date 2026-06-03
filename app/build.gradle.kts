@@ -377,7 +377,7 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
 
                 environment("RUSTFLAGS", "-C link-arg=-z -C link-arg=max-page-size=16384")
 
-                commandLine("cargo", "build", "--target", arch.rustTarget, "--release")
+                commandLine("cargo", "build", "--offline", "--target", arch.rustTarget, "--release")
             }
 
             // Copy the compiled .so to jniLibs

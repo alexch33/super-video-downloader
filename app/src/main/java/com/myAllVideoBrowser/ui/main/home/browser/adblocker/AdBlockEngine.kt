@@ -38,7 +38,7 @@ class AdBlockEngine @Inject constructor(
                     val enabledLists = adBlockDao.getEnabledLists()
                     val currentKey = generateCacheKey(enabledLists)
 
-                    // 1. Try to load from binary cache first
+                    // 1. Try to load from binary cache first (using file-to-native stream)
                     if (cacheFile.exists() && cacheKeyFile.exists()) {
                         val savedKey = try {
                             cacheKeyFile.readText()
@@ -46,122 +46,87 @@ class AdBlockEngine @Inject constructor(
                             ""
                         }
                         if (savedKey == currentKey) {
-                            try {
-                                val bytes = cacheFile.readBytes()
-                                val ptr = native.createEngineFromBinary(bytes)
-                                if (ptr != 0L) {
-                                    updateNativePointer(ptr)
-                                    AppLogger.d("AdBlockEngine: Loaded from binary cache")
-                                    return@withLock
-                                }
-                            } catch (e: Throwable) {
-                                AppLogger.e("AdBlockEngine: Binary cache load failed: ${e.message}")
+                            val ptr = native.createEngineFromBinaryFile(cacheFile.absolutePath)
+                            if (ptr != 0L) {
+                                updateNativePointer(ptr)
+                                AppLogger.d("AdBlockEngine: Loaded successfully from binary cache file")
+                                return@withLock
                             }
                         }
                     }
 
-                    // 2. Fallback: Rebuild from text rules
-                    AppLogger.d("AdBlockEngine: Rebuilding engine from text rules...")
+                    // 2. Fallback: Rebuild engine from files
+                    AppLogger.d("AdBlockEngine: Rebuilding engine from rules files...")
 
-                    val isLocalEnabled = adBlockDao.getEnabledLists()
-                        .firstOrNull { it.isDownloaded && it.localPath == null } != null
-                    var rulesString: String? = buildCombinedRules(enabledLists, isLocalEnabled)
+                    val filePaths = mutableListOf<String>()
 
-                    if (rulesString.isNullOrBlank()) {
-                        AppLogger.w("AdBlockEngine: No rules found to load")
+                    // Copy built-in rules to temp file to pass to native layer
+                    try {
+                        val assetFile = File(context.cacheDir, "easylist_tmp.txt")
+                        context.assets.open("easyprivacylist.txt").use { input ->
+                            assetFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        filePaths.add(assetFile.absolutePath)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        AppLogger.e("AdBlockEngine: Failed to prepare built-in easylist ${e.message}")
+                    }
+
+                    // Add custom rules files
+                    enabledLists.forEach { list ->
+                        list.localPath?.let { path ->
+                            if (File(path).exists()) {
+                                filePaths.add(path)
+                            }
+                        }
+                    }
+
+                    if (filePaths.isEmpty()) {
+                        AppLogger.w("AdBlockEngine: No rules files found")
                         return@withLock
                     }
 
-                    val newPtr = native.createEngine(rulesString)
-
-                    rulesString = null
+                    val newPtr = native.createEngineFromFiles(filePaths.toTypedArray())
 
                     if (newPtr != 0L) {
                         updateNativePointer(newPtr)
-                        AppLogger.d("AdBlockEngine: New engine created and pointer updated")
+                        AppLogger.d("AdBlockEngine: New engine created successfully from files")
 
+                        // Serialize the new engine directly to file to avoid OOM in JVM heap
                         try {
-                            val binary = try {
-                                native.serializeEngine(newPtr)
-                            } catch (_: OutOfMemoryError) {
-                                AppLogger.e("AdBlockEngine: OOM during serialization, skipping cache write")
-                                null
-                            } catch (_: Throwable) {
-                                AppLogger.e("AdBlockEngine: Error during serialization, skipping cache write")
-                                null
-                            }
-
-                            if (binary != null && binary.isNotEmpty()) {
-                                cacheFile.writeBytes(binary)
+                            val success =
+                                native.serializeEngineToFile(newPtr, cacheFile.absolutePath)
+                            if (success) {
                                 cacheKeyFile.writeText(currentKey)
-                                AppLogger.d("AdBlockEngine: Binary cache updated")
+                                AppLogger.d("AdBlockEngine: Binary cache file updated")
                             }
-                        } catch (e: Throwable) {
-                            AppLogger.e("AdBlockEngine: Failed to serialize engine ${e.message}")
+                        } catch (t: Throwable) {
+                            AppLogger.e("AdBlockEngine: Serialization to file failed: ${t.message}")
                         }
                     } else {
-                        AppLogger.e("AdBlockEngine: Failed to create engine from rules string")
+                        AppLogger.e("AdBlockEngine: Failed to create engine from files")
                     }
                 } catch (e: Exception) {
-                    AppLogger.e("AdBlockEngine: Error loading rules ${e.message}")
+                    AppLogger.e("AdBlockEngine: loadRules failed: ${e.message}")
                 }
             }
         }
-    }
-
-    private fun buildCombinedRules(
-        enabledLists: List<AdBlockList>,
-        isLocalEnabled: Boolean
-    ): String {
-        val allRules = StringBuilder()
-
-        if (isLocalEnabled) {
-            // Load built-in rules from assets
-            try {
-                val assetRules =
-                    context.assets.open("easyprivacylist.txt").bufferedReader()
-                        .use { it.readText() }
-                allRules.append(assetRules).append("\n")
-            } catch (e: Exception) {
-                AppLogger.e("Failed to load easylist.txt from assets")
-            }
-
-        }
-        // Load custom rules from files
-        enabledLists.forEach { list ->
-            list.localPath?.let { path ->
-                val file = File(path)
-                if (file.exists()) {
-                    try {
-                        allRules.append(file.readText()).append("\n")
-                    } catch (e: Exception) {
-                        AppLogger.e("Failed to read rules from $path")
-                    }
-                }
-            }
-        }
-
-        return allRules.toString()
     }
 
     private fun updateNativePointer(newPtr: Long) {
-        try {
-            pointerLock.writeLock().withLock {
-                val oldPtr = nativeEnginePtr
-                nativeEnginePtr = newPtr
-                if (oldPtr != 0L) {
-                    // Destroying old engine while synchronized ensures no 'isAd'
-                    // calls are currently using it.
-                    native.destroyEngine(oldPtr)
-                }
+        pointerLock.writeLock().withLock {
+            val oldPtr = nativeEnginePtr
+            nativeEnginePtr = newPtr
+            if (oldPtr != 0L) {
+                native.destroyEngine(oldPtr)
             }
-        } catch (e: Throwable) {
-            e.printStackTrace()
         }
     }
 
     private fun generateCacheKey(lists: List<AdBlockList>): String {
-        val sb = StringBuilder("v17:")
+        val sb = StringBuilder("v22:")
         lists.sortedBy { it.id }.forEach {
             sb.append(it.id).append(":").append(it.lastUpdated).append(";")
         }
@@ -173,7 +138,7 @@ class AdBlockEngine @Inject constructor(
             pointerLock.readLock().withLock {
                 if (nativeEnginePtr == 0L) return false
 
-                if (url.length > 2048 || url.startsWith("data:")) {
+                if (url.length > 1024 || url.startsWith("data:")) {
                     return false
                 }
 
@@ -211,10 +176,13 @@ class AdBlockNative {
         }
     }
 
-    external fun serializeEngine(enginePtr: Long): ByteArray
-    external fun createEngineFromBinary(data: ByteArray): Long
-
-    external fun createEngine(rules: String): Long
+    /**
+     * Native methods updated to use File-to-File streaming
+     * This completely bypasses the JVM heap for large data transfers.
+     */
+    external fun serializeEngineToFile(enginePtr: Long, filePath: String): Boolean
+    external fun createEngineFromBinaryFile(filePath: String): Long
+    external fun createEngineFromFiles(filePaths: Array<String>): Long
 
     // Checks if a URL is an ad
     external fun shouldBlock(

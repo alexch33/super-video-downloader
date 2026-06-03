@@ -1,10 +1,12 @@
-use jni::objects::{JClass, JString, JObject, JByteArray};
-use jni::sys::{jboolean, jlong, jbyteArray};
+use jni::objects::{JClass, JString, JObject, JObjectArray};
+use jni::sys::{jboolean, jlong};
 use jni::JNIEnv;
 use adblock::engine::Engine;
 use adblock::request::Request;
 use std::panic;
 use std::sync::RwLock;
+use std::fs::File;
+use std::io::{Read, Write, BufReader};
 
 type SafeEngine = RwLock<Engine>;
 
@@ -14,14 +16,28 @@ fn safe_jstring_to_string(env: &mut JNIEnv, s: JString) -> Option<String> {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblocker_AdBlockNative_createEngine(
-    mut env: JNIEnv, // Remains mut because it is passed as &mut env below
+pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblocker_AdBlockNative_createEngineFromFiles(
+    mut env: JNIEnv,
     _class: JClass,
-    rules: JString,
+    file_paths: JObjectArray,
 ) -> jlong {
     let result = panic::catch_unwind(move || {
-        let rules_str = safe_jstring_to_string(&mut env, rules)?;
-        let rules_list: Vec<String> = rules_str.lines().map(|s| s.to_string()).collect();
+        let len = env.get_array_length(&file_paths).ok()? as usize;
+        let mut rules_list = Vec::new();
+
+        for i in 0..len {
+            let path_obj: JString = env.get_object_array_element(&file_paths, i as i32).ok()?.into();
+            if let Some(path) = safe_jstring_to_string(&mut env, path_obj) {
+                if let Ok(file) = File::open(path) {
+                    let reader = BufReader::new(file);
+                    let content = std::io::read_to_string(reader).ok()?;
+                    for line in content.lines() {
+                        rules_list.push(line.to_string());
+                    }
+                }
+            }
+        }
+
         let engine = Engine::from_rules(&rules_list, Default::default());
         let boxed_engine = Box::new(RwLock::new(engine));
         Some(Box::into_raw(boxed_engine) as jlong)
@@ -30,38 +46,40 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblocker_AdBlockNative_serializeEngine(
-    env: JNIEnv,
+pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblocker_AdBlockNative_serializeEngineToFile(
+    mut env: JNIEnv,
     _class: JClass,
     engine_ptr: jlong,
-) -> jbyteArray {
-    if engine_ptr == 0 { return std::ptr::null_mut(); }
+    file_path: JString,
+) -> jboolean {
+    if engine_ptr == 0 { return 0; }
 
     let result = panic::catch_unwind(move || {
-        let engine_lock = unsafe { &*(engine_ptr as *const SafeEngine) };
+        let path = safe_jstring_to_string(&mut env, file_path)?;
+        let engine_lock = &*(engine_ptr as *const SafeEngine);
         let engine = engine_lock.read().ok()?;
         let bytes = engine.serialize();
 
-        env.byte_array_from_slice(&bytes)
-            .map(|arr| arr.into_raw())
-            .ok()
+        let mut file = File::create(path).ok()?;
+        file.write_all(&bytes).ok()?;
+        Some(1)
     });
-    result.unwrap_or(None).unwrap_or(std::ptr::null_mut())
+    result.ok().flatten().unwrap_or(0)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblocker_AdBlockNative_createEngineFromBinary(
-    env: JNIEnv,
+pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblocker_AdBlockNative_createEngineFromBinaryFile(
+    mut env: JNIEnv,
     _class: JClass,
-    data: jbyteArray,
+    file_path: JString,
 ) -> jlong {
-    if data.is_null() { return 0; }
-
     let result = panic::catch_unwind(move || {
-        let array = unsafe { JByteArray::from_raw(data) };
-        let bytes = env.convert_byte_array(&array).ok()?;
-        let mut engine = Engine::from_rules(&Vec::<String>::new(), Default::default());
+        let path = safe_jstring_to_string(&mut env, file_path)?;
+        let mut file = File::open(path).ok()?;
+        let mut bytes = Vec::new();
+        file.read_to_end(&mut bytes).ok()?;
 
+        let mut engine = Engine::from_rules(&Vec::<String>::new(), Default::default());
         if engine.deserialize(&bytes).is_ok() {
             let boxed_engine = Box::new(RwLock::new(engine));
             Some(Box::into_raw(boxed_engine) as jlong)
@@ -74,7 +92,7 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
 
 #[no_mangle]
 pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblocker_AdBlockNative_shouldBlock(
-    mut env: JNIEnv, // Remains mut because it is passed as &mut env below
+    mut env: JNIEnv,
     _class: JClass,
     engine_ptr: jlong,
     url: JString,
@@ -86,9 +104,7 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
         if env.push_local_frame(16).is_err() { return 0; }
         let block = (|| -> Option<u8> {
             let engine_lock = &*(engine_ptr as *const SafeEngine);
-
-            // Using write() to prevent the BorrowMutError from the adblock-rust internal cache
-            let engine = engine_lock.write().ok()?; 
+            let engine = engine_lock.write().ok()?;
             
             let url_str = safe_jstring_to_string(&mut env, url)?;
             let source_str = safe_jstring_to_string(&mut env, source_url).unwrap_or_default();

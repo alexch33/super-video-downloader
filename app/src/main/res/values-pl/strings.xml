@@ -143,4 +143,20 @@
     <string name="download_success">Sukces!!!</string>
     <string name="browser_tab">Przeglądarka</string>
     <string name="download_pending">Oczekiwanie</string>
+    <string name="queue_downloads_size">Rozmiar kolejki pobierania:</string>
+    <string name="progress_menu_stop_and_save">Zatrzymaj i zapisz</string>
+    <string name="select_all">Zaznacz wszystko</string>
+    <string name="delete">Usuń</string>
+    <string name="adblock_lists_title">Listy AdBlockera</string>
+    <string name="add_adblock_list">Dodaj listę AdBlock</string>
+    <string name="list_name">Nazwa listy</string>
+    <string name="url">Adres URL</string>
+    <string name="download_update">Pobierz/Zaktualizuj</string>
+    <string name="builtin_list">Wbudowana lista</string>
+    <string name="add">Dodaj</string>
+    <string name="add_custom_list">Dodaj niestandardową listę</string>
+    <string name="downloading_rules">Pobieranie reguł...</string>
+    <string name="built_in_list">Wbudowana lista</string>
+    <string name="not_downloaded">Nie pobrano</string>
+    <string name="last_updated">Ostatnio zaktualizowano</string>
 </resources>

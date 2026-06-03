@@ -145,14 +145,18 @@ class AdBlockEngine @Inject constructor(
     }
 
     private fun updateNativePointer(newPtr: Long) {
-        pointerLock.writeLock().withLock{
-            val oldPtr = nativeEnginePtr
-            nativeEnginePtr = newPtr
-            if (oldPtr != 0L) {
-                // Destroying old engine while synchronized ensures no 'isAd' 
-                // calls are currently using it.
-                native.destroyEngine(oldPtr)
+        try {
+            pointerLock.writeLock().withLock {
+                val oldPtr = nativeEnginePtr
+                nativeEnginePtr = newPtr
+                if (oldPtr != 0L) {
+                    // Destroying old engine while synchronized ensures no 'isAd'
+                    // calls are currently using it.
+                    native.destroyEngine(oldPtr)
+                }
             }
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
     }
 
@@ -165,28 +169,37 @@ class AdBlockEngine @Inject constructor(
     }
 
     fun isAd(url: String, sourceUrl: String = "", resourceType: String = "other"): Boolean {
-        return pointerLock.readLock().withLock {
-            if (nativeEnginePtr == 0L) return false
+        return try {
+            pointerLock.readLock().withLock {
+                if (nativeEnginePtr == 0L) return false
 
-            if (url.length > 2048 || url.startsWith("data:")) {
-                return false
+                if (url.length > 2048 || url.startsWith("data:")) {
+                    return false
+                }
+
+                native.shouldBlock(
+                    nativeEnginePtr,
+                    url,
+                    sourceUrl,
+                    resourceType
+                )
             }
-
-            native.shouldBlock(
-                nativeEnginePtr,
-                url,
-                sourceUrl,
-                resourceType
-            )
+        } catch (e: Throwable) {
+            AppLogger.e("ADBLOCK ENGINE ERROR: ${e.message}")
+            false
         }
     }
 
     protected fun finalize() {
-        synchronized(this) {
-            if (nativeEnginePtr != 0L) {
-                native.destroyEngine(nativeEnginePtr)
-                nativeEnginePtr = 0L
+        try {
+            pointerLock.writeLock().withLock {
+                if (nativeEnginePtr != 0L) {
+                    native.destroyEngine(nativeEnginePtr)
+                    nativeEnginePtr = 0L
+                }
             }
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
     }
 }

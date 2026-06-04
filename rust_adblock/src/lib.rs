@@ -30,9 +30,12 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
             if let Some(path) = safe_jstring_to_string(&mut env, path_obj) {
                 if let Ok(file) = File::open(path) {
                     let reader = BufReader::new(file);
-                    let content = std::io::read_to_string(reader).ok()?;
-                    for line in content.lines() {
-                        rules_list.push(line.to_string());
+                    let mut content = String::new();
+                    let mut reader = reader;
+                    if reader.read_to_string(&mut content).is_ok() {
+                        for line in content.lines() {
+                            rules_list.push(line.to_string());
+                        }
                     }
                 }
             }

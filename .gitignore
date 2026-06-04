@@ -8,3 +8,6 @@ release/
 captures/*
 .externalNativeBuild
 /app/libs/libv2ray*
+
+!rust_adblock/vendor/
+!rust_adblock/.cargo/

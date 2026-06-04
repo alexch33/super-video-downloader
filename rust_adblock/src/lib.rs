@@ -7,10 +7,11 @@ use std::panic;
 use std::sync::RwLock;
 use std::fs::File;
 use std::io::{Read, Write, BufReader};
+use std::io::BufRead;
 
 type SafeEngine = RwLock<Engine>;
 
-fn safe_jstring_to_string(env: &mut JNIEnv, s: JString) -> Option<String> {
+fn safe_jstring_to_string(env: &mut JNIEnv, s: &JString) -> Option<String> {
     if s.is_null() { return None; }
     env.get_string(&s).ok().map(|js| js.into())
 }
@@ -21,22 +22,21 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
     _class: JClass,
     file_paths: JObjectArray,
 ) -> jlong {
-    let result = panic::catch_unwind(move || {
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(move || {
         let len = env.get_array_length(&file_paths).ok()? as usize;
-        let mut rules_list = Vec::new();
+        let mut rules_list = Vec::with_capacity(150_000);
 
         for i in 0..len {
-            let path_obj: JString = env.get_object_array_element(&file_paths, i as i32).ok()?.into();
-            if let Some(path) = safe_jstring_to_string(&mut env, path_obj) {
+            let obj = env.get_object_array_element(&file_paths, i as i32).ok()?;
+            let path_obj = JString::from(obj);
+            if let Some(path) = safe_jstring_to_string(&mut env, &path_obj) {
                 if let Ok(file) = File::open(path) {
                     let reader = BufReader::new(file);
-                    let mut content = String::new();
-                    let mut reader = reader;
-                    if reader.read_to_string(&mut content).is_ok() {
-                        for line in content.lines() {
-                            rules_list.push(line.to_string());
-                        }
-                    }
+                    for line in reader.lines() {
+                      if let Ok(line) = line {
+                           rules_list.push(line);
+                      }
+                   }
                 }
             }
         }
@@ -44,7 +44,7 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
         let engine = Engine::from_rules(&rules_list, Default::default());
         let boxed_engine = Box::new(RwLock::new(engine));
         Some(Box::into_raw(boxed_engine) as jlong)
-    });
+    }));
     result.ok().flatten().unwrap_or(0)
 }
 
@@ -57,8 +57,8 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
 ) -> jboolean {
     if engine_ptr == 0 { return 0; }
 
-    let result = panic::catch_unwind(move || {
-        let path = safe_jstring_to_string(&mut env, file_path)?;
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(move || {
+        let path = safe_jstring_to_string(&mut env, &file_path)?;
         let engine_lock = &*(engine_ptr as *const SafeEngine);
         let engine = engine_lock.read().ok()?;
         let bytes = engine.serialize();
@@ -66,7 +66,7 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
         let mut file = File::create(path).ok()?;
         file.write_all(&bytes).ok()?;
         Some(1)
-    });
+    }));
     result.ok().flatten().unwrap_or(0)
 }
 
@@ -76,8 +76,8 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
     _class: JClass,
     file_path: JString,
 ) -> jlong {
-    let result = panic::catch_unwind(move || {
-        let path = safe_jstring_to_string(&mut env, file_path)?;
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(move || {
+        let path = safe_jstring_to_string(&mut env, &file_path)?;
         let mut file = File::open(path).ok()?;
         let mut bytes = Vec::new();
         file.read_to_end(&mut bytes).ok()?;
@@ -89,7 +89,7 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
         } else {
             None
         }
-    });
+    }));
     result.ok().flatten().unwrap_or(0)
 }
 
@@ -103,15 +103,15 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
     resource_type: JString,
 ) -> jboolean {
     if engine_ptr == 0 { return 0; }
-    let panic_result = panic::catch_unwind(move || {
+    let panic_result = panic::catch_unwind(panic::AssertUnwindSafe(move || {
         if env.push_local_frame(16).is_err() { return 0; }
         let block = (|| -> Option<u8> {
             let engine_lock = &*(engine_ptr as *const SafeEngine);
             let engine = engine_lock.write().ok()?;
             
-            let url_str = safe_jstring_to_string(&mut env, url)?;
-            let source_str = safe_jstring_to_string(&mut env, source_url).unwrap_or_default();
-            let type_str = safe_jstring_to_string(&mut env, resource_type).unwrap_or_else(|| "other".to_string());
+            let url_str = safe_jstring_to_string(&mut env, &url)?;
+            let source_str = safe_jstring_to_string(&mut env, &source_url).unwrap_or_default();
+            let type_str = safe_jstring_to_string(&mut env, &resource_type).unwrap_or_else(|| "other".to_string());
             let request = Request::new(&url_str, &source_str, &type_str).ok()?;
             
             if engine.check_network_request(&request).matched { Some(1) } else { Some(0) }
@@ -119,7 +119,7 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
         let final_out = block.unwrap_or(0);
         let _ = env.pop_local_frame(&JObject::null());
         final_out
-    });
+    }));
     match panic_result {
         Ok(v) => v as jboolean,
         Err(_) => 0,
@@ -133,8 +133,8 @@ pub unsafe extern "C" fn Java_com_myAllVideoBrowser_ui_main_home_browser_adblock
     engine_ptr: jlong,
 ) {
     if engine_ptr != 0 {
-        let _ = panic::catch_unwind(move || {
+        let _ = panic::catch_unwind(panic::AssertUnwindSafe(move || {
             let _ = Box::from_raw(engine_ptr as *mut SafeEngine);
-        });
+        }));
     }
 }

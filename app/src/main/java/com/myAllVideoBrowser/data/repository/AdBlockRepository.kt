@@ -43,7 +43,7 @@ class AdBlockRepository @Inject constructor(
                 AdBlockList(
                     name = "EasyList",
                     url = "https://easylist.to/easylist/easylist.txt",
-                    isEnabled = false,
+                    isEnabled = true,
                     isDownloaded = false
                 ),
                 AdBlockList(

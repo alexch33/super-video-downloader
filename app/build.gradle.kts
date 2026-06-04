@@ -115,8 +115,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 294
-        versionName = "0.8.20.1"
+        versionCode = 298
+        versionName = "0.8.20.2"
 
         if (splitApks) {
             splits {
@@ -346,6 +346,9 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
     description = "Compiles Rust Adblock library for all Android targets"
 
     doLast {
+        val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
+        val executableSuffix = if (isWindows) ".exe" else ""
+
         val toolchainPath = "${ndkPath}/toolchains/llvm/prebuilt/${ndkPrebuiltFolder}/bin"
         val apiLevel = "24"
 
@@ -355,9 +358,9 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
             // NDK 27 Fix: armeabi-v7a clang binary is named 'armv7a-...'
             // but the Rust target is 'armv7-...'
             val linkerBinary = if (arch.abi == "armeabi-v7a") {
-                "armv7a-linux-androideabi$apiLevel-clang"
+                "armv7a-linux-androideabi$apiLevel-clang$executableSuffix"
             } else {
-                "${arch.target}$apiLevel-clang"
+                "${arch.target}$apiLevel-clang$executableSuffix"
             }
 
             val linkerPath = "$toolchainPath/$linkerBinary"
@@ -369,15 +372,25 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
             execOps.exec {
                 workingDir = rustProjectDir
 
+                val cargoCmd = if (isWindows) "cargo.exe" else "cargo"
+
                 // Map the Rust target name to the Cargo Linker environment variable
                 val envVar = "CARGO_TARGET_${arch.rustTarget.uppercase().replace("-", "_")}_LINKER"
-
                 environment(envVar, linkerPath)
-                environment("PATH", "$toolchainPath:${System.getenv("PATH")}")
+
+                val pathSeparator = if (isWindows) ";" else ":"
+                environment("PATH", "$toolchainPath$pathSeparator${System.getenv("PATH")}")
 
                 environment("RUSTFLAGS", "-C link-arg=-z -C link-arg=max-page-size=16384")
 
-                commandLine("cargo", "build", "--target", arch.rustTarget, "--release")
+                commandLine(
+                    cargoCmd,
+                    "build",
+                    "--offline",
+                    "--target",
+                    arch.rustTarget,
+                    "--release"
+                )
             }
 
             // Copy the compiled .so to jniLibs

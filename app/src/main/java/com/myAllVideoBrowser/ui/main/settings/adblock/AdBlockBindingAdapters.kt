@@ -14,7 +14,7 @@ object AdBlockBindingAdapters {
     fun setAdBlockStatus(view: TextView, list: AdBlockList?) {
         list ?: return
         if (list.url == null) {
-            view.text = view.context.getString(R.string.built_in_list)
+            view.text = view.context.getString(R.string.builtin_list)
             view.setTextColor(
                 MaterialColors.getColor(
                     view,

@@ -57,7 +57,6 @@
     <string name="new_tab">New Tab</string>
     <string name="cookies_cleared">Cookies cleared</string>
     <string name="download_started">   Video Download Started Successfully!!!   </string>
-    <string name="more_tabs_in_next_updates">More tabs will be allowed in next updates</string>
     <string name="download_open_in_app">Open in App</string>
     <string name="download_watch_in_app">Watch Video</string>
     <string name="ad_blocker">Ad Blocker</string>
@@ -169,7 +168,6 @@
     <string name="tabs">Tabs</string>
     <string name="add_custom_list">Add custom list</string>
     <string name="downloading_rules">Downloading Rules...</string>
-    <string name="built_in_list">Built-in list</string>
     <string name="not_downloaded">Not downloaded</string>
     <string name="last_updated">Last updated</string>
 </resources>

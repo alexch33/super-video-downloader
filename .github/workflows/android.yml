@@ -46,6 +46,8 @@ jobs:
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "rust_adblock"
 
       - name: Decode and Save Keystore
         run: |

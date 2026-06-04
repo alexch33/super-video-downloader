@@ -85,7 +85,6 @@
     <string name="add_http_proxy">Dodaj serwer proxy http</string>
     <string name="loading_image_view">Ładowanie widoku obrazu</string>
     <string name="download_started">Pobieranie wideo rozpoczęło się pomyślnie!!!</string>
-    <string name="more_tabs_in_next_updates">Większa liczba kart będzie dostępna w kolejnych aktualizacjach</string>
     <string name="show_video_found_alert">Pokaż okno dialogowe pobierania wideo</string>
     <string name="show_action_button">Pokaż przycisk pobierania wideo</string>
     <string name="browser_s_icon">Ikona przeglądarki</string>

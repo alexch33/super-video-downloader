@@ -151,4 +151,15 @@
     <string name="select_all">全选</string>
     <string name="delete">删除</string>
     <string name="stop_and_save_message">按下停止并保存来停止下载并随时保存已下载内容…！</string>
+    <string name="adblock_lists_title">广告拦截列表</string>
+    <string name="add_adblock_list">添加广告拦截列表</string>
+    <string name="list_name">列表名</string>
+    <string name="url">URL</string>
+    <string name="download_update">下载/更新</string>
+    <string name="builtin_list">内置列表</string>
+    <string name="add">添加</string>
+    <string name="add_custom_list">添加自定义列表</string>
+    <string name="downloading_rules">正在下载规则…</string>
+    <string name="not_downloaded">未下载</string>
+    <string name="last_updated">上次更新</string>
 </resources>

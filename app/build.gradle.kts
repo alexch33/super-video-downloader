@@ -372,14 +372,25 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
             execOps.exec {
                 workingDir = rustProjectDir
 
-                val cargoCmd = if (isWindows) "cargo.exe" else "cargo"
+                val cargoCmd = if (isWindows) {
+                    "${System.getenv("USERPROFILE")}\\.cargo\\bin\\cargo.exe"
+                } else {
+                    "${System.getenv("HOME")}/.cargo/bin/cargo"
+                }
 
                 // Map the Rust target name to the Cargo Linker environment variable
                 val envVar = "CARGO_TARGET_${arch.rustTarget.uppercase().replace("-", "_")}_LINKER"
                 environment(envVar, linkerPath)
 
                 val pathSeparator = if (isWindows) ";" else ":"
-                environment("PATH", "$toolchainPath$pathSeparator${System.getenv("PATH")}")
+                environment(
+                    "PATH",
+                    "${System.getenv("HOME")}/.cargo/bin$pathSeparator$toolchainPath$pathSeparator${
+                        System.getenv(
+                            "PATH"
+                        )
+                    }"
+                )
 
                 environment("RUSTFLAGS", "-C link-arg=-z -C link-arg=max-page-size=16384")
 

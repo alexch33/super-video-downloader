@@ -46,6 +46,8 @@ jobs:
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "rust_adblock"
 
       - name: Decode and Save Keystore
         run: |
@@ -54,9 +56,6 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
-      - name: Build with Gradle
-        run: ./gradlew build --info
 
       - name: Build Signed APKs
         run: ./gradlew assembleRelease --info

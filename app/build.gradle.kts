@@ -521,7 +521,7 @@ data class ArchConfig(
     val abi: String,
     val goArch: String,
     val target: String,
-    val rustTarget: String // Add this
+    val rustTarget: String
 )
 
 val archConfigs = listOf(

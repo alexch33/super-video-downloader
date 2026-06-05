@@ -383,14 +383,19 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
                 environment(envVar, linkerPath)
 
                 val pathSeparator = if (isWindows) ";" else ":"
+                val cargoBin =
+                    if (isWindows) "${System.getenv("USERPROFILE")}\\.cargo\\bin" else "${
+                        System.getenv("HOME")
+                    }/.cargo/bin"
+
                 environment(
                     "PATH",
-                    "${System.getenv("HOME")}/.cargo/bin$pathSeparator$toolchainPath$pathSeparator${
-                        System.getenv(
-                            "PATH"
-                        )
-                    }"
+                    "$cargoBin$pathSeparator$toolchainPath$pathSeparator${System.getenv("PATH")}"
                 )
+
+                if (!isWindows) {
+                    environment("CC", "gcc")
+                }
 
                 environment("RUSTFLAGS", "-C link-arg=-z -C link-arg=max-page-size=16384")
 

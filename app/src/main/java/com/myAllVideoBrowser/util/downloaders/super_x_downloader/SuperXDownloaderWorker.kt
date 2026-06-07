@@ -56,7 +56,11 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
     override fun handleAction(
         action: String, task: VideoTaskItem, headers: Map<String, String>, isFileRemove: Boolean
     ) {
-        taskId = task.mId ?: inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)!!
+        val taskIdFromInput = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
+        taskId = task.mId ?: taskIdFromInput ?: run {
+            failWork("SuperXDownloaderWorker: Task ID is missing")
+            return
+        }
         val downloadDir = fileUtil.tmpDir.resolve(taskId)
 
         val controller = FileBasedDownloadController(downloadDir)

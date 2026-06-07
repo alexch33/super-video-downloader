@@ -152,7 +152,10 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
     private fun startDownload(
         task: VideoTaskItem, isContinue: Boolean = false
     ) {
-        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)!!
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY) ?: run {
+            failWork("YoutubeDlDownloaderWorker: TASK_ID_KEY is missing")
+            return
+        }
 
         val vFormat = deserializeVideoFormat(taskId)
 
@@ -161,7 +164,10 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
          **/
         val url = inputData.getString(
             GenericDownloader.Constants.ORIGIN_KEY
-        ) ?: throw Throwable("URL is NULL")
+        ) ?: run {
+            failWork("YoutubeDlDownloaderWorker: ORIGIN_KEY is missing")
+            return
+        }
 
         AppLogger.d("Start download dl:  ${vFormat.formatId} $url $task")
 

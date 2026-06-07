@@ -190,6 +190,18 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
     private fun setWorkContinuation(continuation: Continuation<Result>) {
         this.continuation = continuation
     }
+
+    protected fun failWork(message: String) {
+        AppLogger.e(message)
+        try {
+            if (!getDone()) {
+                setDone()
+                getContinuation().resume(Result.failure())
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
+    }
 }
 
 // info field overrides infoLine for VideoTaskItem

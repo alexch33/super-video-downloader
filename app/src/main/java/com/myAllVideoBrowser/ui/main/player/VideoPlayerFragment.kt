@@ -3,8 +3,6 @@ package com.myAllVideoBrowser.ui.main.player
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.res.Configuration
-import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
@@ -37,6 +35,7 @@ import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import javax.inject.Inject
+import androidx.core.net.toUri
 
 
 @UnstableApi
@@ -71,6 +70,8 @@ class VideoPlayerFragment : BaseFragment() {
     ): View {
         videoPlayerViewModel =
             ViewModelProvider(this, viewModelFactory)[VideoPlayerViewModel::class.java]
+        dataBinding = FragmentPlayerBinding.inflate(inflater, container, false)
+
         arguments?.getString(VIDEO_HEADERS)?.let { rawHeaders ->
             try {
                 val headers =
@@ -78,17 +79,31 @@ class VideoPlayerFragment : BaseFragment() {
                         value.toString().removeSurrounding("\"")
                     }
                 videoPlayerViewModel.videoHeaders.set(headers)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 videoPlayerViewModel.videoHeaders.set(emptyMap())
             }
         }
         arguments?.getString(VIDEO_NAME)?.let { videoPlayerViewModel.videoName.set(it) }
 
-        val iUrl = Uri.parse(arguments?.getString(VIDEO_URL))
-
-        if (iUrl != null) {
-            videoPlayerViewModel.videoUrl.set(iUrl)
+        val videoUrlStr = arguments?.getString(VIDEO_URL)
+        if (videoUrlStr.isNullOrEmpty()) {
+            Toast.makeText(context, "Invalid Video URL", Toast.LENGTH_SHORT).show()
+            handleClose()
+            return dataBinding.root
         }
+
+        val iUrl = try {
+            val parsedUri = videoUrlStr.toUri()
+            if (parsedUri.scheme == null) {
+                throw Exception("Invalid URI scheme")
+            }
+            parsedUri
+        } catch (_: Exception) {
+            Toast.makeText(context, "Malformed Video URL", Toast.LENGTH_SHORT).show()
+            handleClose()
+            return dataBinding.root
+        }
+        videoPlayerViewModel.videoUrl.set(iUrl)
 
         val url = videoPlayerViewModel.videoUrl.get() ?: Uri.EMPTY
         // The "Cookie" header will be passed here, but OkHttp using CookieJar
@@ -101,7 +116,7 @@ class VideoPlayerFragment : BaseFragment() {
             .setMediaSourceFactory(mediaFactory)
             .build()
 
-        dataBinding = FragmentPlayerBinding.inflate(inflater, container, false).apply {
+        dataBinding.apply {
             val currentBinding = this
 
             currentBinding.viewModel = videoPlayerViewModel
@@ -138,10 +153,17 @@ class VideoPlayerFragment : BaseFragment() {
                 }
             })
 
-            val mediaItem: MediaItem = MediaItem.fromUri(url)
-            player.setMediaItem(mediaItem)
-            player.prepare()
-            player.playWhenReady = true
+            if (url != Uri.EMPTY) {
+                try {
+                    val mediaItem: MediaItem = MediaItem.fromUri(url)
+                    player.setMediaItem(mediaItem)
+                    player.prepare()
+                    player.playWhenReady = true
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Error loading video: ${e.message}", Toast.LENGTH_LONG).show()
+                    handleClose()
+                }
+            }
         }
 
         return dataBinding.root

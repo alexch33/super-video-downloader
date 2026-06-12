@@ -278,7 +278,10 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
     private fun startDownload(taskItem: VideoTaskItem, headers: Map<String, String>) {
         AppLogger.d("Start download regular: $taskItem headers: $headers")
-        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)!!
+        val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY) ?: run {
+            failWork("CustomRegularDownloaderWorker: TASK_ID_KEY is missing")
+            return
+        }
         val url = taskItem.url
         showProgress(taskItem.also { it.mId = taskId }, progressCached)
 
@@ -434,8 +437,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
     private fun cancelTask(task: VideoTaskItem) {
         val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
         if (taskId == null) {
-            finishWorkWithFailureTaskId(task)
-
+            failWork("SMTH WRONG, taskId is NULL in cancelTask $task")
             return
         }
 
@@ -449,8 +451,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
 
         if (taskId == null) {
-            finishWorkWithFailureTaskId(task)
-
+            failWork("SMTH WRONG, taskId is NULL in pauseTask $task")
             return
         }
 
@@ -462,7 +463,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
     private fun stopAndSave(task: VideoTaskItem) {
         val taskId = inputData.getString(GenericDownloader.Constants.TASK_ID_KEY)
-            ?: return finishWorkWithFailureTaskId(task)
+            ?: return failWork("SMTH WRONG, taskId is NULL in stopAndSave $task")
 
         val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(task.fileName).name)
         outputFileName = tmpFile.path
@@ -568,14 +569,5 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             }
         }
         return fixedHeaders
-    }
-
-    private fun finishWorkWithFailureTaskId(task: VideoTaskItem) {
-        AppLogger.d("SMTH WRONG, taskId is NULL  $task")
-        try {
-            getContinuation().resume(Result.failure())
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
     }
 }

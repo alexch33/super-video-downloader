@@ -84,6 +84,16 @@ To build this project, you need the following tools installed:
    ```bash
    rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
    ```
+5. **C/C++ Build Tools**:
+   - **Linux**: `sudo apt install build-essential`
+   - **macOS**: `xcode-select --install`
+   - **Windows**: Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (Select "Desktop development with C++")
+     also
+       ensure the following individual components are checked:
+       ◦
+       MSVC v143 - VS 2022 C++ x64/x86 build tools (or latest)
+       ◦
+       Windows 11 SDK (or Windows 10 SDK)
 
 ### Build Commands
 

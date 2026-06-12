@@ -30,6 +30,10 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
         super.onReceive(context, intent)
 
         val taskId = intent.extras?.getString(TASK_ID)
+        if (taskId.isNullOrEmpty()) {
+            AppLogger.e("NotificationReceiver: taskId is null or empty")
+            return
+        }
         receiverScope.launch {
             val progressInfo = progressRepository.getProgressInfos().blockingFirst()
                 .firstOrNull { it.id == taskId }

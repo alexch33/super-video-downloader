@@ -31,7 +31,7 @@ import java.security.Security
 import javax.inject.Inject
 
 
-open class DLApplication : DaggerApplication() {
+open class DLApplication : DaggerApplication(), Configuration.Provider {
     companion object {
         const val DEBUG_TAG: String = "YOUTUBE_DL_DEBUG_TAG"
     }
@@ -50,6 +50,11 @@ open class DLApplication : DaggerApplication() {
 
     @Inject
     lateinit var adBlockEngine: AdBlockEngine
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 
     private lateinit var appComponent: AndroidInjector<DLApplication>
 
@@ -76,7 +81,6 @@ open class DLApplication : DaggerApplication() {
         initializeFileUtils()
 
         val file: File = fileUtil.folderDir
-        val ctx = applicationContext
 
         MMKV.initialize(this)
 
@@ -88,10 +92,6 @@ open class DLApplication : DaggerApplication() {
         } catch (e: Throwable) {
             AppLogger.e("Failed to insert Conscrypt provider: ${e.message}")
         }
-
-        WorkManager.initialize(
-            ctx, Configuration.Builder().setWorkerFactory(workerFactory).build()
-        )
 
         RxJavaPlugins.setErrorHandler { error: Throwable? ->
             AppLogger.e("RxJavaError unhandled $error")

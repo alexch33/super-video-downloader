@@ -13,7 +13,7 @@ class RoomConverter {
     fun convertJsonToVideo(json: String): VideoInfo? {
         return try {
             gson.fromJson(json, VideoInfo::class.java)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             null
         }
     }

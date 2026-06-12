@@ -286,7 +286,7 @@ object HlsPlaylistParser {
 
                 line.startsWith("#EXT-X-PLAYLIST-TYPE") -> playlistType = try {
                     PlaylistType.valueOf(line.substringAfter(':'))
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     null
                 }
 

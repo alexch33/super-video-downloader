@@ -190,7 +190,7 @@ class FileUtil @Inject constructor() {
                     } else {
                         copyAndDeleteWithLock(fromFile, toFile)
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     AppLogger.e("Move failed: ${e.message}")
                     false
                 }
@@ -229,7 +229,7 @@ class FileUtil @Inject constructor() {
                 }
             }
             sourceFile.delete()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             AppLogger.e("Manual copy/delete failed: ${e.message}")
             false
         }
@@ -300,7 +300,7 @@ class FileUtil @Inject constructor() {
             context.contentResolver.openInputStream(uri)?.close()
         } catch (e: FileNotFoundException) {
             return false
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Handle other exceptions as needed
         }
 
@@ -343,7 +343,7 @@ class FileUtil @Inject constructor() {
                 fileLock.release()
                 randomAccessFile.close()
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
             AppLogger.d(e.message.toString())
             return false
@@ -615,7 +615,7 @@ class FileUtil @Inject constructor() {
                     fileLock.release()
                     randomAccessFile.close()
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 e.printStackTrace()
                 AppLogger.d("Source move error $sourceFile $e")
                 false
@@ -665,7 +665,7 @@ class FileUtil @Inject constructor() {
                 arrayOf(mimeType),
                 null
             )
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             AppLogger.e("Error triggering media scan ${e.message}")
         }
     }

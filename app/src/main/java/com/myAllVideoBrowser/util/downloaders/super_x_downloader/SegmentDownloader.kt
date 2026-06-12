@@ -48,7 +48,7 @@ class SegmentDownloader(
             return outputFile.length()
         }
 
-        var lastException: Exception? = null
+        var lastException: Throwable? = null
         for (attempt in 1..RETRY_COUNT) {
             // Check for interruption before every attempt
             if (controller.isInterrupted()) {
@@ -74,7 +74,7 @@ class SegmentDownloader(
                     onProgress?.invoke(bytesCopied)
                     return bytesCopied // Success, return the size
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 if (e is CancellationException) throw e
 
                 lastException = e

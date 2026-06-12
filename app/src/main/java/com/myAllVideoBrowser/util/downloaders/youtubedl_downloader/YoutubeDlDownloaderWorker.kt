@@ -711,7 +711,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             } else {
                 getContinuation().resume(Result.success())
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
         }
     }

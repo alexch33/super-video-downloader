@@ -223,7 +223,7 @@ object DownloaderUtils {
                     response.body.use { keyFile.writeBytes(it.bytes()) }
                     AppLogger.d("HLS: Encryption key downloaded to ${keyFile.absolutePath}")
                 }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             throw IOException(
                 "Failed to download HLS encryption key: ${e.message}",
                 e
@@ -316,7 +316,7 @@ object DownloaderUtils {
                     }
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             throw IOException(
                 "Failed to create concatenated fMP4 file for $prefix: ${e.message}",
                 e

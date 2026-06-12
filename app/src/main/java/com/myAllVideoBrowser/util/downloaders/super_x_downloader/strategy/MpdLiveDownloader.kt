@@ -44,7 +44,7 @@ class MpdLiveDownloader(
         onProgress: (progress: Progress) -> Unit
     ): File {
         return withContext(Dispatchers.IO) {
-            var downloadException: Exception? = null
+            var downloadException: Throwable? = null
             var totalBytesDownloaded = 0L
             lateinit var finalOutputFile: File
 
@@ -133,7 +133,7 @@ class MpdLiveDownloader(
                     throw CancellationException("Recording stopped by user.")
                 }
 
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 downloadException = e
                 AppLogger.w("MPD (Live): Exception in recording loop: ${e.message}. Attempting to save captured segments.")
             } finally {

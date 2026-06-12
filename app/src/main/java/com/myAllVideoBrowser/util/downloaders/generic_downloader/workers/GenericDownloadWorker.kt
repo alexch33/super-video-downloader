@@ -127,7 +127,7 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
             } catch (e: IOException) {
                 AppLogger.e("Download error:- $e")
                 continuation.resume(Result.failure())
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 AppLogger.e("Unexpected error: $e")
                 continuation.resume(Result.failure())
             }
@@ -153,7 +153,7 @@ abstract class GenericDownloadWorker(appContext: Context, workerParams: WorkerPa
                     )
 
                 Gson().fromJson(decodedHeaders, Map::class.java) as Map<String, String>
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 emptyMap()
             }
         } ?: emptyMap()

@@ -336,7 +336,7 @@ class VideoFragment : BaseFragment() {
                                     if (isSuccess) R.string.media_move_success else R.string.media_move_error
                                 Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
                             }
-                        } catch (e: Exception) {
+                        } catch (e: Throwable) {
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(
                                     requireContext(),
@@ -379,7 +379,7 @@ class VideoFragment : BaseFragment() {
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             val videoParentDir = video.uri.toFile().parentFile
             videoParentDir != null && videoParentDir.absolutePath != downloadsDir.absolutePath
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             false
         }
     }
@@ -398,7 +398,7 @@ class VideoFragment : BaseFragment() {
                         localVideo.uri.toFile()
                     )
                     intent.setDataAndType(videoUri, "video/mp4")
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     intent.setDataAndType(localVideo.uri, "video/mp4")
                 }
             } else {

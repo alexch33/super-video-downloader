@@ -176,7 +176,7 @@ object ProxyManager {
                     Log.i(TAG, "Proxy port $port is verified active.")
                     return true
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Thread.sleep(50)
             }
         }

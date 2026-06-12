@@ -159,7 +159,7 @@ class VideoPlayerFragment : BaseFragment() {
                     player.setMediaItem(mediaItem)
                     player.prepare()
                     player.playWhenReady = true
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Toast.makeText(context, "Error loading video: ${e.message}", Toast.LENGTH_LONG).show()
                     handleClose()
                 }

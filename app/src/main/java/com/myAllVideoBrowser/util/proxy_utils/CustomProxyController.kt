@@ -90,7 +90,7 @@ class CustomProxyController @Inject constructor(
             if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
                 try {
                     ProxyController.getInstance().setProxyOverride(proxyConfig, { }) {}
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     AppLogger.d("ERROR SETTING PROXY: $e")
                 }
             }

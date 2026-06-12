@@ -65,7 +65,7 @@ class FfmpegProcessor private constructor() {
             AppLogger.d("$TAG: Bypassing MediaInformationSession to directly process potentially corrupt file.")
             resultUri =
                 executeProcessing(inputFile, outputFile, isFlv, isAudioOnly, 0.0, onProgress)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             AppLogger.e("$TAG: Exception during executeProcessing call. ${e.message} ${e.printStackTrace()}")
             resultUri = null
         } finally {

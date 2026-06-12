@@ -363,7 +363,7 @@ class ChromeBrowser : Browser() {
                         }
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 AppLogger.d("Cookie extraction error: ${e.message}")
             } finally {
                 if (!cookieStoreCopy.delete()) {

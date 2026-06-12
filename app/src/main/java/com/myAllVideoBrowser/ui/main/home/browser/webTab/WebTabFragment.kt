@@ -665,7 +665,7 @@ class WebTabFragment : BaseWebTabFragment() {
             val getWebViewClientMethod = WebView::class.java.getMethod("getWebViewClient")
             val client = getWebViewClientMethod.invoke(webView) as? CustomWebViewClient
             client
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             e.printStackTrace()
             null
         }

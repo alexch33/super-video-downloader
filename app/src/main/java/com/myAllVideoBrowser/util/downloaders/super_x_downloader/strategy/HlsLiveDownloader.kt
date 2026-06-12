@@ -51,7 +51,7 @@ class HlsLiveDownloader(
             var firstAudioSegment: HlsPlaylistParser.UrlMediaSegment? = null
 
             var totalBytesDownloaded = 0L
-            var downloadException: Exception? = null
+            var downloadException: Throwable? = null
 
             val extension = if (isAudioOnlyExtract) "mp3" else "mp4"
             lateinit var finalOutputFile: File
@@ -166,7 +166,7 @@ class HlsLiveDownloader(
                     controller.isPauseRequested() -> throw CancellationException("Download was paused.")
                 }
 
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 downloadException = e
                 AppLogger.w("HLS (Live): Exception caught during download loop: ${e.message}. Attempting to save partial file.")
                 e.printStackTrace()

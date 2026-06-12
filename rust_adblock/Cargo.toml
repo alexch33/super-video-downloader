@@ -10,3 +10,11 @@ crate-type = ["cdylib"] # for .so generation
 [dependencies]
 adblock = "0.12.5" # Brave's engine
 jni = "0.21.1"    # JNI bindings for Rust
+
+[profile.release]
+strip = "symbols"     # Use Rust's built-in stripper for consistency
+opt-level = "z"       # Or "3", but keep it consistent
+lto = true            # Link Time Optimization helps consistency
+codegen-units = 1     # Ensures deterministic code generation
+debug = false
+panic = "abort"

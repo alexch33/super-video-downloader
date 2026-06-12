@@ -337,7 +337,7 @@ tasks.named("coveralls") {
 // =========================================================================
 // RUST ADBLOCK BUILD SETUP (Multi-Architecture)
 // =========================================================================
-val rustProjectDir = file("${project.rootDir}/rust_adblock") // Adjust path to your rust folder
+val rustProjectDir = file("${project.rootDir}/rust_adblock")
 
 val jniLibsDir = file("src/main/jniLibs")
 
@@ -398,7 +398,10 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
                 }
 
                 environment("RUSTFLAGS", "-C link-arg=-z -C link-arg=max-page-size=16384")
-
+                environment(
+                    "RUSTFLAGS",
+                    "-C link-arg=-z -C link-arg=max-page-size=16384 --remap-path-prefix=${rustProjectDir.absolutePath}=/rust_build"
+                )
                 commandLine(
                     cargoCmd,
                     "build",

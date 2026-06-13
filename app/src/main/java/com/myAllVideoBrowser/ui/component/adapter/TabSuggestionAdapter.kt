@@ -35,7 +35,7 @@ class TabSuggestionAdapter(
     // TODO bullshit
     override fun getItemId(position: Int) = try {
         suggestions[position].hashCode().toLong()
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         0
     }
 

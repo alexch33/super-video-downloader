@@ -43,7 +43,7 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
 
         try {
             setForeground(getForegroundInfo())
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             AppLogger.e("Failed to set foreground for ProxyWorker: ${e.message}")
         }
 
@@ -103,7 +103,7 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
                         return Result.retry()
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 AppLogger.i("ProxyWorker loop interrupted: ${e.message}")
             } finally {
                 ProxyManager.stopLocalProxy()

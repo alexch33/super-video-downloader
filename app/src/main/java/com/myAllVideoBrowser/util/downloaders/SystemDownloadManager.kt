@@ -169,7 +169,7 @@ class SystemDownloadManager @Inject constructor(
             removeFlagFiles(taskId)
             val file = File(fileUtil.tmpDir, taskId + extension)
             file.createNewFile()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             AppLogger.e("Error creating flag file: ${e.message}")
         }
     }

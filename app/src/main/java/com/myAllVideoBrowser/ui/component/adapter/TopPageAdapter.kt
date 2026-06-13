@@ -55,7 +55,7 @@ class TopPageAdapter(
 
     override fun getItemId(position: Int) = try {
         pageInfos[position].hashCode().toLong()
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         0
     }
 

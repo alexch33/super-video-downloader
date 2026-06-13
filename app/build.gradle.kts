@@ -115,8 +115,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 306
-        versionName = "0.8.20.4"
+        versionCode = 310
+        versionName = "0.8.20.5"
 
         if (splitApks) {
             splits {
@@ -544,7 +544,7 @@ fun verifyGoExecutable(builderDir: File, executablePath: String) {
             workingDir(builderDir)
             commandLine(executablePath, "version")
         }
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         throw GradleException(
             "✗ Go executable not found or failed to run at: $executablePath\n" +
                     "  Install Go or set:\n" +

@@ -285,7 +285,7 @@ class VideoServiceSuperX(
         // 1. Try strict standard parsing first
         try {
             return Duration.parse(duration).toMillis()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // If strict parsing fails, use regex for a more flexible extraction
         }
 
@@ -307,7 +307,7 @@ class VideoServiceSuperX(
                 AppLogger.e("Unrecognized duration format: $duration")
                 0L
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             AppLogger.e("Error calculating duration for: $duration - ${e.message}")
             0L
         }

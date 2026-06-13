@@ -148,7 +148,7 @@ class ProgressViewModel @Inject constructor(
                 progressObservable().asFlow().collect { progressInfoList ->
                     progressInfos.set(progressInfoList.sortedBy { it.id })
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 e.printStackTrace()
             }
         }

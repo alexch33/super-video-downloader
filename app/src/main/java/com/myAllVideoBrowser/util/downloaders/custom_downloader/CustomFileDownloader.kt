@@ -332,7 +332,7 @@ class CustomFileDownloader(
                         text.toLongOrNull() ?: 0L
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 0L
             }
         }

@@ -42,7 +42,7 @@ class AdBlockEngine @Inject constructor(
                     if (cacheFile.exists() && cacheKeyFile.exists()) {
                         val savedKey = try {
                             cacheKeyFile.readText()
-                        } catch (e: Exception) {
+                        } catch (e: Throwable) {
                             ""
                         }
                         if (savedKey == currentKey) {
@@ -69,7 +69,7 @@ class AdBlockEngine @Inject constructor(
                             }
                         }
                         filePaths.add(assetFile.absolutePath)
-                    } catch (e: Exception) {
+                    } catch (e: Throwable) {
                         e.printStackTrace()
                         AppLogger.e("AdBlockEngine: Failed to prepare built-in easylist ${e.message}")
                     }
@@ -108,7 +108,7 @@ class AdBlockEngine @Inject constructor(
                     } else {
                         AppLogger.e("AdBlockEngine: Failed to create engine from files")
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     AppLogger.e("AdBlockEngine: loadRules failed: ${e.message}")
                 }
             }

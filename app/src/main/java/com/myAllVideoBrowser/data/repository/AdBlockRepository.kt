@@ -150,7 +150,7 @@ class AdBlockRepository @Inject constructor(
                     adBlockDao.update(list.copy(isDownloadFailed = true))
                 }
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             AppLogger.e("Download failed: ${list.url} ${e.message}")
             adBlockDao.update(list.copy(isDownloadFailed = true))
         } finally {

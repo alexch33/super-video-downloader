@@ -464,7 +464,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     if (cookies.isNotEmpty()) {
                         builder?.addHeader("Cookie", stringBuilder.toString())
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     AppLogger.d("Url parse error ${e.message}")
                 }
                 return builder

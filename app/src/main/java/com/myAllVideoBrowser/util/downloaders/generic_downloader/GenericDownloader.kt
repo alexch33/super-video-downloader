@@ -27,7 +27,7 @@ abstract class GenericDownloader : IDownloader {
                 }
                 // Check if any of the work info states is "active" (not finished, cancelled, or failed)
                 return workInfos.any { !it.state.isFinished }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 // Handle exceptions, e.g., if the get() is interrupted
                 AppLogger.e("isWorkScheduled: Error checking work status for $uniqueWorkName")
                 e.printStackTrace()

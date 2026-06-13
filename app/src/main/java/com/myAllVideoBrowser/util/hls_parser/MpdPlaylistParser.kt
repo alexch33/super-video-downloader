@@ -207,7 +207,7 @@ object MpdPlaylistParser {
                     } else {
                         AppLogger.w("MPD Parser (Live): Calculated a non-positive segment number ($segmentNum), skipping.")
                     }
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     AppLogger.e("MPD Parser (Live): Failed to calculate live edge segment ${e.message}")
                     e.printStackTrace()
                 }

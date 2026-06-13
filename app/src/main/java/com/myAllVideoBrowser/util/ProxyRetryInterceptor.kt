@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.util
 import android.content.Context
 import okhttp3.Interceptor
 import okhttp3.Response
+import okio.IOException
 
 
 class ProxyRetryInterceptor(private val context: Context) : Interceptor {
@@ -12,7 +13,7 @@ class ProxyRetryInterceptor(private val context: Context) : Interceptor {
         val maxTries = 3
 
         if (Memory.isMemoryCritical(context)) {
-            throw Error("OOM error")
+            throw IOException("OOM error")
         }
 
         while (true) {

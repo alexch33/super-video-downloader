@@ -211,7 +211,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 }
                 finishWork(completedTask)
 
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 // 4. Handle failures (Pause, Cancel, Error)
                 when {
                     controller.isCancelRequested() -> {
@@ -364,7 +364,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 }
                 finishWork(completedTask)
 
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 // 4. Handle failures
                 when {
                     controller.isCancelRequested() -> {
@@ -444,7 +444,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 }
                 finishWork(completedTask)
 
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 // 4. Handle failures (Cancel, Pause/Error)
                 when {
                     e is CancellationException -> {
@@ -622,7 +622,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 }
                 finishWork(completedTask)
 
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 // 4. Handle failures, including pause and cancel.
                 when {
                     controller.isCancelRequested() -> {

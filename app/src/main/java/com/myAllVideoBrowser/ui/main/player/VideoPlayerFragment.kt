@@ -79,7 +79,7 @@ class VideoPlayerFragment : BaseFragment() {
                         value.toString().removeSurrounding("\"")
                     }
                 videoPlayerViewModel.videoHeaders.set(headers)
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
                 videoPlayerViewModel.videoHeaders.set(emptyMap())
             }
         }
@@ -98,7 +98,7 @@ class VideoPlayerFragment : BaseFragment() {
                 throw Exception("Invalid URI scheme")
             }
             parsedUri
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             Toast.makeText(context, "Malformed Video URL", Toast.LENGTH_SHORT).show()
             handleClose()
             return dataBinding.root

@@ -829,11 +829,11 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                             killedAny = true
                         }
                     }
-                } catch (_: Exception) {
+                } catch (_: Throwable) {
                 }
             }
             killedAny
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             false
         }
     }

@@ -64,7 +64,7 @@ class RequestListTypeAdapter : JsonSerializer<List<Request>>, JsonDeserializer<L
                     builder.method(method, null)
                 }
                 list.add(builder.build())
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
                 // Skip invalid entries
             }
         }

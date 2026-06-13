@@ -89,11 +89,11 @@ object MpdPlaylistParser {
             // 3. "Translate" the complex ExoPlayer manifest into our simple, clean data models.
             translateManifest(exoManifest, baseUri, manifestContent)
 
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             // If ExoPlayer fails, attempt to parse with the custom fallback parser.
             try {
                 parseWithFallback(manifestContent, baseUri)
-            } catch (fallbackException: Exception) {
+            } catch (fallbackException: Throwable) {
                 throw IOException(
                     "Failed to parse MPD manifest using both ExoPlayer and fallback parser",
                     fallbackException
@@ -319,7 +319,7 @@ object MpdPlaylistParser {
         val minimumUpdatePeriod = minimumUpdatePeriodStr?.let {
             try {
                 it.replace("PT", "").replace("S", "").toDoubleOrNull()
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
                 null
             }
         }
@@ -327,7 +327,7 @@ object MpdPlaylistParser {
         val timeShiftBufferDepth = timeShiftBufferDepthStr?.let {
             try {
                 it.replace("PT", "").replace("S", "").toDoubleOrNull()
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
                 null
             }
         }
@@ -341,7 +341,7 @@ object MpdPlaylistParser {
             val periodDuration = periodDurationStr.let {
                 try {
                     it.replace("PT", "").replace("S", "").toDoubleOrNull()
-                } catch (_: Exception) {
+                } catch (_: Throwable) {
                     null
                 }
             }

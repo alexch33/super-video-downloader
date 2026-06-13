@@ -652,7 +652,7 @@ class FileUtil @Inject constructor() {
                 data = fileUri
             }
             context.applicationContext.sendBroadcast(mediaScanIntent)
-        } catch (error: Exception) {
+        } catch (error: Throwable) {
             error.printStackTrace()
         }
         try {

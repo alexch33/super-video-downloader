@@ -115,7 +115,7 @@ object CookieUtils {
                 }
                 return getFinalRedirectURL(URL(location), currentHeaders)
             }
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
 
         }
 

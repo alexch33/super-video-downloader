@@ -105,7 +105,7 @@ object CustomRegularDownloader : GenericDownloader() {
         val headersForClean = (headersMap as Map<*, *>?)?.let { JSONObject(it).toString() }
         val headersVal = try {
             Base64.encodeToString(headersForClean?.toByteArray(), Base64.DEFAULT)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             "{}"
         }
 

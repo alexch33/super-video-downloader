@@ -154,7 +154,7 @@ object DnsStampHelper {
                 0x03 -> parseDot(buffer)
                 else -> DnsStamp.Unhandled(protocol)
             }
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null // Buffer underflow or other parsing error
         }
     }

@@ -20,7 +20,7 @@ object VideoMetadataManager {
         val json = kv.decodeString(id) ?: return null
         return try {
             gson.fromJson(json, VideoInfo::class.java)
-        } catch (_: Exception) {
+        } catch (_: Throwable) {
             null
         }
     }

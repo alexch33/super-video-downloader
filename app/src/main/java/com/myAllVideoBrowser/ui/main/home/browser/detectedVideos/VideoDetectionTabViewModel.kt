@@ -453,7 +453,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             if (alternativeHeaders.isEmpty()) {
                 val builder = try {
                     Request.Builder().url(url.trim())
-                } catch (_: Exception) {
+                } catch (_: Throwable) {
                     null
                 }
                 builder?.addHeader("Referer", "https://${originalUrl.toUri().host}/")
@@ -472,7 +472,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             } else {
                 val builder = try {
                     Request.Builder().url(url.trim())
-                } catch (_: Exception) {
+                } catch (_: Throwable) {
                     null
                 }
                 builder?.headers(alternativeHeaders.toHeaders())

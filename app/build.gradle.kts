@@ -115,8 +115,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 314
-        versionName = "0.8.20.6"
+        versionCode = 318
+        versionName = "0.8.20.7"
 
         if (splitApks) {
             splits {
@@ -372,26 +372,32 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
             execOps.exec {
                 workingDir = rustProjectDir
 
-                val cargoCmd = if (isWindows) {
-                    "${System.getenv("USERPROFILE")}\\.cargo\\bin\\cargo.exe"
+                val cargoCmd: String
+                val cargoBinDir: String?
+                if (isWindows) {
+                cargoBinDir = "${System.getenv("USERPROFILE")}\\.cargo\\bin"
+                cargoCmd = "$cargoBinDir\\cargo.exe"
+            } else {
+                val homeCargoBin = "${System.getenv("HOME")}/.cargo/bin"
+                if (file("$homeCargoBin/cargo").exists()) {
+                    cargoBinDir = homeCargoBin
+                    cargoCmd = "$homeCargoBin/cargo"
                 } else {
-                    "${System.getenv("HOME")}/.cargo/bin/cargo"
+                    cargoBinDir = null
+                    cargoCmd = "cargo"
                 }
-
-                // Map the Rust target name to the Cargo Linker environment variable
-                val envVar = "CARGO_TARGET_${arch.rustTarget.uppercase().replace("-", "_")}_LINKER"
-                environment(envVar, linkerPath)
+            }
 
                 val pathSeparator = if (isWindows) ";" else ":"
-                val cargoBin =
-                    if (isWindows) "${System.getenv("USERPROFILE")}\\.cargo\\bin" else "${
-                        System.getenv("HOME")
-                    }/.cargo/bin"
+                val currentPath = System.getenv("PATH") ?: ""
 
-                environment(
-                    "PATH",
-                    "$cargoBin$pathSeparator$toolchainPath$pathSeparator${System.getenv("PATH")}"
-                )
+                val newPath = if (cargoBinDir != null) {
+                    "$cargoBinDir$pathSeparator$toolchainPath$pathSeparator$currentPath"
+                } else {
+                    "$toolchainPath$pathSeparator$currentPath"
+                }
+
+                environment("PATH", newPath)
 
                 if (!isWindows) {
                     environment("CC", "gcc")

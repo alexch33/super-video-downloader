@@ -77,6 +77,19 @@ class SegmentDownloader(
             } catch (e: Throwable) {
                 if (e is CancellationException) throw e
 
+                if (e.message?.contains("OOM error") == true) {
+                    AppLogger.e("Stopping download due to low memory")
+                    throw CancellationException("Low memory safety trigger")
+                }
+
+                if (e.message?.contains("403") == true || e.message?.contains(
+                        "denied",
+                        true
+                    ) == true
+                ) {
+                    throw okio.IOException(e.message)
+                }
+
                 lastException = e
                 AppLogger.w("$logPrefix: Failed to download segment $segmentIdentifier on attempt $attempt: ${e.message}")
                 if (outputFile.exists()) outputFile.delete() // Clean up failed partial download

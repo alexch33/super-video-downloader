@@ -87,7 +87,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: false
-          body: "Build config fix for F-droid\nTranslations updates\nCrashes fixes"
+          body: "Crashes fixes"
           draft: false
           make_latest: true
           tag_name: ${{ github.ref_name }}

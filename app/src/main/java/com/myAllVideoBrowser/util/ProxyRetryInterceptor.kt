@@ -3,7 +3,7 @@ package com.myAllVideoBrowser.util
 import android.content.Context
 import okhttp3.Interceptor
 import okhttp3.Response
-import okio.IOException
+import java.io.IOException
 
 
 class ProxyRetryInterceptor(private val context: Context) : Interceptor {

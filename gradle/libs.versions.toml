@@ -51,7 +51,7 @@ archCore = "2.2.0"
 dagger = "2.59.2"
 
 # OkHttp
-okhttp = "5.3.2"
+okhttp = "5.4.0"
 
 # Retrofit
 retrofit = "3.0.0"

@@ -355,8 +355,6 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
         archConfigs.forEach { arch ->
             println("🦀 Compiling Rust for ${arch.abi}...")
 
-            // NDK 27 Fix: armeabi-v7a clang binary is named 'armv7a-...'
-            // but the Rust target is 'armv7-...'
             val linkerBinary = if (arch.abi == "armeabi-v7a") {
                 "armv7a-linux-androideabi$apiLevel-clang$executableSuffix"
             } else {
@@ -366,31 +364,26 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
             val linkerPath = "$toolchainPath/$linkerBinary"
 
             if (!file(linkerPath).exists()) {
-                throw GradleException("✗ Rust Linker not found at: $linkerPath\nCheck NDK version and API level.")
+                throw GradleException("✗ Rust Linker not found at: $linkerPath")
             }
 
             execOps.exec {
                 workingDir = rustProjectDir
 
+                val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
                 val cargoCmd: String
                 val cargoBinDir: String?
                 if (isWindows) {
-                cargoBinDir = "${System.getenv("USERPROFILE")}\\.cargo\\bin"
-                cargoCmd = "$cargoBinDir\\cargo.exe"
-            } else {
-                val homeCargoBin = "${System.getenv("HOME")}/.cargo/bin"
-                if (file("$homeCargoBin/cargo").exists()) {
-                    cargoBinDir = homeCargoBin
-                    cargoCmd = "$homeCargoBin/cargo"
+                    cargoBinDir = "${System.getenv("USERPROFILE")}\\.cargo\\bin"
+                    cargoCmd = "$cargoBinDir\\cargo.exe"
                 } else {
-                    cargoBinDir = null
-                    cargoCmd = "cargo"
+                    val homeCargoBin = "${System.getenv("HOME")}/.cargo/bin"
+                    cargoBinDir = if (file("$homeCargoBin/cargo").exists()) homeCargoBin else null
+                    cargoCmd = if (cargoBinDir != null) "$cargoBinDir/cargo" else "cargo"
                 }
-            }
 
                 val pathSeparator = if (isWindows) ";" else ":"
                 val currentPath = System.getenv("PATH") ?: ""
-
                 val newPath = if (cargoBinDir != null) {
                     "$cargoBinDir$pathSeparator$toolchainPath$pathSeparator$currentPath"
                 } else {
@@ -399,15 +392,21 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
 
                 environment("PATH", newPath)
 
-                if (!isWindows) {
-                    environment("CC", "gcc")
-                }
+                val targetEnvVar =
+                    "CARGO_TARGET_${arch.rustTarget.replace("-", "_").toUpperCase()}_LINKER"
+                environment(targetEnvVar, linkerPath)
 
-                environment("RUSTFLAGS", "-C link-arg=-z -C link-arg=max-page-size=16384")
-                environment(
-                    "RUSTFLAGS",
-                    "-C link-arg=-z -C link-arg=max-page-size=16384 --remap-path-prefix=${rustProjectDir.absolutePath}=/rust_build"
-                )
+                environment("CC", linkerPath)
+                environment("CXX", linkerPath.replace("clang", "clang++"))
+
+                val rustFlags = listOf(
+                    "-C link-arg=-z",
+                    "-C link-arg=max-page-size=16384",
+                    "--remap-path-prefix=${rustProjectDir.absolutePath}=/rust_build"
+                ).joinToString(" ")
+
+                environment("RUSTFLAGS", rustFlags)
+
                 commandLine(
                     cargoCmd,
                     "build",

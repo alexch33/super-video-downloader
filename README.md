@@ -80,10 +80,9 @@ To build this project, you need the following tools installed:
 1. **JDK 21**
 2. **Android SDK & NDK** (r27d recommended)
 3. **Go 1.25.7** (for networking components)
-4. **Rust (Stable)** with Android targets:
-   ```bash
-   rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
-   ```
+4. **Rust**:
+    - **Linux/macOS**: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+    - **Windows**: Download and run `rustup-init.exe` from [rustup.rs](https://rustup.rs/)
 5. **C/C++ Build Tools**:
    - **Linux**: `sudo apt install build-essential`
    - **macOS**: `xcode-select --install`

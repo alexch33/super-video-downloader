@@ -410,7 +410,6 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
                 commandLine(
                     cargoCmd,
                     "build",
-                    "--offline",
                     "--target",
                     arch.rustTarget,
                     "--release"

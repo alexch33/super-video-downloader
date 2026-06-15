@@ -342,7 +342,7 @@ val rustProjectDir = file("${project.rootDir}/rust_adblock")
 val jniLibsDir = file("src/main/jniLibs")
 
 val buildRustAdblock = tasks.register("buildRustAdblock") {
-    group = "Go Build"
+    group = "Rust Build"
     description = "Compiles Rust Adblock library for all Android targets"
 
     doLast {
@@ -370,7 +370,6 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
             execOps.exec {
                 workingDir = rustProjectDir
 
-                val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
                 val cargoCmd: String
                 val cargoBinDir: String?
                 if (isWindows) {
@@ -393,7 +392,7 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
                 environment("PATH", newPath)
 
                 val targetEnvVar =
-                    "CARGO_TARGET_${arch.rustTarget.replace("-", "_").toUpperCase()}_LINKER"
+                    "CARGO_TARGET_${arch.rustTarget.replace("-", "_").uppercase()}_LINKER"
                 environment(targetEnvVar, linkerPath)
 
                 environment("CC", linkerPath)

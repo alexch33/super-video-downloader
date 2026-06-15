@@ -96,6 +96,11 @@ To build this project, you need the following tools installed:
 
 ### Build Commands
 
+- Initialize Git Submodules (Required after first clone):
+```bash
+git submodule update --init --recursive
+```
+
 - Build debug APK (macOS / Linux):
 
 ```bash

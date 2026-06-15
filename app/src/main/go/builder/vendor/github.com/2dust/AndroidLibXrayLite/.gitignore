@@ -1,0 +1,44 @@
+# Ignore editor directories and files
+.idea/
+.vscode/
+
+# Ignore Gradle files
+gradle/build.gradle
+
+# Ignore Go generated files
+*.pb.go
+binary*.go
+
+# Ignore configuration and demo directories
+conf/demo/
+demo/
+
+# Ignore asset files
+assets/
+
+# Ignore V2Ray library files
+libv2ray*.[a|j]ar
+
+# Ignore binary files
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Ignore backup and temporary files
+*~
+*.swp
+*.swo
+
+# Ignore build and log directories
+build/
+logs/
+
+# Ignore macOS files
+.DS_Store
+
+# Ignore Node.js dependencies
+node_modules/
+
+# Ignore Go vendor dependencies
+vendor/

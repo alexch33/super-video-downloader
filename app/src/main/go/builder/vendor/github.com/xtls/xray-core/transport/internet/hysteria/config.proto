@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package xray.transport.internet.hysteria;
+option csharp_namespace = "Xray.Transport.Internet.Hysteria";
+option go_package = "github.com/xtls/xray-core/transport/internet/hysteria";
+option java_package = "com.xray.transport.internet.hysteria";
+option java_multiple_files = true;
+
+message Config {
+  int32 version = 1;
+  string auth = 2;
+  string congestion = 3;
+  uint64 up = 4;
+  uint64 down = 5;
+  repeated uint32 ports = 6;
+  int64 interval_min = 7;
+  int64 interval_max = 8;
+
+  uint64 init_stream_receive_window = 9;
+  uint64 max_stream_receive_window = 10;
+  uint64 init_conn_receive_window = 11;
+  uint64 max_conn_receive_window = 12;
+  int64 max_idle_timeout = 13;
+  int64 keep_alive_period = 14;
+  bool disable_path_mtu_discovery = 15;
+}
+

@@ -115,8 +115,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 318
-        versionName = "0.8.20.7"
+        versionCode = 322
+        versionName = "0.8.20.8"
 
         if (splitApks) {
             splits {
@@ -559,146 +559,31 @@ fun verifyGoExecutable(builderDir: File, executablePath: String) {
     }
 }
 
-fun createGoModule(builderDir: File) {
-    val goModFile = file("${builderDir}/go.mod")
-    goModFile.writeText(
-        """
-        module builder
-        go 1.25.7
-
-        require (
-	        github.com/xtls/xray-core v1.260123.1-0.20260206094241-12ee51e4bb1d
-	        golang.org/x/mobile v0.0.0-20260204172633-1dceadbbeea3
-        )
-        
-        // grpc fix, should remove in next updates
-        replace google.golang.org/grpc v1.78.0 => google.golang.org/grpc v1.79.3 
-        // grpc fix 
-        """.trimIndent()
-    )
-    file("${builderDir}/go.sum").delete()
-}
-
-fun vendorGoDependencies(builderDir: File, executablePath: String) {
-    val goEnv = mapOf("GOPROXY" to "https://proxy.golang.org,direct")
-
-    // Add the replace directive for our local clone
-    execOps.exec {
-        workingDir(builderDir)
-        environment(goEnv)
-        commandLine(
-            executablePath, "mod", "edit",
-            "-replace=github.com/2dust/AndroidLibXrayLite=../../../../../build/v2ray/src"
-        )
-    }
-
-    // Tidy the module
-    execOps.exec {
-        workingDir(builderDir)
-        environment(goEnv)
-        commandLine(executablePath, "mod", "tidy")
-    }
-
-    // Create the vendor directory
-    execOps.exec {
-        workingDir(builderDir)
-        environment(goEnv)
-        commandLine(executablePath, "mod", "vendor")
-    }
-}
-
 // =========================================================================
 // GO BUILD TASKS
 // =========================================================================
 
-// Task 1: Clone V2Ray source code and checkout specific commit
-tasks.register<DefaultTask>("cloneV2raySource") {
+// verify the submodule and vendor exist
+tasks.register<DefaultTask>("verifyOfflineSources") {
     group = "Go Setup"
-    description = "Clones V2Ray source and checks out a specific commit."
-
-    val srcDir = file("${buildDirV2ray}/src")
-    outputs.dir(srcDir)
-    onlyIf { !srcDir.exists() }
+    val v2raySrc = file("${project.rootDir}/v2ray-src")
+    val vendorDir = file("${project.rootDir}/app/src/main/go/builder/vendor")
 
     doLast {
-        println("\n╔════════════════════════════════════════════════════════╗")
-        println("║  CLONING V2RAY REPOSITORY                              ║")
-        println("╚════════════════════════════════════════════════════════╝")
-
-        // Clone the default branch with a shallow history
-        println("→ Cloning repository with depth=1...")
-        execOps.exec {
-            workingDir(project.rootDir)
-            commandLine(gitExecutable, "clone", "--depth=1", v2rayRepo, srcDir.absolutePath)
+        if (!v2raySrc.exists() || v2raySrc.listFiles()?.isEmpty() == true) {
+            throw GradleException("✗ V2Ray submodule missing. Run: git submodule update --init --recursive")
         }
-
-        // Fetch the specific commit from the origin
-        println("→ Fetching specific commit: $v2rayCommit...")
-        execOps.exec {
-            workingDir(srcDir)
-            commandLine(gitExecutable, "fetch", "origin", v2rayCommit)
+        if (!vendorDir.exists()) {
+            throw GradleException("✗ Vendor directory missing. Run 'go mod vendor' locally and commit it.")
         }
-
-        // Checkout the fetched commit
-        println("→ Checking out commit...")
-        execOps.exec {
-            workingDir(srcDir)
-            commandLine(gitExecutable, "checkout", v2rayCommit)
-        }
-        println("✓ V2Ray repository ready\n")
+        println("✓ Offline sources verified for F-Droid compliance.")
     }
 }
 
-// Task 2: Prepare Go module and create vendor directory
-tasks.register<DefaultTask>("vendorGoDependencies") {
-    group = "Go Setup"
-    description = "Initializes main go.mod and creates a vendor directory."
-
-    val builderDir = file("src/main/go/builder")
-    val vendorDir = file("${builderDir}/vendor")
-
-    dependsOn(tasks.named("cloneV2raySource"))
-
-    inputs.file("${builderDir}/builder.go")
-    outputs.dir(vendorDir)
-
-    doFirst {
-        println("\n╔════════════════════════════════════════════════════════╗")
-        println("║  VERIFYING GO ENVIRONMENT                              ║")
-        println("╚════════════════════════════════════════════════════════╝")
-
-        val overrideEnv = System.getenv("GO_EXECUTABLE")
-        val overrideProp = project.findProperty("GO_EXECUTABLE")?.toString()
-        val goExecCandidate = overrideEnv ?: overrideProp ?: goExecutable
-
-        println("→ Verifying Go executable: $goExecCandidate...")
-        verifyGoExecutable(builderDir, goExecCandidate)
-        println("✓ Go executable verified\n")
-    }
-
-    doLast {
-        println("\n╔════════════════════════════════════════════════════════╗")
-        println("║  PREPARING GO DEPENDENCIES                             ║")
-        println("╚════════════════════════════════════════════════════════╝")
-
-        val builderDirectory = file("src/main/go/builder")
-        println("→ Creating go.mod...")
-        createGoModule(builderDirectory)
-
-        println("→ Vendoring dependencies...")
-        vendorGoDependencies(builderDirectory, goExecutable)
-        println("✓ Go dependencies ready\n")
-    }
-}
-
-// Task 3: Prepare Go build dependencies
 val prepareGoBuild = tasks.register("prepareGoBuild") {
-    group = "Go Setup"
-    description = "Prepares all dependencies for Go library builds."
-    dependsOn(tasks.named("vendorGoDependencies"))
+    dependsOn(tasks.named("verifyOfflineSources"))
 }
 
-// Task 4: Aggregate all architecture-specific copy tasks
 val copyAllGoSharedLibs = tasks.register("copyAllGoSharedLibs") {
     group = "Go Build"
     description = "Copies Go shared libraries for all architectures to jniLibs."
@@ -733,7 +618,12 @@ archConfigs.forEach { arch ->
         environment("GOARCH", arch.goArch)
         environment("CC", compiler)
         environment("CGO_CFLAGS", "--sysroot=${sysroot}")
-        environment("CGO_LDFLAGS", "--sysroot=${sysroot} -llog -Wl,-z,max-page-size=16384")
+
+        val v2rayLibPath = "${project.rootDir}/v2ray-src/libs"
+        environment(
+            "CGO_LDFLAGS",
+            "--sysroot=${sysroot} -llog -Wl,-z,max-page-size=16384 -L$v2rayLibPath"
+        )
 
         doFirst {
             println("\n>>> Building Go library for ${arch.abi}...")

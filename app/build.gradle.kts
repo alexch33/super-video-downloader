@@ -455,6 +455,7 @@ val goExecutable = run {
     if (propOverride != null && file(propOverride).exists()) return@run propOverride
 
     val candidates = listOf(
+        "/opt/go-bin/go",
         "/opt/homebrew/bin/go",
         "/usr/local/go/bin/go",
         "/usr/local/bin/go",

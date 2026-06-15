@@ -115,10 +115,10 @@ git submodule update --init --recursive
 .\\gradlew.bat :app:assembleDebug
 ```
 
-- Vendor Go dependencies only:
+- Build Go dependencies only:
 
 ```bash
-./gradlew :app:vendorGoDependencies
+./gradlew :app:buildAllGoLibraries
 ```
 
 - Build Rust AdBlocker only:
@@ -138,10 +138,10 @@ git submodule update --init --recursive
 ```bash
 # macOS / Linux
 export GO_EXECUTABLE=/opt/homebrew/bin/go
-./gradlew :app:vendorGoDependencies
+./gradlew :app:buildAllGoLibraries
 
 # Or pass as Gradle property
-./gradlew -PGO_EXECUTABLE=/opt/homebrew/bin/go :app:vendorGoDependencies
+./gradlew -PGO_EXECUTABLE=/opt/homebrew/bin/go :app:buildAllGoLibraries
 ```
 
 ## License

@@ -51,4 +51,4 @@ replace google.golang.org/grpc v1.78.0 => google.golang.org/grpc v1.79.3
 
 // grpc fix
 
-replace github.com/2dust/AndroidLibXrayLite => ../../../../../build/v2ray/src
+replace github.com/2dust/AndroidLibXrayLite => ../../../../../v2ray-src

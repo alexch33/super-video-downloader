@@ -100,7 +100,7 @@
     <string name="check_every_request_on_audio">Vérifier chaque requête pour l’audio</string>
     <string name="go">Y aller</string>
     <string name="force_stream_downloading">Forcer le téléchargement du flux (pour les flux en direct classiques, hors M3U8 ou MPD)</string>
-    <string name="force_stream_detection">Forcer la détection des flux (détection des URL avec une longueur de contenu -1, parfois utilisée pour les flux en direct classiques)</string>
+    <string name="force_stream_detection">Forcer la détection des flux (URL avec une longueur de contenu -1, parfois utilisée pour les flux en direct classiques)</string>
     <string name="is_always_remux_regular_downloads">Post‑traitement pour tous les téléchargements classiques</string>
     <string name="is_remux_only_live_regular_downloads">Post‑traitement uniquement pour les téléchargements en direct</string>
     <string name="is_interrupt_intrecepted_resources">Interrompre le contenu multimédia intercepté pour le navigateur</string>
@@ -145,4 +145,21 @@
     <string name="progress_tab">Progression</string>
     <string name="video_tab">Vidéo</string>
     <string name="can_be_turned_off">Peut être désactivé dans les paramètres du proxy</string>
+    <string name="queue_downloads_size">Taille de la file d\'attente de téléchargement:</string>
+    <string name="progress_menu_stop_and_save">Arrêtez et sauvegarder</string>
+    <string name="select_all">Tout sélectionner</string>
+    <string name="delete">Supprimer</string>
+    <string name="stop_and_save_message">Appuyez sur stop et enregistrer pour arrêter le téléchargement et enregistrer les fichiers téléchargés à tout moment...!</string>
+    <string name="adblock_lists_title">Listes de bloqueurs de publicités</string>
+    <string name="add_adblock_list">Ajouter une liste AdBlock</string>
+    <string name="list_name">Nom de la liste</string>
+    <string name="url">URL</string>
+    <string name="download_update">Télécharger/Mettre à jour</string>
+    <string name="builtin_list">Liste intégrée</string>
+    <string name="add">Ajouter</string>
+    <string name="add_custom_list">Ajouter une liste personnalisée</string>
+    <string name="downloading_rules">Règles de téléchargement...</string>
+    <string name="not_downloaded">Non téléchargé</string>
+    <string name="last_updated">Dernière mise à jour</string>
+    <string name="built_in_list">Liste intégrée</string>
 </resources>

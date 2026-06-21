@@ -9,7 +9,7 @@
     <string name="dialog_preview_video">Aperçu de la vidéo</string>
     <string name="dialog_download_video">Télécharger la vidéo</string>
     <string name="dialog_download_cancel">Annuler</string>
-    <string name="video_empty_message">Vous n\'avez encore téléchargé aucune vidéo.</string>
+    <string name="video_empty_message">Vous n\'avez encore téléchargé aucune vidéo</string>
     <string name="video_menu_rename">Renommer</string>
     <string name="video_menu_delete">Supprimer</string>
     <string name="video_menu_share">Partager</string>
@@ -17,7 +17,7 @@
     <string name="video_rename_invalid">Nom invalide. Veuillez réessayer !</string>
     <string name="video_rename_exist">Le nom de la vidéo existe déjà !</string>
     <string name="video_share_message">Vous n’avez aucune application de lecture vidéo installée sur votre appareil</string>
-    <string name="progress_empty_message">Aucun téléchargement de vidéo en cours.</string>
+    <string name="progress_empty_message">Aucun téléchargement de vidéo en cours</string>
     <string name="settings_videos_folder">Dossier vidéos</string>
     <string name="settings_clear_browser_cookies">Effacer les cookies du navigateur</string>
     <string name="settings_message_open_folder">Vous n’avez aucune application de gestion de fichiers installée sur votre appareil</string>
@@ -100,7 +100,7 @@
     <string name="check_every_request_on_audio">Vérifier chaque requête pour l’audio</string>
     <string name="go">Y aller</string>
     <string name="force_stream_downloading">Forcer le téléchargement du flux (pour les flux en direct classiques, hors M3U8 ou MPD)</string>
-    <string name="force_stream_detection">Forcer la détection des flux (URL avec une longueur de contenu -1, parfois utilisée pour les flux en direct classiques)</string>
+    <string name="force_stream_detection">Forcer la détection des flux (urls avec une longueur de contenu -1, parfois utilisée pour les flux en direct classiques)</string>
     <string name="is_always_remux_regular_downloads">Post‑traitement pour tous les téléchargements classiques</string>
     <string name="is_remux_only_live_regular_downloads">Post‑traitement uniquement pour les téléchargements en direct</string>
     <string name="is_interrupt_intrecepted_resources">Interrompre le contenu multimédia intercepté pour le navigateur</string>
@@ -162,4 +162,5 @@
     <string name="not_downloaded">Non téléchargé</string>
     <string name="last_updated">Dernière mise à jour</string>
     <string name="built_in_list">Liste intégrée</string>
+    <string name="tabs">Onglets</string>
 </resources>

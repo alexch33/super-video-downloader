@@ -385,13 +385,17 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     override fun cancelAllCheckJobs() {
-        regularLoadingList.set(mutableSetOf())
-        m3u8LoadingList.set(mutableSetOf())
-        executorRegular.cancel()
-        verifyVideoLinkJobStorage.forEach { (_, process) ->
-            process.dispose()
+        try {
+            regularLoadingList.set(mutableSetOf())
+            m3u8LoadingList.set(mutableSetOf())
+            executorRegular.cancel()
+            verifyVideoLinkJobStorage.forEach { (_, process) ->
+                process.dispose()
+            }
+            verifyVideoLinkJobStorage.clear()
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
-        verifyVideoLinkJobStorage.clear()
     }
 
 

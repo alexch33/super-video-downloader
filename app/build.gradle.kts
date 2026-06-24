@@ -43,7 +43,7 @@ jacoco {
 val abiFilterList = (project.findProperty("ABI_FILTERS") as? String ?: "")
     .split(';')
     .filter { it.isNotBlank() }
-val splitApksEnv = System.getenv("SPLITS_INCLUDE")?.lowercase() == "true"
+val splitApksEnv = System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: true
 val isFdroidBuild = abiFilterList.isNotEmpty()
 
 val splitApks = if (isFdroidBuild) false else splitApksEnv

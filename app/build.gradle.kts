@@ -40,13 +40,20 @@ jacoco {
 // BUILD CONFIGURATION VARIABLES
 // =========================================================================
 
-val abiFilterList = (project.findProperty("ABI_FILTERS") as? String ?: "")
+
+val abiFilterProperty = (project.findProperty("ABI_FILTERS") as? String ?: "")
     .split(';')
     .filter { it.isNotBlank() }
-val splitApksEnv = System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: true
-val isFdroidBuild = abiFilterList.isNotEmpty()
 
-val splitApks = if (isFdroidBuild) false else splitApksEnv
+val isSingleAbiRequested = abiFilterProperty.size == 1
+
+val splitApksEnv = System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: true
+
+val splitApks = if (isSingleAbiRequested) false else splitApksEnv
+
+val activeFilters = if (isSingleAbiRequested) abiFilterProperty else emptyList()
+
+println("Mode::: SingleAbi=$isSingleAbiRequested, SplitApks=$splitApks, Filters=$abiFilterProperty")
 
 val abiCodes = mapOf(
     "armeabi-v7a" to 1,
@@ -124,10 +131,7 @@ android {
         versionCode = 326
         versionName = "0.8.20.9"
 
-        val isSingleAbiBuild = abiFilterList.isNotEmpty()
-
-        if (isSingleAbiBuild) {
-            // F-Droid path: Disable splits and force the specific ABI
+        if (isSingleAbiRequested) {
             splits {
                 abi {
                     isEnable = false
@@ -135,10 +139,9 @@ android {
             }
             ndk {
                 abiFilters.clear()
-                abiFilters.addAll(abiFilterList)
+                abiFilters.addAll(abiFilterProperty)
             }
         } else if (splitApks) {
-            // standard path: build everything with splits
             splits {
                 abi {
                     isEnable = true
@@ -148,7 +151,6 @@ android {
                 }
             }
         } else {
-            // Fallback: No splits, no filters (builds everything into one APK)
             splits { abi { isEnable = false } }
         }
     }
@@ -201,8 +203,10 @@ android {
                     output.filters.find {
                         it.filterType == FilterConfiguration.FilterType.ABI
                     }?.identifier
+                } else if (isSingleAbiRequested) {
+                    abiFilterProperty[0]
                 } else {
-                    abiFilterList.getOrNull(0)
+                    null
                 }
 
                 val baseAbiCode = abiCodes[name]
@@ -371,14 +375,14 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
         val toolchainPath = "${ndkPath}/toolchains/llvm/prebuilt/${ndkPrebuiltFolder}/bin"
         val apiLevel = "24"
 
-        val targetsToBuild = if (abiFilterList.isNotEmpty()) {
-            archConfigs.filter { it.abi in abiFilterList }
+        val targetsToBuild = if (abiFilterProperty.isNotEmpty()) {
+            archConfigs.filter { it.abi in abiFilterProperty }
         } else {
             archConfigs
         }
 
-        if (targetsToBuild.isEmpty() && abiFilterList.isNotEmpty()) {
-            throw GradleException("Requested ABI_FILTERS ($abiFilterList) not found in archConfigs")
+        if (targetsToBuild.isEmpty() && abiFilterProperty.isNotEmpty()) {
+            throw GradleException("Requested ABI_FILTERS ($abiFilterProperty) not found in archConfigs")
         }
 
         targetsToBuild.forEach { arch ->

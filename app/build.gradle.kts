@@ -40,8 +40,15 @@ jacoco {
 // BUILD CONFIGURATION VARIABLES
 // =========================================================================
 
-val splitApks = System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: true
-val abiFilterList = (project.findProperty("ABI_FILTERS") as? String ?: "").split(';')
+val abiFilterList = (project.findProperty("ABI_FILTERS") as? String ?: "")
+    .split(';')
+    .filter { it.isNotBlank() }
+val splitApks = if (abiFilterList.isNotEmpty()) {
+    false
+} else {
+    (System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: true)
+}
+
 val abiCodes = mapOf(
     "armeabi-v7a" to 1,
     "arm64-v8a" to 2,
@@ -118,7 +125,21 @@ android {
         versionCode = 326
         versionName = "0.8.20.9"
 
-        if (splitApks) {
+        val isSingleAbiBuild = abiFilterList.isNotEmpty()
+
+        if (isSingleAbiBuild) {
+            // F-Droid path: Disable splits and force the specific ABI
+            splits {
+                abi {
+                    isEnable = false
+                }
+            }
+            ndk {
+                abiFilters.clear()
+                abiFilters.addAll(abiFilterList)
+            }
+        } else if (splitApks) {
+            // standard path: build everything with splits
             splits {
                 abi {
                     isEnable = true
@@ -128,9 +149,8 @@ android {
                 }
             }
         } else {
-            ndk {
-                abiFilters.addAll(abiFilterList)
-            }
+            // Fallback: No splits, no filters (builds everything into one APK)
+            splits { abi { isEnable = false } }
         }
     }
 
@@ -352,8 +372,18 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
         val toolchainPath = "${ndkPath}/toolchains/llvm/prebuilt/${ndkPrebuiltFolder}/bin"
         val apiLevel = "24"
 
-        archConfigs.forEach { arch ->
-            println("🦀 Compiling Rust for ${arch.abi}...")
+        val targetsToBuild = if (abiFilterList.isNotEmpty()) {
+            archConfigs.filter { it.abi in abiFilterList }
+        } else {
+            archConfigs
+        }
+
+        if (targetsToBuild.isEmpty() && abiFilterList.isNotEmpty()) {
+            throw GradleException("Requested ABI_FILTERS ($abiFilterList) not found in archConfigs")
+        }
+
+        targetsToBuild.forEach { arch ->
+            println("🦀 Compiling Rust specifically for ${arch.abi}...")
 
             val linkerBinary = if (arch.abi == "armeabi-v7a") {
                 "armv7a-linux-androideabi$apiLevel-clang$executableSuffix"

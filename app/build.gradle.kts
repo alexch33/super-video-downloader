@@ -47,7 +47,7 @@ val abiFilterProperty = (project.findProperty("ABI_FILTERS") as? String ?: "")
 
 val isSingleAbiRequested = abiFilterProperty.size == 1
 
-val splitApksEnv = System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: true
+val splitApksEnv = System.getenv("SPLITS_INCLUDE")?.lowercase()?.toBoolean() ?: true
 
 val splitApks = if (isSingleAbiRequested) false else splitApksEnv
 

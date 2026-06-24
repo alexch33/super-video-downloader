@@ -41,17 +41,23 @@ jacoco {
 // =========================================================================
 
 
-val abiFilterProperty = (project.findProperty("ABI_FILTERS") as? String ?: "")
-    .split(';')
+val abiFilterRaw = (project.findProperty("ABI_FILTERS") as? String ?: "").trim()
+
+val abiFilterProperty = abiFilterRaw
+    .split(Regex("[;,\n]"))
+    .map { it.trim() }
     .filter { it.isNotBlank() }
 
+println("ABI_FILTERS: $abiFilterProperty")
 val isSingleAbiRequested = abiFilterProperty.size == 1
 
-val splitApksEnv = System.getenv("SPLITS_INCLUDE")?.toBoolean() ?: true
+val splitApksEnv = System.getenv("SPLITS_INCLUDE")?.lowercase()?.toBoolean() ?: true
 
 val splitApks = if (isSingleAbiRequested) false else splitApksEnv
 
-val activeFilters = if (isSingleAbiRequested) abiFilterProperty else emptyList()
+val activeFilters = abiFilterProperty.ifEmpty {
+    listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+}
 
 println("Mode::: SingleAbi=$isSingleAbiRequested, SplitApks=$splitApks, Filters=$abiFilterProperty")
 
@@ -375,14 +381,10 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
         val toolchainPath = "${ndkPath}/toolchains/llvm/prebuilt/${ndkPrebuiltFolder}/bin"
         val apiLevel = "24"
 
-        val targetsToBuild = if (abiFilterProperty.isNotEmpty()) {
-            archConfigs.filter { it.abi in abiFilterProperty }
-        } else {
-            archConfigs
-        }
+        val targetsToBuild = archConfigs.filter { it.abi in activeFilters }
 
         if (targetsToBuild.isEmpty() && abiFilterProperty.isNotEmpty()) {
-            throw GradleException("Requested ABI_FILTERS ($abiFilterProperty) not found in archConfigs")
+            throw GradleException("Requested ABI_FILTERS ($activeFilters) not found in archConfigs")
         }
 
         targetsToBuild.forEach { arch ->
@@ -626,7 +628,9 @@ val copyAllGoSharedLibs = tasks.register("copyAllGoSharedLibs") {
 // GENERATE ARCHITECTURE-SPECIFIC BUILD & COPY TASKS
 // =========================================================================
 
-archConfigs.forEach { arch ->
+val goTargets = archConfigs.filter { it.abi in activeFilters }
+
+goTargets.forEach { arch ->
     // Build task for current architecture
     val buildTask = tasks.register<Exec>("buildGoSharedLib_${arch.abi}") {
         dependsOn(prepareGoBuild)

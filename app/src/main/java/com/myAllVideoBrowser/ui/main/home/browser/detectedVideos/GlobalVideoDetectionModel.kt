@@ -1,7 +1,5 @@
 package com.myAllVideoBrowser.ui.main.home.browser.detectedVideos
 
-import android.os.Handler
-import android.os.Looper
 import androidx.databinding.Observable
 import androidx.databinding.ObservableBoolean
 import androidx.lifecycle.viewModelScope
@@ -16,6 +14,8 @@ import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Request
 import javax.inject.Inject
@@ -25,8 +25,13 @@ class GlobalVideoDetectionModel @Inject constructor(
     private val baseSchedulers: BaseSchedulers,
     okHttpProxyClient: OkHttpProxyClient,
 ) : VideoDetectionTabViewModel(videoRepository, baseSchedulers, okHttpProxyClient), IVideoDetector {
+    
+    @Volatile
     private var lastVerifiedLink: String = ""
+    @Volatile
     private var lastVerifiedM3u8PointUrl = Pair("", "")
+    
+    private var pushJob: Job? = null
 
     private val butonStateCallBack = object :
         Observable.OnPropertyChangedCallback() {
@@ -52,8 +57,11 @@ class GlobalVideoDetectionModel @Inject constructor(
 
     override fun cancelAllCheckJobs() {
         super.cancelAllCheckJobs()
-
-        lastVerifiedLink = ""
+        synchronized(this) {
+            lastVerifiedLink = ""
+            lastVerifiedM3u8PointUrl = Pair("", "")
+        }
+        pushJob?.cancel()
     }
 
     override fun hasCheckLoadingsRegular(): ObservableBoolean {
@@ -64,6 +72,7 @@ class GlobalVideoDetectionModel @Inject constructor(
         return ObservableBoolean(false)
     }
 
+    @Synchronized
     override fun verifyLinkStatus(
         resourceRequest: Request, hlsTitle: String?, isM3u8: Boolean, isMpd: Boolean
     ) {
@@ -83,10 +92,7 @@ class GlobalVideoDetectionModel @Inject constructor(
                     startVerifyProcess(resourceRequest, isM3u8, isMpd, hlsTitle)
                 }
             } else {
-                if (urlToVerify.contains(
-                        ".txt"
-                    )
-                ) {
+                if (urlToVerify.contains(".txt")) {
                     return
                 }
                 lastVerifiedLink = urlToVerify
@@ -101,12 +107,15 @@ class GlobalVideoDetectionModel @Inject constructor(
     override fun startVerifyProcess(
         resourceRequest: Request, isM3u8: Boolean, isMpd: Boolean, hlsTitle: String?
     ) {
-        val job = verifyVideoLinkJobStorage[resourceRequest.url.toString()]
-        if (job != null && !job.isDisposed) {
+        val taskUrl = resourceRequest.url.toString()
+        if (taskUrl.isEmpty()) return
+
+        val existingJob = verifyVideoLinkJobStorage[taskUrl]
+        if (existingJob != null && !existingJob.isDisposed) {
             return
         }
 
-        verifyVideoLinkJobStorage[resourceRequest.url.toString()] =
+        verifyVideoLinkJobStorage[taskUrl] =
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 downloadButtonState.set(DownloadButtonStateLoading())
                 val info = try {
@@ -133,6 +142,9 @@ class GlobalVideoDetectionModel @Inject constructor(
                 } else {
                     emitter.onNext(VideoInfo(id = ""))
                 }
+                emitter.onComplete()
+            }.doOnTerminate {
+                verifyVideoLinkJobStorage.remove(taskUrl)
             }.observeOn(baseSchedulers.io).subscribeOn(baseSchedulers.io).subscribe { info ->
                 val isLastNotEmpty = lastVerifiedLink.isNotEmpty()
 
@@ -141,22 +153,13 @@ class GlobalVideoDetectionModel @Inject constructor(
                         info.title = hlsTitle
                     }
                     val state = downloadButtonState.get()
-                    if (state is DownloadButtonStateCanDownload) {
-                        if (state.info?.isRegularDownload == true) {
-                            AppLogger.d(
-                                "Watching set new info state with Regular Download... currentState: $state skippingInfo: $info"
-                            )
-                        }
-                    }
-                    if (state is DownloadButtonStateCanDownload && state.info?.isM3u8 == true && state.info.isMaster && isLastNotEmpty || (state is DownloadButtonStateCanDownload && state.info?.isRegularDownload != true && info.isRegularDownload) || state is DownloadButtonStateLoading && info.isRegularDownload) {
-                        AppLogger.d(
-                            "Skipping set new info state... currentState: $state skippingInfo: $info"
-                        )
-                    } else {
-                        AppLogger.d(
-                            "Setting set new info state... state: $state info: $info"
-                        )
-                        viewModelScope.launch(Dispatchers.IO) {
+                    
+                    val shouldSkip = (state is DownloadButtonStateCanDownload && state.info?.isM3u8 == true && state.info.isMaster && isLastNotEmpty) || 
+                                     (state is DownloadButtonStateCanDownload && state.info?.isRegularDownload != true && info.isRegularDownload) || 
+                                     (state is DownloadButtonStateLoading && info.isRegularDownload)
+
+                    if (!shouldSkip) {
+                        viewModelScope.launch(executorPusher) {
                             pushNewVideoInfoToAll(info)
                         }
                     }
@@ -210,10 +213,13 @@ class GlobalVideoDetectionModel @Inject constructor(
             return
         }
 
-        downloadButtonState.set(DownloadButtonStateLoading())
-        Handler(Looper.getMainLooper()).postDelayed({
+        // Cancel previous pending UI update to avoid flickering
+        pushJob?.cancel()
+        pushJob = viewModelScope.launch(Dispatchers.Main) {
+            downloadButtonState.set(DownloadButtonStateLoading())
+            delay(400)
             downloadButtonState.set(DownloadButtonStateCanDownload(newInfo))
-        }, 400)
+        }
     }
 
     override fun onStartPage(url: String, userAgentString: String) {

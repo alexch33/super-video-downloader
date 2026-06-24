@@ -39,6 +39,7 @@ import java.net.URL
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import androidx.core.net.toUri
+import java.util.concurrent.ConcurrentHashMap
 
 open class VideoDetectionTabViewModel @Inject constructor(
     private val videoRepository: VideoRepository,
@@ -56,10 +57,10 @@ open class VideoDetectionTabViewModel @Inject constructor(
     var initialUrl: String = ""
 
     @Volatile
-    var m3u8LoadingList = ObservableField<MutableSet<String>>()
+    var m3u8LoadingList = ObservableField<MutableSet<String>>(ConcurrentHashMap.newKeySet())
 
     @Volatile
-    var regularLoadingList = ObservableField<MutableSet<String>>()
+    var regularLoadingList = ObservableField<MutableSet<String>>(ConcurrentHashMap.newKeySet())
 
     val showDetectedVideosEvent = SingleLiveEvent<Void?>()
 
@@ -81,7 +82,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
     val downloadButtonIcon = ObservableInt(R.drawable.invisible_24px)
 
     @Volatile
-    var verifyVideoLinkJobStorage = mutableMapOf<String, Disposable>()
+    var verifyVideoLinkJobStorage = ConcurrentHashMap<String, Disposable>()
 
     private val hasCheckLoadingsM3u8 = ObservableBoolean(false)
     private val hasCheckLoadingsRegular = ObservableBoolean(false)
@@ -248,9 +249,9 @@ open class VideoDetectionTabViewModel @Inject constructor(
             return
         }
 
-        val loadings = m3u8LoadingList.get()?.toMutableSet() ?: mutableSetOf()
-        loadings.add(resourceRequest.url.toString())
-        m3u8LoadingList.set(loadings.toMutableSet())
+        m3u8LoadingList.get()?.add(resourceRequest.url.toString())
+        m3u8LoadingList.notifyChange()
+
         if (detectedVideosList.get()?.isEmpty() == true) {
             setButtonState(DownloadButtonStateLoading())
         }
@@ -279,9 +280,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
                 emitter.onComplete()
             }.doOnTerminate {
-                val loadings2 = m3u8LoadingList.get()?.toMutableSet() ?: mutableSetOf()
-                loadings2.remove(resourceRequest.url.toString())
-                m3u8LoadingList.set(loadings2.toMutableSet())
+                m3u8LoadingList.get()?.remove(resourceRequest.url.toString())
+                m3u8LoadingList.notifyChange()
                 verifyVideoLinkJobStorage.remove(taskUrl)
             }.observeOn(baseSchedulers.computation).subscribeOn(baseSchedulers.videoService)
                 .subscribe { info ->
@@ -368,15 +368,13 @@ open class VideoDetectionTabViewModel @Inject constructor(
             if (request.url.toString().contains(".mp4")) {
                 setButtonState(DownloadButtonStateLoading())
             }
-            val loadings = regularLoadingList.get() ?: mutableSetOf()
-            loadings.add(request.url.toString())
-            regularLoadingList.set(loadings.toMutableSet())
+            regularLoadingList.get()?.add(request.url.toString())
+            regularLoadingList.notifyChange()
             propagateCheckJob(uriString, headers, isCheckOnAudio, isCheckOnVideo)
             it.onComplete()
         }.subscribeOn(baseSchedulers.io).doOnComplete {
-            val loadings = regularLoadingList.get() ?: mutableSetOf()
-            loadings.remove(request.url.toString())
-            regularLoadingList.set(loadings.toMutableSet())
+            regularLoadingList.get()?.remove(request.url.toString())
+            regularLoadingList.notifyChange()
         }.onErrorComplete().doOnError {
             AppLogger.d("Checking ERROR... $clearedUrl")
         }.subscribe()
@@ -385,13 +383,20 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     override fun cancelAllCheckJobs() {
-        regularLoadingList.set(mutableSetOf())
-        m3u8LoadingList.set(mutableSetOf())
-        executorRegular.cancel()
-        verifyVideoLinkJobStorage.forEach { (_, process) ->
-            process.dispose()
+        try {
+            regularLoadingList.get()?.clear()
+            regularLoadingList.notifyChange()
+            m3u8LoadingList.get()?.clear()
+            m3u8LoadingList.notifyChange()
+            executorRegular.cancel()
+            
+            // Iterate over a snapshot of values to safely dispose
+            val jobs = verifyVideoLinkJobStorage.values.toMutableList()
+            verifyVideoLinkJobStorage.clear()
+            jobs.forEach { it.dispose() }
+        } catch (e: Throwable) {
+            e.printStackTrace()
         }
-        verifyVideoLinkJobStorage.clear()
     }
 
 

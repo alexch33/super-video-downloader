@@ -102,7 +102,11 @@ android {
                 "META-INF/versions/9/OSGI-INF/MANIFEST.MF",
                 "META-INF/NOTICE.txt",
                 "META-INF/notice.txt",
-                "META-INF/ASL2.0"
+                "META-INF/ASL2.0",
+                "**/*.prof",
+                "**/*.profm",
+                "META-INF/com.android.tools/package-helpers/baseline-profiles/*.prof",
+                "assets/dexopt/baseline.prof"
             )
         }
         jniLibs {
@@ -179,6 +183,9 @@ android {
                 signingConfig = null
                 println("No signing keys found. Building UNSIGNED apk.")
             }
+
+            isMinifyEnabled = true
+            isShrinkResources = false
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android.txt"),

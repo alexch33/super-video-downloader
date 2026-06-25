@@ -172,7 +172,14 @@ android {
         release {
             enableUnitTestCoverage = false
             enableAndroidTestCoverage = false
-            signingConfig = signingConfigs.getByName("release")
+            val isSigningAvailable = !System.getenv("KEYSTORE_PASSWORD").isNullOrBlank()
+            if (isSigningAvailable) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = null
+                println("No signing keys found. Building UNSIGNED apk.")
+            }
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android.txt"),
                 "proguard-rules.pro"
@@ -232,6 +239,19 @@ android {
     sourceSets {
         getByName("main") {
             jniLibs.srcDir("src/main/jniLibs")
+        }
+    }
+
+    applicationVariants.all {
+        val variant = this
+        if (isSingleAbiRequested) {
+            outputs.all {
+                val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+                val abiName = abiFilterProperty[0]
+                // This generates: app-arm64-v8a-release-unsigned.apk
+                output.outputFileName = "app-$abiName-${variant.name}-unsigned.apk"
+                println("⚙️ F-Droid APK Rename: ${output.outputFileName}")
+            }
         }
     }
 }

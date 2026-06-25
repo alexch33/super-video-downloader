@@ -9,3 +9,8 @@
 -keep class com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockNative {
     native <methods>;
 }
+
+-dontwarn java.beans.ConstructorProperties
+-dontwarn java.beans.Transient
+-dontwarn java.beans.XMLIDREF
+-dontwarn com.fasterxml.jackson.databind.ext.Java7SupportImpl

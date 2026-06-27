@@ -55,7 +55,7 @@ class CandidatesListRecyclerViewAdapter(
     private var formats: List<VideoFormatEntity> = arrayListOf()
 
     init {
-        val allFormats = downloadCandidates.formats.formats
+        val allFormats = downloadCandidates.formats.allFormats()
         formats = getShortenFormats(allFormats)
     }
 

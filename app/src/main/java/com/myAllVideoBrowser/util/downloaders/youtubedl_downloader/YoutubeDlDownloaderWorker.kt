@@ -15,6 +15,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.workers.GenericDownloadWorkerWrapper
 import com.google.gson.Gson
+import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.Memory
@@ -128,14 +129,15 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                         task.also {
                             it.taskState =
                                 VideoTaskState.SUCCESS
-                            it.lineInfo = "Success"
+                            it.lineInfo = applicationContext.getString(R.string.download_success)
                         }
                         finishWork(task)
                     } else {
                         task.also {
                             it.taskState =
                                 VideoTaskState.ERROR
-                            it.lineInfo = "ERROR while saving"
+                            it.lineInfo =
+                                "${applicationContext.getString(R.string.download_started)} ERROR while saving"
                         }
                         finishWork(task)
                     }
@@ -197,7 +199,12 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         showProgress(taskId, taskTitle, 0, "Starting...", tmpFile, false)
         saveProgress(
             taskId,
-            line = LineInfo(taskId, 0.0, 0.0, sourceLine = "Starting..."),
+            line = LineInfo(
+                taskId,
+                0.0,
+                0.0,
+                sourceLine = applicationContext.getString(R.string.download_started)
+            ),
             task.also { it.taskState = VideoTaskState.DOWNLOADING }).blockingFirst(Unit)
 
         downloadJobDisposable?.dispose()
@@ -208,7 +215,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             finishWork(task.also {
                 task.mId = taskId
                 task.taskState = VideoTaskState.ERROR
-                task.errorMessage = "Not enough space"
+                task.errorMessage =
+                    "${applicationContext.getString(R.string.download_error)} Not enough space"
             })
         }
     }
@@ -272,7 +280,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                     finishWork(task.also {
                         it.mId = taskId
                         it.taskState = VideoTaskState.ERROR
-                        it.errorMessage = "OOM error"
+                        it.errorMessage =
+                            "${applicationContext.getString(R.string.download_error)} OOM error"
                     })
                     return@execute
                 }
@@ -318,7 +327,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                         finishWork(task.also {
                             it.mId = taskId
                             it.taskState = VideoTaskState.ERROR
-                            it.errorMessage = "Not enough space"
+                            it.errorMessage =
+                                "${applicationContext.getString(R.string.download_started)} Not enough space"
                         })
 
                         return@execute
@@ -513,7 +523,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                         it.setIsLive(true)
                                         it.mId = taskId
                                         it.taskState = VideoTaskState.ERROR
-                                        it.errorMessage = "Not enough space"
+                                        it.errorMessage =
+                                            "${applicationContext.getString(R.string.download_error)} Not enough space"
                                     })
                                 }
 
@@ -523,7 +534,8 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
                                         it.setIsLive(true)
                                         it.mId = taskId
                                         it.taskState = VideoTaskState.ERROR
-                                        it.errorMessage = "OOM error"
+                                        it.errorMessage =
+                                            "${applicationContext.getString(R.string.download_error)} OOM error"
                                     })
                                 }
                             }
@@ -774,11 +786,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         val decodedHeadersString = String(Base64.decode(decompressedRaw, Base64.DEFAULT))
 
         return Gson().fromJson(decodedHeadersString, VideoFormatEntity::class.java)
-    }
-
-    private fun hideNotifications(taskId: String) {
-        notificationsHelper.hideNotification(taskId.hashCode())
-        notificationsHelper.hideNotification(taskId.hashCode() + 1)
     }
 
     private fun handleOomError(taskId: String) {

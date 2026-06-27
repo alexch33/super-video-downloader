@@ -7,9 +7,9 @@ import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.ProgressRepository
 import com.myAllVideoBrowser.util.AppLogger
-import com.myAllVideoBrowser.util.downloaders.custom_downloader.CustomRegularDownloader
-import com.myAllVideoBrowser.util.downloaders.super_x_downloader.SuperXDownloader
-import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloader
+import com.myAllVideoBrowser.util.FileUtil
+import com.myAllVideoBrowser.util.NotificationsHelper
+import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import dagger.android.DaggerBroadcastReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +20,12 @@ import javax.inject.Inject
 class NotificationReceiver : DaggerBroadcastReceiver() {
     @Inject
     lateinit var progressRepository: ProgressRepository
+
+    @Inject
+    lateinit var fileUtil: FileUtil
+
+    @Inject
+    lateinit var notificationsHelper: NotificationsHelper
 
     @Inject
     lateinit var systemDownloadManager: SystemDownloadManager
@@ -41,10 +47,19 @@ class NotificationReceiver : DaggerBroadcastReceiver() {
             AppLogger.d("-----------------------------------   $taskId  $progressInfo")
 
             if (progressInfo == null) {
+                AppLogger.e("NotificationReceiver: progressInfo is null")
+                GenericDownloader.killWorkerAndRemoveData(context, taskId, fileUtil)
+                notificationsHelper.hideNotification(taskId.hashCode())
                 return@launch
             }
 
-            val videoInfo = VideoMetadataManager.getVideoInfo(progressInfo.id) ?: return@launch
+            val videoInfo = VideoMetadataManager.getVideoInfo(progressInfo.id)
+            if (videoInfo == null) {
+                AppLogger.e("NotificationReceiver: videoInfo is null")
+                GenericDownloader.killWorkerAndRemoveData(context, taskId, fileUtil)
+                notificationsHelper.hideNotification(taskId.hashCode())
+                return@launch
+            }
 
             when (intent.action) {
                 ACTION_PAUSE -> {

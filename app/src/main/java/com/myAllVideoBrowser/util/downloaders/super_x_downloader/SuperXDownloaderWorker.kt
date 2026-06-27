@@ -235,7 +235,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         return@launch
                     }
 
-                    controller.isPauseRequested() || e is CancellationException -> {
+                    controller.isPauseRequested() -> {
                         AppLogger.d("HLS (Live): Task $taskId is pausing gracefully.")
                         finishWork(task.also {
                             it.taskState = VideoTaskState.PAUSE
@@ -388,7 +388,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         return@launch
                     }
 
-                    controller.isPauseRequested() || e is CancellationException -> {
+                    controller.isPauseRequested() -> {
                         AppLogger.d("MPD: Task $taskId is pausing gracefully.")
                         finishWork(task.also {
                             it.taskState = VideoTaskState.PAUSE
@@ -646,7 +646,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         return@launch
                     }
 
-                    controller.isPauseRequested() || e is CancellationException -> {
+                    controller.isPauseRequested() -> {
                         AppLogger.d("HLS: Task $taskId is pausing gracefully.")
                         finishWork(task.also {
                             it.taskState = VideoTaskState.PAUSE

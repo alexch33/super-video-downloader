@@ -7,6 +7,7 @@ import android.util.Base64
 import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.work.WorkerParameters
+import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.FfmpegProcessor
 import com.myAllVideoBrowser.util.FileUtil
@@ -56,7 +57,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
             GenericDownloader.DownloaderActions.RESUME -> {
                 startDownload(task.also {
-                    it.lineInfo = "Starting..."
+                    it.lineInfo = applicationContext.getString(R.string.download_started)
                 }, headers)
             }
 
@@ -165,7 +166,8 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             if (!sourcePath.exists()) {
                 return finishWork(item.also {
                     it.taskState = VideoTaskState.ERROR
-                    it.errorMessage = "Downloaded file disappeared"
+                    it.errorMessage =
+                        "${applicationContext.getString(R.string.download_error)} Downloaded file disappeared"
                 })
             }
             isPreprocessed = true
@@ -232,7 +234,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 val finalItem = item.apply {
                     taskState = VideoTaskState.SUCCESS
                     filePath = target
-                    lineInfo = "Download Success"
+                    lineInfo = applicationContext.getString(R.string.download_success)
                     totalSize = finalSize
                     downloadSize = finalSize
                 }
@@ -256,7 +258,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 finalItem = item.apply {
                     taskState = VideoTaskState.SUCCESS
                     filePath = target
-                    lineInfo = "Download Success"
+                    lineInfo = applicationContext.getString(R.string.download_success)
                     totalSize = finalSize
                     downloadSize = finalSize
                 }
@@ -356,7 +358,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 } else if (taskState == VideoTaskState.PAUSE) {
                     val item = taskItem.also {
                         it.taskState = taskState
-                        it.lineInfo = "PAUSED"
+                        it.lineInfo = applicationContext.getString(R.string.download_paused)
                         it.mId = taskId
                     }
                     AppLogger.d("HANDLING TASK PAUSE IN FAILURE $taskItem")
@@ -364,7 +366,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 } else if (taskState == VideoTaskState.CANCELED) {
                     val item = taskItem.also {
                         it.taskState = taskState
-                        it.errorMessage = "Canceled"
+                        it.errorMessage = applicationContext.getString(R.string.download_canceled)
                         it.mId = taskId
                     }
                     AppLogger.d("HANDLING TASK CANCEL IN FAILURE $item")
@@ -460,7 +462,7 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         if (!isRunning) {
             finishWork(task.also {
                 it.taskState = VideoTaskState.CANCELED
-                it.lineInfo = "Canceled"
+                it.lineInfo = applicationContext.getString(R.string.download_canceled)
             })
         }
     }

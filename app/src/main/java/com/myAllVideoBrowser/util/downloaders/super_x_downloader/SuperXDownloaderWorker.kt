@@ -5,6 +5,7 @@ import android.text.format.Formatter
 import android.util.Base64
 import androidx.core.net.toUri
 import androidx.work.WorkerParameters
+import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskItem
@@ -239,7 +240,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         AppLogger.d("HLS (Live): Task $taskId is pausing gracefully.")
                         finishWork(task.also {
                             it.taskState = VideoTaskState.PAUSE
-                            it.errorMessage = "Paused"
+                            it.errorMessage = applicationContext.getString(R.string.download_paused)
                         })
                     }
 
@@ -248,7 +249,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         e.printStackTrace()
                         finishWork(task.also {
                             it.taskState = VideoTaskState.ERROR
-                            it.errorMessage = "HLS Live download failed: ${e.message}"
+                            it.errorMessage =
+                                "${applicationContext.getString(R.string.download_error)} HLS Live download failed: ${e.message}"
                         })
                     }
                 }
@@ -392,7 +394,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         AppLogger.d("MPD: Task $taskId is pausing gracefully.")
                         finishWork(task.also {
                             it.taskState = VideoTaskState.PAUSE
-                            it.errorMessage = "Paused"
+                            it.errorMessage = applicationContext.getString(R.string.download_paused)
                         })
                     }
 
@@ -401,7 +403,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         e.printStackTrace()
                         finishWork(task.also {
                             it.taskState = VideoTaskState.ERROR
-                            it.errorMessage = "MPD download failed: ${e.message}"
+                            it.errorMessage =
+                                "${applicationContext.getString(R.string.download_error)} MPD download failed: ${e.message}"
                         })
                     }
                 }
@@ -492,7 +495,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         e.printStackTrace()
                         finishWork(task.also {
                             it.taskState = VideoTaskState.ERROR
-                            it.errorMessage = "MPD Live download failed: ${e.message}"
+                            it.errorMessage =
+                                "${applicationContext.getString(R.string.download_error)} MPD Live download failed: ${e.message}"
                         })
                     }
                 }
@@ -658,7 +662,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                         e.printStackTrace()
                         finishWork(task.also {
                             it.taskState = VideoTaskState.ERROR
-                            it.errorMessage = "HLS download failed: ${e.message}"
+                            it.errorMessage =
+                                "${applicationContext.getString(R.string.download_error)} HLS download failed: ${e.message}"
                         })
                     }
                 }
@@ -781,10 +786,16 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
         }
         val controller = FileBasedDownloadController(fileUtil.tmpDir.resolve(taskId))
         if (controller.isCancelRequested() || item.errorMessage?.contains("was cancelled") == true) {
-            item.also { it.taskState = VideoTaskState.CANCELED }
+            item.also {
+                it.taskState = VideoTaskState.CANCELED
+                it.errorMessage = applicationContext.getString(R.string.download_canceled)
+            }
         }
         if (controller.isPauseRequested()) {
-            item.also { it.taskState = VideoTaskState.PAUSE }
+            item.also {
+                it.taskState = VideoTaskState.PAUSE
+                it.lineInfo = applicationContext.getString(R.string.download_paused)
+            }
         }
 
         AppLogger.d("SuperX: Finishing work for task $taskId with state ${item.taskState}  error message: ${item.errorMessage}")
@@ -802,9 +813,9 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
         val notificationData = notificationsHelper.createNotificationBuilder(item.also {
             if (item.taskState == VideoTaskState.SUCCESS) {
-                it.lineInfo = "Success"
+                it.lineInfo = applicationContext.getString(R.string.download_success)
             } else if (item.taskState == VideoTaskState.CANCELED) {
-                it.lineInfo = "Canceled"
+                it.lineInfo = applicationContext.getString(R.string.download_canceled)
             }
         })
         showNotificationFinal(notificationData.first, notificationData.second)
@@ -867,7 +878,7 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                 } else {
                     AppLogger.e("FFmpeg: Failed to move file to $targetPath")
                     item.taskState = VideoTaskState.ERROR
-                    item.errorMessage = "Error moving file"
+                    item.errorMessage = applicationContext.getString(R.string.media_move_error)
                     sourcePath.parentFile?.deleteRecursively()
                     saveProgress(item.mId, finalProgress, item.taskState, "Error moving file")
                 }

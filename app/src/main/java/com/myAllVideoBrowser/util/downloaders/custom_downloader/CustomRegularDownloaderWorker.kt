@@ -456,7 +456,13 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(task.fileName).name)
         CustomFileDownloader.cancel(tmpFile)
 
-        getContinuation().resume(Result.success())
+        val isRunning = GenericDownloader.isWorkScheduled(applicationContext, taskId)
+        if (!isRunning) {
+            finishWork(task.also {
+                it.taskState = VideoTaskState.CANCELED
+                it.lineInfo = "Canceled"
+            })
+        }
     }
 
     private fun pauseTask(task: VideoTaskItem) {

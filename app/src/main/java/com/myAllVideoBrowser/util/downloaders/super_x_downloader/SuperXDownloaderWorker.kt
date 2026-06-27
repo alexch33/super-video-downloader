@@ -881,6 +881,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     item.taskState,
                     if (item.taskState == VideoTaskState.ERROR) {
                         item.errorMessage ?: "Unknown Superx Error"
+                    } else if (item.taskState == VideoTaskState.CANCELED) {
+                        "Canceled"
                     } else {
                         "Paused"
                     }

@@ -47,6 +47,9 @@ class FileBasedDownloadController(private val downloadDir: File) {
         if (!downloadDir.exists()) {
             downloadDir.mkdirs()
         }
+        if (isPauseRequested()) {
+            pauseFlag.delete()
+        }
         cancelFlag.createNewFile()
     }
 

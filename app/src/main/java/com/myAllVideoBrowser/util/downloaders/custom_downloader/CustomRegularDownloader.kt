@@ -86,6 +86,8 @@ object CustomRegularDownloader : GenericDownloader() {
     }
 
     override fun getDownloadDataFromVideoInfo(videoInfo: VideoInfo): Data.Builder {
+        videoInfo.repairNulls()
+
         val videoUrl = videoInfo.firstUrlToString
         val headers = videoInfo.downloadUrls.firstOrNull()?.headers
         val headersMap = mutableMapOf<String, String>()

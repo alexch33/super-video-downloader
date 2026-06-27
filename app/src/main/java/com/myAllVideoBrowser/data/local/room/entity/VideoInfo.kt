@@ -77,6 +77,32 @@ data class VideoInfo(
     var isAudioOnlyExtract: Boolean = false
 ) {
 
+    /**
+     * Repairs the object if GSON/Room bypassed Kotlin's nullability during deserialization.
+     * i have no idea how to reproduce case when some fields became null, so this is just crash fix
+     */
+    fun repairNulls(): VideoInfo {
+        @Suppress("SENSELESS_COMPARISON")
+        if (id == null) id = UUID.randomUUID().toString()
+        @Suppress("SENSELESS_COMPARISON")
+        if (downloadUrls == null) downloadUrls = emptyList()
+        @Suppress("SENSELESS_COMPARISON")
+        if (formats == null) {
+            formats = VideFormatEntityList(emptyList())
+        } else {
+            formats.fixNulls()
+        }
+        @Suppress("SENSELESS_COMPARISON")
+        if (title == null) title = ""
+        @Suppress("SENSELESS_COMPARISON")
+        if (ext == null) ext = ""
+        @Suppress("SENSELESS_COMPARISON")
+        if (thumbnail == null) thumbnail = ""
+        @Suppress("SENSELESS_COMPARISON")
+        if (originalUrl == null) originalUrl = ""
+        return this
+    }
+
     val firstUrlToString: String
         get() {
             if (downloadUrls.isNotEmpty()) {
@@ -90,14 +116,14 @@ data class VideoInfo(
 
     val isM3u8: Boolean
         get() {
-            return formats.formats.any { format -> format.isM3u8 }
+            return (formats.allFormats()).any { format -> format.isM3u8 }
         }
 
     val isMpd: Boolean
         get() {
-            return formats.formats.any { format -> format.isMpd }
+            return (formats.allFormats()).any { format -> format.isMpd }
         }
-    val isMaster get() = isM3u8 && formats.formats.size > 1
+    val isMaster get() = isM3u8 && (formats.allFormats().size) > 1
 
     fun isTikTokVideo(): Boolean {
         return originalUrl.contains("tiktok.com")
@@ -136,18 +162,23 @@ data class VideoInfo(
         result = 31 * result + isAudioOnlyExtract.hashCode()
         return result
     }
-
-
 }
 
 class FormatsConverter {
     @TypeConverter
-    fun convertFormatListToJSONString(formatList: VideFormatEntityList): String =
-        Gson().toJson(formatList)
+    fun convertFormatListToJSONString(formatList: VideFormatEntityList?): String =
+        Gson().toJson(formatList ?: VideFormatEntityList(emptyList()))
 
     @TypeConverter
-    fun convertJSONStringToFormatList(jsonString: String): VideFormatEntityList =
-        Gson().fromJson(jsonString, VideFormatEntityList::class.java)
+    fun convertJSONStringToFormatList(jsonString: String?): VideFormatEntityList {
+        if (jsonString.isNullOrEmpty()) return VideFormatEntityList(emptyList())
+        return try {
+            val result = Gson().fromJson(jsonString, VideFormatEntityList::class.java)
+            result?.fixNulls() ?: VideFormatEntityList(emptyList())
+        } catch (_: Exception) {
+            VideFormatEntityList(emptyList())
+        }
+    }
 }
 
 class DownloadUrlsConverter {
@@ -159,10 +190,11 @@ class DownloadUrlsConverter {
     }
 
     @TypeConverter
-    fun fromSource(sourceList: List<Request>): String {
+    fun fromSource(sourceList: List<Request>?): String {
         val resultBuffer = StringBuffer()
+        val list = sourceList ?: return ""
 
-        for (source in sourceList) {
+        for (source in list) {
             val url = source.url.toString()
             val method = source.method
             val body = source.body.toString()
@@ -188,27 +220,31 @@ class DownloadUrlsConverter {
     }
 
     @TypeConverter
-    fun toSource(inputList: String): List<Request> {
+    fun toSource(inputList: String?): List<Request> {
         val resultList = mutableListOf<Request>()
+        if (inputList.isNullOrEmpty()) return resultList
 
         for (input in inputList.split(">^^^<").filter { it.isNotEmpty() }) {
-            val jsonMap = Json.parseToJsonElement(input).jsonObject.toMutableMap<String, Any>()
+            try {
+                val jsonMap = Json.parseToJsonElement(input).jsonObject.toMutableMap<String, Any>()
 
-            val body = (jsonMap[BODY] ?: "").toString()
+                val body = (jsonMap[BODY] ?: "").toString()
 
-            // TODO FIX serialize error on some headers
-            val headers =
-                Json.parseToJsonElement(jsonMap[HEADERS].toString()).jsonObject.toMutableMap<String, Any>()
+                val headers =
+                    Json.parseToJsonElement(jsonMap[HEADERS].toString()).jsonObject.toMutableMap<String, Any>()
 
-            val urlToAdd = jsonMap[URL_KEY].toString().toHttpUrlOrNull() ?: continue
-            resultList.add(
-                Request.Builder().url(urlToAdd)
-                    .headers(headers.map { it.key to it.value.toString() }.toMap().toHeaders())
-                    .method(
-                        jsonMap[METHOD].toString(),
-                        body.toRequestBody(null)
-                    ).build()
-            )
+                val urlToAdd = jsonMap[URL_KEY].toString().toHttpUrlOrNull() ?: continue
+                resultList.add(
+                    Request.Builder().url(urlToAdd)
+                        .headers(headers.map { it.key to it.value.toString() }.toMap().toHeaders())
+                        .method(
+                            jsonMap[METHOD].toString(),
+                            body.toRequestBody(null)
+                        ).build()
+                )
+            } catch (_: Exception) {
+                // Skip invalid entries
+            }
         }
 
         return resultList

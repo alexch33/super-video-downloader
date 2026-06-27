@@ -107,9 +107,15 @@ object SuperXDownloader : GenericDownloader() {
     }
 
     override fun getDownloadDataFromVideoInfo(videoInfo: VideoInfo): Data.Builder {
+        // Enforce nullability constraints that might have been bypassed by reflection (GSON/Room)
+        videoInfo.repairNulls()
+
         val videoUrl = videoInfo.originalUrl
-        val headers = videoInfo.formats.formats.firstOrNull()?.httpHeaders
-        val headersMap = headers?.toMap()?.toMutableMap() ?: mutableMapOf()
+        val formatsList = videoInfo.formats.allFormats()
+        val firstFormat = formatsList.firstOrNull()
+
+        val headers = firstFormat?.httpHeaders
+        val headersMap = headers?.toMutableMap() ?: mutableMapOf()
 
         val fileName = videoInfo.name
 
@@ -145,10 +151,10 @@ object SuperXDownloader : GenericDownloader() {
         data.putBoolean(Constants.IS_MPD, videoInfo.isMpd)
         data.putString(
             Constants.SELECTED_FORMAT_ID,
-            videoInfo.formats.formats.firstOrNull()?.formatId
+            firstFormat?.formatId
         )
         data.putBoolean(Constants.IS_LIVE, videoInfo.isLive)
-        data.putString(Constants.VIDEO_CODEC, videoInfo.formats.formats.firstOrNull()?.vcodec)
+        data.putString(Constants.VIDEO_CODEC, firstFormat?.vcodec)
         data.putBoolean(Constants.IS_AUDIO_ONLY_EXTRACT, videoInfo.isAudioOnlyExtract)
         return data
     }

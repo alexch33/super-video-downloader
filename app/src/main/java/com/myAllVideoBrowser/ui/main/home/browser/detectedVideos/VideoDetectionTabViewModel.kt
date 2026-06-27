@@ -299,7 +299,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     open suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
-        if (newInfo.formats.formats.isEmpty()) {
+        if (newInfo.formats.allFormats().isEmpty()) {
             return
         }
 
@@ -327,8 +327,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
         return if (newInfo.isRegularDownload) {
             existing.firstUrlToString == newInfo.firstUrlToString
         } else {
-            existing.formats.formats.any { existingFormat ->
-                newInfo.formats.formats.any { newFormat ->
+            existing.formats.allFormats().any { existingFormat ->
+                newInfo.formats.allFormats().any { newFormat ->
                     existingFormat.url == newFormat.url
                 }
             }

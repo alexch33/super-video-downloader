@@ -209,7 +209,7 @@ class GlobalVideoDetectionModel @Inject constructor(
     }
 
     override suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
-        if (newInfo.formats.formats.isEmpty()) {
+        if (newInfo.formats.allFormats().isEmpty()) {
             return
         }
 

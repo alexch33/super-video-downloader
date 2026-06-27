@@ -76,13 +76,28 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     AppLogger.d("HLS: Cancel action received for task $taskId. Creating flag file.")
                     val isWorkerRunning =
                         GenericDownloader.isWorkScheduled(applicationContext, taskId)
-                    if (isWorkerRunning) {
-                        controller.requestCancel()
-                        getContinuation().resume(Result.success())
-                    } else {
-                        controller.requestCancel()
-                        finishWork(task.also { it.taskState = VideoTaskState.CANCELED })
+                    val selectedFormatId =
+                        inputData.getString(GenericDownloader.Constants.SELECTED_FORMAT_ID)
+                    // already canceled, clean data and kill worker
+                    if (selectedFormatId == null && isWorkerRunning) {
+                        AppLogger.e("HLS: No selected format ID was provided to the worker. Stopping worker.")
+                        GenericDownloader.killWorkerAndRemoveData(
+                            applicationContext,
+                            taskId,
+                            fileUtil
+                        )
+                        hideNotifications(taskId)
+                        getContinuation().resume(Result.failure())
+                        return
                     }
+
+                    controller.requestCancel()
+                    finishWork(task.also { it.taskState = VideoTaskState.CANCELED })
+                    GenericDownloader.killWorkerAndRemoveData(
+                        applicationContext,
+                        taskId,
+                        fileUtil
+                    )
                 }
 
                 GenericDownloader.DownloaderActions.PAUSE -> {
@@ -764,7 +779,15 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             getContinuation().resume(Result.failure())
             return
         }
-        AppLogger.d("FFmpeg: Finishing work for task $taskId with state ${item.taskState}")
+        val controller = FileBasedDownloadController(fileUtil.tmpDir.resolve(taskId))
+        if (controller.isCancelRequested() || item.errorMessage?.contains("was cancelled") == true) {
+            item.also { it.taskState = VideoTaskState.CANCELED }
+        }
+        if (controller.isPauseRequested()) {
+            item.also { it.taskState = VideoTaskState.PAUSE }
+        }
+
+        AppLogger.d("SuperX: Finishing work for task $taskId with state ${item.taskState}  error message: ${item.errorMessage}")
 
         handleTaskCompletion(item.also {
             val cachedCurrentBytes = progressCached?.currentBytes

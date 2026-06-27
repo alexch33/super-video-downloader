@@ -28,10 +28,12 @@ object YoutubeDlDownloader : GenericDownloader() {
     override fun getDownloadDataFromVideoInfo(
         videoInfo: VideoInfo
     ): Data.Builder {
+        videoInfo.repairNulls()
+
         val videoUrl: String = if (videoInfo.downloadUrls.isNotEmpty()) {
             videoInfo.originalUrl
         } else {
-            videoInfo.formats.formats.firstOrNull()?.url.toString()
+            videoInfo.formats.allFormats().firstOrNull()?.url.toString()
         }
 
         val data = Data.Builder()
@@ -45,9 +47,9 @@ object YoutubeDlDownloader : GenericDownloader() {
         data.putBoolean(Constants.IS_AUDIO_ONLY_EXTRACT, videoInfo.isAudioOnlyExtract)
         data.putBoolean(Constants.IS_LIVE, videoInfo.isLive)
 
-        if (videoInfo.formats.formats.firstOrNull() != null && videoInfo.formats.formats.isNotEmpty()) {
+        if (videoInfo.formats.allFormats().firstOrNull() != null && videoInfo.formats.allFormats().isNotEmpty()) {
             val stringifiedFormatEntity =
-                Gson().toJson(videoInfo.formats.formats.firstOrNull()).toString()
+                Gson().toJson(videoInfo.formats.allFormats().firstOrNull()).toString()
             val encodedEntity =
                 Base64.encodeToString(stringifiedFormatEntity.toByteArray(), Base64.DEFAULT)
 

@@ -38,7 +38,7 @@ class VideoInfoAdapter(
                 val currentVideoInfo = binding.videoInfo ?: return
 
                 val curSelected = model.selectedFormats.get()?.get(currentVideoInfo.id)
-                val foundFormat = currentVideoInfo.formats.formats.find { it.format == curSelected }
+                val foundFormat = currentVideoInfo.formats.allFormats().find { it.format == curSelected }
 
                 if (foundFormat != null) {
                     model.selectedFormatUrl.set(foundFormat.url)
@@ -72,7 +72,7 @@ class VideoInfoAdapter(
 
                 val frmts = model.selectedFormats.get()?.toMutableMap() ?: mutableMapOf()
                 val selected = frmts[info.id]
-                val defaultFormat = info.formats.formats.lastOrNull()?.format ?: "unknown"
+                val defaultFormat = info.formats.allFormats().lastOrNull()?.format ?: "unknown"
                 if (selected == null) {
                     frmts[info.id] = defaultFormat
                 }
@@ -81,15 +81,15 @@ class VideoInfoAdapter(
                 if (info.isRegularDownload) {
                     model.selectedFormatUrl.set(info.firstUrlToString)
                 } else {
-                    model.selectedFormatUrl.set(info.formats.formats.lastOrNull()?.url)
+                    model.selectedFormatUrl.set(info.formats.allFormats().lastOrNull()?.url)
                 }
 
                 videoInfo = info
                 val typeText = if (info.isM3u8 || info.isMpd) {
-                    val isMpd = info.formats.formats.firstOrNull()?.isMpd == true
+                    val isMpd = info.formats.allFormats().firstOrNull()?.isMpd == true
                     if (isMpd) "MPD List" else "M3U8 List"
                 } else if (info.isMaster) {
-                    val isMpd = info.formats.formats.firstOrNull()?.isMpd == true
+                    val isMpd = info.formats.allFormats().firstOrNull()?.isMpd == true
                     if (isMpd) "MPD Master List" else "M3U8 Mater List"
                 } else if (info.isRegularDownload) {
                     "Regular MP4 Download"
@@ -98,7 +98,7 @@ class VideoInfoAdapter(
                 }
 
                 if (info.isRegularDownload) {
-                    val fileSize = info.formats.formats.firstOrNull()?.fileSize
+                    val fileSize = info.formats.allFormats().firstOrNull()?.fileSize
                     if (fileSize != null) {
                         val size = FileUtil.getFileSizeReadable(fileSize.toDouble())
                         sizeTextView.text = "Download Size: $size"

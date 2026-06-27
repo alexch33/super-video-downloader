@@ -11,11 +11,23 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.Deflater
 import java.util.zip.Inflater
 import androidx.core.content.edit
+import com.myAllVideoBrowser.util.FileUtil
 
 
 abstract class GenericDownloader : IDownloader {
     companion object {
         private var instance: GenericDownloader? = null
+
+        fun killWorkerAndRemoveData(context: Context, workId: String, fileUtil: FileUtil) {
+            try {
+                AppLogger.d("killWorker: Attempting to kill work with ID: $workId")
+                WorkManager.getInstance(context).cancelUniqueWork(workId)
+                fileUtil.tmpDir.resolve(workId).deleteRecursively()
+            } catch (e: Exception) {
+                AppLogger.e("killWorker: Failed to cancel work $workId")
+                e.printStackTrace()
+            }
+        }
 
         fun isWorkScheduled(context: Context, uniqueWorkName: String): Boolean {
             val workManager = WorkManager.getInstance(context)

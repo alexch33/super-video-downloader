@@ -2,12 +2,9 @@ package com.myAllVideoBrowser.util
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.os.Build
 import com.google.gson.Gson
 import com.myAllVideoBrowser.data.local.GeneratedProxyCreds
 import com.myAllVideoBrowser.data.local.model.Proxy
-import java.text.SimpleDateFormat
-import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 import androidx.core.content.edit
@@ -347,27 +344,29 @@ class SharedPrefHelper @Inject constructor(
     fun getGeneratedCreds(): GeneratedProxyCreds {
         val creds = sharedPreferences.getString(GENERATED_CREDENTIALS, null)
         return if (creds != null) {
-            val saved = GeneratedProxyCreds.fromJson(creds)
+            var credsResult: GeneratedProxyCreds
+            try {
+                val saved = GeneratedProxyCreds.fromJson(creds)
 
-            val hasSpecialChar = saved.localPassword.any { !it.isLetterOrDigit() }
-            if (hasSpecialChar) {
-                val newCreds = GeneratedProxyCreds.generateProxyCredentials()
-                setGeneratedCreds(newCreds)
-                return newCreds
-            }
+                val hasSpecialChar = saved.localPassword.any { !it.isLetterOrDigit() }
+                if (hasSpecialChar) {
+                    val newCreds = GeneratedProxyCreds.generateProxyCredentials()
+                    setGeneratedCreds(newCreds)
+                    return newCreds
+                }
 
-            if (isTimeToRegenerate()) {
-                val newCreds = GeneratedProxyCreds.generateProxyCredentials()
-                setGeneratedCreds(newCreds)
-                saveCredsTimestamp(System.currentTimeMillis())
-                return newCreds
+                credsResult = if (isTimeToRegenerate()) {
+                    generateAndSetNewCreds()
+                } else {
+                    saved
+                }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                credsResult = generateAndSetNewCreds()
             }
-            saved
+            credsResult
         } else {
-            val initialCreds = GeneratedProxyCreds.generateProxyCredentials()
-            setGeneratedCreds(initialCreds)
-            saveCredsTimestamp(System.currentTimeMillis())
-            initialCreds
+            generateAndSetNewCreds()
         }
     }
 
@@ -440,5 +439,12 @@ class SharedPrefHelper @Inject constructor(
         sharedPreferences.edit {
             putBoolean(IS_ADBLOCK_ON, isOn)
         }
+    }
+
+    private fun generateAndSetNewCreds(): GeneratedProxyCreds {
+        val newCreds = GeneratedProxyCreds.generateProxyCredentials()
+        setGeneratedCreds(newCreds)
+        saveCredsTimestamp(System.currentTimeMillis())
+        return newCreds
     }
 }

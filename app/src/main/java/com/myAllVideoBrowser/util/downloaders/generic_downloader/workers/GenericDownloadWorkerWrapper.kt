@@ -124,4 +124,9 @@ abstract class GenericDownloadWorkerWrapper(
         setDone()
         disposable?.dispose()
     }
+
+    fun hideNotifications(taskId: String) {
+        notificationsHelper.hideNotification(taskId.hashCode())
+        notificationsHelper.hideNotification(taskId.hashCode() + 1)
+    }
 }

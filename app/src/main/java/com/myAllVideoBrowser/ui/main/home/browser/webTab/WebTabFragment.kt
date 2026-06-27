@@ -329,7 +329,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 requireContext(), VideoPlayerActivity::class.java
             ).apply {
                 // you can add values(if any) to pass to the next class or avoid using `.apply`
-                val currFormat = videoInfo.formats.formats.filter {
+                val currFormat = videoInfo.formats.allFormats().filter {
                     it.format?.contains(
                         format
                     ) ?: false
@@ -360,7 +360,7 @@ class WebTabFragment : BaseWebTabFragment() {
         val info = videoInfo.copy(
             id = UUID.randomUUID().toString(),
             title = FileNameCleaner.cleanFileName(videoTitle),
-            formats = VideFormatEntityList(videoInfo.formats.formats.filter {
+            formats = VideFormatEntityList(videoInfo.formats.allFormats().filter {
                 it.format?.contains(
                     format
                 ) ?: false
@@ -818,7 +818,7 @@ class WebTabFragment : BaseWebTabFragment() {
         }
 
         override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
-            val foundFormat = videoInfo.formats.formats.find { thisFormat ->
+            val foundFormat = videoInfo.formats.allFormats().find { thisFormat ->
                 thisFormat.format?.contains(format) == true
             }
             if (foundFormat == null) {

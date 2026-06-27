@@ -135,5 +135,24 @@ data class VideoFormatEntity(
 }
 
 data class VideFormatEntityList(
-    val formats: List<VideoFormatEntity>
-)
+    @SerializedName("formats")
+    @Expose
+    var formats: List<VideoFormatEntity> = emptyList()
+) {
+    fun fixNulls(): VideFormatEntityList {
+        @Suppress("SENSELESS_COMPARISON")
+        if (formats == null) {
+            formats = emptyList()
+        }
+        return this
+    }
+
+    /**
+     * Ensured getter to prevent null bypass by GSON/Room reflection.
+     */
+    fun allFormats(): List<VideoFormatEntity> {
+        @Suppress("SENSELESS_COMPARISON")
+        if (formats == null) return emptyList()
+        return formats
+    }
+}

@@ -776,11 +776,6 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         return Gson().fromJson(decodedHeadersString, VideoFormatEntity::class.java)
     }
 
-    private fun hideNotifications(taskId: String) {
-        notificationsHelper.hideNotification(taskId.hashCode())
-        notificationsHelper.hideNotification(taskId.hashCode() + 1)
-    }
-
     private fun handleOomError(taskId: String) {
         YoutubeDL.getInstance().destroyProcessById(taskId)
 

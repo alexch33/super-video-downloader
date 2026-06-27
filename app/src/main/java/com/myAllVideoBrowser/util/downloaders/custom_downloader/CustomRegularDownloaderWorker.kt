@@ -55,7 +55,9 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
             }
 
             GenericDownloader.DownloaderActions.RESUME -> {
-                startDownload(task, headers)
+                startDownload(task.also {
+                    it.lineInfo = "Starting..."
+                }, headers)
             }
 
             GenericDownloader.DownloaderActions.STOP_SAVE_ACTION -> {
@@ -87,11 +89,9 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         CustomRegularDownloader.deleteHeadersStringFromSharedPreferences(applicationContext, taskId)
 
         try {
-            val notificationData = notificationsHelper.createNotificationBuilder(item.also {
+            item.also {
                 it.percent = progressCached.currentBytes / progressCached.totalBytes.toFloat() * 100
-            })
-            showNotificationFinal(notificationData.first, notificationData.second)
-
+            }
             val result =
                 if (item.taskState == VideoTaskState.ERROR) Result.failure() else Result.success()
 
@@ -108,7 +108,12 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 errorMsg
             }
 
+            AppLogger.d("FINISHING SUCCESS... $item")
+
             saveProgress(item.mId, progressCached, item.taskState, progressInfo)
+
+            val notificationData = notificationsHelper.createNotificationBuilder(item)
+            showNotificationFinal(notificationData.first, notificationData.second)
 
             getContinuation().resume(result)
         } catch (e: Throwable) {
@@ -290,7 +295,6 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
         val fixedHeaders = decodeCookieHeader(headers)
         updateProgressInfoAndStartDownload(taskItem.also {
             it.taskState = VideoTaskState.DOWNLOADING
-            it.lineInfo = "Strting..."
         }, taskId, url, fixedHeaders)
     }
 
@@ -356,6 +360,14 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                         it.mId = taskId
                     }
                     AppLogger.d("HANDLING TASK PAUSE IN FAILURE $taskItem")
+                    finishWork(item)
+                } else if (taskState == VideoTaskState.CANCELED) {
+                    val item = taskItem.also {
+                        it.taskState = taskState
+                        it.errorMessage = "Canceled"
+                        it.mId = taskId
+                    }
+                    AppLogger.d("HANDLING TASK CANCEL IN FAILURE $item")
                     finishWork(item)
                 } else {
                     val item = taskItem.also {

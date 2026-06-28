@@ -68,7 +68,7 @@ class BrowserHomeViewModel @Inject constructor(
             homePublishSubject.debounce(300, TimeUnit.MILLISECONDS)
                 .toFlowable(BackpressureStrategy.LATEST), SuggestionsUtils.getSuggestions(
                 okHttpClient.getProxyOkHttpClient(), searchTextInput.get() ?: ""
-            )
+            ).toFlowable(BackpressureStrategy.LATEST)
         ) { _, suggestions ->
             val listSuggestions = mutableListOf<Suggestion>()
             listSuggestions.addAll(suggestions)

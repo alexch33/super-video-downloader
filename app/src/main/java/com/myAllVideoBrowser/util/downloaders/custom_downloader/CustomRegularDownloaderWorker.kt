@@ -275,10 +275,20 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
                 finishWork(item.also { it.taskState = VideoTaskState.SUCCESS })
             } else {
                 AppLogger.e("Error during post-processing ${e.printStackTrace()}")
-                finishWork(item.also {
-                    it.taskState = VideoTaskState.ERROR
-                    it.errorMessage = e.message
-                })
+
+                if (sourcePath.parentFile?.exists() != true) {
+                    // was delete
+                    finishWork(item.also {
+                        it.taskState = VideoTaskState.CANCELED
+                        it.errorMessage = applicationContext.getString(R.string.download_canceled)
+                    })
+                } else {
+                    // regular error
+                    finishWork(item.also {
+                        it.taskState = VideoTaskState.ERROR
+                        it.errorMessage = e.message
+                    })
+                }
             }
         }
     }
@@ -457,13 +467,14 @@ class CustomRegularDownloaderWorker(appContext: Context, workerParams: WorkerPar
 
         val tmpFile = fileUtil.tmpDir.resolve(taskId).resolve(File(task.fileName).name)
         CustomFileDownloader.cancel(tmpFile)
-
         val isRunning = GenericDownloader.isWorkScheduled(applicationContext, taskId)
         if (!isRunning) {
             finishWork(task.also {
                 it.taskState = VideoTaskState.CANCELED
                 it.lineInfo = applicationContext.getString(R.string.download_canceled)
             })
+        } else {
+            GenericDownloader.cancelFfmpegTaskById(taskId)
         }
     }
 

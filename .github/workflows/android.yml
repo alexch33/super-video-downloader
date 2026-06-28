@@ -88,7 +88,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Crashes fixes\nBug with download task canceling in merge segment state\nMore String Localizations for download notifications"
+          body: "Download manager tasks cancellation system reworked"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

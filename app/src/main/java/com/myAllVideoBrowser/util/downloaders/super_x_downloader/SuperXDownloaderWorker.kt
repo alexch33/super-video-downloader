@@ -5,6 +5,7 @@ import android.text.format.Formatter
 import android.util.Base64
 import androidx.core.net.toUri
 import androidx.work.WorkerParameters
+import com.antonkarpenko.ffmpegkit.FFmpegKit
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.GenericDownloader
@@ -93,12 +94,8 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
                     }
 
                     controller.requestCancel()
+                    GenericDownloader.cancelFfmpegTaskById(taskId)
                     finishWork(task.also { it.taskState = VideoTaskState.CANCELED })
-                    GenericDownloader.killWorkerAndRemoveData(
-                        applicationContext,
-                        taskId,
-                        fileUtil
-                    )
                 }
 
                 GenericDownloader.DownloaderActions.PAUSE -> {
@@ -784,8 +781,12 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
             getContinuation().resume(Result.failure())
             return
         }
+
         val controller = FileBasedDownloadController(fileUtil.tmpDir.resolve(taskId))
-        if (controller.isCancelRequested() || item.errorMessage?.contains("was cancelled") == true) {
+        if (controller.isCancelRequested() || item.errorMessage?.contains("was cancelled") == true || item.errorMessage?.contains(
+                "received cancel request"
+            ) == true
+        ) {
             item.also {
                 it.taskState = VideoTaskState.CANCELED
                 it.errorMessage = applicationContext.getString(R.string.download_canceled)
@@ -886,6 +887,16 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
             else -> { // ERROR state
                 AppLogger.d("SuperX: Task failed with error: ${item.errorMessage}  ${item.taskState}")
+                val infos = progressRepository.getProgressInfos().blockingFirst(emptyList())
+                val found = infos.firstOrNull {
+                    it.id == item.mId
+                }
+                // was delete
+                if (found == null) {
+                    item.also {
+                        it.taskState = VideoTaskState.CANCELED
+                    }
+                }
                 saveProgress(
                     item.mId,
                     finalProgress,

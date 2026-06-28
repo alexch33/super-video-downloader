@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.Deflater
 import java.util.zip.Inflater
 import androidx.core.content.edit
+import com.antonkarpenko.ffmpegkit.FFmpegKit
 import com.myAllVideoBrowser.util.FileUtil
 
 
@@ -22,10 +23,26 @@ abstract class GenericDownloader : IDownloader {
             try {
                 AppLogger.d("killWorker: Attempting to kill work with ID: $workId")
                 WorkManager.getInstance(context).cancelUniqueWork(workId)
+                cancelFfmpegTaskById(workId)
                 fileUtil.tmpDir.resolve(workId).deleteRecursively()
             } catch (e: Exception) {
                 AppLogger.e("killWorker: Failed to cancel work $workId")
                 e.printStackTrace()
+            }
+        }
+
+        fun cancelFfmpegTaskById(id: String) {
+            try {
+                val found = FFmpegKit.listSessions().firstOrNull { session ->
+                    val argumentWithTaskId =
+                        session.arguments.firstOrNull { arg -> arg.contains(id) }
+                    argumentWithTaskId.isNullOrEmpty().not()
+                }
+                if (found != null) {
+                    FFmpegKit.cancel(found.sessionId)
+                }
+            } catch (e: Throwable) {
+                AppLogger.e("ERORR CANCEL FFMPEG TASK with id $id ${e.message}")
             }
         }
 

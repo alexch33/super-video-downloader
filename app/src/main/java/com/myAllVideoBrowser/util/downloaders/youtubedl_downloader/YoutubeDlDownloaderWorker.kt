@@ -250,6 +250,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
         if (taskId != null) {
             YoutubeDL.getInstance().destroyProcessById(taskId)
+            destroyChildProcesses()
 
             val fileToRemove = File("${fileUtil.tmpDir}/$taskId")
 

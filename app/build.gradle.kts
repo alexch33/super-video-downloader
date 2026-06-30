@@ -138,8 +138,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 334
-        versionName = "0.8.21.1"
+        versionCode = 338
+        versionName = "0.8.21.2"
 
         if (isSingleAbiRequested) {
             splits {

@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.util
 import com.myAllVideoBrowser.data.local.model.Suggestion
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.core.Observable
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
@@ -10,8 +11,8 @@ import org.json.JSONObject
 
 class SuggestionsUtils {
     companion object {
-        fun getSuggestions(okHttpClient: OkHttpClient, input: String): Flowable<List<Suggestion>> {
-            return Flowable.create({ emitter ->
+        fun getSuggestions(okHttpClient: OkHttpClient, input: String): Observable<List<Suggestion>> {
+            return Observable.create { emitter ->
                 val request = Request.Builder()
                     .url("https://duckduckgo.com/ac/?q=$input&kl=wt-wt")
                     .build()
@@ -20,7 +21,7 @@ class SuggestionsUtils {
 
                 val result: ArrayList<Suggestion> = ArrayList()
 
-                val jsn = JSONArray(response.toString())
+                val jsn = JSONArray(response)
                 for (i in 0 until jsn.length()) {
                     try {
                         val phraseObj = JSONObject(jsn.get(i).toString())
@@ -31,7 +32,8 @@ class SuggestionsUtils {
                     }
                 }
                 emitter.onNext(result)
-            }, BackpressureStrategy.LATEST)
+                emitter.onComplete()
+            }
         }
     }
 }

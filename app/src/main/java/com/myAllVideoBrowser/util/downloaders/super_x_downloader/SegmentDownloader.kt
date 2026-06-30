@@ -85,7 +85,7 @@ class SegmentDownloader(
                 if (e.message?.contains("403") == true || e.message?.contains(
                         "denied",
                         true
-                    ) == true
+                    ) == true || e.message?.contains("ENOENT (No such file or directory)") == true // Canceled
                 ) {
                     throw okio.IOException(e.message)
                 }

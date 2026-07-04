@@ -502,11 +502,6 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
 // =========================================================================
 val execOps = project.serviceOf<ExecOperations>()
 
-// V2Ray Repository Configuration
-val v2rayRepo = "https://github.com/2dust/AndroidLibXrayLite.git"
-val v2rayCommit = "d783dc8ea75afa0ff8fc9dcd51a426a9a67f6a70"
-val buildDirV2ray = file("${project.rootDir}/build/v2ray")
-
 // Go Executable Detection
 val goExecutable = run {
     val envOverride = System.getenv("GO_EXECUTABLE")

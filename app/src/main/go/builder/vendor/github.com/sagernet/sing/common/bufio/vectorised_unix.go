@@ -8,7 +8,6 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/buf"
 	"github.com/sagernet/sing/common/control"
 	M "github.com/sagernet/sing/common/metadata"
@@ -62,7 +61,7 @@ func (w *SyscallVectorisedWriter) WriteVectorised(buffers []*buf.Buffer) error {
 			return innerErr != unix.EAGAIN
 		}
 	})
-	common.ClearArray(iovecList)
+	clear(iovecList)
 	if innerErr != 0 {
 		err = os.NewSyscallError("SYS_WRITEV", innerErr)
 	}
@@ -115,7 +114,7 @@ func (w *SyscallVectorisedPacketWriter) WriteVectorisedPacket(buffers []*buf.Buf
 			return innerErr != unix.EAGAIN
 		}
 	})
-	common.ClearArray(iovecList)
+	clear(iovecList)
 	if innerErr != 0 {
 		err = os.NewSyscallError("SYS_SENDMSG", innerErr)
 	}

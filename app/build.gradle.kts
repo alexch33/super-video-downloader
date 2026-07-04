@@ -708,7 +708,7 @@ goTargets.forEach { arch ->
             "-mod=vendor",
             "-buildmode=c-shared",
             "-trimpath",
-            "-ldflags", "-s -w -buildid=",
+            "-ldflags", "-s -w -buildid= -checklinkname=0",
             "-o", outputSO.absolutePath,
             "."
         )

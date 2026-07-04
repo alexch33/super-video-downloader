@@ -1,12 +1,18 @@
 package splithttp
 
 import (
+	"encoding/base64"
+	"fmt"
+	"io"
+	"math/rand/v2"
 	"net/http"
 	"strings"
 
 	"github.com/xtls/xray-core/common"
+	"github.com/xtls/xray-core/common/buf"
 	"github.com/xtls/xray-core/common/crypto"
 	"github.com/xtls/xray-core/common/utils"
+	"github.com/xtls/xray-core/common/uuid"
 	"github.com/xtls/xray-core/transport/internet"
 )
 
@@ -48,17 +54,75 @@ func (c *Config) GetRequestHeader() http.Header {
 	for k, v := range c.Headers {
 		header.Add(k, v)
 	}
-	if header.Get("User-Agent") == "" {
-		header.Set("User-Agent", utils.ChromeUA)
-	}
+	utils.TryDefaultHeadersWith(header, "fetch")
 	return header
 }
 
-func (c *Config) WriteResponseHeader(writer http.ResponseWriter) {
+func (c *Config) GetRequestHeaderWithPayload(payload []byte) http.Header {
+	header := c.GetRequestHeader()
+
+	key := c.UplinkDataKey
+	encodedData := base64.RawURLEncoding.EncodeToString(payload)
+
+	for i := 0; len(encodedData) > 0; i++ {
+		chunkSize := min(int(c.GetNormalizedUplinkChunkSize().rand()), len(encodedData))
+		chunk := encodedData[:chunkSize]
+		encodedData = encodedData[chunkSize:]
+		headerKey := fmt.Sprintf("%s-%d", key, i)
+		header.Set(headerKey, chunk)
+	}
+
+	return header
+}
+
+func (c *Config) GetRequestCookiesWithPayload(payload []byte) []*http.Cookie {
+	cookies := []*http.Cookie{}
+
+	key := c.UplinkDataKey
+	encodedData := base64.RawURLEncoding.EncodeToString(payload)
+
+	for i := 0; len(encodedData) > 0; i++ {
+		chunkSize := min(int(c.GetNormalizedUplinkChunkSize().rand()), len(encodedData))
+		chunk := encodedData[:chunkSize]
+		encodedData = encodedData[chunkSize:]
+		cookieName := fmt.Sprintf("%s_%d", key, i)
+		cookies = append(cookies, &http.Cookie{Name: cookieName, Value: chunk})
+	}
+
+	return cookies
+}
+
+func (c *Config) WriteResponseHeader(writer http.ResponseWriter, requestMethod string, requestHeader http.Header) {
 	// CORS headers for the browser dialer
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	writer.Header().Set("Access-Control-Allow-Methods", "*")
-	// writer.Header().Set("X-Version", core.Version())
+	if origin := requestHeader.Get("Origin"); origin == "" {
+		writer.Header().Set("Access-Control-Allow-Origin", "*")
+	} else {
+		// Chrome says: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'.
+		writer.Header().Set("Access-Control-Allow-Origin", origin)
+	}
+
+	if c.GetNormalizedSessionPlacement() == PlacementCookie ||
+		c.GetNormalizedSeqPlacement() == PlacementCookie ||
+		c.XPaddingPlacement == PlacementCookie ||
+		c.GetNormalizedUplinkDataPlacement() == PlacementCookie {
+		writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	}
+
+	if requestMethod == "OPTIONS" {
+		requestedMethod := requestHeader.Get("Access-Control-Request-Method")
+		if requestedMethod != "" {
+			writer.Header().Set("Access-Control-Allow-Methods", requestedMethod)
+		} else {
+			writer.Header().Set("Access-Control-Allow-Methods", "*")
+		}
+
+		requestedHeaders := requestHeader.Get("Access-Control-Request-Headers")
+		if requestedHeaders == "" {
+			writer.Header().Set("Access-Control-Allow-Headers", "*")
+		} else {
+			writer.Header().Set("Access-Control-Allow-Headers", requestedHeaders)
+		}
+	}
 }
 
 func (c *Config) GetNormalizedUplinkHTTPMethod() string {
@@ -69,26 +133,26 @@ func (c *Config) GetNormalizedUplinkHTTPMethod() string {
 	return c.UplinkHTTPMethod
 }
 
-func (c *Config) GetNormalizedScMaxEachPostBytes() RangeConfig {
+func (c *Config) GetNormalizedScMaxEachPostBytes() *RangeConfig {
 	if c.ScMaxEachPostBytes == nil || c.ScMaxEachPostBytes.To == 0 {
-		return RangeConfig{
+		return &RangeConfig{
 			From: 1000000,
 			To:   1000000,
 		}
 	}
 
-	return *c.ScMaxEachPostBytes
+	return c.ScMaxEachPostBytes
 }
 
-func (c *Config) GetNormalizedScMinPostsIntervalMs() RangeConfig {
+func (c *Config) GetNormalizedScMinPostsIntervalMs() *RangeConfig {
 	if c.ScMinPostsIntervalMs == nil || c.ScMinPostsIntervalMs.To == 0 {
-		return RangeConfig{
+		return &RangeConfig{
 			From: 30,
 			To:   30,
 		}
 	}
 
-	return *c.ScMinPostsIntervalMs
+	return c.ScMinPostsIntervalMs
 }
 
 func (c *Config) GetNormalizedScMaxBufferedPosts() int {
@@ -99,22 +163,56 @@ func (c *Config) GetNormalizedScMaxBufferedPosts() int {
 	return int(c.ScMaxBufferedPosts)
 }
 
-func (c *Config) GetNormalizedScStreamUpServerSecs() RangeConfig {
+func (c *Config) GetNormalizedScStreamUpServerSecs() *RangeConfig {
 	if c.ScStreamUpServerSecs == nil || c.ScStreamUpServerSecs.To == 0 {
-		return RangeConfig{
+		return &RangeConfig{
 			From: 20,
 			To:   80,
 		}
 	}
 
-	return *c.ScStreamUpServerSecs
+	return c.ScStreamUpServerSecs
+}
+
+func (c *Config) GetNormalizedUplinkChunkSize() *RangeConfig {
+	if c.UplinkChunkSize == nil || c.UplinkChunkSize.To == 0 {
+		switch c.UplinkDataPlacement {
+		case PlacementCookie:
+			return &RangeConfig{
+				From: 2 * 1024, // 2 KiB
+				To:   3 * 1024, // 3 KiB
+			}
+		case PlacementHeader:
+			return &RangeConfig{
+				From: 3 * 1000, // 3 KB
+				To:   4 * 1000, // 4 KB
+			}
+		default:
+			return c.GetNormalizedScMaxEachPostBytes()
+		}
+	} else if c.UplinkChunkSize.From < 64 {
+		return &RangeConfig{
+			From: 64,
+			To:   max(64, c.UplinkChunkSize.To),
+		}
+	}
+
+	return c.UplinkChunkSize
+}
+
+func (c *Config) GetNormalizedServerMaxHeaderBytes() int {
+	if c.ServerMaxHeaderBytes <= 0 {
+		return 8192
+	} else {
+		return int(c.ServerMaxHeaderBytes)
+	}
 }
 
 func (c *Config) GetNormalizedSessionPlacement() string {
-	if c.SessionPlacement == "" {
+	if c.SessionIDPlacement == "" {
 		return PlacementPath
 	}
-	return c.SessionPlacement
+	return c.SessionIDPlacement
 }
 
 func (c *Config) GetNormalizedSeqPlacement() string {
@@ -132,8 +230,8 @@ func (c *Config) GetNormalizedUplinkDataPlacement() string {
 }
 
 func (c *Config) GetNormalizedSessionKey() string {
-	if c.SessionKey != "" {
-		return c.SessionKey
+	if c.SessionIDKey != "" {
+		return c.SessionIDKey
 	}
 	switch c.GetNormalizedSessionPlacement() {
 	case PlacementHeader:
@@ -196,24 +294,102 @@ func (c *Config) ApplyMetaToRequest(req *http.Request, sessionId string, seqStr 
 	}
 }
 
+func (c *Config) FillStreamRequest(request *http.Request, sessionId string, seqStr string) {
+	request.Header = c.GetRequestHeader()
+	length := int(c.GetNormalizedXPaddingBytes().rand())
+	config := XPaddingConfig{Length: length}
+
+	if c.XPaddingObfsMode {
+		config.Placement = XPaddingPlacement{
+			Placement: c.XPaddingPlacement,
+			Key:       c.XPaddingKey,
+			Header:    c.XPaddingHeader,
+			RawURL:    request.URL.String(),
+		}
+		config.Method = PaddingMethod(c.XPaddingMethod)
+	} else {
+		config.Placement = XPaddingPlacement{
+			Placement: PlacementQueryInHeader,
+			Key:       "x_padding",
+			Header:    "Referer",
+			RawURL:    request.URL.String(),
+		}
+	}
+
+	c.ApplyXPaddingToRequest(request, config)
+	c.ApplyMetaToRequest(request, sessionId, "")
+
+	if request.Body != nil && !c.NoGRPCHeader { // stream-up/one
+		request.Header.Set("Content-Type", "application/grpc")
+	}
+}
+
+func (c *Config) FillPacketRequest(request *http.Request, sessionId string, seqStr string, payload buf.MultiBuffer) error {
+	dataPlacement := c.GetNormalizedUplinkDataPlacement()
+
+	if dataPlacement == PlacementBody || dataPlacement == PlacementAuto {
+		request.Header = c.GetRequestHeader()
+		request.Body = io.NopCloser(&buf.MultiBufferContainer{MultiBuffer: payload})
+		request.ContentLength = int64(payload.Len())
+	} else {
+		data := make([]byte, payload.Len())
+		payload.Copy(data)
+		buf.ReleaseMulti(payload)
+		switch dataPlacement {
+		case PlacementHeader:
+			request.Header = c.GetRequestHeaderWithPayload(data)
+		case PlacementCookie:
+			request.Header = c.GetRequestHeader()
+			for _, cookie := range c.GetRequestCookiesWithPayload(data) {
+				request.AddCookie(cookie)
+			}
+		}
+	}
+
+	length := int(c.GetNormalizedXPaddingBytes().rand())
+	config := XPaddingConfig{Length: length}
+
+	if c.XPaddingObfsMode {
+		config.Placement = XPaddingPlacement{
+			Placement: c.XPaddingPlacement,
+			Key:       c.XPaddingKey,
+			Header:    c.XPaddingHeader,
+			RawURL:    request.URL.String(),
+		}
+		config.Method = PaddingMethod(c.XPaddingMethod)
+	} else {
+		config.Placement = XPaddingPlacement{
+			Placement: PlacementQueryInHeader,
+			Key:       "x_padding",
+			Header:    "Referer",
+			RawURL:    request.URL.String(),
+		}
+	}
+
+	c.ApplyXPaddingToRequest(request, config)
+	c.ApplyMetaToRequest(request, sessionId, seqStr)
+
+	return nil
+}
+
 func (c *Config) ExtractMetaFromRequest(req *http.Request, path string) (sessionId string, seqStr string) {
 	sessionPlacement := c.GetNormalizedSessionPlacement()
 	seqPlacement := c.GetNormalizedSeqPlacement()
 	sessionKey := c.GetNormalizedSessionKey()
 	seqKey := c.GetNormalizedSeqKey()
 
-	if sessionPlacement == PlacementPath && seqPlacement == PlacementPath {
-		subpath := strings.Split(req.URL.Path[len(path):], "/")
-		if len(subpath) > 0 {
-			sessionId = subpath[0]
-		}
-		if len(subpath) > 1 {
-			seqStr = subpath[1]
-		}
-		return sessionId, seqStr
+	var subpath []string
+	pathPart := 0
+	if sessionPlacement == PlacementPath || seqPlacement == PlacementPath {
+		subpath = strings.Split(req.URL.Path[len(path):], "/")
 	}
 
 	switch sessionPlacement {
+	case PlacementPath:
+		if len(subpath) > pathPart {
+			sessionId = subpath[pathPart]
+			pathPart += 1
+		}
 	case PlacementQuery:
 		sessionId = req.URL.Query().Get(sessionKey)
 	case PlacementHeader:
@@ -225,6 +401,11 @@ func (c *Config) ExtractMetaFromRequest(req *http.Request, path string) (session
 	}
 
 	switch seqPlacement {
+	case PlacementPath:
+		if len(subpath) > pathPart {
+			seqStr = subpath[pathPart]
+			pathPart += 1
+		}
 	case PlacementQuery:
 		seqStr = req.URL.Query().Get(seqKey)
 	case PlacementHeader:
@@ -238,59 +419,59 @@ func (c *Config) ExtractMetaFromRequest(req *http.Request, path string) (session
 	return sessionId, seqStr
 }
 
-func (m *XmuxConfig) GetNormalizedMaxConcurrency() RangeConfig {
+func (m *XmuxConfig) GetNormalizedMaxConcurrency() *RangeConfig {
 	if m.MaxConcurrency == nil {
-		return RangeConfig{
+		return &RangeConfig{
 			From: 0,
 			To:   0,
 		}
 	}
 
-	return *m.MaxConcurrency
+	return m.MaxConcurrency
 }
 
-func (m *XmuxConfig) GetNormalizedMaxConnections() RangeConfig {
+func (m *XmuxConfig) GetNormalizedMaxConnections() *RangeConfig {
 	if m.MaxConnections == nil {
-		return RangeConfig{
+		return &RangeConfig{
 			From: 0,
 			To:   0,
 		}
 	}
 
-	return *m.MaxConnections
+	return m.MaxConnections
 }
 
-func (m *XmuxConfig) GetNormalizedCMaxReuseTimes() RangeConfig {
+func (m *XmuxConfig) GetNormalizedCMaxReuseTimes() *RangeConfig {
 	if m.CMaxReuseTimes == nil {
-		return RangeConfig{
+		return &RangeConfig{
 			From: 0,
 			To:   0,
 		}
 	}
 
-	return *m.CMaxReuseTimes
+	return m.CMaxReuseTimes
 }
 
-func (m *XmuxConfig) GetNormalizedHMaxRequestTimes() RangeConfig {
+func (m *XmuxConfig) GetNormalizedHMaxRequestTimes() *RangeConfig {
 	if m.HMaxRequestTimes == nil {
-		return RangeConfig{
+		return &RangeConfig{
 			From: 0,
 			To:   0,
 		}
 	}
 
-	return *m.HMaxRequestTimes
+	return m.HMaxRequestTimes
 }
 
-func (m *XmuxConfig) GetNormalizedHMaxReusableSecs() RangeConfig {
+func (m *XmuxConfig) GetNormalizedHMaxReusableSecs() *RangeConfig {
 	if m.HMaxReusableSecs == nil {
-		return RangeConfig{
+		return &RangeConfig{
 			From: 0,
 			To:   0,
 		}
 	}
 
-	return *m.HMaxReusableSecs
+	return m.HMaxReusableSecs
 }
 
 func init() {
@@ -299,8 +480,42 @@ func init() {
 	}))
 }
 
-func (c RangeConfig) rand() int32 {
+func (c *RangeConfig) rand() int32 {
+	if c == nil {
+		return 0
+	}
 	return int32(crypto.RandBetween(int64(c.From), int64(c.To)))
+}
+
+// predefined
+var PredefinedTable = map[string]string{
+	"ALPHABET": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+	"Alphabet": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+	"BASE36":   "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+	"Base62":   "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+	"HEX":      "0123456789ABCDEF",
+	"alphabet": "abcdefghijklmnopqrstuvwxyz",
+	"base36":   "0123456789abcdefghijklmnopqrstuvwxyz",
+	"hex":      "0123456789abcdef",
+	"number":   "0123456789",
+}
+
+func (c *Config) GenerateSessionID() string {
+	length := c.SessionIDLength.rand()
+	table := c.SessionIDTable
+	if predefined, ok := PredefinedTable[table]; ok {
+		table = predefined
+	}
+	if table != "" && length > 0 {
+		id := make([]byte, length)
+		for i := range id {
+			id[i] = table[rand.N(len(table))]
+		}
+		return string(id)
+	} else {
+		uuid := uuid.New()
+		return uuid.String()
+	}
 }
 
 func appendToPath(path, value string) string {

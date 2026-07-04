@@ -621,14 +621,14 @@ func (d *decoder) value(v reflect.Value) {
 	switch v.Kind() {
 	case reflect.Array:
 		l := v.Len()
-		for i := 0; i < l; i++ {
+		for i := range l {
 			d.value(v.Index(i))
 		}
 
 	case reflect.Struct:
 		t := v.Type()
 		l := v.NumField()
-		for i := 0; i < l; i++ {
+		for i := range l {
 			// Note: Calling v.CanSet() below is an optimization.
 			// It would be sufficient to check the field name,
 			// but creating the StructField info for each field is
@@ -643,7 +643,7 @@ func (d *decoder) value(v reflect.Value) {
 
 	case reflect.Slice:
 		l := v.Len()
-		for i := 0; i < l; i++ {
+		for i := range l {
 			d.value(v.Index(i))
 		}
 
@@ -690,14 +690,14 @@ func (e *encoder) value(v reflect.Value) {
 	switch v.Kind() {
 	case reflect.Array:
 		l := v.Len()
-		for i := 0; i < l; i++ {
+		for i := range l {
 			e.value(v.Index(i))
 		}
 
 	case reflect.Struct:
 		t := v.Type()
 		l := v.NumField()
-		for i := 0; i < l; i++ {
+		for i := range l {
 			// see comment for corresponding code in decoder.value()
 			if v := v.Field(i); v.CanSet() || t.Field(i).Name != "_" {
 				e.value(v)
@@ -708,7 +708,7 @@ func (e *encoder) value(v reflect.Value) {
 
 	case reflect.Slice:
 		l := v.Len()
-		for i := 0; i < l; i++ {
+		for i := range l {
 			e.value(v.Index(i))
 		}
 

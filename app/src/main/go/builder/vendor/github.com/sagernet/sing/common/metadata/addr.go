@@ -41,12 +41,17 @@ func (ap Socksaddr) Unwrap() Socksaddr {
 	return ap
 }
 
+// Deprecated: Do not reject potentially valid domain names. If a strict check is indeed necessary, manually call M.IsDomain.
 func (ap Socksaddr) IsFqdn() bool {
 	return IsDomainName(ap.Fqdn)
 }
 
+func (ap Socksaddr) IsDomain() bool {
+	return ap.Fqdn != ""
+}
+
 func (ap Socksaddr) IsValid() bool {
-	return ap.IsIP() || ap.IsFqdn()
+	return ap.IsIP() || ap.IsDomain()
 }
 
 func (ap Socksaddr) AddrString() string {

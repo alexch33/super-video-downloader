@@ -2,6 +2,7 @@ package format
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/sagernet/sing/common"
 )
@@ -11,52 +12,56 @@ type Stringer interface {
 }
 
 func ToString(messages ...any) string {
-	var output string
+	var output strings.Builder
 	for _, rawMessage := range messages {
 		if rawMessage == nil {
-			output += "nil"
+			output.WriteString("nil")
 			continue
 		}
 		switch message := rawMessage.(type) {
 		case string:
-			output += message
+			output.WriteString(message)
 		case bool:
 			if message {
-				output += "true"
+				output.WriteString("true")
 			} else {
-				output += "false"
+				output.WriteString("false")
 			}
 		case uint:
-			output += strconv.FormatUint(uint64(message), 10)
+			output.WriteString(strconv.FormatUint(uint64(message), 10))
 		case uint8:
-			output += strconv.FormatUint(uint64(message), 10)
+			output.WriteString(strconv.FormatUint(uint64(message), 10))
 		case uint16:
-			output += strconv.FormatUint(uint64(message), 10)
+			output.WriteString(strconv.FormatUint(uint64(message), 10))
 		case uint32:
-			output += strconv.FormatUint(uint64(message), 10)
+			output.WriteString(strconv.FormatUint(uint64(message), 10))
 		case uint64:
-			output += strconv.FormatUint(message, 10)
+			output.WriteString(strconv.FormatUint(message, 10))
 		case int:
-			output += strconv.FormatInt(int64(message), 10)
+			output.WriteString(strconv.FormatInt(int64(message), 10))
 		case int8:
-			output += strconv.FormatInt(int64(message), 10)
+			output.WriteString(strconv.FormatInt(int64(message), 10))
 		case int16:
-			output += strconv.FormatInt(int64(message), 10)
+			output.WriteString(strconv.FormatInt(int64(message), 10))
 		case int32:
-			output += strconv.FormatInt(int64(message), 10)
+			output.WriteString(strconv.FormatInt(int64(message), 10))
 		case int64:
-			output += strconv.FormatInt(message, 10)
+			output.WriteString(strconv.FormatInt(message, 10))
+		case float32:
+			output.WriteString(strconv.FormatFloat(float64(message), 'f', -1, 32))
+		case float64:
+			output.WriteString(strconv.FormatFloat(message, 'f', -1, 64))
 		case uintptr:
-			output += strconv.FormatUint(uint64(message), 10)
+			output.WriteString(strconv.FormatUint(uint64(message), 10))
 		case error:
-			output += message.Error()
+			output.WriteString(message.Error())
 		case Stringer:
-			output += message.String()
+			output.WriteString(message.String())
 		default:
 			panic("unknown value")
 		}
 	}
-	return output
+	return output.String()
 }
 
 func ToString0[T any](message T) string {
@@ -69,5 +74,5 @@ func MapToString[T any](arr []T) []string {
 
 func Seconds(seconds float64) string {
 	seconds100 := int(seconds * 100)
-	return ToString(seconds100/100, ".", seconds100%100, seconds100%10)
+	return ToString(seconds100/100, ".", seconds100%100/10, seconds100%10)
 }

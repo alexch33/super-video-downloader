@@ -48,7 +48,21 @@ func dialWebSocket(ctx context.Context, dest net.Destination, streamSettings *in
 
 	dialer := &websocket.Dialer{
 		NetDial: func(network, addr string) (net.Conn, error) {
-			return internet.DialSystem(ctx, dest, streamSettings.SocketSettings)
+			conn, err := internet.DialSystem(ctx, dest, streamSettings.SocketSettings)
+			if err != nil {
+				return nil, err
+			}
+
+			if streamSettings.TcpmaskManager != nil {
+				newConn, err := streamSettings.TcpmaskManager.WrapConnClient(conn)
+				if err != nil {
+					conn.Close()
+					return nil, errors.New("mask err").Base(err)
+				}
+				conn = newConn
+			}
+
+			return conn, err
 		},
 		ReadBufferSize:   4 * 1024,
 		WriteBufferSize:  4 * 1024,
@@ -70,6 +84,16 @@ func dialWebSocket(ctx context.Context, dest net.Destination, streamSettings *in
 					errors.LogErrorInner(ctx, err, "failed to dial to "+addr)
 					return nil, err
 				}
+
+				if streamSettings.TcpmaskManager != nil {
+					newConn, err := streamSettings.TcpmaskManager.WrapConnClient(pconn)
+					if err != nil {
+						pconn.Close()
+						return nil, errors.New("mask err").Base(err)
+					}
+					pconn = newConn
+				}
+
 				// TLS and apply the handshake
 				cn := tls.UClient(pconn, tlsConfig, fingerprint).(*tls.UConn)
 				if err := cn.WebsocketHandshakeContext(ctx); err != nil {
@@ -87,13 +111,20 @@ func dialWebSocket(ctx context.Context, dest net.Destination, streamSettings *in
 		}
 	}
 
-	host := dest.NetAddr()
-	if (protocol == "ws" && dest.Port == 80) || (protocol == "wss" && dest.Port == 443) {
-		host = dest.Address.String()
-	}
-	uri := protocol + "://" + host + wsSettings.GetNormalizedPath()
-
 	if browser_dialer.HasBrowserDialer() {
+		// For Browser Dialer's optimized IP and non-standard port
+		host := wsSettings.Host
+		if host == "" && tConfig.ServerName != "" {
+			host = tConfig.ServerName
+		}
+		if host == "" {
+			host = dest.Address.String()
+		}
+		if !(protocol == "ws" && dest.Port == 80) && !(protocol == "wss" && dest.Port == 443) {
+			host += ":" + dest.Port.String()
+		}
+		uri := protocol + "://" + host + wsSettings.GetNormalizedPath()
+
 		conn, err := browser_dialer.DialWS(uri, ed)
 		if err != nil {
 			return nil, err
@@ -101,6 +132,12 @@ func dialWebSocket(ctx context.Context, dest net.Destination, streamSettings *in
 
 		return NewConnection(conn, conn.RemoteAddr(), nil, wsSettings.HeartbeatPeriod), nil
 	}
+
+	host := dest.Address.String()
+	if !(protocol == "ws" && dest.Port == 80) && !(protocol == "wss" && dest.Port == 443) {
+		host += ":" + dest.Port.String()
+	}
+	uri := protocol + "://" + host + wsSettings.GetNormalizedPath()
 
 	header := wsSettings.GetRequestHeader()
 	// See dialer.DialContext()

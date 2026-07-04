@@ -120,6 +120,8 @@ func populateConfig(config *Config) *Config {
 		MaxIncomingUniStreams:            maxIncomingUniStreams,
 		TokenStore:                       config.TokenStore,
 		EnableDatagrams:                  config.EnableDatagrams,
+		OmitMaxDatagramFrameSize:         config.OmitMaxDatagramFrameSize,
+		AssumePeerMaxDatagramFrameSize:   config.AssumePeerMaxDatagramFrameSize,
 		InitialPacketSize:                initialPacketSize,
 		DisablePathMTUDiscovery:          config.DisablePathMTUDiscovery,
 		EnableStreamResetPartialDelivery: config.EnableStreamResetPartialDelivery,

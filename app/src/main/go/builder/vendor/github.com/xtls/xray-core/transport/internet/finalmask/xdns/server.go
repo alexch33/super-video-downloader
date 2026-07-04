@@ -4,23 +4,27 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	go_errors "errors"
 	"io"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/xtls/xray-core/common/errors"
+	"github.com/xtls/xray-core/transport/internet/finalmask"
 )
 
 const (
-	idleTimeout      = 2 * time.Minute
+	idleTimeout      = 10 * time.Second
 	responseTTL      = 60
 	maxResponseDelay = 1 * time.Second
 )
 
 var (
-	maxUDPPayload     = 1280 - 40 - 8
-	maxEncodedPayload = computeMaxEncodedPayload(maxUDPPayload)
+	maxUDPPayload         = 1280 - 40 - 8
+	maxEncodedPayloadTXT  = computeMaxEncodedPayloadForType(maxUDPPayload, RRTypeTXT)
+	maxEncodedPayloadA    = computeMaxEncodedPayloadForType(maxUDPPayload, RRTypeA)
+	maxEncodedPayloadAAAA = computeMaxEncodedPayloadForType(maxUDPPayload, RRTypeAAAA)
 )
 
 func clientIDToAddr(clientID [8]byte) *net.UDPAddr {
@@ -42,15 +46,16 @@ type record struct {
 }
 
 type queue struct {
-	lash  time.Time
-	queue chan []byte
-	stash chan []byte
+	last   time.Time
+	rrType uint16
+	queue  chan []byte
+	stash  chan []byte
 }
 
 type xdnsConnServer struct {
-	conn net.PacketConn
+	net.PacketConn
 
-	domain Name
+	domains []domainSpec
 
 	ch            chan *record
 	readQueue     chan *packet
@@ -60,23 +65,26 @@ type xdnsConnServer struct {
 	mutex  sync.Mutex
 }
 
-func NewConnServer(c *Config, raw net.PacketConn, end bool) (net.PacketConn, error) {
-	if !end {
-		return nil, errors.New("xdns requires being at the outermost level")
+func NewConnServer(c *Config, raw net.PacketConn) (net.PacketConn, error) {
+	if len(c.Domains) == 0 {
+		return nil, errors.New("empty domains")
 	}
-
-	domain, err := ParseName(c.Domain)
-	if err != nil {
-		return nil, err
+	domains := make([]domainSpec, 0, len(c.Domains))
+	for _, domain := range c.Domains {
+		domain, err := parseDomainSpec(domain, "")
+		if err != nil {
+			return nil, err
+		}
+		domains = append(domains, domain)
 	}
 
 	conn := &xdnsConnServer{
-		conn: raw,
+		PacketConn: raw,
 
-		domain: domain,
+		domains: domains,
 
-		ch:            make(chan *record, 100),
-		readQueue:     make(chan *packet, 128),
+		ch:            make(chan *record, 500),
+		readQueue:     make(chan *packet, 512),
 		writeQueueMap: make(map[string]*queue),
 	}
 
@@ -99,7 +107,7 @@ func (c *xdnsConnServer) clean() {
 		now := time.Now()
 
 		for key, q := range c.writeQueueMap {
-			if now.Sub(q.lash) >= idleTimeout {
+			if now.Sub(q.last) >= idleTimeout {
 				close(q.queue)
 				close(q.stash)
 				delete(c.writeQueueMap, key)
@@ -118,9 +126,6 @@ func (c *xdnsConnServer) clean() {
 }
 
 func (c *xdnsConnServer) ensureQueue(addr net.Addr) *queue {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
 	if c.closed {
 		return nil
 	}
@@ -128,12 +133,12 @@ func (c *xdnsConnServer) ensureQueue(addr net.Addr) *queue {
 	q, ok := c.writeQueueMap[addr.String()]
 	if !ok {
 		q = &queue{
-			queue: make(chan []byte, 128),
+			queue: make(chan []byte, 512),
 			stash: make(chan []byte, 1),
 		}
 		c.writeQueueMap[addr.String()] = q
 	}
-	q.lash = time.Now()
+	q.last = time.Now()
 
 	return q
 }
@@ -153,23 +158,28 @@ func (c *xdnsConnServer) stash(queue *queue, p []byte) {
 }
 
 func (c *xdnsConnServer) recvLoop() {
+	var buf [finalmask.UDPSize]byte
+
 	for {
 		if c.closed {
 			break
 		}
 
-		var buf [4096]byte
-		n, addr, err := c.conn.ReadFrom(buf[:])
+		n, addr, err := c.PacketConn.ReadFrom(buf[:])
 		if err != nil {
+			if go_errors.Is(err, net.ErrClosed) {
+				break
+			}
 			continue
 		}
 
 		query, err := MessageFromWireFormat(buf[:n])
 		if err != nil {
+			errors.LogDebug(context.Background(), addr, " xdns from wireformat err ", err)
 			continue
 		}
 
-		resp, payload := responseFor(&query, c.domain)
+		resp, payload := responseFor(&query, c.domains)
 
 		var clientID [8]byte
 		n = copy(clientID[:], payload)
@@ -190,6 +200,7 @@ func (c *xdnsConnServer) recvLoop() {
 					addr: clientIDToAddr(clientID),
 				}:
 				default:
+					errors.LogDebug(context.Background(), addr, " ", clientID, " mask read err queue full")
 				}
 			}
 		} else {
@@ -202,17 +213,31 @@ func (c *xdnsConnServer) recvLoop() {
 			select {
 			case c.ch <- &record{resp, addr, clientIDToAddr(clientID)}:
 			default:
+				errors.LogDebug(context.Background(), addr, " ", clientID, " mask read err record queue full")
 			}
 		}
 	}
 
+	errors.LogDebug(context.Background(), "xdns closed")
+
 	close(c.ch)
 	close(c.readQueue)
+
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	c.closed = true
+	for key, q := range c.writeQueueMap {
+		close(q.queue)
+		close(q.stash)
+		delete(c.writeQueueMap, key)
+	}
 }
 
 func (c *xdnsConnServer) sendLoop() {
 	var nextRec *record
 	for {
+		var err error
 		rec := nextRec
 		nextRec = nil
 
@@ -225,37 +250,32 @@ func (c *xdnsConnServer) sendLoop() {
 		}
 
 		if rec.Resp.Rcode() == RcodeNoError && len(rec.Resp.Question) == 1 {
-			rec.Resp.Answer = []RR{
-				{
-					Name:  rec.Resp.Question[0].Name,
-					Type:  rec.Resp.Question[0].Type,
-					Class: rec.Resp.Question[0].Class,
-					TTL:   responseTTL,
-					Data:  nil,
-				},
-			}
-
 			var payload bytes.Buffer
-			limit := maxEncodedPayload
+			limit := maxEncodedPayloadForType(rec.Resp.Question[0].Type)
 			timer := time.NewTimer(maxResponseDelay)
+
 			for {
-				queue := c.ensureQueue(rec.ClientAddr)
-				if queue == nil {
+				c.mutex.Lock()
+				q := c.ensureQueue(rec.ClientAddr)
+				if q == nil {
+					c.mutex.Unlock()
 					return
 				}
+				q.rrType = rec.Resp.Question[0].Type
+				c.mutex.Unlock()
 
 				var p []byte
 
 				select {
-				case p = <-queue.stash:
+				case p = <-q.stash:
 				default:
 					select {
-					case p = <-queue.stash:
-					case p = <-queue.queue:
+					case p = <-q.stash:
+					case p = <-q.queue:
 					default:
 						select {
-						case p = <-queue.stash:
-						case p = <-queue.queue:
+						case p = <-q.stash:
+						case p = <-q.queue:
 						case <-timer.C:
 						case nextRec = <-c.ch:
 						}
@@ -269,33 +289,39 @@ func (c *xdnsConnServer) sendLoop() {
 				}
 
 				limit -= 2 + len(p)
-				if payload.Len() == 0 {
-
-				} else if limit < 0 {
-					c.stash(queue, p)
-
+				if limit < 0 {
+					if payload.Len() == 0 {
+						errors.LogDebug(context.Background(), rec.Addr, " ", rec.ClientAddr, " xdns payload too large for rrtype ", rec.Resp.Question[0].Type, " ", len(p))
+						continue
+					}
+					c.stash(q, p)
 					break
 				}
 
-				if int(uint16(len(p))) != len(p) {
-					panic(len(p))
-				}
+				// if len(p) > 65535 {
+				// 	panic(len(p))
+				// }
 
 				_ = binary.Write(&payload, binary.BigEndian, uint16(len(p)))
 				payload.Write(p)
 			}
-			timer.Stop()
 
-			rec.Resp.Answer[0].Data = EncodeRDataTXT(payload.Bytes())
+			timer.Stop()
+			rec.Resp.Answer, err = answersForPayload(rec.Resp.Question[0], responseTTL, payload.Bytes())
+			if err != nil {
+				errors.LogDebug(context.Background(), rec.Addr, " ", rec.ClientAddr, " xdns encode err ", err)
+				continue
+			}
 		}
 
 		buf, err := rec.Resp.WireFormat()
 		if err != nil {
+			errors.LogDebug(context.Background(), rec.Addr, " ", rec.ClientAddr, " xdns wireformat err ", err)
 			continue
 		}
 
 		if len(buf) > maxUDPPayload {
-			errors.LogDebug(context.Background(), "xdns server truncate ", len(buf))
+			errors.LogDebug(context.Background(), rec.Addr, " ", rec.ClientAddr, " xdns truncate ", len(buf))
 			buf = buf[:maxUDPPayload]
 			buf[2] |= 0x02
 		}
@@ -304,37 +330,42 @@ func (c *xdnsConnServer) sendLoop() {
 			return
 		}
 
-		_, _ = c.conn.WriteTo(buf, rec.Addr)
+		_, err = c.PacketConn.WriteTo(buf, rec.Addr)
+		if go_errors.Is(err, net.ErrClosed) {
+			c.closed = true
+			break
+		}
 	}
-}
-
-func (c *xdnsConnServer) Size() int32 {
-	return 0
 }
 
 func (c *xdnsConnServer) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
 	packet, ok := <-c.readQueue
 	if !ok {
-		return 0, nil, io.EOF
+		return 0, nil, net.ErrClosed
 	}
-	n = copy(p, packet.p)
-	if n != len(packet.p) {
-		return 0, nil, io.ErrShortBuffer
+	if len(p) < len(packet.p) {
+		errors.LogDebug(context.Background(), packet.addr, " mask read err short buffer ", len(p), " ", len(packet.p))
+		return 0, packet.addr, nil
 	}
-	return n, packet.addr, nil
+	copy(p, packet.p)
+	return len(packet.p), packet.addr, nil
 }
 
 func (c *xdnsConnServer) WriteTo(p []byte, addr net.Addr) (n int, err error) {
-	q := c.ensureQueue(addr)
-	if q == nil {
-		return 0, errors.New("xdns closed")
-	}
-
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	if c.closed {
-		return 0, errors.New("xdns closed")
+	q := c.ensureQueue(addr)
+	if q == nil {
+		return 0, io.ErrClosedPipe
+	}
+	limit := maxEncodedPayloadForType(q.rrType)
+	if q.rrType == 0 {
+		limit = maxEncodedPayloadTXT
+	}
+	if len(p)+2 > limit {
+		errors.LogDebug(context.Background(), addr, " mask write err short write ", len(p), "+2 > ", limit)
+		return 0, nil
 	}
 
 	buf := make([]byte, len(p))
@@ -344,42 +375,14 @@ func (c *xdnsConnServer) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 	case q.queue <- buf:
 		return len(p), nil
 	default:
-		return 0, errors.New("xdns queue full")
+		// errors.LogDebug(context.Background(), addr, " mask write err queue full")
+		return 0, nil
 	}
 }
 
 func (c *xdnsConnServer) Close() error {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	if c.closed {
-		return nil
-	}
-
 	c.closed = true
-	for key, q := range c.writeQueueMap {
-		close(q.queue)
-		close(q.stash)
-		delete(c.writeQueueMap, key)
-	}
-
-	return c.conn.Close()
-}
-
-func (c *xdnsConnServer) LocalAddr() net.Addr {
-	return c.conn.LocalAddr()
-}
-
-func (c *xdnsConnServer) SetDeadline(t time.Time) error {
-	return c.conn.SetDeadline(t)
-}
-
-func (c *xdnsConnServer) SetReadDeadline(t time.Time) error {
-	return c.conn.SetReadDeadline(t)
-}
-
-func (c *xdnsConnServer) SetWriteDeadline(t time.Time) error {
-	return c.conn.SetWriteDeadline(t)
+	return c.PacketConn.Close()
 }
 
 func nextPacketServer(r *bytes.Reader) ([]byte, error) {
@@ -409,7 +412,7 @@ func nextPacketServer(r *bytes.Reader) ([]byte, error) {
 	}
 }
 
-func responseFor(query *Message, domain Name) (*Message, []byte) {
+func responseFor(query *Message, domains []domainSpec) (*Message, []byte) {
 	resp := &Message{
 		ID:       query.ID,
 		Flags:    0x8000,
@@ -457,7 +460,18 @@ func responseFor(query *Message, domain Name) (*Message, []byte) {
 	}
 	question := query.Question[0]
 
-	prefix, ok := question.Name.TrimSuffix(domain)
+	var (
+		prefix Name
+		ok     bool
+		match  domainSpec
+	)
+	for _, domain := range domains {
+		prefix, ok = question.Name.TrimSuffix(domain.name)
+		if ok {
+			match = domain
+			break
+		}
+	}
 	if !ok {
 		resp.Flags |= RcodeNameError
 		return resp, nil
@@ -469,7 +483,13 @@ func responseFor(query *Message, domain Name) (*Message, []byte) {
 		return resp, nil
 	}
 
-	if question.Type != RRTypeTXT {
+	switch question.Type {
+	case RRTypeTXT, RRTypeA, RRTypeAAAA:
+	default:
+		resp.Flags |= RcodeNameError
+		return resp, nil
+	}
+	if match.rrType != 0 && question.Type != match.rrType {
 		resp.Flags |= RcodeNameError
 		return resp, nil
 	}
@@ -489,79 +509,4 @@ func responseFor(query *Message, domain Name) (*Message, []byte) {
 	}
 
 	return resp, payload
-}
-
-func computeMaxEncodedPayload(limit int) int {
-	maxLengthName, err := NewName([][]byte{
-		[]byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-		[]byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-		[]byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-		[]byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-	})
-	if err != nil {
-		panic(err)
-	}
-	{
-		n := 0
-		for _, label := range maxLengthName {
-			n += len(label) + 1
-		}
-		n += 1
-		if n != 255 {
-			panic("computeMaxEncodedPayload n != 255")
-		}
-	}
-
-	queryLimit := uint16(limit)
-	if int(queryLimit) != limit {
-		queryLimit = 0xffff
-	}
-	query := &Message{
-		Question: []Question{
-			{
-				Name:  maxLengthName,
-				Type:  RRTypeTXT,
-				Class: RRTypeTXT,
-			},
-		},
-
-		Additional: []RR{
-			{
-				Name:  Name{},
-				Type:  RRTypeOPT,
-				Class: queryLimit,
-				TTL:   0,
-				Data:  []byte{},
-			},
-		},
-	}
-	resp, _ := responseFor(query, [][]byte{})
-
-	resp.Answer = []RR{
-		{
-			Name:  query.Question[0].Name,
-			Type:  query.Question[0].Type,
-			Class: query.Question[0].Class,
-			TTL:   responseTTL,
-			Data:  nil,
-		},
-	}
-
-	low := 0
-	high := 32768
-	for low+1 < high {
-		mid := (low + high) / 2
-		resp.Answer[0].Data = EncodeRDataTXT(make([]byte, mid))
-		buf, err := resp.WireFormat()
-		if err != nil {
-			panic(err)
-		}
-		if len(buf) <= limit {
-			low = mid
-		} else {
-			high = mid
-		}
-	}
-
-	return low
 }

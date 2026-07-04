@@ -2,10 +2,12 @@ package udp
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/xtls/xray-core/common"
 	"github.com/xtls/xray-core/common/errors"
 	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/net/cnc"
 	"github.com/xtls/xray-core/transport/internet"
 	"github.com/xtls/xray-core/transport/internet/stat"
 )
@@ -23,22 +25,30 @@ func init() {
 			}
 
 			if streamSettings != nil && streamSettings.UdpmaskManager != nil {
-				wrapper, ok := conn.(*internet.PacketConnWrapper)
-				if !ok {
-					conn.Close()
-					return nil, errors.New("conn is not PacketConnWrapper")
+				var pktConn net.PacketConn
+				var udpAddr *net.UDPAddr
+				switch c := conn.(type) {
+				case *internet.PacketConnWrapper:
+					pktConn = c.PacketConn
+					udpAddr = c.RemoteAddr().(*net.UDPAddr)
+				case *cnc.Connection:
+					pktConn = &internet.FakePacketConn{Conn: c}
+					udpAddr = &net.UDPAddr{IP: c.RemoteAddr().(*net.TCPAddr).IP, Port: c.RemoteAddr().(*net.TCPAddr).Port}
+				default:
+					panic(reflect.TypeOf(c))
 				}
-
-				raw := wrapper.Conn
-
-				wrapper.Conn, err = streamSettings.UdpmaskManager.WrapPacketConnClient(raw)
+				newConn, err := streamSettings.UdpmaskManager.WrapPacketConnClient(pktConn)
 				if err != nil {
-					raw.Close()
+					pktConn.Close()
 					return nil, errors.New("mask err").Base(err)
+				}
+				pktConn = newConn
+				conn = &internet.PacketConnWrapper{
+					PacketConn: pktConn,
+					Dest:       udpAddr,
 				}
 			}
 
-			// TODO: handle dialer options
 			return conn, nil
 		}))
 }

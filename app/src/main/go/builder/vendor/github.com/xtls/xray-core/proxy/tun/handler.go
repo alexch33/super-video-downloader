@@ -2,6 +2,9 @@ package tun
 
 import (
 	"context"
+	"net/netip"
+	"strings"
+	"syscall"
 
 	"github.com/xtls/xray-core/common"
 	"github.com/xtls/xray-core/common/buf"
@@ -14,7 +17,9 @@ import (
 	"github.com/xtls/xray-core/core"
 	"github.com/xtls/xray-core/features/policy"
 	"github.com/xtls/xray-core/features/routing"
+	"github.com/xtls/xray-core/features/stats"
 	"github.com/xtls/xray-core/transport"
+	"github.com/xtls/xray-core/transport/internet"
 	"github.com/xtls/xray-core/transport/internet/stat"
 )
 
@@ -23,10 +28,13 @@ type Handler struct {
 	ctx             context.Context
 	config          *Config
 	stack           Stack
+	tun             Tun
 	policyManager   policy.Manager
 	dispatcher      routing.Dispatcher
 	tag             string
 	sniffingRequest session.SniffingRequest
+	uplinkCounter   stats.Counter
+	downlinkCounter stats.Counter
 }
 
 // ConnectionHandler interface with the only method that stack is going to push new connections to
@@ -37,15 +45,11 @@ type ConnectionHandler interface {
 // Handler implements ConnectionHandler
 var _ ConnectionHandler = (*Handler)(nil)
 
-func (t *Handler) policy() policy.Session {
-	p := t.policyManager.ForLevel(t.config.UserLevel)
-	return p
-}
+// Handler implements common.Runnable
+var _ common.Runnable = (*Handler)(nil)
 
 // Init the Handler instance with necessary parameters
 func (t *Handler) Init(ctx context.Context, pm policy.Manager, dispatcher routing.Dispatcher) error {
-	var err error
-
 	// Retrieve tag and sniffing config from context (set by AlwaysOnInboundHandler)
 	if inbound := session.InboundFromContext(ctx); inbound != nil {
 		t.tag = inbound.Tag
@@ -58,21 +62,69 @@ func (t *Handler) Init(ctx context.Context, pm policy.Manager, dispatcher routin
 	t.policyManager = pm
 	t.dispatcher = dispatcher
 
-	tunName := t.config.Name
-	tunOptions := TunOptions{
-		Name: tunName,
-		MTU:  t.config.MTU,
+	if len(t.tag) > 0 && pm.ForSystem().Stats.InboundUplink {
+		statsManager := core.MustFromContext(ctx).GetFeature(stats.ManagerType()).(stats.Manager)
+		name := "inbound>>>" + t.tag + ">>>traffic>>>uplink"
+		c, _ := stats.GetOrRegisterCounter(statsManager, name)
+		if c != nil {
+			t.uplinkCounter = c
+		}
 	}
-	tunInterface, err := NewTun(tunOptions)
+	if len(t.tag) > 0 && pm.ForSystem().Stats.InboundDownlink {
+		statsManager := core.MustFromContext(ctx).GetFeature(stats.ManagerType()).(stats.Manager)
+		name := "inbound>>>" + t.tag + ">>>traffic>>>downlink"
+		c, _ := stats.GetOrRegisterCounter(statsManager, name)
+		if c != nil {
+			t.downlinkCounter = c
+		}
+	}
+
+	return nil
+}
+
+func (t *Handler) Start() error {
+	tunName := t.config.Name
+	tunInterface, err := NewTun(t.config)
 	if err != nil {
 		return err
+	}
+
+	if t.config.AutoOutboundsInterface != "" {
+		tunIndex, err := tunInterface.Index()
+		if err != nil {
+			_ = tunInterface.Close()
+			return err
+		}
+		if t.config.AutoOutboundsInterface == "auto" {
+			t.config.AutoOutboundsInterface = ""
+		}
+		updater = &InterfaceUpdater{tunIndex: tunIndex, fixedName: t.config.AutoOutboundsInterface}
+		updater.Update()
+		internet.RegisterDialerController(func(network, address string, c syscall.RawConn) error {
+			iface := updater.Get()
+			if iface == nil {
+				errors.LogInfo(context.Background(), "[tun] falied to set interface > iface == nil")
+				return nil
+			}
+			return c.Control(func(fd uintptr) {
+				addrPort, _ := netip.ParseAddrPort(address)
+				// skip loopback
+				if addrPort.Addr().IsLoopback() || strings.HasPrefix(strings.ToLower(address), "localhost:") {
+					return
+				}
+				err := setinterface(network, address, fd, iface)
+				if err != nil {
+					errors.LogInfoInner(context.Background(), err, "[tun] falied to set interface")
+				}
+			})
+		})
 	}
 
 	errors.LogInfo(t.ctx, tunName, " created")
 
 	tunStackOptions := StackOptions{
 		Tun:         tunInterface,
-		IdleTimeout: pm.ForLevel(t.config.UserLevel).Timeouts.ConnectionIdle,
+		IdleTimeout: t.policyManager.ForLevel(t.config.UserLevel).Timeouts.ConnectionIdle,
 	}
 	tunStack, err := NewStack(t.ctx, tunStackOptions, t)
 	if err != nil {
@@ -95,6 +147,7 @@ func (t *Handler) Init(ctx context.Context, pm policy.Manager, dispatcher routin
 	}
 
 	t.stack = tunStack
+	t.tun = tunInterface
 
 	errors.LogInfo(t.ctx, tunName, " up")
 	return nil
@@ -110,7 +163,22 @@ func (t *Handler) HandleConnection(conn net.Conn, destination net.Destination) {
 	defer cancel()
 	ctx = c.ContextWithID(ctx, session.NewID())
 
-	source := net.DestinationFromAddr(conn.RemoteAddr())
+	// if the connection is already closed, conn.RemoteAddr() will be nil
+	// due to gvisor weird behavior
+	remote := conn.RemoteAddr()
+	if remote == nil {
+		errors.LogInfo(t.ctx, "dropped quickly closed connection")
+		return
+	}
+	source := net.DestinationFromAddr(remote)
+	if t.uplinkCounter != nil || t.downlinkCounter != nil {
+		conn = &stat.CounterConnection{
+			Connection:   conn,
+			ReadCounter:  t.uplinkCounter,
+			WriteCounter: t.downlinkCounter,
+		}
+	}
+
 	inbound := session.Inbound{
 		Name:          "tun",
 		Tag:           t.tag,
@@ -142,6 +210,11 @@ func (t *Handler) HandleConnection(conn net.Conn, destination net.Destination) {
 	if err := t.dispatcher.DispatchLink(ctx, destination, link); err != nil {
 		errors.LogError(ctx, errors.New("connection closed").Base(err))
 	}
+}
+
+// Close implements common.Closable.
+func (t *Handler) Close() error {
+	return errors.Combine(common.CloseIfExists(t.stack), common.CloseIfExists(t.tun))
 }
 
 // Network implements proxy.Inbound

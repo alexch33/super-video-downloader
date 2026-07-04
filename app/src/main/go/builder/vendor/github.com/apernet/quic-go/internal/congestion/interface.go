@@ -19,15 +19,15 @@ type SendAlgorithm interface {
 	SetMaxDatagramSize(protocol.ByteCount)
 }
 
+type SendAlgorithmEx interface {
+	SendAlgorithm
+	OnCongestionEventEx(priorInFlight protocol.ByteCount, eventTime monotime.Time, ackedPackets []congestion.AckedPacketInfo, lostPackets []congestion.LostPacketInfo)
+}
+
 // A SendAlgorithmWithDebugInfos is a SendAlgorithm that exposes some debug infos
 type SendAlgorithmWithDebugInfos interface {
 	SendAlgorithm
 	InSlowStart() bool
 	InRecovery() bool
 	GetCongestionWindow() protocol.ByteCount
-}
-
-type SendAlgorithmEx interface {
-	SendAlgorithm
-	OnCongestionEventEx(priorInFlight protocol.ByteCount, eventTime monotime.Time, ackedPackets []congestion.AckedPacketInfo, lostPackets []congestion.LostPacketInfo)
 }

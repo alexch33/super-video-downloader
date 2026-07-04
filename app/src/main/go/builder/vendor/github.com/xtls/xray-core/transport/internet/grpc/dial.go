@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"reflect"
 	"sync"
 	"time"
 
@@ -61,7 +62,7 @@ func dialgRPC(ctx context.Context, dest net.Destination, streamSettings *interne
 		if err != nil {
 			return nil, errors.New("Cannot dial gRPC").Base(err)
 		}
-		return encoding.NewMultiHunkConn(grpcService, nil), nil
+		return encoding.NewMultiHunkConn(grpcService, nil, nil), nil
 	}
 
 	errors.LogDebug(ctx, "using gRPC tun mode service name: `"+grpcSettings.getServiceName()+"` stream name: `"+grpcSettings.getTunStreamName()+"`")
@@ -70,7 +71,7 @@ func dialgRPC(ctx context.Context, dest net.Destination, streamSettings *interne
 		return nil, errors.New("Cannot dial gRPC").Base(err)
 	}
 
-	return encoding.NewHunkConn(grpcService, nil), nil
+	return encoding.NewHunkConn(grpcService, nil, nil), nil
 }
 
 func getGrpcClient(ctx context.Context, dest net.Destination, streamSettings *internet.MemoryStreamConfig) (*grpc.ClientConn, error) {
@@ -125,6 +126,15 @@ func getGrpcClient(ctx context.Context, dest net.Destination, streamSettings *in
 
 			c, err := internet.DialSystem(gctx, net.TCPDestination(address, port), sockopt)
 			if err == nil {
+				if streamSettings.TcpmaskManager != nil {
+					newConn, err := streamSettings.TcpmaskManager.WrapConnClient(c)
+					if err != nil {
+						c.Close()
+						return nil, errors.New("mask err").Base(err)
+					}
+					c = newConn
+				}
+
 				if tlsConfig != nil {
 					config := tlsConfig.GetTLSConfig()
 					if config.ServerName == "" && address.Family().IsDomain() {
@@ -168,12 +178,6 @@ func getGrpcClient(ctx context.Context, dest net.Destination, streamSettings *in
 		dialOptions = append(dialOptions, grpc.WithInitialWindowSize(grpcSettings.InitialWindowsSize))
 	}
 
-	userAgent := grpcSettings.UserAgent
-	if userAgent == "" {
-		userAgent = utils.ChromeUA
-	}
-	dialOptions = append(dialOptions, grpc.WithUserAgent(userAgent))
-
 	var grpcDestHost string
 	if dest.Address.Family().IsDomain() {
 		grpcDestHost = dest.Address.Domain()
@@ -181,10 +185,34 @@ func getGrpcClient(ctx context.Context, dest net.Destination, streamSettings *in
 		grpcDestHost = dest.Address.IP().String()
 	}
 
-	conn, err := grpc.Dial(
-		net.JoinHostPort(grpcDestHost, dest.Port.String()),
+	conn, err := grpc.NewClient(
+		"passthrough:///"+net.JoinHostPort(grpcDestHost, dest.Port.String()),
 		dialOptions...,
 	)
+	if err == nil {
+		userAgent := grpcSettings.UserAgent
+		// It's NOT recommended to set the UA of gRPC connections to that of real browsers, as they are fundamentally incapable of initiating real gRPC connections.
+		switch userAgent {
+		case "chrome", "":
+			userAgent = utils.ChromeUA
+		case "firefox":
+			userAgent = utils.FirefoxUA
+		case "edge":
+			userAgent = utils.MSEdgeUA
+		case "golang":
+			userAgent = ""
+		}
+		setUserAgent(conn, userAgent)
+		conn.Connect()
+	}
 	globalDialerMap[dialerConf{dest, streamSettings}] = conn
 	return conn, err
+}
+
+// setUserAgent overrides the user-agent on a ClientConn to remove the
+// "grpc-go/version" suffix that grpc.WithUserAgent unconditionally appends.
+func setUserAgent(conn *grpc.ClientConn, ua string) {
+	if f := reflect.ValueOf(conn).Elem().FieldByName("dopts").FieldByName("copts").FieldByName("UserAgent"); f.IsValid() {
+		*(*string)(f.Addr().UnsafePointer()) = ua
+	}
 }

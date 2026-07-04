@@ -29,6 +29,6 @@ type stubReader struct {
 
 func (r stubReader) ReadByte() (byte, error) {
 	var b [1]byte
-	_, err := r.Read(b[:])
+	_, err := io.ReadFull(r.Reader, b[:])
 	return b[0], err
 }

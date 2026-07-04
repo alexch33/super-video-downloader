@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/apernet/quic-go/internal/protocol"
+	"github.com/apernet/quic-go/monotime"
 )
 
 type (
@@ -24,7 +25,7 @@ const (
 type AckedPacketInfo struct {
 	PacketNumber PacketNumber
 	BytesAcked   ByteCount
-	ReceivedTime Time
+	ReceivedTime monotime.Time
 }
 
 type LostPacketInfo struct {
@@ -34,12 +35,12 @@ type LostPacketInfo struct {
 
 type CongestionControl interface {
 	SetRTTStatsProvider(provider RTTStatsProvider)
-	TimeUntilSend(bytesInFlight ByteCount) Time
-	HasPacingBudget(now Time) bool
-	OnPacketSent(sentTime Time, bytesInFlight ByteCount, packetNumber PacketNumber, bytes ByteCount, isRetransmittable bool)
+	TimeUntilSend(bytesInFlight ByteCount) monotime.Time
+	HasPacingBudget(now monotime.Time) bool
+	OnPacketSent(sentTime monotime.Time, bytesInFlight ByteCount, packetNumber PacketNumber, bytes ByteCount, isRetransmittable bool)
 	CanSend(bytesInFlight ByteCount) bool
 	MaybeExitSlowStart()
-	OnPacketAcked(number PacketNumber, ackedBytes ByteCount, priorInFlight ByteCount, eventTime Time)
+	OnPacketAcked(number PacketNumber, ackedBytes ByteCount, priorInFlight ByteCount, eventTime monotime.Time)
 	OnCongestionEvent(number PacketNumber, lostBytes ByteCount, priorInFlight ByteCount)
 	OnRetransmissionTimeout(packetsRetransmitted bool)
 	SetMaxDatagramSize(size ByteCount)
@@ -50,7 +51,7 @@ type CongestionControl interface {
 
 type CongestionControlEx interface {
 	CongestionControl
-	OnCongestionEventEx(priorInFlight ByteCount, eventTime Time, ackedPackets []AckedPacketInfo, lostPackets []LostPacketInfo)
+	OnCongestionEventEx(priorInFlight ByteCount, eventTime monotime.Time, ackedPackets []AckedPacketInfo, lostPackets []LostPacketInfo)
 }
 
 type RTTStatsProvider interface {

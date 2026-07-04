@@ -35,9 +35,9 @@ type ConnPolicyOptions struct {
 type Policy int
 
 const (
-	// USE address from PROXY header
+	// USE address from PROXY header.
 	USE Policy = iota
-	// IGNORE address from PROXY header, but accept connection
+	// IGNORE address from PROXY header, but accept connection.
 	IGNORE
 	// REJECT connection when PROXY header is sent
 	// Note: even though the first read on the connection returns an error if
@@ -49,7 +49,7 @@ const (
 	// a PROXY header is not present, subsequent reads do not. It is the task
 	// of the code using the connection to handle that case properly.
 	REQUIRE
-	// SKIP accepts a connection without requiring the PROXY header
+	// SKIP accepts a connection without requiring the PROXY header.
 	// Note: an example usage can be found in the SkipProxyHeaderForCIDR
 	// function.
 	SKIP
@@ -87,7 +87,7 @@ func SkipProxyHeaderForCIDR(skipHeaderCIDR *net.IPNet, def Policy) PolicyFunc {
 	}
 }
 
-// WithPolicy adds given policy to a connection when passed as option to NewConn()
+// WithPolicy adds given policy to a connection when passed as option to NewConn().
 func WithPolicy(p Policy) func(*Conn) {
 	return func(c *Conn) {
 		c.ProxyHeaderPolicy = p

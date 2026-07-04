@@ -3,6 +3,7 @@ package bufio
 import (
 	"io"
 	"net"
+	"sync/atomic"
 
 	"github.com/sagernet/sing/common/buf"
 	M "github.com/sagernet/sing/common/metadata"
@@ -11,6 +12,7 @@ import (
 
 type CachedConn struct {
 	net.Conn
+	taken  atomic.Bool
 	buffer *buf.Buffer
 }
 
@@ -23,6 +25,9 @@ func NewCachedConn(conn net.Conn, buffer *buf.Buffer) *CachedConn {
 }
 
 func (c *CachedConn) ReadCached() *buf.Buffer {
+	if !c.taken.CompareAndSwap(false, true) {
+		return nil
+	}
 	buffer := c.buffer
 	c.buffer = nil
 	if buffer != nil {
@@ -76,16 +81,19 @@ func (c *CachedConn) WriterReplaceable() bool {
 }
 
 func (c *CachedConn) Close() error {
-	if buffer := c.buffer; buffer != nil {
-		buffer.DecRef()
-		buffer.Release()
-		c.buffer = nil
+	if c.taken.CompareAndSwap(false, true) {
+		if buffer := c.buffer; buffer != nil {
+			c.buffer = nil
+			buffer.DecRef()
+			buffer.Release()
+		}
 	}
 	return c.Conn.Close()
 }
 
 type CachedReader struct {
 	upstream io.Reader
+	taken    atomic.Bool
 	buffer   *buf.Buffer
 }
 
@@ -98,6 +106,9 @@ func NewCachedReader(upstream io.Reader, buffer *buf.Buffer) *CachedReader {
 }
 
 func (r *CachedReader) ReadCached() *buf.Buffer {
+	if !r.taken.CompareAndSwap(false, true) {
+		return nil
+	}
 	buffer := r.buffer
 	r.buffer = nil
 	if buffer != nil {
@@ -141,16 +152,19 @@ func (r *CachedReader) ReaderReplaceable() bool {
 }
 
 func (r *CachedReader) Close() error {
-	if buffer := r.buffer; buffer != nil {
-		buffer.DecRef()
-		buffer.Release()
-		r.buffer = nil
+	if r.taken.CompareAndSwap(false, true) {
+		if buffer := r.buffer; buffer != nil {
+			r.buffer = nil
+			buffer.DecRef()
+			buffer.Release()
+		}
 	}
 	return nil
 }
 
 type CachedPacketConn struct {
 	N.PacketConn
+	taken       atomic.Bool
 	buffer      *buf.Buffer
 	destination M.Socksaddr
 }
@@ -179,6 +193,9 @@ func (c *CachedPacketConn) ReadPacket(buffer *buf.Buffer) (destination M.Socksad
 }
 
 func (c *CachedPacketConn) ReadCachedPacket() *N.PacketBuffer {
+	if !c.taken.CompareAndSwap(false, true) {
+		return nil
+	}
 	buffer := c.buffer
 	c.buffer = nil
 	if buffer != nil {
@@ -205,10 +222,12 @@ func (c *CachedPacketConn) WriterReplaceable() bool {
 }
 
 func (c *CachedPacketConn) Close() error {
-	if buffer := c.buffer; buffer != nil {
-		buffer.DecRef()
-		buffer.Release()
-		c.buffer = nil
+	if c.taken.CompareAndSwap(false, true) {
+		if buffer := c.buffer; buffer != nil {
+			c.buffer = nil
+			buffer.DecRef()
+			buffer.Release()
+		}
 	}
 	return c.PacketConn.Close()
 }

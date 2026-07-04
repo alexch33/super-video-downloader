@@ -108,7 +108,7 @@ func (s *Service[T]) NewContextPacketEx(ctx context.Context, key T, buffer *buf.
 			remoteAddr:   destination,
 			readDeadline: pipe.MakeDeadline(),
 		}
-		c.ctx, c.cancel = common.ContextWithCancelCause(ctx)
+		c.ctx, c.cancel = context.WithCancelCause(ctx)
 		return c
 	})
 	if !loaded {
@@ -154,7 +154,7 @@ var _ N.PacketConn = (*conn)(nil)
 
 type conn struct {
 	ctx             context.Context
-	cancel          common.ContextCancelCauseFunc
+	cancel          context.CancelCauseFunc
 	data            chan packet
 	localAddr       M.Socksaddr
 	remoteAddr      M.Socksaddr

@@ -58,20 +58,6 @@ type TokenStore interface {
 // when the server rejects a 0-RTT connection attempt.
 var Err0RTTRejected = errors.New("0-RTT rejected")
 
-// ConnectionTracingKey can be used to associate a [logging.ConnectionTracer] with a [Conn].
-// It is set on the Conn.Context() context,
-// as well as on the context passed to logging.Tracer.NewConnectionTracer.
-//
-// Deprecated: Applications can set their own tracing key using Transport.ConnContext.
-var ConnectionTracingKey = connTracingCtxKey{}
-
-// ConnectionTracingID is the type of the context value saved under the ConnectionTracingKey.
-//
-// Deprecated: Applications can set their own tracing key using Transport.ConnContext.
-type ConnectionTracingID uint64
-
-type connTracingCtxKey struct{}
-
 // QUICVersionContextKey can be used to find out the QUIC version of a TLS handshake from the
 // context returned by tls.Config.ClientInfo.Context.
 var QUICVersionContextKey = handshake.QUICVersionContextKey
@@ -186,6 +172,12 @@ type Config struct {
 	Allow0RTT bool
 	// Enable QUIC datagram support (RFC 9221).
 	EnableDatagrams bool
+	// OmitMaxDatagramFrameSize omits the max_datagram_frame_size transport parameter,
+	// even when QUIC datagram support is enabled.
+	OmitMaxDatagramFrameSize bool
+	// AssumePeerMaxDatagramFrameSize treats peers that omit max_datagram_frame_size
+	// as supporting DATAGRAM frames up to this size. This is a non-standard extension.
+	AssumePeerMaxDatagramFrameSize int64
 	// Enable QUIC Stream Resets with Partial Delivery.
 	// See https://datatracker.ietf.org/doc/html/draft-ietf-quic-reliable-stream-reset-07.
 	EnableStreamResetPartialDelivery bool
@@ -193,13 +185,11 @@ type Config struct {
 	Tracer func(ctx context.Context, isClient bool, connID ConnectionID) qlogwriter.Trace
 
 	MaxDatagramFrameSize int64
-	DisablePathManager   bool
-}
 
-// ClientHelloInfo contains information about an incoming connection attempt.
-//
-// Deprecated: Use ClientInfo instead.
-type ClientHelloInfo = ClientInfo
+	// DisablePathManager disables path manager.
+	// for hysteria2 port hopping, direct change remote address without connection migration logic
+	DisablePathManager bool
+}
 
 // ClientInfo contains information about an incoming connection attempt.
 type ClientInfo struct {
@@ -216,13 +206,18 @@ type ClientInfo struct {
 type ConnectionState struct {
 	// TLS contains information about the TLS connection state, incl. the tls.ConnectionState.
 	TLS tls.ConnectionState
-	// SupportsDatagrams indicates whether the peer advertised support for QUIC datagrams (RFC 9221).
-	// When true, datagrams can be sent using the Conn's SendDatagram method.
-	// This is a unilateral declaration by the peer - receiving datagrams is only possible if
-	// datagram support was enabled locally via Config.EnableDatagrams.
-	SupportsDatagrams bool
-	// SupportsStreamResetPartialDelivery indicates whether the peer advertised support for QUIC Stream Resets with Partial Delivery.
-	SupportsStreamResetPartialDelivery bool
+	// SupportsDatagrams indicates support for QUIC datagrams (RFC 9221).
+	SupportsDatagrams struct {
+		// Remote is true if the peer advertised datagram support.
+		// Local is true if datagram support was enabled via Config.EnableDatagrams.
+		Remote, Local bool
+	}
+	// SupportsStreamResetPartialDelivery indicates support for QUIC Stream Resets with Partial Delivery.
+	SupportsStreamResetPartialDelivery struct {
+		// Remote is true if the peer advertised support.
+		// Local is true if support was enabled via Config.EnableStreamResetPartialDelivery.
+		Remote, Local bool
+	}
 	// Used0RTT says if 0-RTT resumption was used.
 	Used0RTT bool
 	// Version is the QUIC version of the QUIC connection.

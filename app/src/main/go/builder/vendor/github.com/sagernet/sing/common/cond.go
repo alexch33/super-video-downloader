@@ -1,22 +1,17 @@
 package common
 
 import (
+	"cmp"
 	"context"
 	"io"
 	"runtime"
+	"slices"
 	"sort"
 	"unsafe"
-
-	"github.com/sagernet/sing/common/x/constraints"
 )
 
 func Any[T any](array []T, block func(it T) bool) bool {
-	for _, it := range array {
-		if block(it) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(array, block)
 }
 
 func AnyIndexed[T any](array []T, block func(index int, it T) bool) bool {
@@ -47,12 +42,7 @@ func AllIndexed[T any](array []T, block func(index int, it T) bool) bool {
 }
 
 func Contains[T comparable](arr []T, target T) bool {
-	for index := range arr {
-		if target == arr[index] {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(arr, target)
 }
 
 func Map[T any, N any](arr []T, block func(it T) N) []N {
@@ -214,13 +204,13 @@ func UniqBy[T any, C comparable](arr []T, block func(it T) C) []T {
 	return result
 }
 
-func SortBy[T any, C constraints.Ordered](arr []T, block func(it T) C) {
+func SortBy[T any, C cmp.Ordered](arr []T, block func(it T) C) {
 	sort.Slice(arr, func(i, j int) bool {
 		return block(arr[i]) < block(arr[j])
 	})
 }
 
-func MinBy[T any, C constraints.Ordered](arr []T, block func(it T) C) T {
+func MinBy[T any, C cmp.Ordered](arr []T, block func(it T) C) T {
 	var min T
 	var minValue C
 	if len(arr) == 0 {
@@ -239,7 +229,7 @@ func MinBy[T any, C constraints.Ordered](arr []T, block func(it T) C) T {
 	return min
 }
 
-func MaxBy[T any, C constraints.Ordered](arr []T, block func(it T) C) T {
+func MaxBy[T any, C cmp.Ordered](arr []T, block func(it T) C) T {
 	var max T
 	var maxValue C
 	if len(arr) == 0 {

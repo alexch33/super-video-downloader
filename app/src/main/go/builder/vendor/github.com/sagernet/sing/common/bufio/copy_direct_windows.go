@@ -125,7 +125,7 @@ func (w *vectorisedSyscallReadWaiter) InitializeReadWaiter(options N.ReadWaitOpt
 				buffer = w.options.NewBuffer()
 				w.buffers[i] = buffer
 			}
-			w.iovecList[i] = buffer.Iovec(buffer.Cap())
+			w.iovecList[i] = buffer.Iovec(buffer.FreeLen())
 		}
 		var (
 			readN uint32

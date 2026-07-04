@@ -352,6 +352,22 @@ func (shm *serverHelloMsg) getPublicPtr() *PubServerHelloMsg {
 	}
 }
 
+// UnmarshalServerHello allows external code to parse raw server hellos.
+// It returns nil on failure.
+func UnmarshalServerHello(data []byte) *PubServerHelloMsg {
+	m := &serverHelloMsg{}
+	if m.unmarshal(data) {
+		return m.getPublicPtr()
+	}
+	return nil
+}
+
+// Marshal allows external code to convert a ServerHello object back into
+// raw bytes.
+func (shm *PubServerHelloMsg) Marshal() ([]byte, error) {
+	return shm.getPrivatePtr().marshal()
+}
+
 type PubClientHelloMsg struct {
 	Raw                          []byte // renamed to clientHelloMsg.original in crypto/tls
 	Vers                         uint16
@@ -629,6 +645,21 @@ func (fh *finishedHash) getPublicObj() FinishedHash {
 type KeyShare struct {
 	Group CurveID `json:"group"`
 	Data  []byte  `json:"key_exchange,omitempty"` // optional
+}
+
+const (
+	// Internal marker bytes used by ReuseHybridAndClassicalKeyShares.
+	// ApplyPreset consumes these and generates real keyshare bytes.
+	keyShareHybridReuseMarker    byte = 0xf1
+	keyShareClassicalReuseMarker byte = 0xf2
+)
+
+// ReuseHybridAndClassicalKeyShares marks a hybrid/classical keyshare pair so
+// ApplyPreset reuses the same classical key material for both entries.
+func ReuseHybridAndClassicalKeyShares(hybrid, classical KeyShare) []KeyShare {
+	hybrid.Data = []byte{keyShareHybridReuseMarker}
+	classical.Data = []byte{keyShareClassicalReuseMarker}
+	return []KeyShare{hybrid, classical}
 }
 
 func (ks KeyShare) ToPrivate() keyShare {

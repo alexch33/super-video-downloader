@@ -79,7 +79,7 @@ A compact set of copy-paste commands to build the app on different OSes.
 To build this project, you need the following tools installed:
 1. **JDK 21**
 2. **Android SDK & NDK** (r27d recommended)
-3. **Go 1.25.7** (for networking components)
+3. **Go 1.26.0** (for networking components)
 4. **Rust**:
     - **Linux/macOS**: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
     - **Windows**: Download and run `rustup-init.exe` from [rustup.rs](https://rustup.rs/)

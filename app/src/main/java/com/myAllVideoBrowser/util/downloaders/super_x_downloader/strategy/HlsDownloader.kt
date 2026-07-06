@@ -42,7 +42,7 @@ class HlsDownloader(
         return withContext(Dispatchers.IO) {
             val hlsTotalBytesDownloaded = AtomicLong(0L)
             val hlsSegmentsCompleted = AtomicInteger(0)
-            val startTime = System.currentTimeMillis() // Add this
+            val startTime = System.currentTimeMillis()
 
             // 1. Get the list of media segments by calling the provided function
             val (videoSegmentsRaw, audioSegments) = getMediaSegments(task.url, headers)
@@ -112,41 +112,40 @@ class HlsDownloader(
             }
 
             // 2. Handle Resuming: Calculate initial progress from already downloaded files
-            val alreadyDownloadedVideo = videoSegments?.filter { segment ->
-                val segmentFile =
-                    downloadDir.resolve("segment_${"%05d".format(videoSegments.indexOf(segment))}.$videoExt")
-                segmentFile.exists() && segmentFile.length() > 0
-            } ?: emptyList()
-
-            val alreadyDownloadedAudio = audioSegments?.filter { segment ->
-                val segmentFile =
-                    downloadDir.resolve("audio_segment_${"%05d".format(audioSegments.indexOf(segment))}.$audioExt")
-                segmentFile.exists() && segmentFile.length() > 0
-            } ?: emptyList()
-
-            val initialVideoSize = if (videoSegments != null) {
-                alreadyDownloadedVideo.sumOf {
-                    downloadDir.resolve("segment_${"%05d".format(videoSegments.indexOf(it))}.$videoExt")
-                        .length()
+            val alreadyDownloadedVideoIndices = mutableSetOf<Int>()
+            videoSegments?.forEachIndexed { index, _ ->
+                val segmentFile = downloadDir.resolve("segment_${"%05d".format(index)}.$videoExt")
+                if (segmentFile.exists() && segmentFile.length() > 0) {
+                    alreadyDownloadedVideoIndices.add(index)
                 }
-            } else 0L
+            }
 
-            val initialAudioSize = if (audioSegments != null) {
-                alreadyDownloadedAudio.sumOf {
-                    downloadDir.resolve("audio_segment_${"%05d".format(audioSegments.indexOf(it))}.$audioExt")
-                        .length()
+            val alreadyDownloadedAudioIndices = mutableSetOf<Int>()
+            audioSegments?.forEachIndexed { index, _ ->
+                val segmentFile =
+                    downloadDir.resolve("audio_segment_${"%05d".format(index)}.$audioExt")
+                if (segmentFile.exists() && segmentFile.length() > 0) {
+                    alreadyDownloadedAudioIndices.add(index)
                 }
-            } else 0L
+            }
+
+            val initialVideoSize = alreadyDownloadedVideoIndices.sumOf { index ->
+                downloadDir.resolve("segment_${"%05d".format(index)}.$videoExt").length()
+            }
+            val initialAudioSize = alreadyDownloadedAudioIndices.sumOf { index ->
+                downloadDir.resolve("audio_segment_${"%05d".format(index)}.$audioExt").length()
+            }
 
             val initialTotalDownloaded = initialVideoSize + initialAudioSize
-            val initialSegmentsCompleted = alreadyDownloadedVideo.size + alreadyDownloadedAudio.size
+            val initialSegmentsCompleted =
+                alreadyDownloadedVideoIndices.size + alreadyDownloadedAudioIndices.size
 
             hlsTotalBytesDownloaded.addAndGet(initialTotalDownloaded)
             hlsSegmentsCompleted.set(initialSegmentsCompleted)
 
             if (initialSegmentsCompleted > 0) {
                 val info =
-                    "HLS Resumed: ${alreadyDownloadedVideo.size}/${videoSegments?.size ?: 0} video and ${alreadyDownloadedAudio.size}/${audioSegments?.size ?: 0} audio segments already present."
+                    "HLS Resumed: ${alreadyDownloadedVideoIndices.size}/${videoSegments?.size ?: 0} video and ${alreadyDownloadedAudioIndices.size}/${audioSegments?.size ?: 0} audio segments already present."
                 AppLogger.d(info)
                 if (initialSegmentsCompleted < totalSegmentsToDownload) {
                     val avgSegmentSize = initialTotalDownloaded / initialSegmentsCompleted
@@ -158,62 +157,69 @@ class HlsDownloader(
             // 3. Download remaining segments in parallel using coroutines
             val downloadJobs = mutableListOf<Job>()
             val dispatcher = Dispatchers.IO.limitedParallelism(threadCount)
+            val maxSegmentsCount = maxOf(videoSegments?.size ?: 0, audioSegments?.size ?: 0)
 
-            // Create jobs for video segments
-            videoSegments?.filterNot { alreadyDownloadedVideo.contains(it) }?.forEach { segment ->
-                val index = videoSegments.indexOf(segment)
-                val job = launch(dispatcher) {
-                    val outputFile =
-                        downloadDir.resolve("segment_${"%05d".format(index)}.$videoExt")
-                    val downloadedBytes =
-                        segmentDownloader.download(segment.url, outputFile, "HLS", index)
-                    val completed = hlsSegmentsCompleted.incrementAndGet()
-                    val totalDownloaded = hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
+            for (i in 0 until maxSegmentsCount) {
+                // Interleave by launching video then audio for the same segment index
+                // Video segment job
+                videoSegments?.getOrNull(i)?.let { segment ->
+                    if (!alreadyDownloadedVideoIndices.contains(i)) {
+                        val job = launch(dispatcher) {
+                            val outputFile =
+                                downloadDir.resolve("segment_${"%05d".format(i)}.$videoExt")
+                            val downloadedBytes =
+                                segmentDownloader.download(segment.url, outputFile, "HLS", i)
+                            val completed = hlsSegmentsCompleted.incrementAndGet()
+                            val totalDownloaded = hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
 
-                    val avgSegmentSize = if (completed > 0) totalDownloaded / completed else 0
-                    val totalToDownload = avgSegmentSize * totalSegmentsToDownload
+                            val avgSegmentSize =
+                                if (completed > 0) totalDownloaded / completed else 0
+                            val totalToDownload = avgSegmentSize * totalSegmentsToDownload
 
-                    onProgress(
-                        DownloaderUtils.createSegmentsDownloadProgress(
-                            totalDownloaded,
-                            totalToDownload,
-                            completed,
-                            totalSegmentsToDownload,
-                            startTime,
-                            false
-                        )
-                    )
+                            onProgress(
+                                DownloaderUtils.createSegmentsDownloadProgress(
+                                    totalDownloaded,
+                                    totalToDownload,
+                                    completed,
+                                    totalSegmentsToDownload,
+                                    startTime,
+                                    false
+                                )
+                            )
+                        }
+                        downloadJobs.add(job)
+                    }
                 }
-                downloadJobs.add(job)
-            }
 
-            // Create jobs for audio segments
-            audioSegments?.filterNot { alreadyDownloadedAudio.contains(it) }?.forEach { segment ->
-                val index = audioSegments.indexOf(segment)
-                val job = launch(dispatcher) {
-                    val outputFile =
-                        downloadDir.resolve("audio_segment_${"%05d".format(index)}.$audioExt")
-                    val downloadedBytes =
-                        segmentDownloader.download(segment.url, outputFile, "HLS-Audio", index)
-                    val completedSegments = hlsSegmentsCompleted.incrementAndGet()
-                    val totalDownloaded = hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
+                // Audio segment job
+                audioSegments?.getOrNull(i)?.let { segment ->
+                    if (!alreadyDownloadedAudioIndices.contains(i)) {
+                        val job = launch(dispatcher) {
+                            val outputFile =
+                                downloadDir.resolve("audio_segment_${"%05d".format(i)}.$audioExt")
+                            val downloadedBytes =
+                                segmentDownloader.download(segment.url, outputFile, "HLS-Audio", i)
+                            val completed = hlsSegmentsCompleted.incrementAndGet()
+                            val totalDownloaded = hlsTotalBytesDownloaded.addAndGet(downloadedBytes)
 
-                    val avgSegmentSize =
-                        if (completedSegments > 0) totalDownloaded / completedSegments else 0
-                    val totalToDownloaded = avgSegmentSize * totalSegmentsToDownload
+                            val avgSegmentSize =
+                                if (completed > 0) totalDownloaded / completed else 0
+                            val totalToDownload = avgSegmentSize * totalSegmentsToDownload
 
-                    onProgress(
-                        DownloaderUtils.createSegmentsDownloadProgress(
-                            totalDownloaded,
-                            totalToDownloaded,
-                            completedSegments,
-                            totalSegmentsToDownload,
-                            startTime,
-                            false
-                        )
-                    )
+                            onProgress(
+                                DownloaderUtils.createSegmentsDownloadProgress(
+                                    totalDownloaded,
+                                    totalToDownload,
+                                    completed,
+                                    totalSegmentsToDownload,
+                                    startTime,
+                                    false
+                                )
+                            )
+                        }
+                        downloadJobs.add(job)
+                    }
                 }
-                downloadJobs.add(job)
             }
 
             // Wait for all segment downloads to complete

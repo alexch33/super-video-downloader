@@ -138,8 +138,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 344
-        versionName = "0.8.22"
+        versionCode = 350
+        versionName = "0.8.22.1"
 
         if (isSingleAbiRequested) {
             splits {
@@ -191,6 +191,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            packaging {
+                jniLibs {
+                    jniLibs.keepDebugSymbols.add("**/libffmpegkit.so")
+                }
+            }
         }
     }
 

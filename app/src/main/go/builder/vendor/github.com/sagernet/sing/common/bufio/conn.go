@@ -1,6 +1,7 @@
 package bufio
 
 import (
+	"errors"
 	"io"
 	"net"
 	"net/netip"
@@ -119,7 +120,7 @@ type ExtendedReaderWrapper struct {
 func (r *ExtendedReaderWrapper) ReadBuffer(buffer *buf.Buffer) error {
 	n, err := r.Read(buffer.FreeBytes())
 	buffer.Truncate(n)
-	if n > 0 && err == io.EOF {
+	if n > 0 && errors.Is(err, io.EOF) {
 		return nil
 	}
 	return err

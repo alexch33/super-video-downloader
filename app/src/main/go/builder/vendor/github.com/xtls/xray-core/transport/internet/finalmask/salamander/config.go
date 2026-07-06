@@ -4,13 +4,24 @@ import (
 	"net"
 )
 
-func (c *Config) UDP() {
+func (c *Config) UDP() {}
+
+func (c *Config) HeaderConn() {}
+
+func (c *Config) WrapPacketConnClient(raw net.PacketConn, level int, levelCount int) (net.PacketConn, error) {
+	return NewSalamanderConnClient(c, raw)
 }
 
-func (c *Config) WrapPacketConnClient(raw net.PacketConn, first bool, leaveSize int32, end bool) (net.PacketConn, error) {
-	return NewConnClient(c, raw, first, leaveSize)
+func (c *Config) WrapPacketConnServer(raw net.PacketConn, level int, levelCount int) (net.PacketConn, error) {
+	return NewSalamanderConnServer(c, raw)
 }
 
-func (c *Config) WrapPacketConnServer(raw net.PacketConn, first bool, leaveSize int32, end bool) (net.PacketConn, error) {
-	return NewConnServer(c, raw, first, leaveSize)
+func (c *GeckoConfig) UDP() {}
+
+func (c *GeckoConfig) WrapPacketConnClient(raw net.PacketConn, level int, levelCount int) (net.PacketConn, error) {
+	return NewGeckoConnClient(c, raw)
+}
+
+func (c *GeckoConfig) WrapPacketConnServer(raw net.PacketConn, level int, levelCount int) (net.PacketConn, error) {
+	return NewGeckoConnServer(c, raw)
 }

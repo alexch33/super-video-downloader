@@ -381,7 +381,6 @@ func (c *Config) GetTLSConfig(opts ...Option) *tls.Config {
 		PinnedPeerCertSha256: c.PinnedPeerCertSha256,
 	}
 	config := &tls.Config{
-		InsecureSkipVerify:     c.AllowInsecure,
 		Rand:                   randCarrier,
 		ClientSessionCache:     globalSessionCache,
 		RootCAs:                root,
@@ -459,7 +458,7 @@ func (c *Config) GetTLSConfig(opts ...Option) *tls.Config {
 	}
 
 	if len(c.MasterKeyLog) > 0 && c.MasterKeyLog != "none" {
-		writer, err := os.OpenFile(c.MasterKeyLog, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+		writer, err := os.OpenFile(c.MasterKeyLog, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0o644)
 		if err != nil {
 			errors.LogErrorInner(context.Background(), err, "failed to open ", c.MasterKeyLog, " as master key log")
 		} else {
@@ -469,11 +468,7 @@ func (c *Config) GetTLSConfig(opts ...Option) *tls.Config {
 	if len(c.EchConfigList) > 0 || len(c.EchServerKeys) > 0 {
 		err := ApplyECH(c, config)
 		if err != nil {
-			if c.EchForceQuery == "full" {
-				errors.LogError(context.Background(), err)
-			} else {
-				errors.LogInfo(context.Background(), err)
-			}
+			errors.LogError(context.Background(), err)
 		}
 	}
 
@@ -524,11 +519,13 @@ func ConfigFromStreamSettings(settings *internet.MemoryStreamConfig) *Config {
 
 func ParseCurveName(curveNames []string) []tls.CurveID {
 	curveMap := map[string]tls.CurveID{
-		"curvep256":      tls.CurveP256,
-		"curvep384":      tls.CurveP384,
-		"curvep521":      tls.CurveP521,
-		"x25519":         tls.X25519,
-		"x25519mlkem768": tls.X25519MLKEM768,
+		"curvep256":          tls.CurveP256,
+		"curvep384":          tls.CurveP384,
+		"curvep521":          tls.CurveP521,
+		"x25519":             tls.X25519,
+		"x25519mlkem768":     tls.X25519MLKEM768,
+		"secp256r1mlkem768":  tls.SecP256r1MLKEM768,
+		"secp384r1mlkem1024": tls.SecP384r1MLKEM1024,
 	}
 
 	var curveIDs []tls.CurveID

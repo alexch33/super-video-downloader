@@ -11,7 +11,7 @@ import (
 
 const maxSpliceSize = 1 << 20
 
-func splice(source syscall.RawConn, destination syscall.RawConn, readCounters []N.CountFunc, writeCounters []N.CountFunc) (handed bool, n int64, err error) {
+func splice(source syscall.RawConn, sourceReader N.SyscallReader, destination syscall.RawConn, destinationWriter N.SyscallWriter, readCounters []N.CountFunc, writeCounters []N.CountFunc) (handed bool, n int64, err error) {
 	handed = true
 	var pipeFDs [2]int
 	err = unix.Pipe2(pipeFDs[:], syscall.O_CLOEXEC|syscall.O_NONBLOCK)
@@ -20,12 +20,14 @@ func splice(source syscall.RawConn, destination syscall.RawConn, readCounters []
 	}
 	defer unix.Close(pipeFDs[0])
 	defer unix.Close(pipeFDs[1])
-
 	_, _ = unix.FcntlInt(uintptr(pipeFDs[0]), unix.F_SETPIPE_SZ, maxSpliceSize)
-	var readN int
-	var readErr error
-	var writeSize int
-	var writeErr error
+	var (
+		readN        int
+		readErr      error
+		writeSize    int
+		writeErr     error
+		notFirstTime bool
+	)
 	readFunc := func(fd uintptr) (done bool) {
 		p0, p1 := unix.Splice(int(fd), nil, pipeFDs[1], nil, maxSpliceSize, unix.SPLICE_F_NONBLOCK)
 		readN = int(p0)
@@ -46,15 +48,28 @@ func splice(source syscall.RawConn, destination syscall.RawConn, readCounters []
 	}
 	for {
 		err = source.Read(readFunc)
-		if err != nil {
-			readErr = err
-		}
 		if readErr != nil {
-			if readErr == unix.EINVAL || readErr == unix.ENOSYS {
+			err = readErr
+		}
+		if err != nil {
+			if sourceReader != nil {
+				newBuffer, newErr := sourceReader.HandleSyscallReadError(err)
+				if newErr != nil {
+					err = newErr
+				} else {
+					err = nil
+					if len(newBuffer) > 0 {
+						readN, readErr = unix.Write(pipeFDs[1], newBuffer)
+						if readErr != nil {
+							err = E.Cause(err, "write handled data")
+						}
+					}
+				}
+			} else if !notFirstTime && E.IsMulti(err, unix.EINVAL, unix.ENOSYS) {
 				handed = false
 				return
 			}
-			err = E.Cause(readErr, "splice read")
+			err = E.Cause(err, "splice read")
 			return
 		}
 		if readN == 0 {
@@ -62,18 +77,20 @@ func splice(source syscall.RawConn, destination syscall.RawConn, readCounters []
 		}
 		writeSize = readN
 		err = destination.Write(writeFunc)
-		if err != nil {
-			writeErr = err
-		}
 		if writeErr != nil {
-			err = E.Cause(writeErr, "splice write")
+			err = writeErr
+		}
+		if err != nil {
+			err = E.Cause(err, "splice write")
 			return
 		}
+		n += int64(readN)
 		for _, readCounter := range readCounters {
 			readCounter(int64(readN))
 		}
 		for _, writeCounter := range writeCounters {
 			writeCounter(int64(readN))
 		}
+		notFirstTime = true
 	}
 }

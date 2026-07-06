@@ -5,9 +5,12 @@ import (
 	gotls "crypto/tls"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
+	reflect "reflect"
+	"runtime"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -19,10 +22,13 @@ import (
 	"github.com/xtls/xray-core/common/buf"
 	"github.com/xtls/xray-core/common/errors"
 	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/net/cnc"
 	"github.com/xtls/xray-core/common/signal/done"
-	"github.com/xtls/xray-core/common/uuid"
 	"github.com/xtls/xray-core/transport/internet"
 	"github.com/xtls/xray-core/transport/internet/browser_dialer"
+	"github.com/xtls/xray-core/transport/internet/hysteria/congestion"
+	"github.com/xtls/xray-core/transport/internet/hysteria/congestion/bbr"
+	"github.com/xtls/xray-core/transport/internet/hysteria/udphop"
 	"github.com/xtls/xray-core/transport/internet/reality"
 	"github.com/xtls/xray-core/transport/internet/stat"
 	"github.com/xtls/xray-core/transport/internet/tls"
@@ -117,6 +123,15 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 			return nil, err
 		}
 
+		if streamSettings.TcpmaskManager != nil {
+			newConn, err := streamSettings.TcpmaskManager.WrapConnClient(conn)
+			if err != nil {
+				conn.Close()
+				return nil, errors.New("mask err").Base(err)
+			}
+			conn = newConn
+		}
+
 		if realityConfig != nil {
 			return reality.UClient(conn, realityConfig, ctxInner, dest)
 		}
@@ -143,59 +158,120 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 	var transport http.RoundTripper
 
 	if httpVersion == "3" {
-		if keepAlivePeriod == 0 {
-			keepAlivePeriod = net.QuicgoH3KeepAlivePeriod
+		quicParams := streamSettings.QuicParams
+		if quicParams == nil {
+			quicParams = &internet.QuicParams{
+				BbrProfile: string(bbr.ProfileStandard),
+				UdpHop:     &internet.UdpHop{},
+			}
 		}
-		if keepAlivePeriod < 0 {
-			keepAlivePeriod = 0
-		}
-		quicConfig := &quic.Config{
-			MaxIdleTimeout: net.ConnIdleTimeout,
 
+		quicConfig := &quic.Config{
+			InitialStreamReceiveWindow:     quicParams.InitStreamReceiveWindow,
+			MaxStreamReceiveWindow:         quicParams.MaxStreamReceiveWindow,
+			InitialConnectionReceiveWindow: quicParams.InitConnReceiveWindow,
+			MaxConnectionReceiveWindow:     quicParams.MaxConnReceiveWindow,
+			MaxIdleTimeout:                 time.Duration(quicParams.MaxIdleTimeout) * time.Second,
+			KeepAlivePeriod:                time.Duration(quicParams.KeepAlivePeriod) * time.Second,
+			MaxIncomingStreams:             quicParams.MaxIncomingStreams,
+			DisablePathMTUDiscovery:        quicParams.DisablePathMtuDiscovery || (runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin"),
+		}
+		if quicParams.MaxIdleTimeout == 0 {
+			quicConfig.MaxIdleTimeout = net.ConnIdleTimeout
+		}
+		if quicParams.KeepAlivePeriod == 0 {
+			if keepAlivePeriod == 0 {
+				quicConfig.KeepAlivePeriod = net.QuicgoH3KeepAlivePeriod
+			} else if keepAlivePeriod > 0 {
+				quicConfig.KeepAlivePeriod = keepAlivePeriod
+			}
+		}
+		if quicParams.MaxIncomingStreams == 0 {
 			// these two are defaults of quic-go/http3. the default of quic-go (no
 			// http3) is different, so it is hardcoded here for clarity.
 			// https://github.com/quic-go/quic-go/blob/b8ea5c798155950fb5bbfdd06cad1939c9355878/http3/client.go#L36-L39
-			MaxIncomingStreams: -1,
-			KeepAlivePeriod:    keepAlivePeriod,
+			quicConfig.MaxIncomingStreams = -1
 		}
+
 		transport = &http3.Transport{
 			QUICConfig:      quicConfig,
 			TLSClientConfig: gotlsConfig,
 			Dial: func(ctx context.Context, addr string, tlsCfg *gotls.Config, cfg *quic.Config) (*quic.Conn, error) {
-				conn, err := internet.DialSystem(ctx, dest, streamSettings.SocketSettings)
+				udpHopDialer := func(addr *net.UDPAddr) (net.PacketConn, error) {
+					conn, err := internet.DialSystem(ctx, net.UDPDestination(net.IPAddress(addr.IP), net.Port(addr.Port)), streamSettings.SocketSettings)
+					if err != nil {
+						errors.LogInfoInner(context.Background(), err, "skip hop: failed to dial to dest")
+						return nil, errors.New("")
+					}
+
+					var pktConn net.PacketConn
+
+					switch c := conn.(type) {
+					case *internet.PacketConnWrapper:
+						pktConn = c.PacketConn
+					case *cnc.Connection:
+						pktConn = &internet.FakePacketConn{Conn: c}
+					default:
+						panic(reflect.TypeOf(c))
+					}
+
+					return pktConn, nil
+				}
+
+				var pktConn net.PacketConn
+				var udpAddr *net.UDPAddr
+				var index int
+
+				if len(quicParams.UdpHop.Ports) > 0 {
+					index = rand.Intn(len(quicParams.UdpHop.Ports))
+					dest.Port = net.Port(quicParams.UdpHop.Ports[index])
+				}
+
+				raw, err := internet.DialSystem(ctx, dest, streamSettings.SocketSettings)
+				if err != nil {
+					return nil, errors.New("failed to dial to dest").Base(err)
+				}
+				switch c := raw.(type) {
+				case *internet.PacketConnWrapper:
+					pktConn = c.PacketConn
+					udpAddr = raw.RemoteAddr().(*net.UDPAddr)
+				case *cnc.Connection:
+					pktConn = &internet.FakePacketConn{Conn: c}
+					udpAddr = &net.UDPAddr{IP: c.RemoteAddr().(*net.TCPAddr).IP, Port: c.RemoteAddr().(*net.TCPAddr).Port}
+				default:
+					panic(reflect.TypeOf(c))
+				}
+
+				if len(quicParams.UdpHop.Ports) > 0 {
+					pktConn = udphop.NewUDPHopPacketConn(udphop.ToAddrs(udpAddr.IP, quicParams.UdpHop.Ports), time.Duration(quicParams.UdpHop.IntervalMin)*time.Second, time.Duration(quicParams.UdpHop.IntervalMax)*time.Second, udpHopDialer, pktConn, index)
+				}
+
+				if streamSettings.UdpmaskManager != nil {
+					newConn, err := streamSettings.UdpmaskManager.WrapPacketConnClient(pktConn)
+					if err != nil {
+						pktConn.Close()
+						return nil, errors.New("mask err").Base(err)
+					}
+					pktConn = newConn
+				}
+
+				conn, err := quic.DialEarly(ctx, pktConn, udpAddr, tlsCfg, cfg)
 				if err != nil {
 					return nil, err
 				}
+				context.AfterFunc(conn.Context(), func() { pktConn.Close() })
 
-				var udpConn net.PacketConn
-				var udpAddr *net.UDPAddr
-
-				switch c := conn.(type) {
-				case *internet.PacketConnWrapper:
-					var ok bool
-					udpConn, ok = c.Conn.(*net.UDPConn)
-					if !ok {
-						return nil, errors.New("PacketConnWrapper does not contain a UDP connection")
-					}
-					udpAddr, err = net.ResolveUDPAddr("udp", c.Dest.String())
-					if err != nil {
-						return nil, err
-					}
-				case *net.UDPConn:
-					udpConn = c
-					udpAddr, err = net.ResolveUDPAddr("udp", c.RemoteAddr().String())
-					if err != nil {
-						return nil, err
-					}
+				switch quicParams.Congestion {
+				case "reno":
+				case "", "bbr":
+					congestion.UseBBR(conn, bbr.Profile(quicParams.BbrProfile))
+				case "force-brutal":
+					congestion.UseBrutal(conn, quicParams.BrutalUp)
 				default:
-					udpConn = &internet.FakePacketConn{Conn: c}
-					udpAddr, err = net.ResolveUDPAddr("udp", c.RemoteAddr().String())
-					if err != nil {
-						return nil, err
-					}
+					panic(quicParams.Congestion)
 				}
 
-				return quic.DialEarly(ctx, udpConn, udpAddr, tlsCfg, cfg)
+				return conn, nil
 			},
 		}
 	} else if httpVersion == "2" {
@@ -271,6 +347,12 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 	if requestURL.Host == "" {
 		requestURL.Host = dest.Address.String()
 	}
+	if browser_dialer.HasBrowserDialer() && realityConfig == nil {
+		// For Browser Dialer's optimized IP and non-standard port
+		if !(requestURL.Scheme == "http" && dest.Port == 80) && !(requestURL.Scheme == "https" && dest.Port == 443) {
+			requestURL.Host += ":" + dest.Port.String()
+		}
+	}
 
 	requestURL.Path = transportConfiguration.GetNormalizedPath()
 	requestURL.RawQuery = transportConfiguration.GetNormalizedQuery()
@@ -290,8 +372,7 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 
 	sessionId := ""
 	if mode != "stream-one" {
-		sessionIdUuid := uuid.New()
-		sessionId = sessionIdUuid.String()
+		sessionId = transportConfiguration.GenerateSessionID()
 	}
 
 	errors.LogInfo(ctx, fmt.Sprintf("XHTTP is dialing to %s, mode %s, HTTP version %s, host %s", dest, mode, httpVersion, requestURL.Host))
@@ -332,6 +413,12 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 		if requestURL2.Host == "" {
 			requestURL2.Host = dest2.Address.String()
 		}
+		if browser_dialer.HasBrowserDialer() && realityConfig2 == nil {
+			// For Browser Dialer's optimized IP and non-standard port
+			if !(requestURL2.Scheme == "http" && dest2.Port == 80) && !(requestURL2.Scheme == "https" && dest2.Port == 443) {
+				requestURL2.Host += ":" + dest2.Port.String()
+			}
+		}
 		requestURL2.Path = config2.GetNormalizedPath()
 		requestURL2.RawQuery = config2.GetNormalizedQuery()
 		httpClient2, xmuxClient2 = getHTTPClient(ctx, dest2, memory2)
@@ -339,10 +426,10 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 	}
 
 	if xmuxClient != nil {
-		xmuxClient.OpenUsage.Add(1)
+		xmuxClient.AddRunning()
 	}
 	if xmuxClient2 != nil && xmuxClient2 != xmuxClient {
-		xmuxClient2.OpenUsage.Add(1)
+		xmuxClient2.AddRunning()
 	}
 	var closed atomic.Int32
 
@@ -354,10 +441,10 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 				return
 			}
 			if xmuxClient != nil {
-				xmuxClient.OpenUsage.Add(-1)
+				xmuxClient.DoneRunning()
 			}
 			if xmuxClient2 != nil && xmuxClient2 != xmuxClient {
-				xmuxClient2.OpenUsage.Add(-1)
+				xmuxClient2.DoneRunning()
 			}
 		},
 	}
@@ -396,8 +483,8 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 	scMaxEachPostBytes := transportConfiguration.GetNormalizedScMaxEachPostBytes()
 	scMinPostsIntervalMs := transportConfiguration.GetNormalizedScMinPostsIntervalMs()
 
-	if scMaxEachPostBytes.From <= buf.Size {
-		panic("`scMaxEachPostBytes` should be bigger than " + strconv.Itoa(buf.Size))
+	if scMaxEachPostBytes.From <= 0 {
+		panic("`scMaxEachPostBytes` should be bigger than 0")
 	}
 
 	maxUploadSize := scMaxEachPostBytes.rand()
@@ -405,7 +492,7 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 	// code relies on this behavior. Subtract 1 so that together with
 	// uploadWriter wrapper, exact size limits can be enforced
 	// uploadPipeReader, uploadPipeWriter := pipe.New(pipe.WithSizeLimit(maxUploadSize - 1))
-	uploadPipeReader, uploadPipeWriter := pipe.New(pipe.WithSizeLimit(maxUploadSize - buf.Size))
+	uploadPipeReader, uploadPipeWriter := pipe.New(pipe.WithSizeLimit(max(0, maxUploadSize-buf.Size)))
 
 	conn.writer = uploadWriter{
 		uploadPipeWriter,
@@ -416,58 +503,66 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 		var seq int64
 		var lastWrite time.Time
 
+		dynamicHTTPClient := httpClient
+		dynamicXmuxClient := xmuxClient
 		for {
-			wroteRequest := done.New()
-
-			ctx := httptrace.WithClientTrace(ctx, &httptrace.ClientTrace{
-				WroteRequest: func(httptrace.WroteRequestInfo) {
-					wroteRequest.Close()
-				},
-			})
-
-			// this intentionally makes a shallow-copy of the struct so we
-			// can reassign Path (potentially concurrently)
-			url := requestURL
-			seqStr := strconv.FormatInt(seq, 10)
-			seq += 1
-
-			if scMinPostsIntervalMs.From > 0 {
-				time.Sleep(time.Duration(scMinPostsIntervalMs.rand())*time.Millisecond - time.Since(lastWrite))
-			}
-
 			// by offloading the uploads into a buffered pipe, multiple conn.Write
 			// calls get automatically batched together into larger POST requests.
 			// without batching, bandwidth is extremely limited.
-			chunk, err := uploadPipeReader.ReadMultiBuffer()
+			remainder, err := uploadPipeReader.ReadMultiBuffer()
 			if err != nil {
 				break
 			}
 
-			lastWrite = time.Now()
-
-			if xmuxClient != nil && (xmuxClient.LeftRequests.Add(-1) <= 0 ||
-				(xmuxClient.UnreusableAt != time.Time{} && lastWrite.After(xmuxClient.UnreusableAt))) {
-				httpClient, xmuxClient = getHTTPClient(ctx, dest, streamSettings)
-			}
-
-			go func() {
-				err := httpClient.PostPacket(
-					ctx,
-					url.String(),
-					sessionId,
-					seqStr,
-					&buf.MultiBufferContainer{MultiBuffer: chunk},
-					int64(chunk.Len()),
-				)
-				wroteRequest.Close()
-				if err != nil {
-					errors.LogInfoInner(ctx, err, "failed to send upload")
-					uploadPipeReader.Interrupt()
+			doSplit := atomic.Bool{}
+			for doSplit.Store(true); doSplit.Load(); {
+				var chunk buf.MultiBuffer
+				remainder, chunk = buf.SplitSize(remainder, maxUploadSize)
+				if chunk.IsEmpty() {
+					break
 				}
-			}()
 
-			if _, ok := httpClient.(*DefaultDialerClient); ok {
-				<-wroteRequest.Wait()
+				wroteRequest := done.New()
+
+				ctx := httptrace.WithClientTrace(ctx, &httptrace.ClientTrace{
+					WroteRequest: func(httptrace.WroteRequestInfo) {
+						wroteRequest.Close()
+					},
+				})
+
+				seqStr := strconv.FormatInt(seq, 10)
+				seq += 1
+
+				if scMinPostsIntervalMs.From > 0 {
+					time.Sleep(time.Duration(scMinPostsIntervalMs.rand())*time.Millisecond - time.Since(lastWrite))
+				}
+
+				lastWrite = time.Now()
+
+				if dynamicXmuxClient != nil && (dynamicXmuxClient.LeftRequests.Add(-1) <= 0 ||
+					(dynamicXmuxClient.UnreusableAt != time.Time{} && lastWrite.After(dynamicXmuxClient.UnreusableAt))) {
+					dynamicHTTPClient, dynamicXmuxClient = getHTTPClient(ctx, dest, streamSettings)
+				}
+
+				go func(hClient DialerClient) {
+					err := hClient.PostPacket(
+						ctx,
+						requestURL.String(),
+						sessionId,
+						seqStr,
+						chunk,
+					)
+					wroteRequest.Close()
+					if err != nil {
+						errors.LogInfoInner(ctx, err, "failed to send upload")
+						uploadPipeReader.Interrupt()
+						doSplit.Store(false)
+					}
+				}(dynamicHTTPClient)
+
+				if _, ok := dynamicHTTPClient.(*DefaultDialerClient); ok {
+					<-wroteRequest.Wait()
+				}
 			}
 		}
 	}()

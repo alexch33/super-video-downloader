@@ -4,6 +4,11 @@
 -dontwarn org.immutables.value.Value$Style$ImplementationVisibility
 -dontwarn org.immutables.value.Value$Style
 
+-keep class com.antonkarpenko.ffmpegkit.** { *; }
+-keepclasseswithmembernames class com.antonkarpenko.ffmpegkit.** {
+    native <methods>;
+}
+-keepattributes Exceptions, InnerClasses, Signature, Deprecated, SourceFile, LineNumberTable, *Annotation*, EnclosingMethod
 -keep class com.yausername.youtubedl_android.** { *; }
 -keep class org.immutables.** { *; }
 -keep class com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockNative {

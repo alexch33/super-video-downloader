@@ -3,11 +3,11 @@ package common
 import "strings"
 
 func SubstringAfter(s string, substr string) string {
-	index := strings.Index(s, substr)
-	if index == -1 {
-		return s
+	_, after, found := strings.Cut(s, substr)
+	if found {
+		return after
 	}
-	return s[index+len(substr):]
+	return s
 }
 
 func SubstringAfterLast(s string, substr string) string {
@@ -19,11 +19,11 @@ func SubstringAfterLast(s string, substr string) string {
 }
 
 func SubstringBefore(s string, substr string) string {
-	index := strings.Index(s, substr)
-	if index == -1 {
-		return s
+	before, _, found := strings.Cut(s, substr)
+	if found {
+		return before
 	}
-	return s[:index]
+	return s
 }
 
 func SubstringBeforeLast(s string, substr string) string {

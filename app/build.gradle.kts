@@ -138,8 +138,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 338
-        versionName = "0.8.21.2"
+        versionCode = 350
+        versionName = "0.8.22.1"
 
         if (isSingleAbiRequested) {
             splits {
@@ -191,6 +191,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            packaging {
+                jniLibs {
+                    jniLibs.keepDebugSymbols.add("**/libffmpegkit.so")
+                }
+            }
         }
     }
 
@@ -502,11 +508,6 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
 // =========================================================================
 val execOps = project.serviceOf<ExecOperations>()
 
-// V2Ray Repository Configuration
-val v2rayRepo = "https://github.com/2dust/AndroidLibXrayLite.git"
-val v2rayCommit = "d783dc8ea75afa0ff8fc9dcd51a426a9a67f6a70"
-val buildDirV2ray = file("${project.rootDir}/build/v2ray")
-
 // Go Executable Detection
 val goExecutable = run {
     val envOverride = System.getenv("GO_EXECUTABLE")
@@ -708,7 +709,7 @@ goTargets.forEach { arch ->
             "-mod=vendor",
             "-buildmode=c-shared",
             "-trimpath",
-            "-ldflags", "-s -w -buildid=",
+            "-ldflags", "-s -w -buildid= -checklinkname=0",
             "-o", outputSO.absolutePath,
             "."
         )

@@ -124,6 +124,7 @@ var _ N.VectorisedWriter = (*SyscallVectorisedWriter)(nil)
 type SyscallVectorisedWriter struct {
 	upstream any
 	rawConn  syscall.RawConn
+	//nolint:unused
 	syscallVectorisedWriterFields
 }
 

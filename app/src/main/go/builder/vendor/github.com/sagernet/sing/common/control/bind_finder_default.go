@@ -95,6 +95,9 @@ func (f *DefaultInterfaceFinder) ByAddr(addr netip.Addr) (*Interface, error) {
 	f.access.RLock()
 	defer f.access.RUnlock()
 	for _, netInterface := range f.interfaces {
+		if netInterface.Flags&net.FlagRunning == 0 {
+			continue
+		}
 		for _, prefix := range netInterface.Addresses {
 			if prefix.Addr() == addr {
 				return &netInterface, nil
@@ -102,6 +105,9 @@ func (f *DefaultInterfaceFinder) ByAddr(addr netip.Addr) (*Interface, error) {
 		}
 	}
 	for _, netInterface := range f.interfaces {
+		if netInterface.Flags&net.FlagRunning == 0 {
+			continue
+		}
 		for _, prefix := range netInterface.Addresses {
 			if prefix.Contains(addr) {
 				return &netInterface, nil

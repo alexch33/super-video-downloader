@@ -3,27 +3,26 @@ package bufio
 import (
 	"errors"
 	"io"
-	"syscall"
 
 	"github.com/sagernet/sing/common/buf"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 )
 
-func copyDirect(source syscall.Conn, destination syscall.Conn, readCounters []N.CountFunc, writeCounters []N.CountFunc) (handed bool, n int64, err error) {
-	rawSource, err := source.SyscallConn()
-	if err != nil {
+func copyDirect(source io.Reader, destination io.Writer, readCounters []N.CountFunc, writeCounters []N.CountFunc) (handed bool, n int64, err error) {
+	if !N.SyscallAvailableForRead(source) || !N.SyscallAvailableForWrite(destination) {
 		return
 	}
-	rawDestination, err := destination.SyscallConn()
-	if err != nil {
+	sourceReader, sourceConn := N.SyscallConnForRead(source)
+	destinationWriter, destinationConn := N.SyscallConnForWrite(destination)
+	if sourceConn == nil || destinationConn == nil {
 		return
 	}
-	handed, n, err = splice(rawSource, rawDestination, readCounters, writeCounters)
+	handed, n, err = splice(sourceConn, sourceReader, destinationConn, destinationWriter, readCounters, writeCounters)
 	return
 }
 
-func copyWaitWithPool(originSource io.Reader, destination N.ExtendedWriter, source N.ExtendedReader, readWaiter N.ReadWaiter, options N.ReadWaitOptions, readCounters []N.CountFunc, writeCounters []N.CountFunc, increaseBufferAfter int64) (handled bool, n int64, err error) {
+func copyWaitWithPool(session *CopySession, destination N.ExtendedWriter, source N.ExtendedReader, readWaiter N.ReadWaiter, options N.ReadWaitOptions) (handled bool, n int64, err error) {
 	handled = true
 	var (
 		buffer       *buf.Buffer
@@ -43,19 +42,16 @@ func copyWaitWithPool(originSource io.Reader, destination N.ExtendedWriter, sour
 		if err != nil {
 			buffer.Leak()
 			if !notFirstTime {
-				err = N.ReportHandshakeFailure(originSource, err)
+				err = N.ReportHandshakeFailure(session.originSource, err)
 			}
 			return
 		}
 		n += int64(dataLen)
-		for _, counter := range readCounters {
-			counter(int64(dataLen))
-		}
-		for _, counter := range writeCounters {
-			counter(int64(dataLen))
+		if err = session.Transfer(int64(dataLen)); err != nil {
+			return
 		}
 		notFirstTime = true
-		if !options.IncreaseBuffer && increaseBufferAfter > 0 && n >= increaseBufferAfter {
+		if !options.IncreaseBuffer && session.options.IncreaseBufferAfter > 0 && n >= session.options.IncreaseBufferAfter {
 			options.IncreaseBuffer = true
 			vectorisedReadWaiter, isVectorisedReadWaiter := CreateVectorisedReadWaiter(source)
 			vectorisedWriter, isVectorisedWriter := CreateVectorisedWriter(destination)
@@ -65,13 +61,13 @@ func copyWaitWithPool(originSource io.Reader, destination N.ExtendedWriter, sour
 			} else {
 				vectorisedReadWaiter.InitializeReadWaiter(options)
 			}
-			n, err = copyWaitVectorisedWithPool(vectorisedWriter, vectorisedReadWaiter, readCounters, writeCounters, n)
+			n, err = copyWaitVectorisedWithPool(session, vectorisedWriter, vectorisedReadWaiter, n)
 			return
 		}
 	}
 }
 
-func copyWaitVectorisedWithPool(vectorisedWriter N.VectorisedWriter, readWaiter N.VectorisedReadWaiter, readCounters []N.CountFunc, writeCounters []N.CountFunc, inputN int64) (n int64, err error) {
+func copyWaitVectorisedWithPool(session *CopySession, vectorisedWriter N.VectorisedWriter, readWaiter N.VectorisedReadWaiter, inputN int64) (n int64, err error) {
 	n += inputN
 	var buffers []*buf.Buffer
 	for {
@@ -95,11 +91,8 @@ func copyWaitVectorisedWithPool(vectorisedWriter N.VectorisedWriter, readWaiter 
 			return
 		}
 		n += int64(dataLen)
-		for _, counter := range readCounters {
-			counter(int64(dataLen))
-		}
-		for _, counter := range writeCounters {
-			counter(int64(dataLen))
+		if err = session.Transfer(int64(dataLen)); err != nil {
+			return
 		}
 	}
 }

@@ -132,7 +132,7 @@ var errOverflow = errors.New("binary: varint overflows a 64-bit integer")
 func ReadUvarint(r io.ByteReader) (uint64, error) {
 	var x uint64
 	var s uint
-	for i := 0; i < MaxVarintLen64; i++ {
+	for i := range MaxVarintLen64 {
 		b, err := r.ReadByte()
 		if err != nil {
 			if i > 0 && err == io.EOF {

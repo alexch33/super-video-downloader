@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"net/http"
 	"os"
 	"syscall"
 	_ "unsafe"
@@ -51,7 +52,16 @@ func IsClosedOrCanceled(err error) bool {
 }
 
 func IsClosed(err error) bool {
-	return IsMulti(err, io.EOF, net.ErrClosed, io.ErrClosedPipe, os.ErrClosed, syscall.EPIPE, syscall.ECONNRESET, syscall.ENOTCONN)
+	return IsMulti(err,
+		io.EOF,
+		net.ErrClosed,
+		io.ErrClosedPipe,
+		os.ErrClosed,
+		syscall.EPIPE,
+		syscall.ECONNRESET,
+		syscall.ENOTCONN,
+		http.ErrServerClosed,
+	)
 }
 
 func IsCanceled(err error) bool {

@@ -242,10 +242,11 @@ func (m *clientHelloMsg) marshalMsgReorderOuterExts(echInner bool, outerExts []u
 		}
 	}
 	if len(m.alpnProtocols) > 0 {
-		// RFC 7301, Section 3.1
-		if echInner {
+		// ALPN extension copy is skipped because in ECH inner, the ALPN might be different
+		if echInner && false {
 			echOuterExts = append(echOuterExts, extensionALPN)
 		} else {
+			// RFC 7301, Section 3.1
 			exts.AddUint16(extensionALPN)
 			exts.AddUint16LengthPrefixed(func(exts *cryptobyte.Builder) {
 				exts.AddUint16LengthPrefixed(func(exts *cryptobyte.Builder) {

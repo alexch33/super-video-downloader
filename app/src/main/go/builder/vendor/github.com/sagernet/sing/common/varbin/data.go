@@ -12,6 +12,7 @@ import (
 	E "github.com/sagernet/sing/common/exceptions"
 )
 
+// Deprecated: not well-designed. Use manual serialization or JSON/gRPC instead.
 func Read(r io.Reader, order binary.ByteOrder, rawData any) error {
 	reader := StubReader(r)
 	switch data := rawData.(type) {
@@ -45,6 +46,7 @@ func Read(r io.Reader, order binary.ByteOrder, rawData any) error {
 	return read(reader, order, reflect.Indirect(reflect.ValueOf(rawData)), false)
 }
 
+// Deprecated: not well-designed. Use manual serialization or JSON/gRPC instead.
 func ReadValue[T any](r io.Reader, order binary.ByteOrder) (T, error) {
 	var value T
 	err := Read(r, order, &value)
@@ -115,7 +117,7 @@ func read(r Reader, order binary.ByteOrder, data reflect.Value, isArrayMapValue 
 			}
 			binary.DecodeValue(order, buf, data)
 		} else {
-			for i := 0; i < arrayLen; i++ {
+			for i := range arrayLen {
 				err := read(r, order, data.Index(i), true)
 				if err != nil {
 					return E.Cause(err, "[", i, "]")
@@ -148,7 +150,7 @@ func read(r Reader, order binary.ByteOrder, data reflect.Value, isArrayMapValue 
 				} else {
 					data.Set(reflect.MakeSlice(data.Type(), itemLength, itemLength))
 				}
-				for i := 0; i < itemLength; i++ {
+				for i := range itemLength {
 					err := read(r, order, data.Index(i), true)
 					if err != nil {
 						return E.Cause(err, "[", i, "]")
@@ -162,7 +164,7 @@ func read(r Reader, order binary.ByteOrder, data reflect.Value, isArrayMapValue 
 			return E.Cause(err, "map length")
 		}
 		data.Set(reflect.MakeMap(data.Type()))
-		for index := 0; index < int(mapLength); index++ {
+		for index := range int(mapLength) {
 			key := reflect.New(data.Type().Key()).Elem()
 			err = read(r, order, key, false)
 			if err != nil {
@@ -178,7 +180,7 @@ func read(r Reader, order binary.ByteOrder, data reflect.Value, isArrayMapValue 
 	case reflect.Struct:
 		fieldType := data.Type()
 		fieldLen := data.NumField()
-		for i := 0; i < fieldLen; i++ {
+		for i := range fieldLen {
 			field := data.Field(i)
 			fieldName := fieldType.Field(i).Name
 			if field.CanSet() || fieldName != "_" {
@@ -191,7 +193,7 @@ func read(r Reader, order binary.ByteOrder, data reflect.Value, isArrayMapValue 
 	default:
 		size := binary.DataSize(data)
 		if size < 0 {
-			return errors.New("invalid type " + reflect.TypeOf(data).String())
+			return errors.New("invalid type " + reflect.TypeFor[reflect.Value]().String())
 		}
 		buf := make([]byte, size)
 		_, err := io.ReadFull(r, buf)
@@ -203,6 +205,7 @@ func read(r Reader, order binary.ByteOrder, data reflect.Value, isArrayMapValue 
 	return nil
 }
 
+// Deprecated: not well-designed. Use manual serialization or JSON/gRPC instead.
 func Write(w io.Writer, order binary.ByteOrder, rawData any) error {
 	if intBaseDataSize(rawData) != 0 {
 		return binary.Write(w, order, rawData)
@@ -307,10 +310,10 @@ func write(writer Writer, order binary.ByteOrder, data reflect.Value, isArrayOrM
 				binary.EncodeValue(order, buf, data)
 				_, err := writer.Write(buf)
 				if err != nil {
-					return E.Cause(err, reflect.TypeOf(data).String())
+					return E.Cause(err, reflect.TypeFor[reflect.Value]().String())
 				}
 			} else {
-				for i := 0; i < dataLen; i++ {
+				for i := range dataLen {
 					err := write(writer, order, data.Index(i), true)
 					if err != nil {
 						return E.Cause(err, "[", i, "]")
@@ -332,7 +335,7 @@ func write(writer Writer, order binary.ByteOrder, data reflect.Value, isArrayOrM
 					return err
 				}
 			} else {
-				for i := 0; i < dataLen; i++ {
+				for i := range dataLen {
 					err = write(writer, order, data.Index(i), true)
 					if err != nil {
 						return E.Cause(err, "[", i, "]")
@@ -361,7 +364,7 @@ func write(writer Writer, order binary.ByteOrder, data reflect.Value, isArrayOrM
 	case reflect.Struct:
 		fieldType := data.Type()
 		fieldLen := data.NumField()
-		for i := 0; i < fieldLen; i++ {
+		for i := range fieldLen {
 			field := data.Field(i)
 			fieldName := fieldType.Field(i).Name
 			if field.CanSet() || fieldName != "_" {
@@ -380,7 +383,7 @@ func write(writer Writer, order binary.ByteOrder, data reflect.Value, isArrayOrM
 		binary.EncodeValue(order, buf, data)
 		_, err := writer.Write(buf)
 		if err != nil {
-			return E.Cause(err, reflect.TypeOf(data).String())
+			return E.Cause(err, reflect.TypeFor[reflect.Value]().String())
 		}
 	}
 	return nil

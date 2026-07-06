@@ -5,6 +5,16 @@ import (
 	"reflect"
 )
 
+// Deprecated: use [context.CancelCauseFunc] directly.
+type ContextCancelCauseFunc = context.CancelCauseFunc
+
+var (
+	// Deprecated: use [context.WithCancelCause] directly.
+	ContextWithCancelCause = context.WithCancelCause
+	// Deprecated: use [context.Cause] directly.
+	ContextCause = context.Cause
+)
+
 // Deprecated: not used
 func SelectContext(contextList []context.Context) (int, error) {
 	if len(contextList) == 1 {

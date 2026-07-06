@@ -55,7 +55,7 @@ func wrapConn(pc net.PacketConn) (rawConn, error) {
 	conn, ok := pc.(interface {
 		SyscallConn() (syscall.RawConn, error)
 	})
-	var supportsDF bool
+	var supportsDF bool = true
 	if ok {
 		rawConn, err := conn.SyscallConn()
 		if err != nil {
@@ -98,6 +98,7 @@ func (c *basicConn) ReadPacket() (receivedPacket, error) {
 	buffer.Data = buffer.Data[:protocol.MaxPacketBufferSize]
 	n, addr, err := c.ReadFrom(buffer.Data)
 	if err != nil {
+		buffer.Release()
 		return receivedPacket{}, err
 	}
 	return receivedPacket{

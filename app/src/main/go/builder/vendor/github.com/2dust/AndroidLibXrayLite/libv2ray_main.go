@@ -24,15 +24,18 @@ import (
 	corestats "github.com/xtls/xray-core/features/stats"
 	coreserial "github.com/xtls/xray-core/infra/conf/serial"
 	_ "github.com/xtls/xray-core/main/distro/all"
+	browser_dialer "github.com/xtls/xray-core/transport/internet/browser_dialer"
 	mobasset "golang.org/x/mobile/asset"
 )
 
 // Constants for environment variables
 const (
-	coreAsset   = "xray.location.asset"
-	coreCert    = "xray.location.cert"
-	xudpBaseKey = "xray.xudp.basekey"
-	tunFdKey    = "xray.tun.fd"
+	coreAsset            = "xray.location.asset"
+	coreCert             = "xray.location.cert"
+	xudpBaseKey          = "xray.xudp.basekey"
+	tunFdKey             = "xray.tun.fd"
+	browserDialerAddress = "xray.browser.dialer"
+	libVersion           = 38 // Library version, update here only
 )
 
 // CoreController represents a controller for managing Xray core instance lifecycle
@@ -152,6 +155,40 @@ func (x *CoreController) QueryStats(tag string, direct string) int64 {
 	return counter.Set(0)
 }
 
+// QueryAllOutboundTrafficStats retrieves and resets all outbound traffic counters.
+// Returns a single-line text in format: tag,direction,value;tag,direction,value;
+// Returns an empty string if the stats manager is not initialized or no counters exist.
+func (x *CoreController) QueryAllOutboundTrafficStats() string {
+	if x.statsManager == nil {
+		return ""
+	}
+
+	var b strings.Builder
+
+	x.statsManager.VisitCounters(func(name string, counter corestats.Counter) bool {
+		parts := strings.Split(name, ">>>")
+		if len(parts) != 4 || parts[0] != "outbound" || parts[2] != "traffic" {
+			return true
+		}
+
+		tag := parts[1]
+		direct := parts[3]
+		value := counter.Set(0)
+		if value <= 0 {
+			return true // Skip counters with non-positive values
+		}
+
+		b.WriteString(tag)
+		b.WriteByte(',')
+		b.WriteString(direct)
+		b.WriteByte(',')
+		b.WriteString(strconv.FormatInt(value, 10))
+		b.WriteByte(';')
+		return true
+	})
+	return b.String()
+}
+
 // MeasureDelay measures network latency to a specified URL through the current core instance
 // Uses a 12-second timeout context and returns the round-trip time in milliseconds
 // An error is returned if the connection fails or returns an unexpected status
@@ -195,8 +232,14 @@ func MeasureOutboundDelay(ConfigureFileContent string, url string) (int64, error
 
 // CheckVersionX returns the library and Xray versions
 func CheckVersionX() string {
-	var version = 34
-	return fmt.Sprintf("Lib v%d, Xray-core v%s", version, core.Version())
+	return fmt.Sprintf("Lib v%d, Xray-core v%s", libVersion, core.Version())
+}
+
+// ReconcileBrowserDialer updates the browser dialer address and reloads its configuration
+// If the dialer address is empty, it will disable the browser dialer and close existing connections
+func ReconcileBrowserDialer(dialerAddr string) {
+	setEnvVariable(browserDialerAddress, dialerAddr)
+	browser_dialer.Reload()
 }
 
 // doShutdown shuts down the Xray instance and cleans up resources

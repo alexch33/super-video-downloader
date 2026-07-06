@@ -22,24 +22,19 @@ const (
 )
 
 type Config struct {
-	state                   protoimpl.MessageState `protogen:"open.v1"`
-	Version                 int32                  `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
-	Auth                    string                 `protobuf:"bytes,2,opt,name=auth,proto3" json:"auth,omitempty"`
-	Congestion              string                 `protobuf:"bytes,3,opt,name=congestion,proto3" json:"congestion,omitempty"`
-	Up                      uint64                 `protobuf:"varint,4,opt,name=up,proto3" json:"up,omitempty"`
-	Down                    uint64                 `protobuf:"varint,5,opt,name=down,proto3" json:"down,omitempty"`
-	Ports                   []uint32               `protobuf:"varint,6,rep,packed,name=ports,proto3" json:"ports,omitempty"`
-	IntervalMin             int64                  `protobuf:"varint,7,opt,name=interval_min,json=intervalMin,proto3" json:"interval_min,omitempty"`
-	IntervalMax             int64                  `protobuf:"varint,8,opt,name=interval_max,json=intervalMax,proto3" json:"interval_max,omitempty"`
-	InitStreamReceiveWindow uint64                 `protobuf:"varint,9,opt,name=init_stream_receive_window,json=initStreamReceiveWindow,proto3" json:"init_stream_receive_window,omitempty"`
-	MaxStreamReceiveWindow  uint64                 `protobuf:"varint,10,opt,name=max_stream_receive_window,json=maxStreamReceiveWindow,proto3" json:"max_stream_receive_window,omitempty"`
-	InitConnReceiveWindow   uint64                 `protobuf:"varint,11,opt,name=init_conn_receive_window,json=initConnReceiveWindow,proto3" json:"init_conn_receive_window,omitempty"`
-	MaxConnReceiveWindow    uint64                 `protobuf:"varint,12,opt,name=max_conn_receive_window,json=maxConnReceiveWindow,proto3" json:"max_conn_receive_window,omitempty"`
-	MaxIdleTimeout          int64                  `protobuf:"varint,13,opt,name=max_idle_timeout,json=maxIdleTimeout,proto3" json:"max_idle_timeout,omitempty"`
-	KeepAlivePeriod         int64                  `protobuf:"varint,14,opt,name=keep_alive_period,json=keepAlivePeriod,proto3" json:"keep_alive_period,omitempty"`
-	DisablePathMtuDiscovery bool                   `protobuf:"varint,15,opt,name=disable_path_mtu_discovery,json=disablePathMtuDiscovery,proto3" json:"disable_path_mtu_discovery,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Auth                 string                 `protobuf:"bytes,2,opt,name=auth,proto3" json:"auth,omitempty"`
+	UdpIdleTimeout       int64                  `protobuf:"varint,3,opt,name=udp_idle_timeout,json=udpIdleTimeout,proto3" json:"udp_idle_timeout,omitempty"`
+	MasqType             string                 `protobuf:"bytes,4,opt,name=masq_type,json=masqType,proto3" json:"masq_type,omitempty"`
+	MasqFile             string                 `protobuf:"bytes,5,opt,name=masq_file,json=masqFile,proto3" json:"masq_file,omitempty"`
+	MasqUrl              string                 `protobuf:"bytes,6,opt,name=masq_url,json=masqUrl,proto3" json:"masq_url,omitempty"`
+	MasqUrlRewriteHost   bool                   `protobuf:"varint,7,opt,name=masq_url_rewrite_host,json=masqUrlRewriteHost,proto3" json:"masq_url_rewrite_host,omitempty"`
+	MasqUrlInsecure      bool                   `protobuf:"varint,8,opt,name=masq_url_insecure,json=masqUrlInsecure,proto3" json:"masq_url_insecure,omitempty"`
+	MasqString           string                 `protobuf:"bytes,9,opt,name=masq_string,json=masqString,proto3" json:"masq_string,omitempty"`
+	MasqStringHeaders    map[string]string      `protobuf:"bytes,10,rep,name=masq_string_headers,json=masqStringHeaders,proto3" json:"masq_string_headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	MasqStringStatusCode int32                  `protobuf:"varint,11,opt,name=masq_string_status_code,json=masqStringStatusCode,proto3" json:"masq_string_status_code,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *Config) Reset() {
@@ -72,13 +67,6 @@ func (*Config) Descriptor() ([]byte, []int) {
 	return file_transport_internet_hysteria_config_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Config) GetVersion() int32 {
-	if x != nil {
-		return x.Version
-	}
-	return 0
-}
-
 func (x *Config) GetAuth() string {
 	if x != nil {
 		return x.Auth
@@ -86,121 +74,90 @@ func (x *Config) GetAuth() string {
 	return ""
 }
 
-func (x *Config) GetCongestion() string {
+func (x *Config) GetUdpIdleTimeout() int64 {
 	if x != nil {
-		return x.Congestion
+		return x.UdpIdleTimeout
+	}
+	return 0
+}
+
+func (x *Config) GetMasqType() string {
+	if x != nil {
+		return x.MasqType
 	}
 	return ""
 }
 
-func (x *Config) GetUp() uint64 {
+func (x *Config) GetMasqFile() string {
 	if x != nil {
-		return x.Up
+		return x.MasqFile
 	}
-	return 0
+	return ""
 }
 
-func (x *Config) GetDown() uint64 {
+func (x *Config) GetMasqUrl() string {
 	if x != nil {
-		return x.Down
+		return x.MasqUrl
 	}
-	return 0
+	return ""
 }
 
-func (x *Config) GetPorts() []uint32 {
+func (x *Config) GetMasqUrlRewriteHost() bool {
 	if x != nil {
-		return x.Ports
+		return x.MasqUrlRewriteHost
+	}
+	return false
+}
+
+func (x *Config) GetMasqUrlInsecure() bool {
+	if x != nil {
+		return x.MasqUrlInsecure
+	}
+	return false
+}
+
+func (x *Config) GetMasqString() string {
+	if x != nil {
+		return x.MasqString
+	}
+	return ""
+}
+
+func (x *Config) GetMasqStringHeaders() map[string]string {
+	if x != nil {
+		return x.MasqStringHeaders
 	}
 	return nil
 }
 
-func (x *Config) GetIntervalMin() int64 {
+func (x *Config) GetMasqStringStatusCode() int32 {
 	if x != nil {
-		return x.IntervalMin
+		return x.MasqStringStatusCode
 	}
 	return 0
-}
-
-func (x *Config) GetIntervalMax() int64 {
-	if x != nil {
-		return x.IntervalMax
-	}
-	return 0
-}
-
-func (x *Config) GetInitStreamReceiveWindow() uint64 {
-	if x != nil {
-		return x.InitStreamReceiveWindow
-	}
-	return 0
-}
-
-func (x *Config) GetMaxStreamReceiveWindow() uint64 {
-	if x != nil {
-		return x.MaxStreamReceiveWindow
-	}
-	return 0
-}
-
-func (x *Config) GetInitConnReceiveWindow() uint64 {
-	if x != nil {
-		return x.InitConnReceiveWindow
-	}
-	return 0
-}
-
-func (x *Config) GetMaxConnReceiveWindow() uint64 {
-	if x != nil {
-		return x.MaxConnReceiveWindow
-	}
-	return 0
-}
-
-func (x *Config) GetMaxIdleTimeout() int64 {
-	if x != nil {
-		return x.MaxIdleTimeout
-	}
-	return 0
-}
-
-func (x *Config) GetKeepAlivePeriod() int64 {
-	if x != nil {
-		return x.KeepAlivePeriod
-	}
-	return 0
-}
-
-func (x *Config) GetDisablePathMtuDiscovery() bool {
-	if x != nil {
-		return x.DisablePathMtuDiscovery
-	}
-	return false
 }
 
 var File_transport_internet_hysteria_config_proto protoreflect.FileDescriptor
 
 const file_transport_internet_hysteria_config_proto_rawDesc = "" +
 	"\n" +
-	"(transport/internet/hysteria/config.proto\x12 xray.transport.internet.hysteria\"\xd1\x04\n" +
-	"\x06Config\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\x05R\aversion\x12\x12\n" +
-	"\x04auth\x18\x02 \x01(\tR\x04auth\x12\x1e\n" +
-	"\n" +
-	"congestion\x18\x03 \x01(\tR\n" +
-	"congestion\x12\x0e\n" +
-	"\x02up\x18\x04 \x01(\x04R\x02up\x12\x12\n" +
-	"\x04down\x18\x05 \x01(\x04R\x04down\x12\x14\n" +
-	"\x05ports\x18\x06 \x03(\rR\x05ports\x12!\n" +
-	"\finterval_min\x18\a \x01(\x03R\vintervalMin\x12!\n" +
-	"\finterval_max\x18\b \x01(\x03R\vintervalMax\x12;\n" +
-	"\x1ainit_stream_receive_window\x18\t \x01(\x04R\x17initStreamReceiveWindow\x129\n" +
-	"\x19max_stream_receive_window\x18\n" +
-	" \x01(\x04R\x16maxStreamReceiveWindow\x127\n" +
-	"\x18init_conn_receive_window\x18\v \x01(\x04R\x15initConnReceiveWindow\x125\n" +
-	"\x17max_conn_receive_window\x18\f \x01(\x04R\x14maxConnReceiveWindow\x12(\n" +
-	"\x10max_idle_timeout\x18\r \x01(\x03R\x0emaxIdleTimeout\x12*\n" +
-	"\x11keep_alive_period\x18\x0e \x01(\x03R\x0fkeepAlivePeriod\x12;\n" +
-	"\x1adisable_path_mtu_discovery\x18\x0f \x01(\bR\x17disablePathMtuDiscoveryB\x82\x01\n" +
+	"(transport/internet/hysteria/config.proto\x12 xray.transport.internet.hysteria\"\x8f\x04\n" +
+	"\x06Config\x12\x12\n" +
+	"\x04auth\x18\x02 \x01(\tR\x04auth\x12(\n" +
+	"\x10udp_idle_timeout\x18\x03 \x01(\x03R\x0eudpIdleTimeout\x12\x1b\n" +
+	"\tmasq_type\x18\x04 \x01(\tR\bmasqType\x12\x1b\n" +
+	"\tmasq_file\x18\x05 \x01(\tR\bmasqFile\x12\x19\n" +
+	"\bmasq_url\x18\x06 \x01(\tR\amasqUrl\x121\n" +
+	"\x15masq_url_rewrite_host\x18\a \x01(\bR\x12masqUrlRewriteHost\x12*\n" +
+	"\x11masq_url_insecure\x18\b \x01(\bR\x0fmasqUrlInsecure\x12\x1f\n" +
+	"\vmasq_string\x18\t \x01(\tR\n" +
+	"masqString\x12o\n" +
+	"\x13masq_string_headers\x18\n" +
+	" \x03(\v2?.xray.transport.internet.hysteria.Config.MasqStringHeadersEntryR\x11masqStringHeaders\x125\n" +
+	"\x17masq_string_status_code\x18\v \x01(\x05R\x14masqStringStatusCode\x1aD\n" +
+	"\x16MasqStringHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01J\x04\b\x01\x10\x02B\x82\x01\n" +
 	"$com.xray.transport.internet.hysteriaP\x01Z5github.com/xtls/xray-core/transport/internet/hysteria\xaa\x02 Xray.Transport.Internet.Hysteriab\x06proto3"
 
 var (
@@ -215,16 +172,18 @@ func file_transport_internet_hysteria_config_proto_rawDescGZIP() []byte {
 	return file_transport_internet_hysteria_config_proto_rawDescData
 }
 
-var file_transport_internet_hysteria_config_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_transport_internet_hysteria_config_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_transport_internet_hysteria_config_proto_goTypes = []any{
 	(*Config)(nil), // 0: xray.transport.internet.hysteria.Config
+	nil,            // 1: xray.transport.internet.hysteria.Config.MasqStringHeadersEntry
 }
 var file_transport_internet_hysteria_config_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	1, // 0: xray.transport.internet.hysteria.Config.masq_string_headers:type_name -> xray.transport.internet.hysteria.Config.MasqStringHeadersEntry
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_transport_internet_hysteria_config_proto_init() }
@@ -238,7 +197,7 @@ func file_transport_internet_hysteria_config_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_transport_internet_hysteria_config_proto_rawDesc), len(file_transport_internet_hysteria_config_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

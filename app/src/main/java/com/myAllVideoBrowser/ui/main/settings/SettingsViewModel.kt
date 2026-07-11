@@ -49,6 +49,7 @@ class SettingsViewModel @Inject constructor(
     val isInterruptIntreceptedResources = ObservableBoolean(false)
     val isUseLegacyM3u8Detection = ObservableBoolean(false)
     val isAdBlockOn = ObservableBoolean(true)
+    val isDownloadSubtitles = ObservableBoolean(false)
     val queueSize = ObservableInt(1)
     private val isShowVideoActionButton = ObservableBoolean(true)
     private val isShowVideoAlert = ObservableBoolean(true)
@@ -79,6 +80,7 @@ class SettingsViewModel @Inject constructor(
             val lockPortrait = sharedPrefHelper.getIsLockPortrait()
             val askRedirection = sharedPrefHelper.getIsAskRedirection()
             val adBlockOn = sharedPrefHelper.getIsAdBlockOn()
+            val downloadSubtitles = sharedPrefHelper.getIsDownloadSubtitles()
 
             val isExternal = sharedPrefHelper.getIsExternalUse()
             val isAppDir = sharedPrefHelper.getIsAppDirUse()
@@ -115,6 +117,7 @@ class SettingsViewModel @Inject constructor(
                 isAskRedirection.set(askRedirection)
                 storageType.set(sType)
                 isAdBlockOn.set(adBlockOn)
+                isDownloadSubtitles.set(downloadSubtitles)
             }
         }
     }
@@ -307,6 +310,13 @@ class SettingsViewModel @Inject constructor(
         isAdBlockOn.set(isOn)
         viewModelScope.launch(Dispatchers.IO) {
             sharedPrefHelper.setIsAdBlockOn(isOn)
+        }
+    }
+
+    fun setIsDownloadSubtitles(isDownload: Boolean) {
+        isDownloadSubtitles.set(isDownload)
+        viewModelScope.launch(Dispatchers.IO) {
+            sharedPrefHelper.setIsDownloadSubtitles(isDownload)
         }
     }
 

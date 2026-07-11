@@ -66,6 +66,7 @@
                 android:checked="@{list.isEnabled}"
                 android:enabled="@{!viewModel.isDownloading(list.id)}"
                 android:onClick="@{() -> viewModel.toggleList(list)}"
+                android:contentDescription="@{list.name}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -114,7 +115,8 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:layout_marginEnd="8dp"
-                    android:indeterminate="true" />
+                    android:indeterminate="true"
+                    android:contentDescription="@string/loading_image_view" />
 
                 <com.google.android.material.textview.MaterialTextView
                     android:layout_width="wrap_content"

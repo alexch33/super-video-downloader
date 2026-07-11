@@ -32,6 +32,8 @@
         android:text="@{suggestion.content}"
         android:textColor="?attr/colorOnSurface"
         android:textSize="@dimen/text_medium"
+        android:clickable="true"
+        android:focusable="true"
         tools:text="How to download videos" />
 
 </layout>

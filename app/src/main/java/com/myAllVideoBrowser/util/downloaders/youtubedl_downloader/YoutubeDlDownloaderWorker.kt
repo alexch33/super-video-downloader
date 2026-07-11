@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import java.io.File
 import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 
@@ -412,6 +413,17 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         request.addOption("--progress-delta", "2")
 
         request.addOption("--progress")
+
+        if (sharedPrefHelper.getIsDownloadSubtitles()) {
+            request.addOption("--write-sub")
+            request.addOption("--write-auto-sub")
+            request.addOption("--embed-subs")
+            request.addOption("--convert-subs", "srt")
+            request.addOption("--ignore-errors")
+
+            val deviceLanguage = Locale.getDefault().language
+            request.addOption("--sub-langs", "$deviceLanguage.*")
+        }
 
         val threadsCount = sharedPrefHelper.getM3u8DownloaderThreadCount()
         request.addOption("-N", threadsCount)

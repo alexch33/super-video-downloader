@@ -27,6 +27,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:navigationIcon="@drawable/arrow_back24px"
+                app:navigationContentDescription="@string/all_text_cancel"
                 app:title="@string/bookmarks_list"
                 app:titleTextAppearance="@style/TextAppearance.Material3.TitleLarge" />
 

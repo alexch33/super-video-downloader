@@ -30,6 +30,8 @@
         android:padding="@dimen/padding_small"
         android:textColor="?attr/colorOnSurface"
         android:textSize="@dimen/text_small"
+        android:focusable="true"
+        android:clickable="true"
         tools:text="https://www.google.com" />
 
 </layout>

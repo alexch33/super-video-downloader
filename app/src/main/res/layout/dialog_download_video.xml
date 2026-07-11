@@ -76,6 +76,7 @@
             android:horizontalSpacing="8dp"
             android:numColumns="2"
             android:verticalSpacing="8dp"
+            android:contentDescription="@string/player_resolution"
             app:layout_constraintTop_toBottomOf="@id/video_title_layout" />
 
         <com.google.android.material.button.MaterialButton

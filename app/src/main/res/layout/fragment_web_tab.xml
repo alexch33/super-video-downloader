@@ -35,7 +35,8 @@
             android:id="@+id/customView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:importantForAccessibility="no" />
 
         <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:id="@+id/containerBrowser"
@@ -77,6 +78,7 @@
                                 style="@style/Widget.Material3.Button.IconButton"
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
+                                android:contentDescription="@string/accessibility_close"
                                 android:onClick="@{() -> browserMenuListener.onTabCloseClicked()}"
                                 app:icon="@drawable/tab_close_24px"
                                 app:iconTint="?attr/colorOnSurface" />
@@ -86,6 +88,7 @@
                                 style="@style/Widget.Material3.Button.IconButton"
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
+                                android:contentDescription="@string/accessibility_back"
                                 android:onClick="@{() -> browserMenuListener.onBrowserBackClicked()}"
                                 app:icon="@drawable/arrow_back24px"
                                 app:iconTint="?attr/colorOnSurface" />
@@ -95,6 +98,7 @@
                                 style="@style/Widget.Material3.Button.IconButton"
                                 android:layout_width="40dp"
                                 android:layout_height="40dp"
+                                android:contentDescription="@string/accessibility_forward"
                                 android:onClick="@{() -> browserMenuListener.onBrowserForwardClicked()}"
                                 app:icon="@drawable/arrow_forward24px"
                                 app:iconTint="?attr/colorOnSurface" />
@@ -129,6 +133,7 @@
                             android:layout_width="40dp"
                             android:layout_height="40dp"
                             android:layout_marginEnd="4dp"
+                            android:contentDescription="@{viewModel.isShowProgress() ? @string/accessibility_stop : @string/accessibility_refresh}"
                             android:onClick="@{() -> viewModel.isShowProgress() ? browserMenuListener.onBrowserStopClicked() : browserMenuListener.onBrowserReloadClicked()}"
                             app:icon="@{viewModel.progressIcon}"
                             app:iconTint="?attr/colorOnSurfaceVariant"
@@ -142,6 +147,7 @@
                             android:layout_width="40dp"
                             android:layout_height="40dp"
                             android:layout_marginEnd="4dp"
+                            android:contentDescription="@string/menu"
                             android:onClick="@{() -> browserMenuListener.onBrowserMenuClicked()}"
                             app:icon="@drawable/ic_more_24dp"
                             app:iconTint="?attr/colorOnSurface"
@@ -158,6 +164,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="3dp"
                     android:progress="@{viewModel.progress}"
+                    android:importantForAccessibility="no"
                     android:progressTint="?attr/colorPrimary"
                     android:visibility="@{viewModel.isShowProgress ? View.VISIBLE : View.GONE}" />
 
@@ -178,6 +185,7 @@
                     android:layout_width="4dp"
                     android:layout_margin="1dp"
                     android:layout_height="match_parent"
+                    android:importantForAccessibility="no"
                     android:visibility="@{(videoTabVModel.hasCheckLoadingsM3u8() || videoTabVModel.hasCheckLoadingsRegular()) ? View.VISIBLE : View.GONE }"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -188,6 +196,7 @@
                         android:layout_width="700dp"
                         android:layout_height="match_parent"
                         android:indeterminate="true"
+                        android:importantForAccessibility="no"
                         android:indeterminateDrawable="@drawable/progress_load_data"
                         android:rotation="90" />
                 </FrameLayout>
@@ -196,7 +205,8 @@
                     android:id="@+id/fullscreen_container"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    android:importantForAccessibility="no" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

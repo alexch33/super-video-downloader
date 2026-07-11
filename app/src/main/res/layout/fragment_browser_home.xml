@@ -121,6 +121,7 @@
             android:numColumns="4"
             android:padding="16dp"
             android:verticalSpacing="16dp"
+            android:contentDescription="@string/bookmarks_list"
             app:items="@{mainVModel.bookmarksList}" />
 
     </LinearLayout>

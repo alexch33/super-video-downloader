@@ -29,6 +29,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:navigationIcon="@drawable/arrow_back24px"
+                app:navigationContentDescription="@string/accessibility_back"
                 app:title="@string/title_settings" />
 
         </com.google.android.material.appbar.AppBarLayout>
@@ -75,13 +76,15 @@
                             android:layout_height="64dp"
                             android:background="?attr/selectableItemBackground"
                             android:onClick="@{() -> viewModel.clearCookies()}"
-                            android:paddingHorizontal="16dp">
+                            android:paddingHorizontal="16dp"
+                            android:focusable="true"
+                            android:clickable="true">
 
                             <ImageView
                                 android:id="@+id/iv_browser"
                                 android:layout_width="24dp"
                                 android:layout_height="24dp"
-                                android:contentDescription="@string/browser_s_icon"
+                                android:importantForAccessibility="no"
                                 android:src="@drawable/public_24px"
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintStart_toStartOf="parent"
@@ -313,12 +316,14 @@
                             android:layout_height="64dp"
                             android:background="?attr/selectableItemBackground"
                             android:onClick="@{() -> viewModel.openAdBlockSettings()}"
-                            android:paddingHorizontal="16dp">
+                            android:paddingHorizontal="16dp"
+                            android:focusable="true"
+                            android:clickable="true">
 
                             <com.google.android.material.textview.MaterialTextView
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:text="AdBlocker Lists"
+                                android:text="@string/adblock_lists_title"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                                 app:layout_constraintBottom_toBottomOf="parent"
                                 app:layout_constraintEnd_toEndOf="parent"
@@ -352,6 +357,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
+                                android:contentDescription="@string/ads_detection_treshold"
                                 android:valueFrom="0.0"
                                 android:valueTo="52428800.0" />
                         </LinearLayout>
@@ -463,6 +469,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
+                                android:contentDescription="@string/regular_threads_count"
                                 android:stepSize="1.0"
                                 android:valueFrom="1.0"
                                 android:valueTo="16.0" />
@@ -493,6 +500,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
+                                android:contentDescription="@string/m3u8_threads_count"
                                 android:stepSize="1.0"
                                 android:valueFrom="1.0"
                                 android:valueTo="16.0" />
@@ -558,7 +566,8 @@
                     android:id="@+id/bottom_bar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal" />
+                    android:orientation="horizontal"
+                    android:importantForAccessibility="no" />
 
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
@@ -567,7 +576,8 @@
             android:id="@+id/anchor"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center" />
+            android:layout_gravity="center"
+            android:importantForAccessibility="no" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

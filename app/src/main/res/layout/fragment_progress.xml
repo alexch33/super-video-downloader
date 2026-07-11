@@ -56,6 +56,7 @@
                     android:id="@+id/sims_count_slider"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:contentDescription="@string/queue_downloads_size"
                     android:stepSize="1"
                     android:valueFrom="1"
                     android:valueTo="8" />
@@ -104,6 +105,7 @@
                     android:adjustViewBounds="true"
                     android:scaleType="centerInside"
                     android:src="@drawable/ic_empty"
+                    android:importantForAccessibility="no"
                     app:layout_constraintBottom_toTopOf="@id/tv_empty_text"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"
@@ -132,7 +134,8 @@
             android:id="@+id/anchor"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center" />
+            android:layout_gravity="center"
+            android:importantForAccessibility="no" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

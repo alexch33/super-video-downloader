@@ -35,6 +35,7 @@
         android:checked="@{is_candidate_selected}"
         android:onClick="@{() -> listener.onSelectFormat(videoInfo, download_candidate)}"
         android:onLongClick="@{() -> listener.onFormatUrlShare(videoInfo, download_candidate)}"
+        android:contentDescription="@{download_candidate}"
         app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
         app:cardCornerRadius="16dp"
         app:checkedIconTint="?attr/colorPrimary"
@@ -47,7 +48,8 @@
             android:gravity="center"
             android:minWidth="80dp"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="12dp"
+            android:importantForAccessibility="no">
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tv_title"

@@ -42,6 +42,7 @@
                 android:id="@+id/favicon"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
+                android:importantForAccessibility="no"
                 app:bitmap="@{bookmarkItem.faviconBitmap()}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

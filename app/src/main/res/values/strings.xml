@@ -172,4 +172,10 @@
     <string name="last_updated">Last updated</string>
     <string name="built_in_list">Built-in list</string>
     <string name="download_subtitles">Download Subtitles(youtube-dlp)</string>
+
+    <string name="accessibility_back">Back</string>
+    <string name="accessibility_forward">Forward</string>
+    <string name="accessibility_refresh">Refresh</string>
+    <string name="accessibility_stop">Stop</string>
+    <string name="accessibility_close">Close</string>
 </resources>

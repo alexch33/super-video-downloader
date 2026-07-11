@@ -1,8 +1,8 @@
 package com.myAllVideoBrowser.util.proxy_utils.proxy_manager
 
 import android.util.Log
+import androidx.webkit.WebViewFeature
 import com.myAllVideoBrowser.DLApplication.Companion.DEBUG_TAG
-import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.v2ray.V2Ray
 import java.io.Serializable
 
@@ -160,6 +160,9 @@ object ProxyManager {
     }
 
     fun isProxyRunning(): Boolean {
+        if (!isProxySupported()) {
+            return false
+        }
         return try {
             V2Ray.XrayIsRunning() != 0L
         } catch (e: Throwable) {
@@ -182,5 +185,13 @@ object ProxyManager {
         }
         Log.e(TAG, "Proxy started but port $port never became reachable.")
         return false
+    }
+
+    fun isProxySupported(): Boolean {
+        return try {
+            WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)
+        } catch (_: Throwable) {
+            false
+        }
     }
 }

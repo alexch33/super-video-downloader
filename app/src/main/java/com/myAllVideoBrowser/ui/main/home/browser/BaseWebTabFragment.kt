@@ -23,10 +23,14 @@ import com.myAllVideoBrowser.util.SharedPrefHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import androidx.webkit.WebViewFeature
+import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
+import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 
 
 abstract class BaseWebTabFragment : BaseFragment() {
+    @Inject
+    lateinit var customProxyController: CustomProxyController
+
     @Inject
     lateinit var mainActivity: MainActivity
 
@@ -121,16 +125,19 @@ abstract class BaseWebTabFragment : BaseFragment() {
     fun buildWebTabMenu(browserMenu: View, isHomeTab: Boolean) {
         if (popupMenu == null) {
             popupMenu = buildPopupMenu(browserMenu)
-            
+
             val menu = popupMenu!!.menu
-            
+
             menu.findItem(R.id.bookmark).isVisible = !isHomeTab
             menu.findItem(R.id.share_link).isVisible = !isHomeTab
-            
-            menu.findItem(R.id.adblock_toggle).isChecked = mainActivity.settingsViewModel.isAdBlockOn.get()
-            menu.findItem(R.id.desktop_mode).isChecked = mainActivity.settingsViewModel.isDesktopMode.get()
-            menu.findItem(R.id.proxies).isChecked = mainActivity.proxiesViewModel.isProxyOn.get() == true
-            
+
+            menu.findItem(R.id.adblock_toggle).isChecked =
+                mainActivity.settingsViewModel.isAdBlockOn.get()
+            menu.findItem(R.id.desktop_mode).isChecked =
+                mainActivity.settingsViewModel.isDesktopMode.get()
+            menu.findItem(R.id.proxies).isChecked =
+                mainActivity.proxiesViewModel.isProxyOn.get() == true
+
             val isDarkModeItem = menu.findItem(R.id.is_dark)
             isDarkModeItem.isChecked = mainActivity.settingsViewModel.isDarkMode.get()
             isDarkModeItem.isEnabled = !mainActivity.settingsViewModel.isAutoDarkMode.get()
@@ -138,10 +145,16 @@ abstract class BaseWebTabFragment : BaseFragment() {
             popupMenu!!.setForceShowIcon(true)
 
             mainActivity.settingsViewModel.isDarkMode.addOnPropertyChangedCallback(darkModeCallback)
-            mainActivity.settingsViewModel.isAutoDarkMode.addOnPropertyChangedCallback(autoDarkModeCallback)
-            mainActivity.settingsViewModel.isDesktopMode.addOnPropertyChangedCallback(desktopModeCallback)
+            mainActivity.settingsViewModel.isAutoDarkMode.addOnPropertyChangedCallback(
+                autoDarkModeCallback
+            )
+            mainActivity.settingsViewModel.isDesktopMode.addOnPropertyChangedCallback(
+                desktopModeCallback
+            )
             mainActivity.proxiesViewModel.isProxyOn.addOnPropertyChangedCallback(proxyOnCallback)
-            mainActivity.settingsViewModel.isAdBlockOn.addOnPropertyChangedCallback(adBlockOnCallback)
+            mainActivity.settingsViewModel.isAdBlockOn.addOnPropertyChangedCallback(
+                adBlockOnCallback
+            )
         }
     }
 
@@ -167,9 +180,7 @@ abstract class BaseWebTabFragment : BaseFragment() {
         popupMenu.gravity = Gravity.END
         popupMenu.menuInflater.inflate(R.menu.menu_browser, popupMenu.menu)
 
-        popupMenu.menu.findItem(R.id.proxies).isEnabled =
-            WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)
-
+        popupMenu.menu.findItem(R.id.proxies).isEnabled = ProxyManager.isProxySupported()
         popupMenu.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.share_link -> {

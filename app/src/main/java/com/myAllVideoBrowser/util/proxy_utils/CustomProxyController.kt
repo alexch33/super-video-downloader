@@ -1,11 +1,13 @@
 package com.myAllVideoBrowser.util.proxy_utils
 
+import android.annotation.SuppressLint
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
 import androidx.webkit.WebViewFeature
 import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import java.net.Authenticator
 import java.net.PasswordAuthentication
 import javax.inject.Inject
@@ -21,16 +23,21 @@ class CustomProxyController @Inject constructor(
     private var lastAppliedConfig: LastConfig? = null
 
     init {
-        updateProxyState()
+        if (ProxyManager.isProxySupported()) {
+            updateProxyState()
+        }
     }
 
     fun getCurrentRunningProxy(): Proxy {
-        if (!WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
-            return Proxy.noProxy()
-        }
-        return if (isProxyOn()) {
-            return getLocalProxy()
-        } else {
+        return try {
+            if (!ProxyManager.isProxySupported()) {
+                Proxy.noProxy()
+            } else if (isProxyOn()) {
+                getLocalProxy()
+            } else {
+                Proxy.noProxy()
+            }
+        } catch (_: Throwable) {
             Proxy.noProxy()
         }
     }
@@ -44,6 +51,7 @@ class CustomProxyController @Inject constructor(
         setCurrentProxy(getCurrentRunningProxy())
     }
 
+    @SuppressLint("RequiresFeature")
     @Synchronized
     private fun setCurrentProxy(proxy: Proxy) {
         val isDohEnabled = sharedPrefHelper.getIsDohOn()
@@ -107,8 +115,12 @@ class CustomProxyController @Inject constructor(
 
             Authenticator.setDefault(null)
 
-            if (WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
-                ProxyController.getInstance().clearProxyOverride({ }) {}
+            if (ProxyManager.isProxySupported()) {
+                try {
+                    ProxyController.getInstance().clearProxyOverride({ }) {}
+                } catch (t: Throwable) {
+                    AppLogger.d("Error clearing proxy: $t")
+                }
             }
         }
 
@@ -116,11 +128,9 @@ class CustomProxyController @Inject constructor(
     }
 
     private fun isProxyOn(): Boolean {
-        if (!WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
-            return false
-        }
-
-        return sharedPrefHelper.getIsProxyOn() || sharedPrefHelper.getIsDohOn()
+        return if (ProxyManager.isProxySupported()) {
+            sharedPrefHelper.getIsProxyOn() || sharedPrefHelper.getIsDohOn()
+        } else false
     }
 
     private fun getLocalProxy(): Proxy {

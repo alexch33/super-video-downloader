@@ -414,14 +414,16 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
 
         request.addOption("--progress")
 
-        request.addOption("--write-sub")
-        request.addOption("--write-auto-sub")
-        request.addOption("--embed-subs")
-        request.addOption("--convert-subs", "srt")
-        request.addOption("--ignore-errors")
+        if (sharedPrefHelper.getIsDownloadSubtitles()) {
+            request.addOption("--write-sub")
+            request.addOption("--write-auto-sub")
+            request.addOption("--embed-subs")
+            request.addOption("--convert-subs", "srt")
+            request.addOption("--ignore-errors")
 
-        val deviceLanguage = Locale.getDefault().language
-        request.addOption("--sub-langs", "$deviceLanguage.*")
+            val deviceLanguage = Locale.getDefault().language
+            request.addOption("--sub-langs", "$deviceLanguage.*")
+        }
 
         val threadsCount = sharedPrefHelper.getM3u8DownloaderThreadCount()
         request.addOption("-N", threadsCount)

@@ -383,6 +383,21 @@
                         android:orientation="vertical">
 
                         <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/is_download_subtitles"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:checked="@{viewModel.isDownloadSubtitles}"
+                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsDownloadSubtitles(isChecked)}"
+                            android:padding="16dp"
+                            android:text="@string/download_subtitles"
+                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                        <com.google.android.material.divider.MaterialDivider
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:dividerInsetStart="16dp" />
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/is_force_stream_downloading"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"

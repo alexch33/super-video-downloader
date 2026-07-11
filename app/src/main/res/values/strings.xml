@@ -171,4 +171,5 @@
     <string name="not_downloaded">Not downloaded</string>
     <string name="last_updated">Last updated</string>
     <string name="built_in_list">Built-in list</string>
+    <string name="download_subtitles">Download Subtitles(youtube-dlp)</string>
 </resources>

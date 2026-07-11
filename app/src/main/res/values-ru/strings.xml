@@ -156,4 +156,5 @@
     <string name="not_downloaded">Не скаченно</string>
     <string name="last_updated">Последнее обновление</string>
     <string name="built_in_list">" Встроенный список"</string>
+    <string name="download_subtitles">Скачивать субтитры((youtube-dlp))</string>
 </resources>

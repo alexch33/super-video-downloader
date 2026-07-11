@@ -88,7 +88,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Old android crash fix"
+          body: "Old android crash fix\nScreen Reader Support\nSubtitles support\nVietnam translation added"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

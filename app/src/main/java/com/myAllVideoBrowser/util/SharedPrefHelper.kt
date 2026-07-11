@@ -402,7 +402,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsUseLegacyM3u8Detection(): Boolean {
-        return sharedPreferences.getBoolean(IS_USE_LEGACY_M3U8_DETECTION, false)
+        return sharedPreferences.getBoolean(IS_USE_LEGACY_M3U8_DETECTION, true)
     }
 
     fun setIsUseLegacyM3u8Detection(isUse: Boolean) {

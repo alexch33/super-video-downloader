@@ -3,7 +3,6 @@ package com.myAllVideoBrowser.ui.main.home.browser
 //import com.allVideoDownloaderXmaster.OpenForTesting
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -49,6 +48,7 @@ import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.*
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
+import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -289,9 +289,17 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
-        val swController = ServiceWorkerController.getInstance()
-        swController.setServiceWorkerClient(serviceWorkerClient)
-        swController.serviceWorkerWebSettings.allowContentAccess = true
+        if (ProxyManager.isProxySupported()) {
+            try {
+                val swController = ServiceWorkerController.getInstance()
+                swController.setServiceWorkerClient(serviceWorkerClient)
+                swController.serviceWorkerWebSettings.allowContentAccess = true
+            } catch (t: Throwable) {
+                AppLogger.e("ServiceWorker initialization failed: ${t.message}")
+            }
+        } else {
+            AppLogger.d("Skipping ServiceWorker init: WebView version too old.")
+        }
 
         mainViewModel = mainActivity.mainViewModel
         browserViewModel = ViewModelProvider(this, viewModelFactory)[BrowserViewModel::class.java]

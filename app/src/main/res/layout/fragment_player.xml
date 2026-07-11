@@ -34,6 +34,7 @@
         <ProgressBar
             android:id="@+id/loading_bar"
             android:visibility="visible"
+            android:contentDescription="@string/loading_image_view"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -48,6 +49,7 @@
             android:background="?attr/colorSurfaceContainer"
             app:layout_constraintTop_toTopOf="parent"
             app:navigationIcon="@drawable/ic_arrow_back_white_24dp"
+            app:navigationContentDescription="@string/all_text_cancel"
             app:title="@{viewModel.videoName}"
             app:titleTextColor="?attr/colorOnSurface" />
 

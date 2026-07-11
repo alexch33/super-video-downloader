@@ -82,6 +82,7 @@
                 style="@style/Widget.Material3.Button.IconButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:contentDescription="@string/delete"
                 android:onClick="@{() -> proxiesListener.onProxyRemoveClicked(proxy)}"
                 app:icon="@drawable/delete_forever_24px"
                 app:iconTint="?attr/colorError"

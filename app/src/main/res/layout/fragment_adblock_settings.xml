@@ -23,7 +23,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:navigationIcon="@drawable/arrow_back24px"
-                app:title="AdBlocker Lists" />
+                app:navigationContentDescription="@string/all_text_cancel"
+                app:title="@string/adblock_lists_title" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -33,6 +34,7 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:padding="8dp"
+            android:contentDescription="@string/adblock_lists_title"
             app:layout_behavior="@string/appbar_scrolling_view_behavior"
             tools:listitem="@layout/item_adblock_list" />
 

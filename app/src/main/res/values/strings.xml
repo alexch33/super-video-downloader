@@ -128,7 +128,7 @@
     <string name="proxy_service_channel_description">Background proxy worker.</string>
     <string name="settings_detection">Detection Settings</string>
     <string name="settings_downloading">Downloading Settings</string>
-    <string name="use_legacy_m3u8_detection">Use legacy m3u8/mpd detection(by youtube-dlp)</string>
+    <string name="use_legacy_m3u8_detection">Use youtube-dlp for m3u8/mpd detection</string>
     <string name="playback_channel_name">Playback</string>
     <string name="video_move_downloads">Move Downloads</string>
     <string name="media_move_error">Media Move Error</string>
@@ -171,4 +171,11 @@
     <string name="not_downloaded">Not downloaded</string>
     <string name="last_updated">Last updated</string>
     <string name="built_in_list">Built-in list</string>
+    <string name="download_subtitles">Download Subtitles(youtube-dlp)</string>
+
+    <string name="accessibility_back">Back</string>
+    <string name="accessibility_forward">Forward</string>
+    <string name="accessibility_refresh">Refresh</string>
+    <string name="accessibility_stop">Stop</string>
+    <string name="accessibility_close">Close</string>
 </resources>

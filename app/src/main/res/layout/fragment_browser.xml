@@ -17,6 +17,7 @@
             android:id="@+id/view_pager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:importantForAccessibility="no"
             app:currentItem="@{viewModel.currentTab}"
             app:items="@{viewModel.tabs}" />
 
@@ -49,6 +50,7 @@
                     android:layout_height="match_parent"
                     android:clipToPadding="false"
                     android:paddingBottom="16dp"
+                    android:contentDescription="@string/tabs"
                     app:items="@{viewModel.tabs}"
                     app:selectedTab="@{viewModel.currentTab}" />
 

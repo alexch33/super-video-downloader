@@ -36,6 +36,7 @@
                 android:layout_height="?attr/actionBarSize"
                 android:background="?attr/colorSurfaceContainer"
                 app:navigationIcon="@drawable/arrow_back24px"
+                app:navigationContentDescription="@string/accessibility_back"
                 app:title="@string/proxy"
                 app:titleTextAppearance="?attr/textAppearanceTitleLarge">
 
@@ -61,6 +62,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:checked="@{viewModel.isProxyOn}"
+                        android:contentDescription="@string/proxy"
                         android:onCheckedChanged="@{(view, isChecked) -> listener.onProxyToggle(isChecked)}" />
                 </LinearLayout>
 
@@ -110,6 +112,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:checked="@{viewModel.isSecureDnsOn}"
+                            android:contentDescription="@string/secure_dns"
                             android:onCheckedChanged="@{(view, isChecked) -> viewModel.setSecureDnsState(isChecked)}"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
@@ -349,7 +352,8 @@
                     android:id="@+id/bottom_bar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal" />
+                    android:orientation="horizontal"
+                    android:importantForAccessibility="no" />
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

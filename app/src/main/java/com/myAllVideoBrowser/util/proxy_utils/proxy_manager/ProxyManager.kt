@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.util.proxy_utils.proxy_manager
 
+import android.os.Build
 import android.util.Log
 import androidx.webkit.WebViewFeature
 import com.myAllVideoBrowser.DLApplication.Companion.DEBUG_TAG
@@ -188,6 +189,10 @@ object ProxyManager {
     }
 
     fun isProxySupported(): Boolean {
+        // last version of xray not working on androids below 10 (30)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return false
+        }
         return try {
             WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)
         } catch (_: Throwable) {

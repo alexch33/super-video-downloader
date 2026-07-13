@@ -14,6 +14,7 @@ import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
 import com.myAllVideoBrowser.util.proxy_utils.ProxyWorker
+import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
 import com.tencent.mmkv.MMKV
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
@@ -151,7 +152,7 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
     fun startProxyWorker() {
         val isProxyOn = sharedPrefHelper.getIsProxyOn()
         val isDohOn = sharedPrefHelper.getIsDohOn()
-        if (!(isProxyOn || isDohOn)) {
+        if (!(isProxyOn || isDohOn) || !ProxyManager.isProxySupported()) {
             AppLogger.i("Proxy not enabled in settings, skipping WorkManager enqueue")
             WorkManager.getInstance(this).cancelUniqueWork(ProxyWorker.WORK_NAME)
             return

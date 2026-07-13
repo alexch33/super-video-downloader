@@ -36,6 +36,9 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
     override suspend fun doWork(): Result {
         AppLogger.i("ProxyWorker starting...")
 
+        if (!ProxyManager.isProxySupported()) {
+            return Result.failure()
+        }
         if (!::sharedPrefHelper.isInitialized) {
             AppLogger.e("ProxyWorker: sharedPrefHelper not initialized")
             return Result.failure()
@@ -98,7 +101,7 @@ class ProxyWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             try {
                 while (!isStopped) {
                     delay(10000)
-                    if (!ProxyManager.isProxyRunning()) {
+                    if (!ProxyManager.isProxyRunning() && ProxyManager.isProxySupported()) {
                         AppLogger.w("Proxy process died, attempting to restart...")
                         return Result.retry()
                     }

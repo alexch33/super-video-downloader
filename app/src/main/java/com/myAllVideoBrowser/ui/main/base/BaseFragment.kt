@@ -11,7 +11,7 @@ import dagger.android.support.DaggerFragment
 abstract class BaseFragment : DaggerFragment() {
     fun getThemeBackgroundColor(): Int {
         val color =
-            MaterialColors.getColor(requireContext(), R.attr.colorSurface, Color.YELLOW)
+            MaterialColors.getColor(requireContext(), com.google.android.material.R.attr.colorSurface, Color.YELLOW)
         return color
     }
 }

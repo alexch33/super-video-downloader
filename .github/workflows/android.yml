@@ -88,7 +88,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "v2ray disabled for android bellow 10 (API 30)"
+          body: "Performance && Stability improvement:\nNDK updated to r29\nFull R8 build mode enabled"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

@@ -92,7 +92,7 @@ coveralls = "2.12.2"
 desugarJdk = "2.1.5"
 
 # NDK
-ndk = "27.3.13750724"
+ndk = "29.0.14206865"
 
 # Build SDK versions
 minSdk = "24"

@@ -1,10 +1,10 @@
 [versions]
 # Android and Gradle
 conscryptAndroid = "2.5.3"
-gradlePlugin = "8.13.2"
+gradlePlugin = "9.0.1"
 kotlin = "2.2.10"
 kotlinxCoroutinesRx3 = "1.11.0"
-ksp = "2.2.10-2.0.2"
+ksp = "2.3.2"
 
 # AndroidX Core
 activity = "1.13.0"

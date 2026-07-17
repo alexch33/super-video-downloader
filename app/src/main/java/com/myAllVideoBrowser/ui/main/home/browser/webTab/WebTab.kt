@@ -1,7 +1,6 @@
 package com.myAllVideoBrowser.ui.main.home.browser.webTab
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
 import android.os.Message
 import android.webkit.WebView
 import java.util.UUID
@@ -9,7 +8,7 @@ import java.util.UUID
 class WebTab(
     private val url: String,
     private val title: String?,
-    private val iconBytes: Bitmap? = null,
+    private val icon: Any? = null,
     private val headers: Map<String, String> = emptyMap(),
     private var webview: WebView? = null,
     private var resultMsg: Message? = null,
@@ -53,8 +52,8 @@ class WebTab(
         return this.title ?: ""
     }
 
-    fun getFavicon(): Bitmap? {
-        return iconBytes
+    fun getFavicon(): Any? {
+        return icon
     }
 
     fun isHome(): Boolean {
@@ -63,7 +62,7 @@ class WebTab(
 
 
     override fun toString(): String {
-        return "WebTab(url='$url', title=$title, iconBytes=$iconBytes, headers=$headers, webview=$webview, resultMsg=$resultMsg, id='$id')"
+        return "WebTab(url='$url', title=$title, icon=$icon, headers=$headers, webview=$webview, resultMsg=$resultMsg, id='$id')"
     }
 
     override fun equals(other: Any?): Boolean {
@@ -74,7 +73,7 @@ class WebTab(
 
         if (url != other.url) return false
         if (title != other.title) return false
-        if (iconBytes != other.iconBytes) return false
+        if (icon != other.icon) return false
         if (headers != other.headers) return false
         if (webview != other.webview) return false
         if (resultMsg != other.resultMsg) return false
@@ -86,7 +85,7 @@ class WebTab(
     override fun hashCode(): Int {
         var result = url.hashCode()
         result = 31 * result + (title?.hashCode() ?: 0)
-        result = 31 * result + (iconBytes?.hashCode() ?: 0)
+        result = 31 * result + (icon?.hashCode() ?: 0)
         result = 31 * result + headers.hashCode()
         result = 31 * result + (webview?.hashCode() ?: 0)
         result = 31 * result + (resultMsg?.hashCode() ?: 0)

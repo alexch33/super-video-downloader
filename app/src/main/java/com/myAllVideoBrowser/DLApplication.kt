@@ -52,6 +52,8 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
     @Inject
     lateinit var adBlockEngine: AdBlockEngine
 
+    private var isYoutubeDLInitialized = false
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -104,7 +106,9 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
             }
 
             initializeYoutubeDl()
-            updateYoutubeDL()
+            if (isYoutubeDLInitialized) {
+                updateYoutubeDL()
+            }
 
             startProxyWorker()
 
@@ -132,20 +136,30 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
 
     private fun initializeYoutubeDl() {
         try {
-            YoutubeDL.getInstance().init(applicationContext)
-            FFmpeg.getInstance().init(applicationContext)
+            YoutubeDL.getInstance().init(this)
+            FFmpeg.getInstance().init(this)
+            isYoutubeDLInitialized = true
+            AppLogger.i("YoutubeDL and FFmpeg initialized successfully")
         } catch (e: YoutubeDLException) {
-            AppLogger.e("failed to initialize youtubedl-android $e")
+            isYoutubeDLInitialized = false
+            AppLogger.e("failed to initialize youtubedl-android: ${e.message}")
+        } catch (e: Exception) {
+            isYoutubeDLInitialized = false
+            AppLogger.e("unexpected error during youtubedl-android init: ${e.message}")
         }
     }
 
     private fun updateYoutubeDL() {
+        if (!isYoutubeDLInitialized) {
+            AppLogger.w("Skipping updateYoutubeDL: instance not initialized")
+            return
+        }
         try {
             val status = YoutubeDL.getInstance()
-                .updateYoutubeDL(applicationContext, YoutubeDL.UpdateChannel._MASTER)
+                .updateYoutubeDL(this, YoutubeDL.UpdateChannel._MASTER)
             AppLogger.d("UPDATE_STATUS MASTER: $status")
         } catch (e: Throwable) {
-            e.printStackTrace()
+            AppLogger.e("Failed to update YoutubeDL: ${e.message}")
         }
     }
 

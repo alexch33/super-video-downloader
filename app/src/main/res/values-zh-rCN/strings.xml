@@ -117,7 +117,7 @@
     <string name="custom_dns_saved_message">已保存自定义 DNS</string>
     <string name="settings_detection">检测设置</string>
     <string name="settings_downloading">下载设置</string>
-    <string name="use_legacy_m3u8_detection">使用旧的 m3u8/mpd 检测（通过 youtube-dlp）</string>
+    <string name="use_legacy_m3u8_detection">使用 youyube-dlp 进行 m3u8/mpd 检测</string>
     <string name="playback_channel_name">播放</string>
     <string name="video_move_downloads">移动下载</string>
     <string name="media_move_error">媒体移动错误</string>
@@ -163,4 +163,10 @@
     <string name="not_downloaded">未下载</string>
     <string name="last_updated">上次更新</string>
     <string name="built_in_list">内置列表</string>
+    <string name="download_subtitles">下载字幕（youtube-dlp）</string>
+    <string name="accessibility_back">返回</string>
+    <string name="accessibility_forward">前进</string>
+    <string name="accessibility_refresh">刷新</string>
+    <string name="accessibility_stop">停止</string>
+    <string name="accessibility_close">关闭</string>
 </resources>

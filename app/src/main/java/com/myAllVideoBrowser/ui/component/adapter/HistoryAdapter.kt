@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.github.marlonlom.utilities.timeago.TimeAgo
 import com.github.marlonlom.utilities.timeago.TimeAgoMessages
 import com.myAllVideoBrowser.R
@@ -40,15 +41,17 @@ class HistoryAdapter(
                 this.historyId = historyItem.id
                 this.tvTime.text = convertTimeToTimeAgo(historyItem.datetime)
 
-                if (historyItem.faviconBitmap() == null) {
-                    val bm =
-                        AppCompatResources.getDrawable(
-                            ContextUtils.getApplicationContext(),
-                            R.drawable.ic_browser
-                        )
+                val placeholder = AppCompatResources.getDrawable(
+                    ContextUtils.getApplicationContext(),
+                    R.drawable.ic_browser
+                )
 
-                    this.favicon.setImageDrawable(bm)
-                }
+                Glide.with(favicon.context)
+                    .load(historyItem.favicon)
+                    .placeholder(placeholder)
+                    .error(placeholder)
+                    .circleCrop()
+                    .into(favicon)
 
                 executePendingBindings()
             }

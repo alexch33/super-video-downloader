@@ -33,8 +33,8 @@ data class PageInfo(
     @Expose
     var icon: String = "",
 
-    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
-    var favicon: ByteArray? = null,
+    @ColumnInfo(name = "favicon")
+    var favicon: String? = null,
 
     @ColumnInfo(name = "order")
     @SerializedName("order")
@@ -55,12 +55,12 @@ data class PageInfo(
 
         other as PageInfo
 
-        if (!favicon.contentEquals(other.favicon)) return false
+        if (favicon != other.favicon) return false
 
         return link == other.link
     }
 
     override fun hashCode(): Int {
-        return 31 * link.hashCode() * favicon.contentHashCode()
+        return 31 * link.hashCode() * (favicon?.hashCode() ?: 0)
     }
 }

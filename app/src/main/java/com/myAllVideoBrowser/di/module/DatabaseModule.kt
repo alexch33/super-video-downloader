@@ -133,6 +133,58 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
     }
 }
 
+val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Migration for PageInfo: favicon column type BLOB -> TEXT
+        db.execSQL(
+            """
+            CREATE TABLE PageInfo_new (
+                id TEXT NOT NULL,
+                isSystem INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                link TEXT NOT NULL PRIMARY KEY,
+                icon TEXT NOT NULL,
+                favicon TEXT,
+                `order` INTEGER NOT NULL
+            )
+        """.trimIndent()
+        )
+
+        db.execSQL(
+            """
+            INSERT INTO PageInfo_new (id, isSystem, name, link, icon, `order`)
+            SELECT id, isSystem, name, link, icon, `order` FROM PageInfo
+        """.trimIndent()
+        )
+
+        db.execSQL("DROP TABLE PageInfo")
+        db.execSQL("ALTER TABLE PageInfo_new RENAME TO PageInfo")
+
+        // Migration for HistoryItem: favicon (BLOB) -> faviconUrl (TEXT)
+        db.execSQL(
+            """
+            CREATE TABLE HistoryItem_new (
+                id TEXT NOT NULL PRIMARY KEY,
+                title TEXT,
+                url TEXT NOT NULL,
+                datetime INTEGER NOT NULL,
+                faviconUrl TEXT
+            )
+        """.trimIndent()
+        )
+
+        db.execSQL(
+            """
+            INSERT INTO HistoryItem_new (id, title, url, datetime)
+            SELECT id, title, url, datetime FROM HistoryItem
+        """.trimIndent()
+        )
+
+        db.execSQL("DROP TABLE HistoryItem")
+        db.execSQL("ALTER TABLE HistoryItem_new RENAME TO HistoryItem")
+    }
+}
+
 @Module
 class DatabaseModule {
 
@@ -151,7 +203,8 @@ class DatabaseModule {
             MIGRATION_9_10,
             MIGRATION_10_11,
             MIGRATION_11_12,
-            MIGRATION_12_13
+            MIGRATION_12_13,
+            MIGRATION_13_14
         ).build()
     }
 

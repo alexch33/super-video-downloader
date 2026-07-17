@@ -7,6 +7,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.PageInfo
 import com.myAllVideoBrowser.databinding.ItemBookmarkBinding
@@ -39,13 +40,16 @@ class BookmarksAdapter(
                 this.bookmarkItem = bookmarkItem
                 this.bookmarksListener = bookmarksListener
 
-                if (bookmarkItem.faviconBitmap() == null) {
-                    val bm = AppCompatResources.getDrawable(
-                        ContextUtils.getApplicationContext(), R.drawable.ic_browser
-                    )
+                val placeholder = AppCompatResources.getDrawable(
+                    ContextUtils.getApplicationContext(), R.drawable.ic_browser
+                )
 
-                    this.favicon.setImageDrawable(bm)
-                }
+                Glide.with(favicon.context)
+                    .load(bookmarkItem.favicon)
+                    .placeholder(placeholder)
+                    .error(placeholder)
+                    .circleCrop()
+                    .into(favicon)
 
                 executePendingBindings()
             }

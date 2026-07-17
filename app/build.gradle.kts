@@ -110,7 +110,9 @@ android {
             )
         }
         jniLibs {
-            useLegacyPackaging = true
+            // Setting this to false is required for 16 KB page support.
+            // It ensures native libraries are stored uncompressed and page-aligned.
+            useLegacyPackaging = false
             keepDebugSymbols += listOf(
                 "**/libffmpeg.zip.so",
                 "**/libpython.zip.so",
@@ -138,8 +140,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 374
-        versionName = "0.8.23.3"
+        versionCode = 380
+        versionName = "0.8.23.4"
 
         if (isSingleAbiRequested) {
             splits {
@@ -503,9 +505,6 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
     }
 }
 
-// =========================================================================
-// GO REPRODUCIBLE BUILD SETUP (Multi-Architecture)
-// =========================================================================
 val execOps = project.serviceOf<ExecOperations>()
 
 // Go Executable Detection

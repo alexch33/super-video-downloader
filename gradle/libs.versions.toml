@@ -1,6 +1,6 @@
 [versions]
 # Android and Gradle
-conscryptAndroid = "2.5.3"
+conscryptAndroid = "2.6.1"
 gradlePlugin = "9.0.1"
 kotlin = "2.2.10"
 kotlinxCoroutinesRx3 = "1.11.0"

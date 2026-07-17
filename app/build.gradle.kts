@@ -110,9 +110,8 @@ android {
             )
         }
         jniLibs {
-            // Setting this to false is required for 16 KB page support.
-            // It ensures native libraries are stored uncompressed and page-aligned.
-            useLegacyPackaging = false
+            // needed for youtube-dlp
+            useLegacyPackaging = true
             keepDebugSymbols += listOf(
                 "**/libffmpeg.zip.so",
                 "**/libpython.zip.so",
@@ -140,8 +139,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 380
-        versionName = "0.8.23.4"
+        versionCode = 386
+        versionName = "0.8.23.5"
 
         if (isSingleAbiRequested) {
             splits {

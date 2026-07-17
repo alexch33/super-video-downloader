@@ -60,7 +60,7 @@ class CustomWebChromeClient(
                 resultMsg = resultMsg,
                 url = url,
                 title = "Loading...",
-                iconBytes = null
+                icon = null
             )
 
         return true

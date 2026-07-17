@@ -9,6 +9,7 @@ import android.widget.ArrayAdapter
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.google.android.material.color.MaterialColors
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.PageInfo
@@ -29,15 +30,14 @@ class TopPageAdapter(
         }
 
         with(binding) {
-            this?.pageInfo = pageInfos[position]
+            val page = pageInfos[position]
+            this?.pageInfo = page
             this?.listener = itemListener
-            if (this?.pageInfo?.faviconBitmap() != null) {
-                this.imgIcon.setImageBitmap(pageInfo!!.faviconBitmap())
-            } else {
-                val drawable = AppCompatResources.getDrawable(
-                    ContextUtils.getApplicationContext(), R.drawable.ic_browser
-                )
-                drawable?.setColorFilter(
+            
+            val placeholder = AppCompatResources.getDrawable(
+                context, R.drawable.ic_browser
+            )?.apply {
+                setColorFilter(
                     MaterialColors.getColor(
                         context,
                         com.google.android.material.R.attr.colorOnSurfaceVariant,
@@ -45,8 +45,17 @@ class TopPageAdapter(
                     ),
                     PorterDuff.Mode.SRC_IN
                 )
-                this?.imgIcon?.setImageDrawable(drawable)
             }
+
+            this?.imgIcon?.let { imageView ->
+                Glide.with(imageView.context)
+                    .load(page.favicon)
+                    .placeholder(placeholder)
+                    .error(placeholder)
+                    .circleCrop()
+                    .into(imageView)
+            }
+
             this?.executePendingBindings()
         }
 

@@ -1,5 +1,9 @@
 package com.myAllVideoBrowser.ui.main.home.browser
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import android.view.Gravity
 import android.view.View
 import android.widget.Toast
@@ -9,6 +13,8 @@ import androidx.databinding.Observable
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.myAllVideoBrowser.BuildConfig
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.bookmarks.BookmarksFragment
@@ -22,14 +28,21 @@ import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.Request
 import javax.inject.Inject
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
+import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
+import androidx.core.net.toUri
 
 
 abstract class BaseWebTabFragment : BaseFragment() {
     @Inject
     lateinit var customProxyController: CustomProxyController
+
+    @Inject
+    lateinit var okHttpProxyClient: OkHttpProxyClient
 
     @Inject
     lateinit var mainActivity: MainActivity
@@ -230,6 +243,11 @@ abstract class BaseWebTabFragment : BaseFragment() {
                     true
                 }
 
+                R.id.about -> {
+                    showAboutDialog()
+                    true
+                }
+
                 R.id.proxies -> {
                     navigateToProxies()
                     true
@@ -245,6 +263,66 @@ abstract class BaseWebTabFragment : BaseFragment() {
         }
 
         return popupMenu
+    }
+
+    private fun showAboutDialog() {
+        val currentVersion = BuildConfig.VERSION_NAME
+        val developerUrl = "https://github.com/alexch33"
+        val latestReleaseUrl = "https://github.com/alexch33/super-video-downloader/releases/latest"
+        val btcAddress = "bc1q97xgwurjf2p5at9kzm96fkxymf3rh6gfmfq8fj"
+        val currentVersionString = requireContext().getString(R.string.currentVersion)
+        val latestVersionString = requireContext().getString(R.string.latestVersion)
+        val checkingUpdatesString = requireContext().getString(R.string.checkingForUpdates)
+        val checkingFailedString = requireContext().getString(R.string.checkingForUpdatesFailed)
+        val developerString = requireContext().getString(R.string.developer)
+        val copyBtcString = requireContext().getString(R.string.copyBTC)
+        val btcAddressString = requireContext().getString(R.string.btcAddress)
+        val btcCopiedString = requireContext().getString(R.string.btcCopied)
+        val projectSupportString = requireContext().getString(R.string.supportString)
+
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.about)
+            .setMessage("$currentVersionString: $currentVersion\n$checkingUpdatesString")
+            .setPositiveButton(R.string.ok, null)
+            .setNeutralButton(developerString) { _, _ ->
+                val intent = Intent(Intent.ACTION_VIEW, developerUrl.toUri())
+                startActivity(intent)
+            }
+            .setNegativeButton(copyBtcString) { _, _ ->
+                val clipboard =
+                    requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText(btcAddressString, btcAddress)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(
+                    requireContext(),
+                    btcCopiedString,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            .show()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val client = okHttpProxyClient.getProxyOkHttpClient()
+                val request = Request.Builder()
+                    .url(latestReleaseUrl)
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    val redirectedUrl = response.request.url.toString()
+                    val latestVersion = redirectedUrl.substringAfterLast("/")
+
+                    withContext(Dispatchers.Main) {
+                        dialog.setMessage("$currentVersionString: $currentVersion\n$latestVersionString: $latestVersion\n\n$developerString: $developerUrl\n\n$projectSupportString: $btcAddress")
+                    }
+                }
+            } catch (_: Exception) {
+                withContext(Dispatchers.Main) {
+                    dialog.setMessage("$currentVersionString: $currentVersion\n$checkingFailedString.\n\n$developerString: $developerUrl\n\n$projectSupportString: $btcAddress")
+                }
+            }
+        }
     }
 
     private fun navigateToHistory() {

@@ -114,7 +114,7 @@
     <string name="custom_dns_saved_message">DNS personnalisé enregistré</string>
     <string name="settings_detection">Paramètres de détection</string>
     <string name="settings_downloading">Paramètres de téléchargement</string>
-    <string name="use_legacy_m3u8_detection">Utiliser la détection m3u8/mpd héritée (par youtube-dlp)</string>
+    <string name="use_legacy_m3u8_detection">Utilisez youtube-dlp pour la détection m3u8/mpd</string>
     <string name="playback_channel_name">Lecture</string>
     <string name="video_move_downloads">Déplacer les téléchargements</string>
     <string name="media_move_error">Erreur de déplacement de média</string>
@@ -163,4 +163,10 @@
     <string name="last_updated">Dernière mise à jour</string>
     <string name="built_in_list">Liste intégrée</string>
     <string name="tabs">Onglets</string>
+    <string name="download_subtitles">Télécharger les sous-titres (youtube-dlp)</string>
+    <string name="accessibility_back">Retour</string>
+    <string name="accessibility_forward">Avant</string>
+    <string name="accessibility_refresh">Rafraîchir</string>
+    <string name="accessibility_stop">Arrêtez</string>
+    <string name="accessibility_close">Fermer</string>
 </resources>

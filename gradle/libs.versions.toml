@@ -61,7 +61,7 @@ rxjava3 = "3.1.12"
 rxandroid3 = "3.0.2"
 
 # Other Dependencies
-glide = "5.0.9"
+glide = "5.0.7"
 youtubedl = "0.18.1"
 ffmpegKit = "2.2.1"
 
@@ -96,7 +96,7 @@ ndk = "29.0.14206865"
 
 # Build SDK versions
 minSdk = "24"
-targetSdk = "37"
+targetSdk = "36"
 jvmToolchain = "21"
 
 # Go

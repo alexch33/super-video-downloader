@@ -18,9 +18,9 @@ object ImageBinding {
 
     @BindingAdapter("app:favicon")
     @JvmStatic
-    fun ImageView.loadFavicon(bytes: ByteArray?) {
+    fun ImageView.loadFavicon(url: String?) {
         Glide.with(context)
-            .load(bytes)
+            .load(url)
             .placeholder(R.drawable.ic_browser)
             .error(R.drawable.ic_browser)
             .circleCrop()

@@ -250,8 +250,12 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
             inputData.getBoolean(GenericDownloader.Constants.IS_FILE_REMOVE_KEY, false)
 
         if (taskId != null) {
+            val isLive = inputData.getBoolean(GenericDownloader.Constants.IS_LIVE, false)
+
             YoutubeDL.getInstance().destroyProcessById(taskId)
-            destroyChildProcesses()
+            if (isLive) {
+                destroyChildProcesses()
+            }
 
             val fileToRemove = File("${fileUtil.tmpDir}/$taskId")
 
@@ -807,6 +811,7 @@ class YoutubeDlDownloaderWorker(appContext: Context, workerParams: WorkerParamet
         destroyChildProcesses()
     }
 
+    // this method has issue: it stopping all youtube-dlp tasks, it should be used only on live streams
     private fun destroyChildProcesses(): Boolean {
         return try {
             val myPid = android.os.Process.myPid().toString()

@@ -2,7 +2,6 @@ package com.myAllVideoBrowser.data.repository
 
 import com.myAllVideoBrowser.data.local.room.entity.PageInfo
 import com.myAllVideoBrowser.di.qualifier.LocalData
-import com.myAllVideoBrowser.di.qualifier.RemoteData
 import com.myAllVideoBrowser.util.FaviconUtils
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import kotlinx.coroutines.channels.awaitClose
@@ -51,15 +50,9 @@ class TopPagesRepositoryImpl @Inject constructor(
         val pages = localDataSource.getTopPages()
         for (page in pages) {
             if (page.favicon == null) {
-                val bitmapBytes = try {
-                    FaviconUtils.getEncodedFaviconFromUrl(
-                        okHttpClient.getProxyOkHttpClient(), page.link
-                    )
-                } catch (e: Throwable) {
-                    null
-                }
+                val faviconUrl = FaviconUtils.getFaviconUrl(page.link)
 
-                page.favicon = bitmapBytes
+                page.favicon = faviconUrl
                 localDataSource.saveTopPage(page)
                 delay(10)
                 trySend(page)

@@ -134,13 +134,16 @@ android {
         }
     }
 
+    val isBundleTask =
+        project.gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
+
     // Default Config
     defaultConfig {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 386
-        versionName = "0.8.23.5"
+        versionCode = 392
+        versionName = "0.8.23.6"
 
         if (isSingleAbiRequested) {
             splits {
@@ -152,7 +155,7 @@ android {
                 abiFilters.clear()
                 abiFilters.addAll(abiFilterProperty)
             }
-        } else if (splitApks) {
+        } else if (splitApks && !isBundleTask) {
             splits {
                 abi {
                     isEnable = true
@@ -252,7 +255,7 @@ android {
     // Source Sets
     sourceSets {
         getByName("main") {
-            jniLibs.srcDir("src/main/jniLibs")
+            jniLibs.directories.add("src/main/jniLibs")
         }
     }
 

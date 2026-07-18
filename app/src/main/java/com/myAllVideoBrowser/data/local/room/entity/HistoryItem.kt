@@ -1,6 +1,5 @@
 package com.myAllVideoBrowser.data.local.room.entity
 
-import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.*
@@ -13,9 +12,7 @@ data class HistoryItem(
     var title: String? = null,
     var url: String,
     var datetime: Long = Date().time,
-
-    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
-    var favicon: ByteArray? = null
+    var faviconUrl: String? = null
 ) {
 
     override fun equals(other: Any?): Boolean {

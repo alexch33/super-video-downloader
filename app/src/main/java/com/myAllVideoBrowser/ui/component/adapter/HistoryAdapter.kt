@@ -47,7 +47,7 @@ class HistoryAdapter(
                 )
 
                 Glide.with(favicon.context)
-                    .load(historyItem.favicon)
+                    .load(historyItem.faviconUrl)
                     .placeholder(placeholder)
                     .error(placeholder)
                     .circleCrop()

@@ -8,7 +8,7 @@ import dagger.android.support.DaggerAppCompatActivity
 abstract class BaseActivity : DaggerAppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
-        super.onCreate(savedInstanceState)
         DynamicColors.applyToActivityIfAvailable(this)
+        super.onCreate(savedInstanceState)
     }
 }

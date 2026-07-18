@@ -5,7 +5,6 @@ import androidx.databinding.ObservableBoolean
 import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.room.entity.PageInfo
-//import com.allVideoDownloaderXmaster.OpenForTesting
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.TopPagesRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
@@ -18,7 +17,6 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
-//@OpenForTesting
 class MainViewModel @Inject constructor(
     private val topPagesRepository: TopPagesRepository,
 ) : BaseViewModel() {
@@ -64,9 +62,9 @@ class MainViewModel @Inject constructor(
     fun bookmark(url: String, name: String, favicon: Bitmap?) {
         viewModelScope.launch(executorMoverSingle) {
             var bookmarks = topPagesRepository.getTopPages().toMutableList()
-            val faviconBytes = FaviconUtils.bitmapToBytes(favicon)
+            val faviconUrl = FaviconUtils.getFaviconUrl(url)
             val newBookmark = PageInfo(
-                link = url, order = bookmarks.size, name = name, favicon = faviconBytes
+                link = url, order = bookmarks.size, name = name, favicon = faviconUrl
             )
             bookmarks.add(newBookmark)
             bookmarks = bookmarks.mapIndexed { index, pageInfo ->

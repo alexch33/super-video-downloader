@@ -88,7 +88,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Youtube-dlp initialization fixed\nGradle upgraded to 9\nAdded new gradle build options for performance enhancement"
+          body: "About section added\nPerformance && memory optimizations"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

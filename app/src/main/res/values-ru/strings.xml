@@ -157,4 +157,18 @@
     <string name="last_updated">Последнее обновление</string>
     <string name="built_in_list">" Встроенный список"</string>
     <string name="download_subtitles">Скачивать субтитры((youtube-dlp))</string>
+    <string name="accessibility_close">Закрыть</string>
+    <string name="currentVersion">Текущая версия</string>
+    <string name="checkingForUpdates">Проверка на обновления...</string>
+    <string name="developer">Разработчик</string>
+    <string name="copyBTC">копировать BTC</string>
+    <string name="btcAddress">BTC  кошелёк</string>
+    <string name="btcCopied">BTC  кошелёк скопирован в буфер обмена</string>
+    <string name="latestVersion">Последняя версия</string>
+    <string name="supportString">Поддержка проекта</string>
+    <string name="checkingForUpdatesFailed">Ошибка при проверкке на обновления</string>
+    <string name="accessibility_back">Назад</string>
+    <string name="accessibility_forward">Вперёд</string>
+    <string name="accessibility_refresh">Перезагрузить</string>
+    <string name="accessibility_stop">Стоп</string>
 </resources>

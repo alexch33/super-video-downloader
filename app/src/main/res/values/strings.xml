@@ -51,6 +51,7 @@
     <string name="loading_image_view">loading image view</string>
     <string name="video_menu_open_in_folder">Open in folder</string>
     <string name="help">Help</string>
+    <string name="about">About</string>
     <string name="ok">OK</string>
     <string name="get_started_guide">Hi ;–)  For video detecting go to video in browser, click play and waite until detected(can take 5–50 seconds) \n 1. You can change ads detecting threshold in settings \n 2. Some video downloaded corrupted in multi thread mode, use One thread for downloading in such situations \n\n For Video Downloading: \n \n 1. Press button,in dialog select resolution, if available, and press colored button \n \n 2, 3. Press Play on video player on page with video, after that video should be detected. \n \n If not try to press reload videos on video page or try reload page and repeat. \n If not email me.\n \n \n After downloading video available in app. \n</string>
     <string name="instruction">Hi ;–) \n For video detecting go to video in browser, click play and waite until video detected(can take 5–50 seconds) \n 1. You can change ads detecting threshold in settings \n 2. Video Detection not working for some web sites in mobile mode, try use desktop version of web site if video not detecting in mobile mode \n If not try to press reload videos on video page or try reload page and repeat. \n If not email me.\n \n\n For Video Downloading: \n \n 1. Press Download button,in appeared screen select resolution, if available \n \n 2. Press press download button. \n  \n \n After downloading video available in app. \n</string>
@@ -178,4 +179,13 @@
     <string name="accessibility_refresh">Refresh</string>
     <string name="accessibility_stop">Stop</string>
     <string name="accessibility_close">Close</string>
+    <string name="currentVersion">Current Version</string>
+    <string name="checkingForUpdates">Checking for updates…</string>
+    <string name="developer">Developer</string>
+    <string name="copyBTC">Copy BTC</string>
+    <string name="btcAddress">BTC Address</string>
+    <string name="btcCopied">BTC Address copied to clipboard</string>
+    <string name="latestVersion">Latest version</string>
+    <string name="supportString">Project support BTC</string>
+    <string name="checkingForUpdatesFailed">Failed to check for updates.</string>
 </resources>

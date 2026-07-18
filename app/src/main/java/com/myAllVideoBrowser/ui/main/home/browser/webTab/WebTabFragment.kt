@@ -87,9 +87,6 @@ class WebTabFragment : BaseWebTabFragment() {
     lateinit var proxyController: CustomProxyController
 
     @Inject
-    lateinit var okHttpProxyClient: OkHttpProxyClient
-
-    @Inject
     lateinit var adBlockEngine: AdBlockEngine
 
     private lateinit var dataBinding: FragmentWebTabBinding

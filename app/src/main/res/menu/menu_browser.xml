@@ -38,7 +38,7 @@
     <item
         android:id="@+id/adblock_settings"
         android:icon="@drawable/verified_user_24px"
-        android:title="AdBlock Lists"
+        android:title="@string/adblock_lists_title"
         android:visible="true"
         app:showAsAction="ifRoom|collapseActionView" />
 
@@ -78,5 +78,11 @@
         android:icon="@drawable/dark_mode_24px"
         android:title="@string/dark_mode"
         android:visible="true"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
+        android:id="@+id/about"
+        android:icon="@drawable/help_24px"
+        android:title="@string/about"
         app:showAsAction="ifRoom|collapseActionView" />
 </menu>

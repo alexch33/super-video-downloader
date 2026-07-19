@@ -88,7 +88,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Fixed bug with stopping all youtube-dlp tasks if one canceled (for now it happening only if live stream canceled, because live stream can't be canceled another way)"
+          body: "Fixed bug with stopping all youtube-dlp tasks if one canceled (for now it happening only if live stream canceled, because live stream can't be canceled another way)\nAbout section added\nPerformance && Memory optimizations"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

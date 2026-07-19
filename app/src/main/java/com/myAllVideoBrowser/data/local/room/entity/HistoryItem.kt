@@ -1,8 +1,5 @@
 package com.myAllVideoBrowser.data.local.room.entity
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.*
@@ -15,14 +12,8 @@ data class HistoryItem(
     var title: String? = null,
     var url: String,
     var datetime: Long = Date().time,
-
-    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
-    var favicon: ByteArray? = null
+    var faviconUrl: String? = null
 ) {
-
-    fun faviconBitmap(): Bitmap? {
-        return BitmapFactory.decodeByteArray(favicon, 0, favicon?.size ?: 0)
-    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

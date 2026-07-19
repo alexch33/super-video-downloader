@@ -99,14 +99,8 @@ class CustomWebViewClient(
 
         if (url != null && lastSavedHistoryUrl != url) {
             historyModel.viewModelScope.launch(historyModel.executorSingleHistory) {
-                val icon = try {
-                    FaviconUtils.getEncodedFaviconFromUrl(
-                        okHttpProxyClient.getProxyOkHttpClient(), url
-                    )
-                } catch (_: Throwable) {
-                    null
-                }
-                saveUrlToHistory(url, icon, viewTitle ?: title)
+                val faviconUrl = FaviconUtils.getFaviconUrl(url)
+                saveUrlToHistory(url, faviconUrl, viewTitle ?: title)
 
                 videoDetectionModel.onStartPage(
                     url,
@@ -328,7 +322,7 @@ class CustomWebViewClient(
         return super.onRenderProcessGone(view, detail)
     }
 
-    private suspend fun saveUrlToHistory(url: String, favicon: Bitmap?, title: String?) {
+    private suspend fun saveUrlToHistory(url: String, favicon: Any?, title: String?) {
         val isTitleEmpty = title?.trim()?.isEmpty() == true
 
         if (!isTitleEmpty && lastSavedTitleHistory != title && lastSavedHistoryUrl != url && url.isNotEmpty() && !url.contains(
@@ -338,13 +332,16 @@ class CustomWebViewClient(
             lastSavedHistoryUrl = url
             lastSavedTitleHistory = title ?: ""
 
-            val outputFavicon = FaviconUtils.bitmapToBytes(favicon)
+            val faviconUrl = when (favicon) {
+                is String -> favicon
+                else -> FaviconUtils.getFaviconUrl(url)
+            }
 
             yield()
 
             historyModel.saveHistory(
                 HistoryItem(
-                    url = url, favicon = outputFavicon, title = title
+                    url = url, faviconUrl = faviconUrl, title = title
                 )
             )
         }

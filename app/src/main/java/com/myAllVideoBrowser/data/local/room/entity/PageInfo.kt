@@ -1,7 +1,5 @@
 package com.myAllVideoBrowser.data.local.room.entity
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -35,8 +33,8 @@ data class PageInfo(
     @Expose
     var icon: String = "",
 
-    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
-    var favicon: ByteArray? = null,
+    @ColumnInfo(name = "favicon")
+    var favicon: String? = null,
 
     @ColumnInfo(name = "order")
     @SerializedName("order")
@@ -51,25 +49,18 @@ data class PageInfo(
             .replaceFirstChar { it.uppercase() }
     }
 
-    fun faviconBitmap(): Bitmap? {
-        if (favicon == null) {
-            return null
-        }
-        return BitmapFactory.decodeByteArray(favicon, 0, favicon?.size ?: 0)
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
         other as PageInfo
 
-        if (!favicon.contentEquals(other.favicon)) return false
+        if (favicon != other.favicon) return false
 
         return link == other.link
     }
 
     override fun hashCode(): Int {
-        return 31 * link.hashCode() * favicon.contentHashCode()
+        return 31 * link.hashCode() * (favicon?.hashCode() ?: 0)
     }
 }

@@ -6,13 +6,25 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.widget.ImageView
 import com.bumptech.glide.Glide
+import com.myAllVideoBrowser.R
 
 object ImageBinding {
 
     @BindingAdapter("app:imageUrl")
     @JvmStatic
-    fun ImageView.loadImage(url: String) {
+    fun ImageView.loadImage(url: String?) {
         Glide.with(context).load(url).into(this)
+    }
+
+    @BindingAdapter("app:favicon")
+    @JvmStatic
+    fun ImageView.loadFavicon(url: String?) {
+        Glide.with(context)
+            .load(url)
+            .placeholder(R.drawable.ic_browser)
+            .error(R.drawable.ic_browser)
+            .circleCrop()
+            .into(this)
     }
 
     @BindingAdapter("app:bitmap")

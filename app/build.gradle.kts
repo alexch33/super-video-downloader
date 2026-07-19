@@ -110,6 +110,7 @@ android {
             )
         }
         jniLibs {
+            // needed for youtube-dlp
             useLegacyPackaging = true
             keepDebugSymbols += listOf(
                 "**/libffmpeg.zip.so",
@@ -133,13 +134,16 @@ android {
         }
     }
 
+    val isBundleTask =
+        project.gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
+
     // Default Config
     defaultConfig {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 362
-        versionName = "0.8.23.1"
+        versionCode = 404
+        versionName = "0.8.24"
 
         if (isSingleAbiRequested) {
             splits {
@@ -151,7 +155,7 @@ android {
                 abiFilters.clear()
                 abiFilters.addAll(abiFilterProperty)
             }
-        } else if (splitApks) {
+        } else if (splitApks && !isBundleTask) {
             splits {
                 abi {
                     isEnable = true
@@ -185,7 +189,7 @@ android {
             }
 
             isMinifyEnabled = true
-            isShrinkResources = false
+            isShrinkResources = true
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -251,7 +255,7 @@ android {
     // Source Sets
     sourceSets {
         getByName("main") {
-            jniLibs.srcDir("src/main/jniLibs")
+            jniLibs.directories.add("src/main/jniLibs")
         }
     }
 
@@ -503,9 +507,6 @@ val buildRustAdblock = tasks.register("buildRustAdblock") {
     }
 }
 
-// =========================================================================
-// GO REPRODUCIBLE BUILD SETUP (Multi-Architecture)
-// =========================================================================
 val execOps = project.serviceOf<ExecOperations>()
 
 // Go Executable Detection

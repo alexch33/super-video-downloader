@@ -107,7 +107,7 @@ class HistoryFragment : BaseFragment() {
                 it?.let { item ->
                     parentFragmentManager.popBackStack()
                     BrowserViewModel.instance?.openPageEvent?.value =
-                        WebTab(item.url, item.title, item.faviconBitmap())
+                        WebTab(item.url, item.title, item.faviconUrl)
                 }
             }
         }
@@ -136,7 +136,7 @@ class HistoryFragment : BaseFragment() {
                     }
                     parentFragmentManager.popBackStack()
                     BrowserViewModel.instance?.openPageEvent?.value =
-                        WebTab(item.url, item.title, item.faviconBitmap())
+                        WebTab(item.url, item.title, item.faviconUrl)
                 }
             }
         }

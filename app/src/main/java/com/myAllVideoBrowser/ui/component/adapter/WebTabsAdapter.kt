@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.google.android.material.color.MaterialColors
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.ItemWebTabButtonBinding
@@ -97,18 +98,17 @@ class WebTabsAdapter(
 
                     this.faviconTab.setImageDrawable(bm)
                 } else {
-                    val favicon = webTab.getFavicon()
-                    if (favicon != null) {
-                        this.faviconTab.setImageBitmap(favicon)
-                    } else {
-                        val bm =
-                            AppCompatResources.getDrawable(
-                                context,
-                                R.drawable.public_24px
-                            )
+                    val placeholder = AppCompatResources.getDrawable(
+                        context,
+                        R.drawable.public_24px
+                    )
 
-                        this.faviconTab.setImageDrawable(bm)
-                    }
+                    Glide.with(context)
+                        .load(webTab.getFavicon())
+                        .placeholder(placeholder)
+                        .error(placeholder)
+                        .circleCrop()
+                        .into(this.faviconTab)
                 }
 
                 if (!webTab.isHome()) {

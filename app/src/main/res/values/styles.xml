@@ -16,18 +16,15 @@
     <!-- Base application theme. -->
     <style name="Base.AppTheme" parent="Theme.Material3.DayNight">
         <item name="android:windowBackground">?attr/colorSurfaceContainer</item>
-        <item name="android:windowTranslucentNavigation">true</item>
     </style>
 
     <style name="AppTheme" parent="Base.AppTheme">
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
-    <!--Splash screen theme. You should use it in your manifest file for your Splash Activity-->
     <style name="AppTheme.Launcher">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
-        <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
 

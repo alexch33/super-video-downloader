@@ -35,6 +35,7 @@ jobs:
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r29
+          add-to-path: true
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -47,9 +48,9 @@ jobs:
         with:
           targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android, i686-linux-android
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: "rust_adblock"
+#      - uses: Swatinem/rust-cache@v2
+#        with:
+#          workspaces: "rust_adblock"
 
       - name: Decode and Save Keystore
         run: |

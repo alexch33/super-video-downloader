@@ -521,6 +521,17 @@ val gitExecutable = if (file("/usr/bin/git").exists()) "/usr/bin/git" else "git"
 // =========================================================================
 
 fun findNdkPath(): String {
+    val androidComponents = project.extensions.getByType<com.android.build.api.variant.ApplicationAndroidComponentsExtension>()
+    val sdkDir = androidComponents.sdkComponents.sdkDirectory.get().asFile.absolutePath
+
+    val preferredVersion = "29.0.14206865"
+    val preferredNdkPath = File(sdkDir, "ndk/$preferredVersion")
+
+    if (preferredNdkPath.exists()) {
+        println("✓ Using preferred NDK version $preferredVersion at: ${preferredNdkPath.absolutePath}")
+        return preferredNdkPath.absolutePath
+    }
+
     val envVar = System.getenv("ANDROID_NDK_HOME") ?: System.getenv("ANDROID_NDK_ROOT")
     if (!envVar.isNullOrEmpty()) {
         println("✓ Found NDK path in environment variable: $envVar")

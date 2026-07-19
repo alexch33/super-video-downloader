@@ -112,15 +112,7 @@ android {
         jniLibs {
             // needed for youtube-dlp
             useLegacyPackaging = true
-            keepDebugSymbols += listOf(
-                "**/libffmpeg.zip.so",
-                "**/libpython.zip.so",
-                "**/libffmpeg.so",
-                "**/libffprobe.so",
-                "**/libgojni.so",
-                "**/libpython.so",
-                "**/libqjs.so"
-            )
+            keepDebugSymbols.add("**/*.so")
         }
     }
 
@@ -189,18 +181,12 @@ android {
             }
 
             isMinifyEnabled = true
-            isShrinkResources = true
+            isShrinkResources = false
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-
-            packaging {
-                jniLibs {
-                    jniLibs.keepDebugSymbols.add("**/libffmpegkit.so")
-                }
-            }
         }
     }
 

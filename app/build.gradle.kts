@@ -112,15 +112,7 @@ android {
         jniLibs {
             // needed for youtube-dlp
             useLegacyPackaging = true
-            keepDebugSymbols += listOf(
-                "**/libffmpeg.zip.so",
-                "**/libpython.zip.so",
-                "**/libffmpeg.so",
-                "**/libffprobe.so",
-                "**/libgojni.so",
-                "**/libpython.so",
-                "**/libqjs.so"
-            )
+            keepDebugSymbols.add("**/*.so")
         }
     }
 
@@ -142,7 +134,7 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 404
+        versionCode = 408
         versionName = "0.8.24"
 
         if (isSingleAbiRequested) {
@@ -189,18 +181,12 @@ android {
             }
 
             isMinifyEnabled = true
-            isShrinkResources = true
+            isShrinkResources = false
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-
-            packaging {
-                jniLibs {
-                    jniLibs.keepDebugSymbols.add("**/libffmpegkit.so")
-                }
-            }
         }
     }
 
@@ -535,6 +521,17 @@ val gitExecutable = if (file("/usr/bin/git").exists()) "/usr/bin/git" else "git"
 // =========================================================================
 
 fun findNdkPath(): String {
+    val androidComponents = project.extensions.getByType<com.android.build.api.variant.ApplicationAndroidComponentsExtension>()
+    val sdkDir = androidComponents.sdkComponents.sdkDirectory.get().asFile.absolutePath
+
+    val preferredVersion = "29.0.14206865"
+    val preferredNdkPath = File(sdkDir, "ndk/$preferredVersion")
+
+    if (preferredNdkPath.exists()) {
+        println("✓ Using preferred NDK version $preferredVersion at: ${preferredNdkPath.absolutePath}")
+        return preferredNdkPath.absolutePath
+    }
+
     val envVar = System.getenv("ANDROID_NDK_HOME") ?: System.getenv("ANDROID_NDK_ROOT")
     if (!envVar.isNullOrEmpty()) {
         println("✓ Found NDK path in environment variable: $envVar")

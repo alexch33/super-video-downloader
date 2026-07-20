@@ -35,6 +35,7 @@ jobs:
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r29
+          add-to-path: true
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -88,7 +89,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Fixed bug with stopping all youtube-dlp tasks if one canceled (for now it happening only if live stream canceled, because live stream can't be canceled another way)\nAbout section added\nPerformance && Memory optimizations"
+          body: "Fixed bug with stopping all youtube-dlp tasks if one canceled (for now it happening only if live stream canceled, because live stream can't be canceled another way)\nAbout section added\n Performance && memory optimizations\nStability improvements"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

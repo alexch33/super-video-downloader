@@ -108,6 +108,13 @@ git submodule update --init --recursive
 ./gradlew :app:assembleDebug
 ```
 
+- Build release APK (macOS / Linux):
+
+```bash
+# from repository root
+./gradlew :app:assembleRelease
+```
+
 - Build debug APK (Windows CMD/PowerShell):
 
 ```powershell

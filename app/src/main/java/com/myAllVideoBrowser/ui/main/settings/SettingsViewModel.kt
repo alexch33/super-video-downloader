@@ -59,7 +59,7 @@ class SettingsViewModel @Inject constructor(
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
             val simDownloadsCount = sharedPrefHelper.getMaxSimultaneousDownloads()
-            val useLegacy = sharedPrefHelper.getIsUseLegacyM3u8Detection()
+            val useLegacy = sharedPrefHelper.getIsUseYoutubedlpM3u8Detection()
             val alwaysRemux = sharedPrefHelper.getIsProcessDownloadFfmpeg()
             val remuxOnlyLive = sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg()
             val forceStreamDownload = sharedPrefHelper.getIsForceStreamDownload()

@@ -93,6 +93,16 @@ open class VideoServiceLocal(
             val formatsArray = json.optJSONArray("formats")
 
             if (formatsArray != null) {
+                var hasVideoOnly = false
+                var hasAudioOnly = false
+                for (k in 0 until formatsArray.length()) {
+                    val f = formatsArray.optJSONObject(k) ?: continue
+                    val v = f.optString("vcodec", "none")
+                    val a = f.optString("acodec", "none")
+                    if (v != "none" && a == "none") hasVideoOnly = true
+                    if (v == "none" && a != "none") hasAudioOnly = true
+                }
+
                 for (i in 0 until formatsArray.length()) {
                     val f = formatsArray.getJSONObject(i)
 
@@ -107,14 +117,21 @@ open class VideoServiceLocal(
                         else -> formatNote
                     }
 
+                    val vcodec = f.optString("vcodec", "none")
+                    var acodec = f.optString("acodec", "none")
+
+                    if (hasVideoOnly && hasAudioOnly && vcodec != "none" && acodec == "none") {
+                        acodec = "unknown(auto)"
+                    }
+
                     val entity = VideoFormatEntity(
                         formatId = f.optString("format_id"),
                         format = f.optString("format"),
                         formatNote = localizedNote,
                         url = f.optString("url"),
                         ext = f.optString("ext"),
-                        vcodec = f.optString("vcodec", "none"),
-                        acodec = f.optString("acodec", "none"),
+                        vcodec = vcodec,
+                        acodec = acodec,
                         width = f.optInt("width", 0),
                         height = f.optInt("height", 0),
                         fps = f.optInt("fps", 0),
@@ -179,28 +196,5 @@ open class VideoServiceLocal(
                 "--proxy", "${currentProxy.host}:${currentProxy.port}"
             )
         }
-    }
-
-    private fun videoEntityFromFormat(videoFormat: VideoFormat): VideoFormatEntity {
-        return VideoFormatEntity(
-            asr = videoFormat.asr,
-            tbr = videoFormat.tbr,
-            abr = videoFormat.abr,
-            format = videoFormat.format,
-            formatId = videoFormat.formatId,
-            formatNote = videoFormat.formatNote,
-            ext = videoFormat.ext,
-            preference = videoFormat.preference,
-            vcodec = videoFormat.vcodec,
-            acodec = videoFormat.acodec,
-            width = videoFormat.width,
-            height = videoFormat.height,
-            fileSize = videoFormat.fileSize,
-            fileSizeApproximate = videoFormat.fileSizeApproximate,
-            fps = videoFormat.fps,
-            url = videoFormat.url,
-            manifestUrl = videoFormat.manifestUrl,
-            httpHeaders = videoFormat.httpHeaders
-        )
     }
 }

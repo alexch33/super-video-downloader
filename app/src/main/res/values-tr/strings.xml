@@ -38,7 +38,7 @@
     <string name="settings">Ayarlar</string>
     <string name="about_an_hour_ago">yaklaşık bir saat önce</string>
     <string name="remove">kaldır</string>
-    <string name="insert_your_regular_video">Vdeo url veya M3U8 linkini yapıştır</string>
+    <string name="insert_your_regular_video">Video url veya M3U8 linkini yapıştır</string>
     <string name="title_media_link">Url ile indir</string>
     <string name="clear_history">Geçmişi Sil</string>
     <string name="proxy">Proxy</string>
@@ -55,7 +55,7 @@
     <string name="cookies_cleared">Çerezler temizlendi</string>
     <string name="download_started">Video İndirme Başarıyla Başlatıldı!!!</string>
     <string name="download_open_in_app">Uygulamada Aç</string>
-    <string name="download_watch_in_app">Video İzle</string>
+    <string name="download_watch_in_app">Videoyu İzle</string>
     <string name="ad_blocker">Reklam Engelleyici</string>
     <string name="desktop_mode_on">Masaüstü Modu Açık</string>
     <string name="desktop_mode_off">Masaüstü Modu Kapalı</string>

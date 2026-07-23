@@ -80,7 +80,7 @@
     <string name="check_every_request_on_video_m3u8">M3U8 veya MPD video formatındaki tüm istekleri kontrol et.</string>
     <string name="find_videos_by_url">Website url\'lerini kontrol et</string>
     <string name="dark_mode">Karanlık Mod</string>
-    <string name="found_videos_from">%1$\'dan videolar bulundu</string>
+    <string name="found_videos_from">%1$s\'dan videolar bulundu</string>
     <string name="title">Başlık</string>
     <string name="ads_detection_treshold">Reklam Algılama Eşiği:</string>
     <string name="thread_count_for_regular_files">Normal dosyalar için iş parçacığı sayısı:</string>

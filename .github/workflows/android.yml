@@ -89,7 +89,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Turkish translation added"
+          body: "Try f-droid reproducibility with shrunk resources"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

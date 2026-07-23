@@ -134,8 +134,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 422
-        versionName = "0.8.25.2"
+        versionCode = 426
+        versionName = "0.8.25.3"
 
         if (isSingleAbiRequested) {
             splits {
@@ -181,7 +181,7 @@ android {
             }
 
             isMinifyEnabled = true
-            isShrinkResources = false
+            isShrinkResources = true
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

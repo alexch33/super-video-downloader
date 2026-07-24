@@ -89,7 +89,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Try f-droid reproducibility with shrunk resources"
+          body: "Try f-droid reproducibility with shrunk resources\nUse custom m3u8/mpd detector by default\nMinor fixes"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

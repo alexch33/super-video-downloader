@@ -449,7 +449,7 @@ golang.zx2c4.com/wireguard/windows/tunnel/winipcfg
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa
 ## explicit; go 1.25.0
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.82.0
+# google.golang.org/grpc v1.82.0 => google.golang.org/grpc v1.82.1
 ## explicit; go 1.25.0
 google.golang.org/grpc
 google.golang.org/grpc/attributes
@@ -616,3 +616,4 @@ lukechampine.com/blake3
 lukechampine.com/blake3/bao
 lukechampine.com/blake3/guts
 # github.com/2dust/AndroidLibXrayLite => ../../../../../v2ray-src
+# google.golang.org/grpc => google.golang.org/grpc v1.82.1

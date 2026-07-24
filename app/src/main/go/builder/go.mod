@@ -57,3 +57,5 @@ require (
 )
 
 replace github.com/2dust/AndroidLibXrayLite => ../../../../../v2ray-src
+
+replace google.golang.org/grpc => google.golang.org/grpc v1.82.1

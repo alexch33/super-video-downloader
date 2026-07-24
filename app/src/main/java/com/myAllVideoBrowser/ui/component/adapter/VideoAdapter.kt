@@ -70,7 +70,13 @@ class VideoAdapter(
                 this.isSelected = isSelected
 
                 if (localVideo.uri.toString().contains(".mp3")) {
-                    this.ivThumbnail.setImageResource(R.drawable.audio_file_24px)
+                    Glide.with(this@VideoViewHolder.itemView.context).load(R.drawable.audio_file_24px)
+                        .fitCenter()
+                        .error(R.drawable.audio_file_24px)
+                        .placeholder(R.drawable.audio_file_24px)
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .apply(RequestOptions().override(size.first / 8, size.second / 8))
+                        .into(this.ivThumbnail)
                 } else if (localVideo.uri.toString().contains(".mp4")) {
                     Glide.with(this@VideoViewHolder.itemView.context).load(localVideo.uri)
                         .fitCenter()
@@ -80,7 +86,13 @@ class VideoAdapter(
                         .apply(RequestOptions().override(size.first / 8, size.second / 8))
                         .into(this.ivThumbnail)
                 } else {
-                    this.ivThumbnail.setImageResource(R.drawable.ic_video_24dp)
+                    Glide.with(this@VideoViewHolder.itemView.context).load(R.drawable.ic_video_24dp)
+                        .fitCenter()
+                        .error(R.drawable.ic_video_24dp)
+                        .placeholder(R.drawable.ic_video_24dp)
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .apply(RequestOptions().override(size.first / 8, size.second / 8))
+                        .into(this.ivThumbnail)
                 }
 
                 root.setOnLongClickListener {

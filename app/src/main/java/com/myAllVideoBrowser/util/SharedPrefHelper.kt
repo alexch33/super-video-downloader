@@ -402,7 +402,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsUseYoutubedlpM3u8Detection(): Boolean {
-        return sharedPreferences.getBoolean(IS_USE_LEGACY_M3U8_DETECTION, true)
+        return sharedPreferences.getBoolean(IS_USE_LEGACY_M3U8_DETECTION, false)
     }
 
     fun setIsUseLegacyM3u8Detection(isUse: Boolean) {

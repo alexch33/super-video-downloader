@@ -75,7 +75,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
     var webTabModel: WebTabViewModel? = null
     lateinit var settingsModel: SettingsViewModel
-    val detectedVideosList = ObservableField(setOf<VideoInfo>())
+    val detectedVideosList = ObservableField<MutableSet<VideoInfo>>(ConcurrentHashMap.newKeySet())
 
     val filterRegex =
         Regex("^(.*\\.(apk|html|xml|ico|css|js|png|gif|json|jpg|jpeg|svg|woff|woff2|m3u8|mpd|ts|php|ttf|otf|eot|cur|webp|bmp|tif|tiff|psd|ai|eps|pdf|doc|docx|xls|xlsx|ppt|pptx|csv|md|rtf|vtt|srt|swf|jar|log|txt|m4s))?$")
@@ -155,7 +155,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
         if (url != initialUrl) {
             AppLogger.d("onStartPage: URL is not initial url. Clearing list.")
-            detectedVideosList.set(mutableSetOf())
+            detectedVideosList.set(ConcurrentHashMap.newKeySet())
             cancelAllCheckJobs()
         } else {
             AppLogger.d("onStartPage: URL is initial url. Skipped clearing list.")
@@ -174,7 +174,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         lastUrl = url
         downloadButtonState.set(DownloadButtonStateCanNotDownload())
 
-        detectedVideosList.set(mutableSetOf())
+        detectedVideosList.set(ConcurrentHashMap.newKeySet())
         cancelAllCheckJobs()
 
         val req = getRequestWithHeadersForUrl(
@@ -299,23 +299,24 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     open suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
-        if (newInfo.formats.allFormats().isEmpty()) {
+        if (newInfo.formats.allFormats().isEmpty() || newInfo.id.isEmpty()) {
             return
         }
 
-        if (newInfo.id.isEmpty()) {
-            return
-        }
-
-        val detectedVideos = detectedVideosList.get() ?: emptySet()
+        val detectedVideos = detectedVideosList.get() ?: ConcurrentHashMap.newKeySet()
 
         if (detectedVideos.any { isVideoInfoDuplicate(it, newInfo) }) {
             AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
             return
         }
 
-        AppLogger.d("PUSHING $newInfo to list: \n  $detectedVideos")
-        detectedVideosList.set(detectedVideos + newInfo)
+        AppLogger.d("PUSHING $newInfo to list")
+
+        val nextSet = ConcurrentHashMap.newKeySet<VideoInfo>()
+        nextSet.addAll(detectedVideos)
+        nextSet.add(newInfo)
+
+        detectedVideosList.set(nextSet)
         setButtonState(DownloadButtonStateCanDownload(newInfo))
 
         viewModelScope.launch(Dispatchers.Main) {

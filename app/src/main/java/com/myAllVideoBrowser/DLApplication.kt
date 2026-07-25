@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser
 
+import android.os.Build
 import androidx.work.Configuration
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -112,7 +113,9 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
 
             startProxyWorker()
 
-            adblockInit()
+            if (isMainProcess()) {
+                adblockInit()
+            }
         }
     }
 
@@ -122,6 +125,14 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
         if (isAdOn) {
             adBlockRepository.downloadEnabledLists()
             adBlockEngine.loadRules()
+        }
+    }
+
+    private fun isMainProcess(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            packageName == getProcessName()
+        } else {
+            true
         }
     }
 

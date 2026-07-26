@@ -16,6 +16,7 @@ import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.DaggerWorkerFactory
 import com.myAllVideoBrowser.util.proxy_utils.ProxyWorker
 import com.myAllVideoBrowser.util.proxy_utils.proxy_manager.ProxyManager
+import com.myAllVideoBrowser.v2ray.V2Ray
 import com.tencent.mmkv.MMKV
 import com.yausername.ffmpeg.FFmpeg
 import com.yausername.youtubedl_android.YoutubeDL
@@ -75,6 +76,10 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+
+        if (ProxyManager.isProxySupported()) {
+            V2Ray.init(this)
+        }
 
         try {
             OkHttp.initialize(this)

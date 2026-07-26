@@ -1,6 +1,8 @@
 package com.myAllVideoBrowser.v2ray
 
+import android.content.Context
 import android.util.Log
+import com.getkeepsafe.relinker.ReLinker
 
 /**
  * This object is the JNI wrapper for the Go library `libgojni.so`.
@@ -10,16 +12,22 @@ object V2Ray {
 
     private const val TAG = "V2RayJNI"
 
-    // This block loads the native library once, when this V2Ray object is first used.
-    // "gojni" corresponds to the filename "libgojni.so".
-    init {
+    /**
+     * Initializes the native library using ReLinker for better compatibility on older devices.
+     * This should be called early in the application lifecycle (e.g., in Application.onCreate).
+     */
+    fun init(context: Context) {
         try {
-            System.loadLibrary("gojni")
-            Log.i(TAG, "Successfully loaded 'libgojni.so' native library.")
-        } catch (e: UnsatisfiedLinkError) {
-            // This error means the .so file was not found in the APK.
-            // This is a critical failure.
-            Log.e(TAG, "CRITICAL: Failed to load native library 'libgojni.so'.", e)
+            ReLinker.loadLibrary(context, "gojni")
+            Log.i(TAG, "Successfully loaded 'libgojni' native library using ReLinker.")
+        } catch (t: Throwable) {
+            Log.e(TAG, "Failed to load 'libgojni' using ReLinker: ${t.message}")
+            try {
+                System.loadLibrary("gojni")
+                Log.i(TAG, "Successfully loaded 'libgojni' native library using fallback.")
+            } catch (e: UnsatisfiedLinkError) {
+                Log.e(TAG, "CRITICAL: Failed to load native library 'libgojni'.", e)
+            }
         }
     }
 

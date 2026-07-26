@@ -89,7 +89,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "V2ray upgraded to v26.7.19"
+          body: "Crashes fixes"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

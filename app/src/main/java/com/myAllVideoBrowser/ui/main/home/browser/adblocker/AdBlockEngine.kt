@@ -1,6 +1,7 @@
 package com.myAllVideoBrowser.ui.main.home.browser.adblocker
 
 import android.content.Context
+import com.getkeepsafe.relinker.ReLinker
 import com.myAllVideoBrowser.data.local.room.dao.AdBlockDao
 import com.myAllVideoBrowser.data.local.room.entity.AdBlockList
 import com.myAllVideoBrowser.di.qualifier.ApplicationContext
@@ -22,7 +23,7 @@ class AdBlockEngine @Inject constructor(
     private val adBlockDao: AdBlockDao,
 ) {
     private var nativeEnginePtr: Long = 0
-    private val native = AdBlockNative()
+    private val native = AdBlockNative(context)
     private val engineScope = CoroutineScope(Dispatchers.IO)
     private val reloadMutex = Mutex()
 
@@ -169,10 +170,17 @@ class AdBlockEngine @Inject constructor(
     }
 }
 
-class AdBlockNative {
-    companion object {
-        init {
-            System.loadLibrary("adblock_rust_jni")
+class AdBlockNative(context: Context) {
+    init {
+        try {
+            ReLinker.loadLibrary(context, "adblock_rust_jni")
+        } catch (t: Throwable) {
+            AppLogger.e("Failed to load adblock_rust_jni using ReLinker: ${t.message}")
+            try {
+                System.loadLibrary("adblock_rust_jni")
+            } catch (e: UnsatisfiedLinkError) {
+                AppLogger.e("Final fallback failed: System.loadLibrary(adblock_rust_jni): ${e.message} ${e.stackTraceToString()}")
+            }
         }
     }
 

@@ -102,6 +102,8 @@ jvmToolchain = "21"
 # Go
 goVersion = "1.26.0"
 
+relinker = "1.4.5"
+
 [libraries]
 # Android and Gradle
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "conscryptAndroid" }
@@ -212,6 +214,8 @@ espressoIntents = { module = "androidx.test.espresso:espresso-intents", version.
 # Code Coverage
 desugarJdk = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugarJdk" }
 coverallsPlugin = { module = "org.kt3k.gradle.plugin:coveralls-gradle-plugin", version.ref = "coveralls" }
+
+relinker = { module = "com.getkeepsafe.relinker:relinker", version.ref = "relinker" }
 
 [bundles]
 room = ["roomRuntime", "roomKtx", "roomRxjava3", "roomGuava"]

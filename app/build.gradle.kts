@@ -352,6 +352,8 @@ dependencies {
     implementation(libs.jsoup)
     implementation(libs.timeago)
 
+    implementation(libs.relinker)
+
     // Desugar for Java 8+ APIs
     coreLibraryDesugaring(libs.desugarJdk)
 

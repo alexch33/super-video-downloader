@@ -169,4 +169,14 @@
     <string name="accessibility_refresh">刷新</string>
     <string name="accessibility_stop">停止</string>
     <string name="accessibility_close">关闭</string>
+    <string name="about">关于</string>
+    <string name="currentVersion">当前版本</string>
+    <string name="checkingForUpdates">检查更新中…</string>
+    <string name="developer">开发者</string>
+    <string name="copyBTC">复制 BTC</string>
+    <string name="btcAddress">BTC 地址</string>
+    <string name="btcCopied">已复制 BTC 地址到剪贴板</string>
+    <string name="latestVersion">最新版</string>
+    <string name="supportString">通过 BTC 支持项目</string>
+    <string name="checkingForUpdatesFailed">检查更新失败。</string>
 </resources>

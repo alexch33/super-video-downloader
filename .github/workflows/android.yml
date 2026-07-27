@@ -88,9 +88,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: true
-          body: "Try f-droid reproducibility with shrunk resources\nUse custom m3u8/mpd detector by default\nMinor fixes"
+          prerelease: false
+          body: "No changes since 0.8.25.5, changes since 0.8.25:\nUse Relinker for loading native libs(Old devices crashes fix)\nV2ray upgraded to latest\nUse custom m3u8/mpd detector by default\nTranslations updates\nCrashes fixes\nMinor fixes\nPerformance && Memory optimizations"
           draft: false
-          make_latest: false
+          make_latest: true
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

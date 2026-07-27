@@ -134,8 +134,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 426
-        versionName = "0.8.25.3"
+        versionCode = 438
+        versionName = "0.8.25.6"
 
         if (isSingleAbiRequested) {
             splits {
@@ -351,6 +351,8 @@ dependencies {
     implementation(libs.kotlinxSerializationCore)
     implementation(libs.jsoup)
     implementation(libs.timeago)
+
+    implementation(libs.relinker)
 
     // Desugar for Java 8+ APIs
     coreLibraryDesugaring(libs.desugarJdk)

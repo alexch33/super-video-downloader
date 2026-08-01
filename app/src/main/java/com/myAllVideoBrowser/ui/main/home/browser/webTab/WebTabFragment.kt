@@ -374,18 +374,29 @@ class WebTabFragment : BaseWebTabFragment() {
     }
 
     private fun recreateWebView(savedInstanceState: Bundle?) {
-        if (webTab.getMessage() == null || webTab.getWebView() == null) {
-            webTab.setWebView(WebView(requireContext()))
-        }
+        try {
+            if (webTab.getMessage() == null || webTab.getWebView() == null) {
+                webTab.setWebView(WebView(requireContext()))
+            }
 
-        if (savedInstanceState != null) {
-            webTab.getWebView()?.restoreState(savedInstanceState)
+            if (savedInstanceState != null) {
+                webTab.getWebView()?.restoreState(savedInstanceState)
+            }
+        } catch (e: Exception) {
+            AppLogger.e("Failed to recreate WebView: ${e.message}")
+            context?.let {
+                Toast.makeText(
+                    it,
+                    "WebView provider not available. Please ensure Android System WebView is installed and enabled.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun configureWebView(fragmentWebTabBinding: FragmentWebTabBinding) {
-        val currentWebView = this.webTab.getWebView()
+        val currentWebView = this.webTab.getWebView() ?: return
 
         val webViewClient = CustomWebViewClient(
             tabViewModel,
@@ -409,16 +420,15 @@ class WebTabFragment : BaseWebTabFragment() {
             mainActivity
         )
 
-        currentWebView?.webChromeClient = chromeClient
-        currentWebView?.webViewClient = webViewClient
+        currentWebView.webChromeClient = chromeClient
+        currentWebView.webViewClient = webViewClient
 
-        val webSettings = webTab.getWebView()?.settings
-        val webView = webTab.getWebView()
+        val webSettings = currentWebView.settings
 
-        webView?.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        webView?.isScrollbarFadingEnabled = true
+        currentWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        currentWebView.isScrollbarFadingEnabled = true
 
-        webSettings?.apply {
+        webSettings.apply {
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             setSupportZoom(true)
             setSupportMultipleWindows(true)
@@ -440,7 +450,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 userAgentString = BrowserFragment.DESKTOP_USER_AGENT
             }
         }
-        currentWebView?.setOnCreateContextMenuListener { menu, v, menuInfo ->
+        currentWebView.setOnCreateContextMenuListener { menu, v, _ ->
             val webView = v as WebView
             val hitTestResult = webView.hitTestResult
 
@@ -456,13 +466,13 @@ class WebTabFragment : BaseWebTabFragment() {
             }
         }
 
-        currentWebView?.addJavascriptInterface(
+        currentWebView.addJavascriptInterface(
             shouldInterceptPostRequests,
             WebPostBridge.BRIDGE_NAME
         )
 
         fragmentWebTabBinding.webviewContainer.addView(
-            webTab.getWebView(),
+            currentWebView,
             LinearLayout.LayoutParams(-1, -1)
         )
     }
@@ -756,8 +766,8 @@ class WebTabFragment : BaseWebTabFragment() {
     }
 
     private fun destroyWebView(webView: WebView) {
-        val webViewContainer: ViewGroup = webView.parent as ViewGroup
-        webViewContainer.removeView(webView)
+        val webViewContainer: ViewGroup? = webView.parent as? ViewGroup
+        webViewContainer?.removeView(webView)
         webView.destroy()
         webTab.setWebView(null)
     }
@@ -778,7 +788,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                 transaction.commit()
             }
-        } catch (e: ClassCastException) {
+        } catch (_: ClassCastException) {
             AppLogger.e("Can't get the fragment manager with this")
         }
     }

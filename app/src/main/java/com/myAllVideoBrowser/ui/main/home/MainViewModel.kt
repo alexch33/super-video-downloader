@@ -31,6 +31,8 @@ class MainViewModel @Inject constructor(
 
     val currentItem = ObservableField<Int>()
 
+    val isWebViewAvailable = ObservableBoolean(true)
+
     val offScreenPageLimit = ObservableField(4)
 
     // pair - format:url

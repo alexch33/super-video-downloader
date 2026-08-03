@@ -7,6 +7,7 @@ import android.view.View
 import android.view.WindowManager
 import android.webkit.WebChromeClient
 import android.webkit.WebView
+import android.widget.Toast
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentWebTabBinding
 import com.myAllVideoBrowser.ui.main.home.MainActivity
@@ -50,20 +51,26 @@ class CustomWebChromeClient(
             return false // Blocked
         }
 
-        val transport = resultMsg.obj as WebView.WebViewTransport
-        val newWebView = WebView(view.context)
-        transport.webView = newWebView
+        try {
+            val transport = resultMsg.obj as WebView.WebViewTransport
+            val newWebView = WebView(view.context)
+            transport.webView = newWebView
 
-        tabViewModel.openPageEvent.value =
-            WebTab(
-                webview = newWebView,
-                resultMsg = resultMsg,
-                url = url,
-                title = "Loading...",
-                icon = null
-            )
+            tabViewModel.openPageEvent.value =
+                WebTab(
+                    webview = newWebView,
+                    resultMsg = resultMsg,
+                    url = url,
+                    title = "Loading...",
+                    icon = null
+                )
 
-        return true
+            return true
+        } catch (e: Exception) {
+            AppLogger.e("Failed to create new WebView window: ${e.message}")
+            Toast.makeText(view.context, "WebView provider not available.", Toast.LENGTH_SHORT).show()
+            return false
+        }
     }
 
     override fun onReceivedIcon(view: WebView?, icon: Bitmap?) {

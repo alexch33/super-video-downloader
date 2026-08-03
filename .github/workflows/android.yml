@@ -89,7 +89,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: false
-          body: "No changes since 0.8.25.5, changes since 0.8.25:\nUse Relinker for loading native libs(Old devices crashes fix)\nV2ray upgraded to latest\nUse custom m3u8/mpd detector by default\nTranslations updates\nCrashes fixes\nMinor fixes\nPerformance && Memory optimizations"
+          body: "Fixed youtube-dlp issue with videos without sound\nMinor fixes"
           draft: false
           make_latest: true
           tag_name: ${{ github.ref_name }}

@@ -1,6 +1,8 @@
 package com.myAllVideoBrowser
 
 import android.os.Build
+import android.webkit.CookieManager
+import androidx.webkit.WebViewCompat
 import androidx.work.Configuration
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -56,6 +58,9 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
 
     private var isYoutubeDLInitialized = false
 
+    var isWebViewAvailable = true
+        private set
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -76,6 +81,8 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+
+        checkWebViewAvailability()
 
         if (ProxyManager.isProxySupported()) {
             V2Ray.init(this)
@@ -121,6 +128,21 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
             if (isMainProcess()) {
                 adblockInit()
             }
+        }
+    }
+
+    private fun checkWebViewAvailability() {
+        isWebViewAvailable = try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                WebViewCompat.getCurrentWebViewPackage(applicationContext) != null
+            } else {
+                // Instantiating a CookieManager is a relatively lightweight way to check for WebView provider
+                CookieManager.getInstance()
+                true
+            }
+        } catch (e: Throwable) {
+            AppLogger.e("WebView check failed: ${e.message}")
+            false
         }
     }
 

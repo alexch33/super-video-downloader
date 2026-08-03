@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.Window
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -18,6 +19,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewpager2.widget.ViewPager2
+import com.myAllVideoBrowser.DLApplication
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.ActivityMainBinding
 import com.myAllVideoBrowser.ui.component.adapter.MainAdapter
@@ -88,6 +90,12 @@ class MainActivity : BaseActivity() {
         proxiesViewModel = ViewModelProvider(this, viewModelFactory)[ProxiesViewModel::class.java]
         settingsViewModel = ViewModelProvider(this, viewModelFactory)[SettingsViewModel::class.java]
 
+        val isWebViewAvailable = (application as DLApplication).isWebViewAvailable
+        mainViewModel.isWebViewAvailable.set(isWebViewAvailable)
+        if (!isWebViewAvailable) {
+            Toast.makeText(this, "Browser feature is disabled: WebView provider not found", Toast.LENGTH_LONG).show()
+        }
+
         mainAdapter = MainAdapter(supportFragmentManager, lifecycle, fragmentFactory)
 
         dataBinding.viewPager.isUserInputEnabled = false
@@ -98,6 +106,10 @@ class MainActivity : BaseActivity() {
             var goingToBrowser = false
             when (menuItem.itemId) {
                 R.id.tab_browser -> {
+                    if (!mainViewModel.isWebViewAvailable.get()) {
+                        Toast.makeText(this, "Browser is not available on this device", Toast.LENGTH_SHORT).show()
+                        return@setOnItemSelectedListener false
+                    }
                     mainViewModel.currentItem.set(0)
                     goingToBrowser = true
                 }
@@ -170,7 +182,11 @@ class MainActivity : BaseActivity() {
             if (intent.hasExtra(YoutubeDlDownloaderWorker.IS_FINISHED_DOWNLOAD_ACTION_KEY)) {
                 dataBinding.viewPager.currentItem = 1
             } else {
-                dataBinding.viewPager.currentItem = 0
+                if (mainViewModel.isWebViewAvailable.get()) {
+                    dataBinding.viewPager.currentItem = 0
+                } else {
+                    dataBinding.viewPager.currentItem = 1
+                }
             }
         }
     }

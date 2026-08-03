@@ -176,6 +176,10 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? {
             val url = request.url.toString()
 
+            if (!::settingsModel.isInitialized || !::videoDetectionModel.isInitialized) {
+                return super.shouldInterceptRequest(request)
+            }
+
             val isM3u8Check = settingsModel.isCheckIfEveryRequestOnM3u8.get()
             val isMp4Check = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
             val isCheckOnAudio = settingsModel.isCheckOnAudio.get()
@@ -289,6 +293,16 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
+        mainViewModel = mainActivity.mainViewModel
+        browserViewModel = ViewModelProvider(this, viewModelFactory)[BrowserViewModel::class.java]
+        historyModel = ViewModelProvider(this, viewModelFactory)[HistoryViewModel::class.java]
+        videoDetectionModel =
+            ViewModelProvider(this, viewModelFactory)[GlobalVideoDetectionModel::class.java]
+
+        videoDetectionModel.settingsModel = mainActivity.settingsViewModel
+        browserViewModel.settingsModel = mainActivity.settingsViewModel
+        settingsModel = mainActivity.settingsViewModel
+
         if (ProxyManager.isProxySupported()) {
             try {
                 val swController = ServiceWorkerController.getInstance()
@@ -300,16 +314,6 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         } else {
             AppLogger.d("Skipping ServiceWorker init: WebView version too old.")
         }
-
-        mainViewModel = mainActivity.mainViewModel
-        browserViewModel = ViewModelProvider(this, viewModelFactory)[BrowserViewModel::class.java]
-        historyModel = ViewModelProvider(this, viewModelFactory)[HistoryViewModel::class.java]
-        videoDetectionModel =
-            ViewModelProvider(this, viewModelFactory)[GlobalVideoDetectionModel::class.java]
-
-        videoDetectionModel.settingsModel = mainActivity.settingsViewModel
-        browserViewModel.settingsModel = mainActivity.settingsViewModel
-        settingsModel = mainActivity.settingsViewModel
 
         mainActivity.mainViewModel.browserServicesProvider = this
 

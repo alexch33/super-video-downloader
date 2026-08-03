@@ -93,16 +93,6 @@ open class VideoServiceLocal(
             val formatsArray = json.optJSONArray("formats")
 
             if (formatsArray != null) {
-                var hasVideoOnly = false
-                var hasAudioOnly = false
-                for (k in 0 until formatsArray.length()) {
-                    val f = formatsArray.optJSONObject(k) ?: continue
-                    val v = f.optString("vcodec", "none")
-                    val a = f.optString("acodec", "none")
-                    if (v != "none" && a == "none") hasVideoOnly = true
-                    if (v == "none" && a != "none") hasAudioOnly = true
-                }
-
                 for (i in 0 until formatsArray.length()) {
                     val f = formatsArray.getJSONObject(i)
 
@@ -118,11 +108,7 @@ open class VideoServiceLocal(
                     }
 
                     val vcodec = f.optString("vcodec", "none")
-                    var acodec = f.optString("acodec", "none")
-
-                    if (hasVideoOnly && hasAudioOnly && vcodec != "none" && acodec == "none") {
-                        acodec = "unknown(auto)"
-                    }
+                    val acodec = f.optString("acodec", "none")
 
                     val entity = VideoFormatEntity(
                         formatId = f.optString("format_id"),

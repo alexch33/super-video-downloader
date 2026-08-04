@@ -10,7 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.Window
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
@@ -58,6 +58,16 @@ class MainActivity : BaseActivity() {
 
     private lateinit var mainAdapter: MainAdapter
 
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            AppLogger.d("Notification permission granted")
+        } else {
+            AppLogger.d("Notification permission denied")
+        }
+    }
+
     private val screenOrientationCallback = object : Observable.OnPropertyChangedCallback() {
         override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
             val isLock = settingsViewModel.isLockPortrait.get()
@@ -93,7 +103,11 @@ class MainActivity : BaseActivity() {
         val isWebViewAvailable = (application as DLApplication).isWebViewAvailable
         mainViewModel.isWebViewAvailable.set(isWebViewAvailable)
         if (!isWebViewAvailable) {
-            Toast.makeText(this, "Browser feature is disabled: WebView provider not found", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "Browser feature is disabled: WebView provider not found",
+                Toast.LENGTH_LONG
+            ).show()
         }
 
         mainAdapter = MainAdapter(supportFragmentManager, lifecycle, fragmentFactory)
@@ -107,7 +121,11 @@ class MainActivity : BaseActivity() {
             when (menuItem.itemId) {
                 R.id.tab_browser -> {
                     if (!mainViewModel.isWebViewAvailable.get()) {
-                        Toast.makeText(this, "Browser is not available on this device", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this,
+                            "Browser is not available on this device",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         return@setOnItemSelectedListener false
                     }
                     mainViewModel.currentItem.set(0)
@@ -193,18 +211,21 @@ class MainActivity : BaseActivity() {
 
     private fun grantPermissions() {
         if (Build.VERSION.SDK_INT >= 33) {
-            if (ContextCompat.checkSelfPermission(
-                    applicationContext,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(
+            Handler(Looper.getMainLooper()).post {
+                if (isFinishing || isDestroyed) {
+                    return@post
+                }
+                if (ContextCompat.checkSelfPermission(
+                        this,
                         Manifest.permission.POST_NOTIFICATIONS
-                    ),
-                    0
-                )
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    try {
+                        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } catch (e: Exception) {
+                        AppLogger.e("Failed to launch notification permission request ${e.stackTraceToString()}")
+                    }
+                }
             }
         }
     }

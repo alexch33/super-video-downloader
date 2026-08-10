@@ -1,0 +1,3 @@
+- M3U8/MPD detection by youtube-dlp by default
+- Built-in ad list updated
+- Minor fixes

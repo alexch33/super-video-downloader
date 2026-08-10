@@ -89,7 +89,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: false
-          body: "Fixed youtube-dlp issue with videos without sound\nMinor fixes"
+          body: "M3U8/MPD detection by youtube-dlp by default\nBuilt-in list updated\nMinor fixes"
           draft: false
           make_latest: true
           tag_name: ${{ github.ref_name }}

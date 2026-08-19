@@ -4,6 +4,9 @@
 
 This project was created for research and educational purposes to explore the downloading of a wide variety of video formats and stream types. The developer does not take any responsibility for illegal actions performed by users of this application.
 
+Recommended way to get the app: **[Download from F-Droid](https://f-droid.org/packages/com.myAllVideoBrowser)**.  
+It is published as a **[reproducible build](https://verification.f-droid.org/packages/com.myAllVideoBrowser/)**; F-Droid verifies that the source code matches both their binary and the APK in this repository's [Releases](https://github.com/alexch33/super-video-downloader/releases).
+
 [![F-Droid](https://img.shields.io/f-droid/v/com.myAllVideoBrowser?color=b4eb12&label=F-Droid&logo=fdroid&logoColor=1f78d2)](https://f-droid.org/packages/com.myAllVideoBrowser)
 [![Google Play](https://img.shields.io/badge/Google%20Play-Get%20it%20on-green?logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=com.myAllVideoBrowser)
 

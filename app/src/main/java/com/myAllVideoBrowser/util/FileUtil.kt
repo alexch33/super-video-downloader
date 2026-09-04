@@ -527,14 +527,20 @@ class FileUtil @Inject constructor() {
         } else {
             null
         }
-        val ext2 = Uri.fromFile(context.getExternalFilesDir(null))
-        val ext3 =
-            Uri.fromFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
+        try {
+            val ext2 = Uri.fromFile(context.getExternalFilesDir(null))
+            val ext3 =
+                Uri.fromFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
 
-        val result = uri.toString().contains(ext1.toString()) || uri.toString()
-            .contains(ext2.toString()) || uri.toString().contains(ext3.toString())
+            val result = uri.toString().contains(ext1.toString()) || uri.toString()
+                .contains(ext2.toString()) || uri.toString().contains(ext3.toString())
 
-        return result
+            return result
+        } catch (_: Throwable) {
+            AppLogger.e("isExternalUri ERROR")
+        }
+
+        return false
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)

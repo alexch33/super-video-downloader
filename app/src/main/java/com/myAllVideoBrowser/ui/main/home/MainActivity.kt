@@ -223,7 +223,7 @@ class MainActivity : BaseActivity() {
                     try {
                         requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     } catch (e: Exception) {
-                        AppLogger.e("Failed to launch notification permission request ${e.stackTraceToString()}")
+                        AppLogger.e("Failed to launch notification permission request ${e.message}")
                     }
                 }
             }

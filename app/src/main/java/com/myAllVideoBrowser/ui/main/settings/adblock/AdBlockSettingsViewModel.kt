@@ -16,23 +16,25 @@ class AdBlockSettingsViewModel @Inject constructor(
     private val repository: AdBlockRepository
 ) : ViewModel() {
 
-    init {
-        viewModelScope.launch {
-            repository.checkAndPrepopulateDefaults()
-            repository.activeDownloads.collect { ids ->
-                downloadingIds.clear()
-                downloadingIds.addAll(ids)
-            }
-        }
-    }
+    val downloadingIds = ObservableArrayList<Int>()
 
     val adBlockLists: StateFlow<List<AdBlockList>> = repository.getAllLists()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val downloadingIds = ObservableArrayList<Int>()
-
     val showAddDialogEvent = SingleLiveEvent<Unit?>()
     val errorEvent = SingleLiveEvent<String>()
+
+    init {
+        viewModelScope.launch {
+            repository.checkAndPrepopulateDefaults()
+            repository.activeDownloads.collect { ids ->
+                ids?.let {
+                    downloadingIds.clear()
+                    downloadingIds.addAll(it)
+                }
+            }
+        }
+    }
 
     fun onAddListClicked() {
         showAddDialogEvent.call()

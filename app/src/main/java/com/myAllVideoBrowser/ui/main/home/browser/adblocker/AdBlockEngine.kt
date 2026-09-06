@@ -179,7 +179,7 @@ class AdBlockNative(context: Context) {
             try {
                 System.loadLibrary("adblock_rust_jni")
             } catch (e: UnsatisfiedLinkError) {
-                AppLogger.e("Final fallback failed: System.loadLibrary(adblock_rust_jni): ${e.message} ${e.stackTraceToString()}")
+                AppLogger.e("Final fallback failed: System.loadLibrary(adblock_rust_jni): ${e.message}")
             }
         }
     }

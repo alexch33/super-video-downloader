@@ -34,6 +34,12 @@ const (
 // Path probe packets are declared lost after this time.
 const pathProbePacketLossTimeout = time.Second
 
+// minDatagramRoomForSizing is the least room left in a datagram that is still
+// used to size the next packet number. The imitated client needs the room to
+// fit a header before it caps a packet to it; below that it keeps the full
+// datagram size. A header size is not a constant, so this approximates it.
+const minDatagramRoomForSizing protocol.ByteCount = 40
+
 type packetNumberSpace struct {
 	history sentPacketHistory
 	pns     packetNumberGenerator
@@ -113,6 +119,15 @@ type sentPacketHandler struct {
 
 	perspective protocol.Perspective
 
+	// shortPacketNumbers allows single-byte packet numbers, as Chrome uses.
+	shortPacketNumbers bool
+	// maxDatagramSize converts the congestion window into a packet count, which
+	// is what the packet number length depends on when shortPacketNumbers is set.
+	maxDatagramSize protocol.ByteCount
+	// lastDatagramPadding is the room left in the datagram that was packed last,
+	// which is what the imitated client measures the window against instead.
+	lastDatagramPadding protocol.ByteCount
+
 	qlogger     qlogwriter.Recorder
 	lastMetrics qlog.MetricsUpdated
 	logger      utils.Logger
@@ -131,6 +146,7 @@ func NewSentPacketHandler(
 	enableECN bool,
 	ignorePacketsBelow func(protocol.PacketNumber),
 	pers protocol.Perspective,
+	shortPacketNumbers bool,
 	qlogger qlogwriter.Recorder,
 	logger utils.Logger,
 ) SentPacketHandler {
@@ -144,6 +160,8 @@ func NewSentPacketHandler(
 	)
 
 	h := &sentPacketHandler{
+		shortPacketNumbers:             shortPacketNumbers,
+		maxDatagramSize:                initialMaxDatagramSize,
 		peerCompletedAddressValidation: pers == protocol.PerspectiveServer,
 		peerAddressValidated:           pers == protocol.PerspectiveClient || clientAddressValidated,
 		initialPackets:                 newPacketNumberSpace(initialPN, false),
@@ -993,10 +1011,30 @@ func (h *sentPacketHandler) ECNMode(isShortHeaderPacket bool) protocol.ECN {
 	return h.ecnTracker.Mode()
 }
 
+// packetNumberSizingUnit is the packet size the congestion window is expressed
+// in when deriving the packet number length. The imitated client coalesces a
+// packet into a datagram and then caps the next packet to the room that is
+// left, so a nearly full datagram makes the window look like a large number of
+// packets and lengthens the packet number for exactly one packet. Too little
+// room for a header and it keeps the full size instead.
+func (h *sentPacketHandler) packetNumberSizingUnit() protocol.ByteCount {
+	if h.lastDatagramPadding >= minDatagramRoomForSizing {
+		return h.lastDatagramPadding
+	}
+	return h.maxDatagramSize
+}
+
 func (h *sentPacketHandler) PeekPacketNumber(encLevel protocol.EncryptionLevel) (protocol.PacketNumber, protocol.PacketNumberLen) {
 	pnSpace := h.getPacketNumberSpace(encLevel)
 	pn := pnSpace.pns.Peek()
 	// See section 17.1 of RFC 9000.
+	if h.shortPacketNumbers {
+		var cwndPackets protocol.PacketNumber
+		if size := h.packetNumberSizingUnit(); size > 0 {
+			cwndPackets = protocol.PacketNumber(h.getCongestionControl().GetCongestionWindow() / size)
+		}
+		return pn, protocol.PacketNumberLengthForHeaderChrome(pn, pnSpace.largestAcked, cwndPackets)
+	}
 	return pn, protocol.PacketNumberLengthForHeader(pn, pnSpace.largestAcked)
 }
 
@@ -1064,7 +1102,12 @@ func (h *sentPacketHandler) TimeUntilSend() monotime.Time {
 }
 
 func (h *sentPacketHandler) SetMaxDatagramSize(s protocol.ByteCount) {
+	h.maxDatagramSize = s
 	h.getCongestionControl().SetMaxDatagramSize(s)
+}
+
+func (h *sentPacketHandler) SetLastDatagramPadding(n protocol.ByteCount) {
+	h.lastDatagramPadding = n
 }
 
 func (h *sentPacketHandler) isAmplificationLimited() bool {

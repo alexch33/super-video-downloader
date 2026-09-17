@@ -55,3 +55,30 @@ func PacketNumberLengthForHeader(pn, largestAcked PacketNumber) PacketNumberLen 
 	}
 	return PacketNumberLen4
 }
+
+// PacketNumberLengthForHeaderChrome sizes the packet number the way the imitated
+// client does: take the larger of the unacknowledged range and the congestion
+// window measured in packets, quadruple it, and use the shortest length that can
+// encode that. Both this and PacketNumberLengthForHeader conform to RFC 9000
+// section 17.1, but they differ on the wire in two visible ways.
+//
+// The congestion window sets a floor, so a single byte is used for far longer
+// than a rule based on the unacknowledged range alone would allow: the window
+// only has to stay under a quarter of the one-byte range. Three-byte packet
+// numbers are also never produced, and quic-go's default does produce them.
+func PacketNumberLengthForHeaderChrome(pn, largestAcked PacketNumber, cwndPackets PacketNumber) PacketNumberLen {
+	var numUnacked PacketNumber
+	if largestAcked == InvalidPacketNumber {
+		numUnacked = pn + 1
+	} else {
+		numUnacked = pn - largestAcked
+	}
+	delta := max(numUnacked, cwndPackets)
+	if delta < 1<<8/4 {
+		return PacketNumberLen1
+	}
+	if delta < 1<<16/4 {
+		return PacketNumberLen2
+	}
+	return PacketNumberLen4
+}

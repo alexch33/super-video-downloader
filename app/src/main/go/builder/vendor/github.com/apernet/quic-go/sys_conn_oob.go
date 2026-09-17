@@ -78,7 +78,7 @@ type oobConn struct {
 
 var _ rawConn = &oobConn{}
 
-func newConn(c OOBCapablePacketConn, supportsDF bool) (*oobConn, error) {
+func newConn(c OOBCapablePacketConn, supportsDF bool, disableGSO bool) (*oobConn, error) {
 	rawConn, err := c.SyscallConn()
 	if err != nil {
 		return nil, err
@@ -147,11 +147,11 @@ func newConn(c OOBCapablePacketConn, supportsDF bool) (*oobConn, error) {
 		readPos:              batchSize,
 		cap: connCapabilities{
 			DF:  supportsDF,
-			GSO: isGSOEnabled(rawConn),
+			GSO: !disableGSO && isGSOEnabled(rawConn),
 			ECN: isECNEnabled(),
 		},
 	}
-	for i := 0; i < batchSize; i++ {
+	for i := range batchSize {
 		oobConn.messages[i].OOB = make([]byte, oobBufferSize)
 	}
 	return oobConn, nil

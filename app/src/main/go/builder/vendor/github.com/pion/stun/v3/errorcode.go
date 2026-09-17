@@ -64,7 +64,7 @@ func (c *ErrorCodeAttribute) GetFrom(m *Message) error {
 		return io.ErrUnexpectedEOF
 	}
 	var (
-		class  = uint16(value[errorCodeClassByte])
+		class  = uint16(value[errorCodeClassByte] & 0x7)
 		number = uint16(value[errorCodeNumberByte])
 		code   = int(class*errorCodeModulo + number)
 	)

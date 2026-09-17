@@ -48,7 +48,7 @@ type OOBCapablePacketConn interface {
 
 var _ OOBCapablePacketConn = &net.UDPConn{}
 
-func wrapConn(pc net.PacketConn) (rawConn, error) {
+func wrapConn(pc net.PacketConn, disableGSO bool) (rawConn, error) {
 	_ = setReceiveBuffer(pc)
 	_ = setSendBuffer(pc)
 
@@ -76,7 +76,7 @@ func wrapConn(pc net.PacketConn) (rawConn, error) {
 		utils.DefaultLogger.Infof("PacketConn is not a net.UDPConn. Disabling optimizations possible on UDP connections.")
 		return &basicConn{PacketConn: pc, supportsDF: supportsDF}, nil
 	}
-	return newConn(c, supportsDF)
+	return newConn(c, supportsDF, disableGSO)
 }
 
 // The basicConn is the most trivial implementation of a rawConn.

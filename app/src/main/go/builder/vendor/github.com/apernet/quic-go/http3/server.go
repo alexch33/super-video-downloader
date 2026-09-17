@@ -480,10 +480,7 @@ func (s *Server) handleConn(conn *quic.Conn) error {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		for {
 			str, err := conn.AcceptUniStream(context.Background())
 			if err != nil {
@@ -491,7 +488,7 @@ func (s *Server) handleConn(conn *quic.Conn) error {
 			}
 			go hconn.HandleUnidirectionalStream(str)
 		}
-	}()
+	})
 
 	var nextStreamID quic.StreamID
 	var handleErr error
@@ -537,14 +534,12 @@ func (s *Server) handleConn(conn *quic.Conn) error {
 					Frame:    qlog.Frame{Frame: qlog.GoAwayFrame{StreamID: nextStreamID}},
 				})
 			}
-			wg.Add(1)
 			// Send the GOAWAY frame in a separate Goroutine.
 			// Sending might block if the peer didn't grant enough flow control credit.
 			// Write is guaranteed to return once the connection is closed.
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				_, _ = ctrlStr.Write((&goAwayFrame{StreamID: nextStreamID}).Append(nil))
-			}()
+			})
 			ctx = s.closeCtx
 			continue
 		}
@@ -555,11 +550,9 @@ func (s *Server) handleConn(conn *quic.Conn) error {
 		}
 
 		nextStreamID = str.StreamID() + 4
-		wg.Add(1)
-		go func() {
+		wg.Go(func() {
 			// HandleRequestStream will return once the request has been handled,
 			// or the underlying connection is closed.
-			defer wg.Done()
 			if s.StreamDispatcher == nil {
 				hconn.HandleRequestStream(str)
 				return
@@ -575,7 +568,7 @@ func (s *Server) handleConn(conn *quic.Conn) error {
 				return
 			}
 			hconn.HandleRequestStream(str)
-		}()
+		})
 	}
 	wg.Wait()
 	return handleErr

@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"context"
 	"encoding/json"
 	"math/big"
 	"net/url"
@@ -450,8 +449,8 @@ func (c *SplitHTTPConfig) Build() (proto.Message, error) {
 		return nil, errors.New("maxConnections cannot be specified together with maxConcurrency")
 	}
 	if c.Xmux == (XmuxConfig{}) {
-		c.Xmux.MaxConnections.From = 6
-		c.Xmux.MaxConnections.To = 6
+		c.Xmux.MaxConnections.From = 3
+		c.Xmux.MaxConnections.To = 3
 		c.Xmux.HMaxRequestTimes.From = 600
 		c.Xmux.HMaxRequestTimes.To = 900
 		c.Xmux.HMaxReusableSecs.From = 1800
@@ -534,10 +533,6 @@ type KCPConfig struct {
 
 // Build implements Buildable.
 func (c *KCPConfig) Build() (proto.Message, error) {
-	if c.HeaderConfig != nil || c.Seed != nil {
-		return nil, errors.PrintRemovedFeatureError("mkcp header & seed", "finalmask/udp header-* & mkcp-original & mkcp-aes128gcm")
-	}
-
 	config := common.Must2(internet.CreateTransportConfig(kcp.ProtocolName)).(*kcp.Config)
 
 	if c.Mtu != nil {
@@ -560,16 +555,16 @@ func (c *KCPConfig) Build() (proto.Message, error) {
 	}
 
 	if config.Mtu < 21 {
-		return nil, errors.New("Mtu must be at least 21").AtError()
+		return nil, errors.New("MTU must be at least 21")
 	}
 	if config.Tti < 10 || config.Tti > 1000 {
-		return nil, errors.New("invalid mKCP TTI: ", c.Tti).AtError()
+		return nil, errors.New("TTI must be between 10 and 1000")
 	}
 	if config.CwndMultiplier < 1 {
-		return nil, errors.New("CwndMultiplier must be at least 1").AtError()
+		return nil, errors.New("CwndMultiplier must be at least 1")
 	}
 	if config.GetSendingBufferSize() == 0 {
-		return nil, errors.New("MaxSendingWindow must be >= Mtu").AtError()
+		return nil, errors.New("MaxSendingWindow must be at least ", config.Mtu)
 	}
 
 	return config, nil
@@ -739,11 +734,6 @@ func (b Bandwidth) Bps() (uint64, error) {
 	return uint64(val*float64(mul)) / 8, nil
 }
 
-type UdpHop struct {
-	PortList PortList   `json:"ports"`
-	Interval Int32Range `json:"interval"`
-}
-
 type Masquerade struct {
 	Type string `json:"type"`
 
@@ -751,6 +741,7 @@ type Masquerade struct {
 
 	Url         string `json:"url"`
 	RewriteHost bool   `json:"rewriteHost"`
+	XForwarded  bool   `json:"xForwarded"`
 	Insecure    bool   `json:"insecure"`
 
 	Content    string            `json:"content"`
@@ -759,14 +750,8 @@ type Masquerade struct {
 }
 
 type HysteriaConfig struct {
-	Version int32  `json:"version"`
-	Auth    string `json:"auth"`
-
-	Congestion *string    `json:"congestion"`
-	Up         *Bandwidth `json:"up"`
-	Down       *Bandwidth `json:"down"`
-	UdpHop     *UdpHop    `json:"udphop"`
-
+	Version        int32      `json:"version"`
+	Auth           string     `json:"auth"`
 	UdpIdleTimeout int64      `json:"udpIdleTimeout"`
 	Masquerade     Masquerade `json:"masquerade"`
 }
@@ -774,10 +759,6 @@ type HysteriaConfig struct {
 func (c *HysteriaConfig) Build() (proto.Message, error) {
 	if c.Version != 2 {
 		return nil, errors.New("version != 2")
-	}
-
-	if c.Congestion != nil || c.Up != nil || c.Down != nil || c.UdpHop != nil {
-		errors.LogWarning(context.Background(), "congestion & up & down & udphop move to finalmask/quicParams")
 	}
 
 	if c.UdpIdleTimeout != 0 && (c.UdpIdleTimeout < 2 || c.UdpIdleTimeout > 600) {
@@ -791,6 +772,7 @@ func (c *HysteriaConfig) Build() (proto.Message, error) {
 	config.MasqFile = c.Masquerade.Dir
 	config.MasqUrl = c.Masquerade.Url
 	config.MasqUrlRewriteHost = c.Masquerade.RewriteHost
+	config.MasqUrlXForwarded = c.Masquerade.XForwarded
 	config.MasqUrlInsecure = c.Masquerade.Insecure
 	config.MasqString = c.Masquerade.Content
 	config.MasqStringHeaders = c.Masquerade.Headers

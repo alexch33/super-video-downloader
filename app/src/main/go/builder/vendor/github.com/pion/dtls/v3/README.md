@@ -21,6 +21,11 @@ Native [DTLS 1.2][rfc6347] implementation in the Go programming language.
 
 A long term goal is a professional security review, and maybe an inclusion in stdlib.
 
+> [!WARNING]
+> This branch is currently frozen from tagging while DTLS 1.3 work is underway.
+>
+> DTLS 1.3 and breaking changes should target the `main` branch. Bug fixes and DTLS 1.2 improvments should target the `v3` branch, which can be used for tags until DTLS 1.3 is ready.
+
 ### RFCs
 #### Implemented
 - **RFC 6347**: [Datagram Transport Layer Security Version 1.2][rfc6347]

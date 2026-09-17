@@ -75,6 +75,12 @@ type Transport struct {
 	// If unset, a 4 byte connection ID will be used.
 	ConnectionIDLength int
 
+	// DisableGSO turns off UDP generic segmentation offload, at a cost in
+	// throughput. Set it when packets are rewritten after they leave the stack:
+	// the rewrite hits the combined packet and corrupts every segment but the
+	// first. The send still succeeds, so this cannot be detected automatically.
+	DisableGSO bool
+
 	// Use for generating new connection IDs.
 	// This allows the application to control of the connection IDs used,
 	// which allows routing / load balancing based on connection IDs.
@@ -253,11 +259,16 @@ func (t *Transport) dial(ctx context.Context, addr net.Addr, host string, tlsCon
 	conf = populateConfig(conf)
 	tlsConf = tlsConf.Clone()
 	// setTLSConfigServerName(tlsConf, addr, host)
+	// The first Initial packet is numbered 1, not 0.
+	var initialPacketNumber protocol.PacketNumber
+	if conf.ChromeParrot {
+		initialPacketNumber = 1
+	}
 	return t.doDial(ctx,
 		newSendConn(t.conn, addr, packetInfo{}, utils.DefaultLogger),
 		tlsConf,
 		conf,
-		0,
+		initialPacketNumber,
 		false,
 		use0RTT,
 		conf.Versions[0],
@@ -278,7 +289,13 @@ func (t *Transport) doDial(
 	if err != nil {
 		return nil, err
 	}
-	destConnID, err := generateConnectionIDForInitial()
+	// quic-go randomizes the initial destination connection ID length to exercise
+	// servers; a fixed length is needed here instead.
+	genInitialConnID := generateConnectionIDForInitial
+	if config != nil && config.ChromeParrot {
+		genInitialConnID = protocol.GenerateChromeConnectionIDForInitial
+	}
+	destConnID, err := genInitialConnID()
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +314,7 @@ func (t *Transport) doDial(
 	logger := utils.DefaultLogger.WithPrefix("client")
 	logger.Infof("Starting new connection to %s (%s -> %s), source connection ID %s, destination connection ID %s, version %s", tlsConf.ServerName, sendConn.LocalAddr(), sendConn.RemoteAddr(), srcConnID, destConnID, version)
 
-	conn := newClientConnection(
+	conn, err := newClientConnection(
 		context.WithoutCancel(ctx),
 		sendConn,
 		(*packetHandlerMap)(t),
@@ -314,6 +331,10 @@ func (t *Transport) doDial(
 		logger,
 		version,
 	)
+	if err != nil {
+		t.mutex.Unlock()
+		return nil, err
+	}
 	t.handlers[srcConnID] = conn
 	t.mutex.Unlock()
 
@@ -379,7 +400,7 @@ func (t *Transport) init(allowZeroLengthConnIDs bool) error {
 			conn = c
 		} else {
 			var err error
-			conn, err = wrapConn(t.Conn)
+			conn, err = wrapConn(t.Conn, t.DisableGSO)
 			if err != nil {
 				t.initErr = err
 				return
@@ -511,11 +532,7 @@ func (t *Transport) close(e error) {
 	// Close existing connections
 	var wg sync.WaitGroup
 	for _, handler := range t.handlers {
-		wg.Add(1)
-		go func(handler packetHandler) {
-			handler.destroy(e)
-			wg.Done()
-		}(handler)
+		wg.Go(func() { handler.destroy(e) })
 	}
 	t.mutex.Unlock() // closing connections requires releasing transport mutex
 	wg.Wait()

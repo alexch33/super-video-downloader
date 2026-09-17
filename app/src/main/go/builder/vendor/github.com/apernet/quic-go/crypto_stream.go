@@ -82,6 +82,19 @@ func (s *baseCryptoStream) HasData() bool {
 	return len(s.writeBuf) > 0
 }
 
+// PendingLen returns the number of bytes still queued for sending, which the
+// packet packer uses to size the crypto budget of each Initial.
+func (s *baseCryptoStream) PendingLen() protocol.ByteCount {
+	return protocol.ByteCount(len(s.writeBuf))
+}
+
+// WriteOffset returns the crypto stream offset the next CRYPTO frame will carry.
+// Sizing that frame to an exact byte count requires knowing the offset, since it
+// determines how many bytes the frame header occupies.
+func (s *baseCryptoStream) WriteOffset() protocol.ByteCount {
+	return s.writeOffset
+}
+
 func (s *baseCryptoStream) PopCryptoFrame(maxLen protocol.ByteCount) *wire.CryptoFrame {
 	f := &wire.CryptoFrame{Offset: s.writeOffset}
 	n := min(f.MaxDataLen(maxLen), protocol.ByteCount(len(s.writeBuf)))
@@ -91,6 +104,23 @@ func (s *baseCryptoStream) PopCryptoFrame(maxLen protocol.ByteCount) *wire.Crypt
 	f.Data = s.writeBuf[:n]
 	s.writeBuf = s.writeBuf[n:]
 	s.writeOffset += n
+	return f
+}
+
+// PopCryptoFrameTail takes dataLen bytes from the end of what is queued rather
+// than the start, so a packet can carry the last part of the ClientHello while
+// the middle is still pending. The write offset is unchanged, so later calls to
+// PopCryptoFrame continue from the front.
+func (s *baseCryptoStream) PopCryptoFrameTail(dataLen protocol.ByteCount) *wire.CryptoFrame {
+	if dataLen <= 0 || dataLen > protocol.ByteCount(len(s.writeBuf)) {
+		return nil
+	}
+	n := protocol.ByteCount(len(s.writeBuf)) - dataLen
+	f := &wire.CryptoFrame{
+		Offset: s.writeOffset + n,
+		Data:   s.writeBuf[n:],
+	}
+	s.writeBuf = s.writeBuf[:n]
 	return f
 }
 
@@ -111,9 +141,13 @@ type initialCryptoStream struct {
 	cuts     [2]clientHelloCut
 }
 
-func newInitialCryptoStream(isClient bool) *initialCryptoStream {
+// chromeParrot disables quic-go's own ClientHello scrambling. That scheme cuts at
+// semantically chosen offsets, which is recognizably quic-go; the packet packer
+// applies chaos protection instead, and running both would produce a hybrid
+// matching neither.
+func newInitialCryptoStream(isClient, chromeParrot bool) *initialCryptoStream {
 	var scramble bool
-	if isClient {
+	if isClient && !chromeParrot {
 		disabled, err := strconv.ParseBool(os.Getenv(disableClientHelloScramblingEnv))
 		scramble = err != nil || !disabled
 	}

@@ -29,6 +29,7 @@ package tree
 
 import (
 	"fmt"
+	"slices"
 )
 
 type Val[T any] interface {
@@ -141,12 +142,7 @@ func (t *Btree[T]) Contains(value T) bool {
 
 // ContainsAny returns true if the tree contains any of the values
 func (t *Btree[T]) ContainsAny(values []T) bool {
-	for _, v := range values {
-		if t.Contains(v) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(values, t.Contains)
 }
 
 // ContainsAll returns true if the tree contains all of the values

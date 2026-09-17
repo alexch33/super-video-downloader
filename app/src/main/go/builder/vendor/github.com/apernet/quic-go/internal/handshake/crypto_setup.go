@@ -27,7 +27,7 @@ const clientSessionStateRevision = 5
 
 type cryptoSetup struct {
 	tlsConf *tls.Config
-	conn    *tls.QUICConn
+	conn    tlsQUICConn
 
 	events []Event
 
@@ -67,16 +67,20 @@ type cryptoSetup struct {
 var _ CryptoSetup = &cryptoSetup{}
 
 // NewCryptoSetupClient creates a new crypto setup for the client
+// chromeParrot makes the client emit Chrome's TLS ClientHello via uTLS instead of
+// crypto/tls. It forces enable0RTT off: see newUTLSQUICClient for why resumption
+// can't be carried across the two TLS stacks.
 func NewCryptoSetupClient(
 	connID protocol.ConnectionID,
 	tp *wire.TransportParameters,
 	tlsConf *tls.Config,
 	enable0RTT bool,
+	chromeParrot bool,
 	rttStats *utils.RTTStats,
 	qlogger qlogwriter.Recorder,
 	logger utils.Logger,
 	version protocol.Version,
-) CryptoSetup {
+) (CryptoSetup, error) {
 	cs := newCryptoSetup(
 		connID,
 		tp,
@@ -87,18 +91,25 @@ func NewCryptoSetupClient(
 		version,
 	)
 
-	tlsConf = tlsConf.Clone()
-	tlsConf.MinVersion = tls.VersionTLS13
+	tlsConf = setupConfigForClient(tlsConf)
 	cs.tlsConf = tlsConf
-	cs.allow0RTT = enable0RTT
+	cs.allow0RTT = enable0RTT && !chromeParrot
 
-	cs.conn = tls.QUICClient(&tls.QUICConfig{
-		TLSConfig:           tlsConf,
-		EnableSessionEvents: true,
-	})
+	if chromeParrot {
+		conn, err := newUTLSQUICClient(tlsConf)
+		if err != nil {
+			return nil, err
+		}
+		cs.conn = conn
+	} else {
+		cs.conn = tls.QUICClient(&tls.QUICConfig{
+			TLSConfig:           tlsConf,
+			EnableSessionEvents: true,
+		})
+	}
 	cs.conn.SetTransportParameters(cs.ourParams.Marshal(protocol.PerspectiveClient))
 
-	return cs
+	return cs, nil
 }
 
 // NewCryptoSetupServer creates a new crypto setup for the server
@@ -127,10 +138,7 @@ func NewCryptoSetupServer(
 	tlsConf = setupConfigForServer(tlsConf, localAddr, remoteAddr)
 
 	cs.tlsConf = tlsConf
-	cs.conn = tls.QUICServer(&tls.QUICConfig{
-		TLSConfig:           tlsConf,
-		EnableSessionEvents: true,
-	})
+	cs.conn = tls.QUICServer(getQUICConfig(tlsConf, localAddr, remoteAddr))
 	return cs
 }
 
@@ -296,6 +304,8 @@ func (h *cryptoSetup) handleEvent(ev tls.QUICEvent) (err error) {
 			ev.SessionState.EarlyData = allowEarlyData
 		}
 		return nil
+	case quicErrorEvent:
+		return extractQUICEventError(ev)
 	default:
 		// Unknown events should be ignored.
 		// crypto/tls will ensure that this is safe to do.

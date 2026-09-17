@@ -58,6 +58,12 @@ type TokenStore interface {
 // when the server rejects a 0-RTT connection attempt.
 var Err0RTTRejected = errors.New("0-RTT rejected")
 
+// ErrWouldBlock is returned by [SendStream.TryWriteAll] if the entire slice can't be queued immediately.
+var ErrWouldBlock = errors.New("operation would block")
+
+// ErrWriteLimitReached is returned by [SendStream.WriteWithLimit] when its limiter prevents accepting the entire slice.
+var ErrWriteLimitReached = errors.New("write limit reached")
+
 // QUICVersionContextKey can be used to find out the QUIC version of a TLS handshake from the
 // context returned by tls.Config.ClientInfo.Context.
 var QUICVersionContextKey = handshake.QUICVersionContextKey
@@ -179,7 +185,7 @@ type Config struct {
 	// as supporting DATAGRAM frames up to this size. This is a non-standard extension.
 	AssumePeerMaxDatagramFrameSize int64
 	// Enable QUIC Stream Resets with Partial Delivery.
-	// See https://datatracker.ietf.org/doc/html/draft-ietf-quic-reliable-stream-reset-07.
+	// See https://datatracker.ietf.org/doc/html/draft-ietf-quic-reliable-stream-reset-09.
 	EnableStreamResetPartialDelivery bool
 
 	Tracer func(ctx context.Context, isClient bool, connID ConnectionID) qlogwriter.Trace
@@ -189,6 +195,16 @@ type Config struct {
 	// DisablePathManager disables path manager.
 	// for hysteria2 port hopping, direct change remote address without connection migration logic
 	DisablePathManager bool
+
+	// ChromeParrot makes the client's QUIC handshake look like Google Chrome's.
+	// It overrides the flow control windows, stream limits, idle timeout and
+	// packet size with Chrome's values, encodes the transport parameters the way
+	// Chrome does (see wire.marshalChrome), and applies Chrome's chaos
+	// protection to the Initial packets.
+	//
+	// Client side only; it has no effect on a listener. Because it pins the
+	// values above, settings that conflict with Chrome's are ignored.
+	ChromeParrot bool
 }
 
 // ClientInfo contains information about an incoming connection attempt.

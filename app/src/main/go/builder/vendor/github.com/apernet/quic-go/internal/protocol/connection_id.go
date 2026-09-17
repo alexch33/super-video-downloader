@@ -68,6 +68,17 @@ func GenerateConnectionIDForInitial() (ConnectionID, error) {
 	return GenerateConnectionID(l)
 }
 
+// ChromeConnectionIDLenInitial is the initial destination connection ID length a
+// Chrome-parroting client uses. quic-go randomizes the length instead, which is
+// visible on the wire.
+const ChromeConnectionIDLenInitial = 8
+
+// GenerateChromeConnectionIDForInitial generates an initial destination
+// connection ID of the fixed length above.
+func GenerateChromeConnectionIDForInitial() (ConnectionID, error) {
+	return GenerateConnectionID(ChromeConnectionIDLenInitial)
+}
+
 // ReadConnectionID reads a connection ID of length len from the given io.Reader.
 // It returns io.EOF if there are not enough bytes to read.
 func ReadConnectionID(r io.Reader, l int) (ConnectionID, error) {

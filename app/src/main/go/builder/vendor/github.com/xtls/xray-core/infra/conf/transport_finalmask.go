@@ -11,8 +11,10 @@ import (
 	"regexp"
 	"strings"
 
+	googleuuid "github.com/google/uuid"
 	"github.com/xtls/xray-core/common/errors"
 	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/transport/internet"
 	"github.com/xtls/xray-core/transport/internet/finalmask/fragment"
 	"github.com/xtls/xray-core/transport/internet/finalmask/header/custom"
 	"github.com/xtls/xray-core/transport/internet/finalmask/mkcp/aes128gcm"
@@ -22,6 +24,7 @@ import (
 	"github.com/xtls/xray-core/transport/internet/finalmask/realm"
 	"github.com/xtls/xray-core/transport/internet/finalmask/salamander"
 	"github.com/xtls/xray-core/transport/internet/finalmask/sudoku"
+	"github.com/xtls/xray-core/transport/internet/finalmask/udphop"
 	"github.com/xtls/xray-core/transport/internet/finalmask/xdns"
 	"github.com/xtls/xray-core/transport/internet/finalmask/xicmp"
 	"github.com/xtls/xray-core/transport/internet/finalmask/xmc"
@@ -82,6 +85,7 @@ var (
 		"xdns":          func() interface{} { return new(Xdns) },
 		"xicmp":         func() interface{} { return new(Xicmp) },
 		"realm":         func() interface{} { return new(Realm) },
+		"udphop":        func() interface{} { return new(UDPHop) },
 	}, "type", "settings")
 )
 
@@ -720,14 +724,46 @@ func (c *Xdns) Build() (proto.Message, error) {
 }
 
 type XMC struct {
-	Hostname  string   `json:"hostname"`
-	Usernames []string `json:"usernames"`
-	Password  string   `json:"password"`
+	Hostname string       `json:"hostname"`
+	Profiles []XMCProfile `json:"profiles"`
+	Password string       `json:"password"`
+}
+
+type XMCProfile struct {
+	// Resolve the UUID by username, then request the session profile with
+	// unsigned=false. Client and server must use the same signed profile.
+	Username          string `json:"username"`
+	UUID              string `json:"uuid"`
+	TexturesValue     string `json:"texturesValue"`
+	TexturesSignature string `json:"texturesSignature"`
+}
+
+var xmcUsernamePattern = regexp.MustCompile(`^[A-Za-z0-9_]{3,16}$`)
+
+func (c *XMCProfile) Build() (*xmc.Profile, error) {
+	if !xmcUsernamePattern.MatchString(c.Username) {
+		return nil, fmt.Errorf("invalid minecraft profile username: %q", c.Username)
+	}
+
+	profileUUID, err := googleuuid.Parse(c.UUID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid minecraft profile UUID: %w", err)
+	}
+	if c.TexturesValue == "" || c.TexturesSignature == "" {
+		return nil, fmt.Errorf("incomplete minecraft profile textures")
+	}
+
+	return &xmc.Profile{
+		Username:          c.Username,
+		Uuid:              append([]byte(nil), profileUUID[:]...),
+		TexturesValue:     c.TexturesValue,
+		TexturesSignature: c.TexturesSignature,
+	}, nil
 }
 
 func (c *XMC) Build() (proto.Message, error) {
-	if len(c.Usernames) == 0 {
-		c.Usernames = []string{"Dream"}
+	if len(c.Profiles) == 0 {
+		return nil, fmt.Errorf("minecraft profiles are required")
 	}
 
 	if c.Password == "" {
@@ -744,12 +780,21 @@ func (c *XMC) Build() (proto.Message, error) {
 		return nil, fmt.Errorf("marshal minecraft rsa public key: %w", err)
 	}
 
+	profiles := make([]*xmc.Profile, 0, len(c.Profiles))
+	for i := range c.Profiles {
+		profile, err := c.Profiles[i].Build()
+		if err != nil {
+			return nil, fmt.Errorf("build minecraft profile %d: %w", i, err)
+		}
+		profiles = append(profiles, profile)
+	}
+
 	return &xmc.Config{
 		Password:      c.Password,
-		Usernames:     c.Usernames,
 		Hostname:      c.Hostname,
 		RsaPrivateKey: x509.MarshalPKCS1PrivateKey(rsaPrivateKey),
 		RsaPublicKey:  rsaPublicKey,
+		Profiles:      profiles,
 	}, nil
 }
 
@@ -774,9 +819,11 @@ func (c *Xicmp) Build() (proto.Message, error) {
 }
 
 type Realm struct {
-	Url         string     `json:"url"`
-	StunServers []string   `json:"stunServers"`
-	TlsConfig   *TLSConfig `json:"tlsConfig"`
+	Url         string             `json:"url"`
+	StunServers []string           `json:"stunServers"`
+	TlsConfig   *TLSConfig         `json:"tlsConfig"`
+	IPMode      string             `json:"ipMode"`
+	PortMapping *realm.PortMapping `json:"portMapping"`
 }
 
 func (c *Realm) Build() (proto.Message, error) {
@@ -856,6 +903,64 @@ func (c *Realm) Build() (proto.Message, error) {
 		ID:          id,
 		StunServers: stunServers,
 		TlsConfig:   tlsConfig,
+		IPMode:      strings.ToLower(c.IPMode),
+		PortMapping: c.PortMapping,
+	}, nil
+}
+
+type UDPHop struct {
+	Sockopt     *SocketConfig `json:"sockopt"`
+	Mode        string        `json:"mode"`
+	Interval    Int32Range    `json:"interval"`
+	RemotePorts PortList      `json:"remotePorts"`
+	RemoteIPs   []string      `json:"remoteIPs"`
+}
+
+func (c *UDPHop) Build() (proto.Message, error) {
+	var sockopt *internet.SocketConfig
+	if c.Sockopt != nil {
+		var err error
+		sockopt, err = c.Sockopt.Build()
+		if err != nil {
+			return nil, err
+		}
+	}
+	var local, remote, remoteOnce bool
+	for _, mode := range strings.Split(c.Mode, ",") {
+		switch strings.ToLower(mode) {
+		case "intervallocal":
+			local = true
+		case "intervalremote":
+			remote = true
+		case "perconnremote":
+			remoteOnce = true
+		default:
+			return nil, errors.New("invalid mode ", mode)
+		}
+	}
+	var remoteIPs []string
+	for _, ip := range c.RemoteIPs {
+		prefix, err := netip.ParsePrefix(ip)
+		if err == nil {
+			remoteIPs = append(remoteIPs, prefix.String())
+			continue
+		}
+		addr, err := netip.ParseAddr(ip)
+		if err == nil {
+			remoteIPs = append(remoteIPs, netip.PrefixFrom(addr, addr.BitLen()).String())
+			continue
+		}
+		return nil, errors.New("invalid ip ", ip)
+	}
+	return &udphop.Config{
+		Sockopt:     sockopt,
+		Local:       local,
+		Remote:      remote,
+		RemoteOnce:  remoteOnce,
+		IntervalMin: int64(c.Interval.From),
+		IntervalMax: int64(c.Interval.To),
+		RemotePorts: c.RemotePorts.Build().Ports(),
+		RemoteIPs:   remoteIPs,
 	}, nil
 }
 
@@ -886,20 +991,23 @@ func (c *Mask) Build(tcp bool) (proto.Message, error) {
 }
 
 type QuicParamsConfig struct {
-	Congestion                  string    `json:"congestion"`
-	Debug                       bool      `json:"debug"`
-	BbrProfile                  string    `json:"bbrProfile"`
-	BrutalUp                    Bandwidth `json:"brutalUp"`
-	BrutalDown                  Bandwidth `json:"brutalDown"`
-	UdpHop                      UdpHop    `json:"udpHop"`
-	InitStreamReceiveWindow     uint64    `json:"initStreamReceiveWindow"`
-	MaxStreamReceiveWindow      uint64    `json:"maxStreamReceiveWindow"`
-	InitConnectionReceiveWindow uint64    `json:"initConnectionReceiveWindow"`
-	MaxConnectionReceiveWindow  uint64    `json:"maxConnectionReceiveWindow"`
-	MaxIdleTimeout              int64     `json:"maxIdleTimeout"`
-	KeepAlivePeriod             int64     `json:"keepAlivePeriod"`
-	DisablePathMTUDiscovery     bool      `json:"disablePathMTUDiscovery"`
-	MaxIncomingStreams          int64     `json:"maxIncomingStreams"`
+	Congestion                    string    `json:"congestion"`
+	Debug                         bool      `json:"debug"`
+	BbrProfile                    string    `json:"bbrProfile"`
+	BrutalUp                      Bandwidth `json:"brutalUp"`
+	BrutalDown                    Bandwidth `json:"brutalDown"`
+	BrutalDisableLossCompensation bool      `json:"brutalDisableLossCompensation"`
+	InitStreamReceiveWindow       uint64    `json:"initStreamReceiveWindow"`
+	MaxStreamReceiveWindow        uint64    `json:"maxStreamReceiveWindow"`
+	InitConnectionReceiveWindow   uint64    `json:"initConnectionReceiveWindow"`
+	MaxConnectionReceiveWindow    uint64    `json:"maxConnectionReceiveWindow"`
+	MaxIdleTimeout                int64     `json:"maxIdleTimeout"`
+	KeepAlivePeriod               int64     `json:"keepAlivePeriod"`
+	DisablePathMTUDiscovery       bool      `json:"disablePathMTUDiscovery"`
+	DisableChromeParrot           bool      `json:"disableChromeParrot"`
+	DisableGSO                    bool      `json:"disableGSO"`
+	MaxIncomingStreams            int64     `json:"maxIncomingStreams"`
+	DisableStatelessReset         bool      `json:"disableStatelessReset"`
 }
 
 type FinalMask struct {

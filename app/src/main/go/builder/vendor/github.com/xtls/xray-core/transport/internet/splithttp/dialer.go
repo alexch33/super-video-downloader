@@ -5,7 +5,6 @@ import (
 	gotls "crypto/tls"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
@@ -28,7 +27,6 @@ import (
 	"github.com/xtls/xray-core/transport/internet/browser_dialer"
 	"github.com/xtls/xray-core/transport/internet/hysteria/congestion"
 	"github.com/xtls/xray-core/transport/internet/hysteria/congestion/bbr"
-	"github.com/xtls/xray-core/transport/internet/hysteria/udphop"
 	"github.com/xtls/xray-core/transport/internet/reality"
 	"github.com/xtls/xray-core/transport/internet/stat"
 	"github.com/xtls/xray-core/transport/internet/tls"
@@ -162,7 +160,6 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 		if quicParams == nil {
 			quicParams = &internet.QuicParams{
 				BbrProfile: string(bbr.ProfileStandard),
-				UdpHop:     &internet.UdpHop{},
 			}
 		}
 
@@ -175,6 +172,7 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 			KeepAlivePeriod:                time.Duration(quicParams.KeepAlivePeriod) * time.Second,
 			MaxIncomingStreams:             quicParams.MaxIncomingStreams,
 			DisablePathMTUDiscovery:        quicParams.DisablePathMtuDiscovery || (runtime.GOOS != "linux" && runtime.GOOS != "windows" && runtime.GOOS != "darwin"),
+			ChromeParrot:                   !quicParams.DisableChromeParrot,
 		}
 		if quicParams.MaxIdleTimeout == 0 {
 			quicConfig.MaxIdleTimeout = net.ConnIdleTimeout
@@ -197,35 +195,8 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 			QUICConfig:      quicConfig,
 			TLSClientConfig: gotlsConfig,
 			Dial: func(ctx context.Context, addr string, tlsCfg *gotls.Config, cfg *quic.Config) (*quic.Conn, error) {
-				udpHopDialer := func(addr *net.UDPAddr) (net.PacketConn, error) {
-					conn, err := internet.DialSystem(ctx, net.UDPDestination(net.IPAddress(addr.IP), net.Port(addr.Port)), streamSettings.SocketSettings)
-					if err != nil {
-						errors.LogInfoInner(context.Background(), err, "skip hop: failed to dial to dest")
-						return nil, errors.New("")
-					}
-
-					var pktConn net.PacketConn
-
-					switch c := conn.(type) {
-					case *internet.PacketConnWrapper:
-						pktConn = c.PacketConn
-					case *cnc.Connection:
-						pktConn = &internet.FakePacketConn{Conn: c}
-					default:
-						panic(reflect.TypeOf(c))
-					}
-
-					return pktConn, nil
-				}
-
 				var pktConn net.PacketConn
 				var udpAddr *net.UDPAddr
-				var index int
-
-				if len(quicParams.UdpHop.Ports) > 0 {
-					index = rand.Intn(len(quicParams.UdpHop.Ports))
-					dest.Port = net.Port(quicParams.UdpHop.Ports[index])
-				}
 
 				raw, err := internet.DialSystem(ctx, dest, streamSettings.SocketSettings)
 				if err != nil {
@@ -242,10 +213,6 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 					panic(reflect.TypeOf(c))
 				}
 
-				if len(quicParams.UdpHop.Ports) > 0 {
-					pktConn = udphop.NewUDPHopPacketConn(udphop.ToAddrs(udpAddr.IP, quicParams.UdpHop.Ports), time.Duration(quicParams.UdpHop.IntervalMin)*time.Second, time.Duration(quicParams.UdpHop.IntervalMax)*time.Second, udpHopDialer, pktConn, index)
-				}
-
 				if streamSettings.UdpmaskManager != nil {
 					newConn, err := streamSettings.UdpmaskManager.WrapPacketConnClient(pktConn)
 					if err != nil {
@@ -255,18 +222,25 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 					pktConn = newConn
 				}
 
-				conn, err := quic.DialEarly(ctx, pktConn, udpAddr, tlsCfg, cfg)
+				tr := &quic.Transport{Conn: pktConn, DisableGSO: quicParams.DisableGSO}
+
+				if !quicParams.DisableChromeParrot {
+					tr.ConnectionIDGenerator = quic.ZeroLengthConnectionIDGenerator{}
+					tlsCfg.GetCertificate = nil
+				}
+
+				conn, err := tr.DialEarly(ctx, udpAddr, tlsCfg, cfg)
 				if err != nil {
 					return nil, err
 				}
-				context.AfterFunc(conn.Context(), func() { pktConn.Close() })
+				context.AfterFunc(conn.Context(), func() { tr.Close(); pktConn.Close() })
 
 				switch quicParams.Congestion {
 				case "reno":
 				case "", "bbr":
 					congestion.UseBBR(conn, bbr.Profile(quicParams.BbrProfile))
 				case "force-brutal":
-					congestion.UseBrutal(conn, quicParams.BrutalUp)
+					congestion.UseBrutal(conn, quicParams.BrutalUp, quicParams.BrutalDisableLossCompensation)
 				default:
 					panic(quicParams.Congestion)
 				}
@@ -595,11 +569,12 @@ func (w uploadWriter) Write(b []byte) (int, error) {
 
 	var writed int
 	for _, buff := range buffer.MultiBuffer {
+		n := int(buff.Len())
 		err := w.WriteMultiBuffer(buf.MultiBuffer{buff})
 		if err != nil {
 			return writed, err
 		}
-		writed += int(buff.Len())
+		writed += n
 	}
 	return writed, nil
 }

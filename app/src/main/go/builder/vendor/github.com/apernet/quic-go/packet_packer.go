@@ -97,6 +97,7 @@ func (p *longHeaderPacket) IsAckEliciting() bool { return ackhandler.HasAckElici
 type packetNumberManager interface {
 	PeekPacketNumber(protocol.EncryptionLevel) (protocol.PacketNumber, protocol.PacketNumberLen)
 	PopPacketNumber(protocol.EncryptionLevel) protocol.PacketNumber
+	SetLastDatagramPadding(protocol.ByteCount)
 }
 
 type sealingManager interface {
@@ -137,6 +138,10 @@ type packetPacker struct {
 	numNonAckElicitingAcks int
 
 	peekTimes int
+
+	// chaosProtection applies Chrome's chaos protection to Initial packets.
+	// See appendChaosProtectedPayload.
+	chaosProtection bool
 }
 
 const DatagramFrameMaxPeekTimes = 10
@@ -155,11 +160,13 @@ func newPacketPacker(
 	acks ackFrameSource,
 	datagramQueue *datagramQueue,
 	perspective protocol.Perspective,
+	chaosProtection bool,
 ) *packetPacker {
 	var b [16]byte
 	_, _ = crand.Read(b[:])
 
 	return &packetPacker{
+		chaosProtection:     chaosProtection,
 		cryptoSetup:         cryptoSetup,
 		getDestConnID:       getDestConnID,
 		srcConnID:           srcConnID,
@@ -173,6 +180,22 @@ func newPacketPacker(
 		rand:                *rand.New(rand.NewPCG(binary.BigEndian.Uint64(b[:8]), binary.BigEndian.Uint64(b[8:]))),
 		pnManager:           packetNumberManager,
 	}
+}
+
+// noCoalescing reports whether the packet being packed has to go out in a
+// datagram of its own. The imitated client never coalesces: every datagram it
+// sends carries exactly one encryption level, so its Initial ACK travels alone,
+// padded, and the Handshake flight follows in the next datagram.
+func (p *packetPacker) noCoalescing() bool {
+	return p.chaosProtection && p.perspective == protocol.PerspectiveClient
+}
+
+// splitAckFromCrypto reports whether an ACK should be sent without the CRYPTO
+// data that would otherwise ride along in the same packet. See the call site.
+func (p *packetPacker) splitAckFromCrypto(encLevel protocol.EncryptionLevel) bool {
+	return p.chaosProtection &&
+		encLevel == protocol.EncryptionHandshake &&
+		p.perspective == protocol.PerspectiveClient
 }
 
 // PackConnectionClose packs a packet that closes the connection with a transport error.
@@ -364,7 +387,11 @@ func (p *packetPacker) PackCoalescedPacket(onlyAck bool, maxSize protocol.ByteCo
 
 	// Add a Handshake packet.
 	var handshakeSealer sealer
-	if (onlyAck && size == 0) || (!onlyAck && size < maxSize-protocol.MinCoalescedPacketSize) {
+	appendHandshake := (onlyAck && size == 0) || (!onlyAck && size < maxSize-protocol.MinCoalescedPacketSize)
+	if p.noCoalescing() && size > 0 {
+		appendHandshake = false
+	}
+	if appendHandshake {
 		var err error
 		handshakeSealer, err = p.cryptoSetup.GetHandshakeSealer()
 		if err != nil && err != handshake.ErrKeysDropped && err != handshake.ErrKeysNotYetAvailable {
@@ -387,11 +414,20 @@ func (p *packetPacker) PackCoalescedPacket(onlyAck bool, maxSize protocol.ByteCo
 	}
 
 	// Add a 0-RTT / 1-RTT packet.
+	//
+	// Application data is never coalesced with a long header packet during the
+	// handshake: those go out in datagrams of their own, with the first 1-RTT
+	// packet following separately. quic-go coalesces as soon as 1-RTT keys exist,
+	// which inflates the handshake datagrams.
 	var zeroRTTSealer sealer
 	var oneRTTSealer handshake.ShortHeaderSealer
 	var connID protocol.ConnectionID
 	var kp protocol.KeyPhaseBit
-	if (onlyAck && size == 0) || (!onlyAck && size < maxSize-protocol.MinCoalescedPacketSize) {
+	appendAppData := (onlyAck && size == 0) || (!onlyAck && size < maxSize-protocol.MinCoalescedPacketSize)
+	if p.noCoalescing() && size > 0 {
+		appendAppData = false
+	}
+	if appendAppData {
 		var err error
 		oneRTTSealer, err = p.cryptoSetup.Get1RTTSealer()
 		if err != nil && err != handshake.ErrKeysDropped && err != handshake.ErrKeysNotYetAvailable {
@@ -430,8 +466,9 @@ func (p *packetPacker) PackCoalescedPacket(onlyAck bool, maxSize protocol.ByteCo
 		buffer:         buffer,
 		longHdrPackets: make([]*longHeaderPacket, 0, 3),
 	}
+	var padding protocol.ByteCount
 	if initialPayload.length > 0 {
-		padding := p.initialPaddingLen(initialPayload.frames, size, maxSize)
+		padding = p.initialPaddingLen(initialPayload.frames, size, maxSize)
 		cont, err := p.appendLongHeaderPacket(buffer, initialHdr, initialPayload, padding, protocol.EncryptionInitial, initialSealer, v)
 		if err != nil {
 			buffer.Release()
@@ -439,6 +476,7 @@ func (p *packetPacker) PackCoalescedPacket(onlyAck bool, maxSize protocol.ByteCo
 		}
 		packet.longHdrPackets = append(packet.longHdrPackets, cont)
 	}
+	p.pnManager.SetLastDatagramPadding(padding)
 	if handshakePayload.length > 0 {
 		cont, err := p.appendLongHeaderPacket(buffer, handshakeHdr, handshakePayload, 0, protocol.EncryptionHandshake, handshakeSealer, v)
 		if err != nil {
@@ -522,14 +560,22 @@ func (p *packetPacker) maybeGetCryptoPacket(
 
 	var hasCryptoData func() bool
 	var popCryptoFrame func(maxLen protocol.ByteCount) *wire.CryptoFrame
+	var pendingCryptoLen func() protocol.ByteCount
+	var cryptoWriteOffset func() protocol.ByteCount
+	var popCryptoFrameTail func(dataLen protocol.ByteCount) *wire.CryptoFrame
 	//nolint:exhaustive // Initial and Handshake are the only two encryption levels here.
 	switch encLevel {
 	case protocol.EncryptionInitial:
 		hasCryptoData = p.initialStream.HasData
 		popCryptoFrame = p.initialStream.PopCryptoFrame
+		pendingCryptoLen = p.initialStream.PendingLen
+		cryptoWriteOffset = p.initialStream.WriteOffset
+		popCryptoFrameTail = p.initialStream.PopCryptoFrameTail
 	case protocol.EncryptionHandshake:
 		hasCryptoData = p.handshakeStream.HasData
 		popCryptoFrame = p.handshakeStream.PopCryptoFrame
+		pendingCryptoLen = p.handshakeStream.PendingLen
+		cryptoWriteOffset = p.handshakeStream.WriteOffset
 	}
 	handler := p.retransmissionQueue.AckHandler(encLevel)
 	hasRetransmission := p.retransmissionQueue.HasData(encLevel)
@@ -555,6 +601,13 @@ func (p *packetPacker) maybeGetCryptoPacket(
 		pl.length = ack.Length(v)
 		maxPacketSize -= pl.length
 	}
+	// The server's Handshake flight is acknowledged in a datagram of its own, with
+	// the Finished following in the next one; quic-go packs both into a single
+	// packet. Returning the ACK alone leaves the CRYPTO for the next datagram,
+	// which the send loop packs immediately afterwards.
+	if !hasRetransmission && p.splitAckFromCrypto(encLevel) && pl.ack != nil && hasCryptoData() {
+		return hdr, pl
+	}
 	if hasRetransmission {
 		for {
 			frame := p.retransmissionQueue.GetFrame(encLevel, maxPacketSize, v)
@@ -571,6 +624,27 @@ func (p *packetPacker) maybeGetCryptoPacket(
 		}
 		return hdr, pl
 	} else {
+		// A ClientHello too large for one Initial is not simply cut in two: the
+		// first packet carries its head and its tail, and the middle follows in
+		// later packets. See chromeCryptoSplit.
+		if p.chaosProtection && encLevel == protocol.EncryptionInitial &&
+			pendingCryptoLen != nil && popCryptoFrameTail != nil && cryptoWriteOffset() == 0 {
+			first, last := chromeCryptoSplit(pendingCryptoLen(), cryptoWriteOffset(), maxPacketSize, p.rand.IntN)
+			if first > 0 && last > 0 {
+				// Take the tail before the head, or the head pop consumes it.
+				tail := popCryptoFrameTail(last)
+				head := popCryptoFrame(first + cryptoFrameHeaderLen(cryptoWriteOffset(), first))
+				for _, cf := range []*wire.CryptoFrame{head, tail} {
+					if cf == nil {
+						continue
+					}
+					pl.frames = append(pl.frames, ackhandler.Frame{Frame: cf, Handler: handler})
+					pl.length += cf.Length(v)
+					maxPacketSize -= cf.Length(v)
+				}
+				return hdr, pl
+			}
+		}
 		for hasCryptoData() {
 			cf := popCryptoFrame(maxPacketSize)
 			if cf == nil {
@@ -775,12 +849,12 @@ func (p *packetPacker) PackPTOProbePacket(
 	if encLevel == protocol.EncryptionInitial {
 		padding = p.initialPaddingLen(pl.frames, size, maxPacketSize)
 	}
-
 	longHdrPacket, err := p.appendLongHeaderPacket(buffer, hdr, pl, padding, encLevel, sealer, v)
 	if err != nil {
 		buffer.Release()
 		return nil, err
 	}
+	p.pnManager.SetLastDatagramPadding(padding)
 	packet.longHdrPackets = []*longHeaderPacket{longHdrPacket}
 	return packet, nil
 }
@@ -899,7 +973,11 @@ func (p *packetPacker) appendLongHeaderPacket(buffer *packetBuffer, header *wire
 	}
 	payloadOffset := protocol.ByteCount(len(raw))
 
-	raw, err = p.appendPacketPayload(raw, pl, paddingLen, v)
+	if p.chaosProtection && encLevel == protocol.EncryptionInitial && worthChaosProtecting(pl, paddingLen) {
+		raw, err = p.appendChaosProtectedPayload(raw, pl, paddingLen, v)
+	} else {
+		raw, err = p.appendPacketPayload(raw, pl, paddingLen, v)
+	}
 	if err != nil {
 		return nil, err
 	}

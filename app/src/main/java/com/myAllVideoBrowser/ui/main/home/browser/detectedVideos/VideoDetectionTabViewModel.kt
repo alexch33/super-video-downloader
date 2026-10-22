@@ -220,10 +220,6 @@ open class VideoDetectionTabViewModel @Inject constructor(
     override fun verifyLinkStatus(
         resourceRequest: Request, hlsTitle: String?, isM3u8: Boolean, isMpd: Boolean
     ) {
-        if (resourceRequest.url.toString().contains("tiktok.")) {
-            return
-        }
-
         val urlToVerify = resourceRequest.url.toString()
         if (isM3u8 || isMpd) {
             startVerifyProcess(resourceRequest, isM3u8, isMpd, hlsTitle)
@@ -392,7 +388,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             m3u8LoadingList.get()?.clear()
             m3u8LoadingList.notifyChange()
             executorRegular.cancel()
-            
+
             // Iterate over a snapshot of values to safely dispose
             val jobs = verifyVideoLinkJobStorage.values.toMutableList()
             verifyVideoLinkJobStorage.clear()

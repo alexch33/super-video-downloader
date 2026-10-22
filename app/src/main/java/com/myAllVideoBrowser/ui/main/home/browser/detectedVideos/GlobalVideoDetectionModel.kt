@@ -77,10 +77,6 @@ class GlobalVideoDetectionModel @Inject constructor(
     override fun verifyLinkStatus(
         resourceRequest: Request, hlsTitle: String?, isM3u8: Boolean, isMpd: Boolean
     ) {
-        if (resourceRequest.url.toString().contains("tiktok.")) {
-            return
-        }
-
         val urlToVerify = resourceRequest.url.toString()
 
         if (lastVerifiedLink != urlToVerify) {

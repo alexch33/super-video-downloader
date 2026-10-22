@@ -21,6 +21,7 @@ import com.myAllVideoBrowser.ui.main.bookmarks.BookmarksFragment
 import com.myAllVideoBrowser.ui.main.help.HelpFragment
 import com.myAllVideoBrowser.ui.main.history.HistoryFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
+import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectionLogsFragment
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesFragment
 import com.myAllVideoBrowser.ui.main.settings.SettingsFragment
 import com.myAllVideoBrowser.ui.main.settings.adblock.AdBlockSettingsFragment
@@ -238,6 +239,11 @@ abstract class BaseWebTabFragment : BaseFragment() {
                     true
                 }
 
+                R.id.detection_logs -> {
+                    navigateToDetectionLogs()
+                    true
+                }
+
                 R.id.help -> {
                     navigateToHelp()
                     true
@@ -366,7 +372,25 @@ abstract class BaseWebTabFragment : BaseFragment() {
         }
     }
 
-    private fun navigateToAdBlockSettings() {
+    protected open fun navigateToDetectionLogs() {
+        try {
+            val currentFragment = this
+            val activityFragmentContainer =
+                currentFragment.activity?.findViewById<FragmentContainerView>(R.id.fragment_container_view)
+            activityFragmentContainer?.let {
+                val transaction =
+                    currentFragment.requireActivity().supportFragmentManager.beginTransaction()
+                transaction.add(it.id, DetectionLogsFragment.newInstance())
+                transaction.addToBackStack("detection_logs")
+                transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                transaction.commit()
+            }
+        } catch (_: ClassCastException) {
+            AppLogger.d("Can't get the fragment manager with this")
+        }
+    }
+
+    protected fun navigateToAdBlockSettings() {
         try {
             val currentFragment = this
             val activityFragmentContainer =

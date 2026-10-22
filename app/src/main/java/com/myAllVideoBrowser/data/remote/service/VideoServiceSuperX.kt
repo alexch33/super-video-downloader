@@ -5,6 +5,7 @@ import com.myAllVideoBrowser.data.local.room.entity.VideFormatEntityList
 import com.myAllVideoBrowser.data.local.room.entity.VideoFormatEntity
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.DetectionLogger
 import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
 import com.myAllVideoBrowser.util.hls_parser.MpdPlaylistParser
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
@@ -27,13 +28,27 @@ class VideoServiceSuperX(
         url: Request, isM3u8: Boolean, isMpd: Boolean,
         isAudioCheck: Boolean
     ): VideoInfoWrapper? {
+        val urlType = if (isM3u8) {
+            "M3U8"
+        } else {
+            "MPD"
+        }
+
+        DetectionLogger.log("SUPERX $urlType", "START", url.url.toString())
+
         if (!(isM3u8 || isMpd)) {
             return null
         }
 
         return try {
-            handlePlaylistUrl(url, isM3u8, isMpd)
+            val result = handlePlaylistUrl(url, isM3u8, isMpd)
+            if (result != null) {
+                DetectionLogger.log("SUPERX $urlType", "SUCCESS", url.url.toString())
+            }
+
+            result
         } catch (e: Throwable) {
+            DetectionLogger.log("SUPERX $urlType", "FAILED", url.url.toString(), e.message ?: "unknown")
             AppLogger.d("PlaylistService Error: Failed to parse manifest. ${e.message}")
             null
         }

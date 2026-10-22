@@ -10,6 +10,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateCanDownload
 import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateCanNotDownload
 import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateLoading
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.DetectionLogger
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.disposables.Disposable

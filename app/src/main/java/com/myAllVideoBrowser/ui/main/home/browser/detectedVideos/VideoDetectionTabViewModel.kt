@@ -24,6 +24,7 @@ import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.CookieUtils
+import com.myAllVideoBrowser.util.DetectionLogger
 import com.myAllVideoBrowser.util.SingleLiveEvent
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
@@ -377,6 +378,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             regularLoadingList.get()?.remove(request.url.toString())
             regularLoadingList.notifyChange()
         }.onErrorComplete().doOnError {
+            DetectionLogger.log("REGULAR", "ERROR", uriString, it.message ?: "unknown")
             AppLogger.d("Checking ERROR... $clearedUrl")
         }.subscribe()
 
@@ -501,6 +503,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         isCheckOnAudio: Boolean,
         isCheckOnVideo: Boolean
     ) {
+        DetectionLogger.log("REGULAR", "START", url)
         val threshold = settingsModel.videoDetectionTreshold.get()
 
         val finalUrlPair = runCatching {
@@ -527,6 +530,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val contentLength = response.body.contentLength()
 
                 if (response.code == 403 || response.code == 401) {
+                    DetectionLogger.log("REGULAR", "ERROR", url, "HTTP ${response.code}")
                     handleUnauthorizedResponse(url, threshold, isCheckOnAudio, isCheckOnVideo)
                     return
                 }
@@ -548,6 +552,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val isAudioContent = isAudio && isCheckOnAudio
 
                 if (isVideoContent) {
+                    DetectionLogger.log("REGULAR", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
                         webTabModel?.getTabTextInput()?.get(),
@@ -555,6 +560,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         contentLength
                     )
                 } else if (isAudioContent) {
+                    DetectionLogger.log("REGULAR", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
                         webTabModel?.getTabTextInput()?.get(),
@@ -565,6 +571,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
             }
         }.onFailure { e ->
+            DetectionLogger.log("REGULAR", "ERROR", url, e.message ?: "unknown")
             e.printStackTrace()
         }
     }
@@ -587,6 +594,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     contentType.contains(
                         "video", true
                     ) && isCheckOnVideo && contentLength > threshold.toLong() -> {
+                        DetectionLogger.log("REGULAR", "SUCCESS", url)
                         setMediaInfoWrapperFromUrl(
                             finalUrlPairEmpty.first,
                             webTabModel?.getTabTextInput()?.get(),
@@ -596,6 +604,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     }
 
                     contentType.contains("audio", true) && isCheckOnAudio -> {
+                        DetectionLogger.log("REGULAR", "SUCCESS", url)
                         setMediaInfoWrapperFromUrl(
                             finalUrlPairEmpty.first,
                             webTabModel?.getTabTextInput()?.get(),
@@ -603,6 +612,10 @@ open class VideoDetectionTabViewModel @Inject constructor(
                             contentLength,
                             true
                         )
+                    }
+
+                    else -> {
+                        DetectionLogger.log("REGULAR", "FAILED", url, "unknown unauthorized error")
                     }
                 }
             }

@@ -8,9 +8,9 @@ import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.DetectionLogger
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
-import com.yausername.youtubedl_android.mapper.VideoFormat
 import okhttp3.Request
 import org.json.JSONObject
 import java.util.*
@@ -40,6 +40,14 @@ open class VideoServiceLocal(
         isMpd: Boolean,
         isAudioCheck: Boolean
     ): VideoInfoWrapper? {
+        val urlType = if (isM3u8) {
+            "M3U8"
+        } else if (isMpd) {
+            "MPD"
+        } else {
+            "URL"
+        }
+        DetectionLogger.log("YOUTUBE-DLP $urlType", "START", url.url.toString())
         AppLogger.d("Getting info url...:  $url  ${url.headers["Cookie"]}")
 
         var result: VideoInfoWrapper? = null
@@ -47,7 +55,16 @@ open class VideoServiceLocal(
         try {
             result = handleYoutubeDlUrl(url, isM3u8 || isMpd, isAudioCheck)
         } catch (e: Throwable) {
+            DetectionLogger.log(
+                "YOUTUBE-DLP $urlType",
+                "FAILED",
+                url.url.toString(),
+                e.message ?: "unknown"
+            )
             AppLogger.d("YoutubeDL Error: $e")
+        }
+        if (result != null) {
+            DetectionLogger.log("YOUTUBE-DLP $urlType", "SUCCESS", url.url.toString())
         }
 
         return result

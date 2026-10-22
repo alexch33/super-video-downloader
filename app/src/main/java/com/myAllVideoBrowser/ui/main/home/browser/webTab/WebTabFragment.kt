@@ -61,7 +61,6 @@ import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.FileNameCleaner
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
-import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -665,6 +664,10 @@ class WebTabFragment : BaseWebTabFragment() {
                 videoDetectionTabViewModel.cancelAllCheckJobs()
             }
         }
+        
+        override fun onShowLogsClicked() {
+            navigateToDetectionLogs()
+        }
     }
 
     private fun getWebViewClientCompat(webView: WebView?): CustomWebViewClient? {
@@ -838,6 +841,24 @@ class WebTabFragment : BaseWebTabFragment() {
             return true
         }
     }
+
+//    override fun navigateToDetectionLogs() {
+//        try {
+//            val currentFragment = this
+//            val activityFragmentContainer =
+//                currentFragment.activity?.findViewById<FragmentContainerView>(R.id.fragment_container_view)
+//            activityFragmentContainer?.let {
+//                val transaction =
+//                    currentFragment.requireActivity().supportFragmentManager.beginTransaction()
+//                transaction.add(it.id, DetectionLogsFragment.newInstance())
+//                transaction.addToBackStack("detection_logs")
+//                transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+//                transaction.commit()
+//            }
+//        } catch (e: ClassCastException) {
+//            AppLogger.d("Can't get the fragment manager with this")
+//        }
+//    }
 
     private val shouldInterceptPostRequests = WebPostBridge { url, body ->
         val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()

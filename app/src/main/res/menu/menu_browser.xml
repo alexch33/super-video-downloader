@@ -58,6 +58,12 @@
         app:showAsAction="ifRoom|collapseActionView" />
 
     <item
+        android:id="@+id/detection_logs"
+        android:icon="@drawable/history_menu_icon_24dp"
+        android:title="@string/logs"
+        app:showAsAction="ifRoom|collapseActionView" />
+
+    <item
         android:id="@+id/help"
         android:icon="@drawable/help_24px"
         android:title="@string/help"

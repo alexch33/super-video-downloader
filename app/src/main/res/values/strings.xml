@@ -188,4 +188,6 @@
     <string name="latestVersion">Latest version</string>
     <string name="supportString">Project support BTC</string>
     <string name="checkingForUpdatesFailed">Failed to check for updates.</string>
+    <string name="clear">Clear</string>
+    <string name="logs">Detection Logs</string>
 </resources>

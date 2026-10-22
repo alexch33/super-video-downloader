@@ -123,7 +123,7 @@
                             android:textSize="@dimen/text_small"
                             app:items="@{viewModel.listTabSuggestions}"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toStartOf="@+id/browser_menu_button"
+                            app:layout_constraintEnd_toStartOf="@+id/iv_logs"
                             app:layout_constraintStart_toEndOf="@+id/buttons_block"
                             app:layout_constraintTop_toTopOf="parent" />
 
@@ -140,6 +140,20 @@
                             app:layout_constraintBottom_toBottomOf="@+id/et_search"
                             app:layout_constraintEnd_toEndOf="@+id/et_search"
                             app:layout_constraintTop_toTopOf="@+id/et_search" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/iv_logs"
+                            style="@style/Widget.Material3.Button.IconButton"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_marginEnd="4dp"
+                            android:contentDescription="@string/logs"
+                            android:onClick="@{() -> browserMenuListener.onShowLogsClicked()}"
+                            app:icon="@drawable/history_menu_icon_24dp"
+                            app:iconTint="?attr/colorOnSurface"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@+id/browser_menu_button"
+                            app:layout_constraintTop_toTopOf="parent" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/browser_menu_button"

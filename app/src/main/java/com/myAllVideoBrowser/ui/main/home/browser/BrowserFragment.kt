@@ -86,20 +86,6 @@ interface CurrentTabIndexProvider {
     fun getCurrentTabIndex(): ObservableInt
 }
 
-interface BrowserListener {
-    fun onBrowserMenuClicked()
-
-    fun onBrowserReloadClicked()
-
-    fun onTabCloseClicked()
-
-    fun onBrowserStopClicked()
-
-    fun onBrowserBackClicked()
-
-    fun onBrowserForwardClicked()
-}
-
 const val HOME_TAB_INDEX = 0
 
 const val TAB_INDEX_KEY = "TAB_INDEX_KEY"

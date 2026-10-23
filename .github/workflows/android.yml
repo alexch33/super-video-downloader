@@ -88,9 +88,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: false
-          body: "M3U8/MPD detection by youtube-dlp by default\nBuilt-in list updated\nMinor fixes"
+          prerelease: true
+          body: "Added detection logging to UI\nImport/Export history added\nApp's temporary directory moved to cache directory\nAnubis firewall bypass fix\nTikTok fix\nBlackListed Cloudflare challenges\nWebRTC disabled\nUpgraded all dependencies\nBuilt-in list replaced with osid\nCrashes fixes\nMinor fixes"
           draft: false
-          make_latest: true
+          make_latest: false
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

@@ -64,7 +64,7 @@ class AdBlockEngine @Inject constructor(
                     // Copy built-in rules to temp file to pass to native layer
                     try {
                         val assetFile = File(context.cacheDir, "easylist_tmp.txt")
-                        context.assets.open("easyprivacylist.txt").use { input ->
+                        context.assets.open("osid.txt").use { input ->
                             assetFile.outputStream().use { output ->
                                 input.copyTo(output)
                             }

@@ -31,6 +31,75 @@ import androidx.core.net.toUri
 import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.util.AppLogger
 
+val disableWebRtcJs = """
+    (function() {
+        function blockWebRTC(win) {
+            try {
+                // Stub RTCPeerConnection as a constructor that throws NotSupportedError
+                const DummyRTCPeerConnection = function() {
+                    throw new win.DOMException("RTCPeerConnection not supported", "NotSupportedError");
+                };
+                DummyRTCPeerConnection.prototype = {};
+                
+                win.RTCPeerConnection = DummyRTCPeerConnection;
+                win.webkitRTCPeerConnection = DummyRTCPeerConnection;
+                win.mozRTCPeerConnection = DummyRTCPeerConnection;
+                
+                win.RTCSessionDescription = function() {};
+                win.webkitRTCSessionDescription = function() {};
+                win.mozRTCSessionDescription = function() {};
+                
+                win.RTCIceCandidate = function() {};
+                win.webkitRTCIceCandidate = function() {};
+                win.mozRTCIceCandidate = function() {};
+                
+                if (win.navigator) {
+                    if (!win.navigator.mediaDevices) {
+                        win.navigator.mediaDevices = {};
+                    }
+                    win.navigator.mediaDevices.getUserMedia = function() {
+                        return Promise.reject(new win.DOMException("Permission denied", "NotAllowedError"));
+                    };
+                    win.navigator.mediaDevices.enumerateDevices = function() {
+                        return Promise.resolve([]);
+                    };
+                }
+                
+                win.getUserMedia = function(c, s, e) { if (e) e(new Error("Permission denied")); };
+                win.webkitGetUserMedia = win.getUserMedia;
+                win.mozGetUserMedia = win.getUserMedia;
+            } catch (e) {}
+        }
+
+        // 1. Block on main window
+        blockWebRTC(window);
+
+        // 2. Intercept iframe creation to block inside iframes (defeating iframe bypass)
+        const originalCreateElement = document.createElement;
+        document.createElement = function(tagName) {
+            const el = originalCreateElement.apply(document, arguments);
+            if (tagName && tagName.toLowerCase() === 'iframe') {
+                try {
+                    const originalDescriptor = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'contentWindow');
+                    if (originalDescriptor && originalDescriptor.get) {
+                        Object.defineProperty(el, 'contentWindow', {
+                            get: function() {
+                                const win = originalDescriptor.get.call(this);
+                                if (win) {
+                                    blockWebRTC(win);
+                                }
+                                return win;
+                            },
+                            configurable: true
+                        });
+                    }
+                } catch (e) {}
+            }
+            return el;
+        };
+    })();
+""".trimIndent()
+
 val injectJsInterceptor = """
         (function() {
             const oldSend = XMLHttpRequest.prototype.send;

@@ -27,6 +27,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.bumptech.glide.Glide
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.myAllVideoBrowser.R
@@ -56,6 +58,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.WorkerEventProvider
 import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
+import com.myAllVideoBrowser.ui.main.home.browser.disableWebRtcJs
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
 import com.myAllVideoBrowser.util.AppLogger
@@ -397,6 +400,14 @@ class WebTabFragment : BaseWebTabFragment() {
     @SuppressLint("SetJavaScriptEnabled")
     private fun configureWebView(fragmentWebTabBinding: FragmentWebTabBinding) {
         val currentWebView = this.webTab.getWebView() ?: return
+
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            WebViewCompat.addDocumentStartJavaScript(
+                currentWebView,
+                disableWebRtcJs,
+                setOf("*")
+            )
+        }
 
         val webViewClient = CustomWebViewClient(
             tabViewModel,

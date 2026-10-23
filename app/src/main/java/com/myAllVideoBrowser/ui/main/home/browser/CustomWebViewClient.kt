@@ -151,8 +151,6 @@ class CustomWebViewClient(
             return super.shouldInterceptRequest(view, request)
         }
 
-        AppLogger.d("AAAA  $url")
-
         val resourceType = when {
             request.isForMainFrame -> "main_frame"
             request.url.toString().contains(".js") -> "script"

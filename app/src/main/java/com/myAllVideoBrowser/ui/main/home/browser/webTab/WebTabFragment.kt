@@ -12,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.EditText
@@ -842,25 +843,15 @@ class WebTabFragment : BaseWebTabFragment() {
         }
     }
 
-//    override fun navigateToDetectionLogs() {
-//        try {
-//            val currentFragment = this
-//            val activityFragmentContainer =
-//                currentFragment.activity?.findViewById<FragmentContainerView>(R.id.fragment_container_view)
-//            activityFragmentContainer?.let {
-//                val transaction =
-//                    currentFragment.requireActivity().supportFragmentManager.beginTransaction()
-//                transaction.add(it.id, DetectionLogsFragment.newInstance())
-//                transaction.addToBackStack("detection_logs")
-//                transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-//                transaction.commit()
-//            }
-//        } catch (e: ClassCastException) {
-//            AppLogger.d("Can't get the fragment manager with this")
-//        }
-//    }
-
     private val shouldInterceptPostRequests = WebPostBridge { url, body ->
+        if (url.contains("/challenges.cloudflare.com/")) {
+            return@WebPostBridge false
+        }
+
+        if (url.contains("/cdn-cgi/challenge-platform/")) {
+            return@WebPostBridge false
+        }
+
         val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
         val isAd = isAdBlockOn &&
                 adBlockEngine.isAd(

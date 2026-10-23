@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"math/big"
 	"slices"
+	"sync/atomic"
 	"time"
 
 	utls "github.com/refraction-networking/utls"
@@ -29,11 +30,19 @@ var (
 
 type Conn struct {
 	*tls.Conn
+	suppressCloseNotify atomic.Bool
 }
 
 const tlsCloseTimeout = 250 * time.Millisecond
 
+func (c *Conn) SuppressCloseNotify() {
+	c.suppressCloseNotify.Store(true)
+}
+
 func (c *Conn) Close() error {
+	if c.suppressCloseNotify.Load() {
+		return c.Conn.NetConn().Close()
+	}
 	timer := time.AfterFunc(tlsCloseTimeout, func() {
 		c.Conn.NetConn().Close()
 	})
@@ -74,11 +83,19 @@ func Server(c net.Conn, config *tls.Config) net.Conn {
 
 type UConn struct {
 	*utls.UConn
+	suppressCloseNotify atomic.Bool
 }
 
 var _ Interface = (*UConn)(nil)
 
+func (c *UConn) SuppressCloseNotify() {
+	c.suppressCloseNotify.Store(true)
+}
+
 func (c *UConn) Close() error {
+	if c.suppressCloseNotify.Load() {
+		return c.Conn.NetConn().Close()
+	}
 	timer := time.AfterFunc(tlsCloseTimeout, func() {
 		c.Conn.NetConn().Close()
 	})
@@ -137,6 +154,24 @@ func (c *UConn) NegotiatedProtocol() string {
 	return state.NegotiatedProtocol
 }
 
+func (c *UConn) ConnectionState() tls.ConnectionState {
+	s := c.UConn.ConnectionState()
+	var state tls.ConnectionState
+	state.HandshakeComplete = s.HandshakeComplete
+	state.Version = s.Version
+	state.NegotiatedProtocol = s.NegotiatedProtocol
+	state.DidResume = s.DidResume
+	state.ServerName = s.ServerName
+	state.CipherSuite = s.CipherSuite
+	state.PeerCertificates = s.PeerCertificates
+	state.VerifiedChains = s.VerifiedChains
+	state.SignedCertificateTimestamps = s.SignedCertificateTimestamps
+	state.OCSPResponse = s.OCSPResponse
+	state.TLSUnique = s.TLSUnique
+	state.ECHAccepted = s.ECHAccepted
+	return state
+}
+
 func UClient(c net.Conn, config *tls.Config, fingerprint *utls.ClientHelloID) net.Conn {
 	utlsConn := utls.UClient(c, copyConfig(config), *fingerprint)
 	return &UConn{UConn: utlsConn}
@@ -156,6 +191,23 @@ func copyConfig(c *tls.Config) *utls.Config {
 		KeyLogWriter:                   c.KeyLogWriter,
 		EncryptedClientHelloConfigList: c.EncryptedClientHelloConfigList,
 		NextProtos:                     c.NextProtos,
+	}
+	if c.GetClientCertificate != nil {
+		config.GetClientCertificate = func(info *utls.CertificateRequestInfo) (*utls.Certificate, error) {
+			schemes := make([]tls.SignatureScheme, len(info.SignatureSchemes))
+			for i, s := range info.SignatureSchemes {
+				schemes[i] = tls.SignatureScheme(s)
+			}
+			cert, err := c.GetClientCertificate(&tls.CertificateRequestInfo{
+				AcceptableCAs:    info.AcceptableCAs,
+				SignatureSchemes: schemes,
+				Version:          info.Version,
+			})
+			if err != nil || cert == nil {
+				return &utls.Certificate{}, err
+			}
+			return &utls.Certificate{Certificate: cert.Certificate, PrivateKey: cert.PrivateKey, Leaf: cert.Leaf}, nil
+		}
 	}
 	return config
 }

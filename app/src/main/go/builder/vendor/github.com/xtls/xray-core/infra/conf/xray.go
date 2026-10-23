@@ -16,7 +16,12 @@ import (
 	"github.com/xtls/xray-core/common/serial"
 	core "github.com/xtls/xray-core/core"
 	"github.com/xtls/xray-core/proxy/freedom"
+	"github.com/xtls/xray-core/proxy/masque"
+	"github.com/xtls/xray-core/proxy/vless"
+	"github.com/xtls/xray-core/proxy/vless/inbound"
+	"github.com/xtls/xray-core/proxy/vless/outbound"
 	"github.com/xtls/xray-core/transport/internet"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -32,6 +37,7 @@ var (
 		"trojan":        func() interface{} { return new(TrojanServerConfig) },
 		"wireguard":     func() interface{} { return &WireGuardConfig{IsClient: false} },
 		"hysteria":      func() interface{} { return new(HysteriaServerConfig) },
+		"masque":        func() interface{} { return new(MasqueServerConfig) },
 		"tun":           func() interface{} { return new(TunConfig) },
 	}, "protocol", "settings")
 
@@ -48,6 +54,7 @@ var (
 		"vmess":       func() interface{} { return new(VMessOutboundConfig) },
 		"trojan":      func() interface{} { return new(TrojanClientConfig) },
 		"hysteria":    func() interface{} { return new(HysteriaClientConfig) },
+		"masque":      func() interface{} { return new(MasqueClientConfig) },
 		"dns":         func() interface{} { return new(DNSOutboundConfig) },
 		"wireguard":   func() interface{} { return &WireGuardConfig{IsClient: true} },
 	}, "protocol", "settings")
@@ -203,6 +210,12 @@ func (c *InboundDetourConfig) Build() (*core.InboundHandlerConfig, error) {
 	if err != nil {
 		return nil, errors.New("failed to build inbound handler for protocol ", c.Protocol).Base(err)
 	}
+	if _, ok := ts.(*masque.ServerConfig); !ok && receiverSettings.StreamSettings != nil && receiverSettings.StreamSettings.ProtocolName == "masque" {
+		return nil, errors.New("the masque transport can only be used by the masque inbound")
+	}
+	if err := validateXDrive(ts, receiverSettings.StreamSettings, nil, receiverSettings.PortList); err != nil {
+		return nil, err
+	}
 
 	return &core.InboundHandlerConfig{
 		Tag:              c.Tag,
@@ -253,6 +266,54 @@ func validateOutboundTransportSecurity(rawConfig interface{}, senderSettings *pr
 		}
 	}
 
+	return nil
+}
+
+// validateXDrive allows only VLESS with encryption on xdrive, and on the client Mux.Cool for every connection
+func validateXDrive(ts proto.Message, ss *internet.StreamConfig, ms *proxyman.MultiplexingConfig, pl *net.PortList) error {
+	if ss == nil || ss.ProtocolName != "xdrive" {
+		return nil
+	}
+	switch c := ts.(type) {
+	case *outbound.Config:
+		a, err := c.Vnext.User.Account.GetInstance()
+		if err != nil {
+			return err
+		}
+		account := a.(*vless.Account)
+		if account.Flow != "" {
+			return errors.New(`the xdrive transport doesn't support VLESS "flow"`)
+		}
+		if account.Encryption == "none" {
+			return errors.New(`the xdrive transport needs VLESS "encryption", run "xray vlessenc" to get one`)
+		}
+		// reverse opens its own mux
+		if account.Reverse == nil && (ms == nil || !ms.Enabled || ms.Concurrency < 0 || ms.XudpConcurrency < 0 || ms.XudpProxyUDP443 == "skip") {
+			return errors.New(`the xdrive transport needs "mux" enabled, with no negative "concurrency" or "xudpConcurrency" and no "xudpProxyUDP443":"skip"`)
+		}
+		if account.Testpre != 0 {
+			return errors.New(`the xdrive transport doesn't support VLESS "testpre"`)
+		}
+	case *inbound.Config:
+		if c.Decryption == "none" {
+			return errors.New(`the xdrive transport needs VLESS "decryption", run "xray vlessenc" to get one`)
+		}
+		for _, user := range c.Users {
+			a, err := user.Account.GetInstance()
+			if err != nil {
+				return err
+			}
+			if a.(*vless.Account).Flow != "" {
+				return errors.New(`the xdrive transport doesn't support VLESS "flow"`)
+			}
+		}
+		// every port gets its own listener on the same folder, and each of them accepts the same session
+		if pl != nil && len(pl.Ports()) != 1 {
+			return errors.New("the xdrive transport can only listen on one port")
+		}
+	default:
+		return errors.New("the xdrive transport can only be used by VLESS")
+	}
 	return nil
 }
 
@@ -334,8 +395,15 @@ func (c *OutboundDetourConfig) Build() (*core.OutboundHandlerConfig, error) {
 	if err != nil {
 		return nil, errors.New("failed to build outbound handler for protocol ", c.Protocol).Base(err)
 	}
+	if err := validateXDrive(ts, senderSettings.StreamSettings, senderSettings.MultiplexSettings, nil); err != nil {
+		return nil, err
+	}
 	if err := validateOutboundTransportSecurity(rawConfig, senderSettings); err != nil {
 		return nil, err
+	}
+
+	if _, ok := ts.(*masque.ClientConfig); !ok && senderSettings.StreamSettings != nil && senderSettings.StreamSettings.ProtocolName == "masque" {
+		return nil, errors.New("the masque transport can only be used by the masque outbound")
 	}
 
 	if fc, ok := ts.(*freedom.Config); ok {

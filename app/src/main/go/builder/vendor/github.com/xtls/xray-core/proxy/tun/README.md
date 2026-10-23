@@ -15,12 +15,74 @@ Plainly enabling it in the config probably will result nothing, or lock your rou
 ## DETAILS
 
 By default, enabling the feature will only bring the tun interface up. \
-When configured explicitly, Windows and Linux can apply interface addresses from `gateway`, while macOS uses the first IPv4 prefix from `gateway` to configure the utun point-to-point address. \
-Windows, Linux and macOS can also apply system routes from `autoSystemRoutingTable`.
-Linux and macOS do not configure system DNS from the `dns` field; system DNS remains managed by the OS or distribution-specific network services. \
+When configured explicitly, Windows and Linux can apply interface addresses from `gateway`, while macOS uses the first IPv4 prefix from `gateway` for the point-to-point address and FreeBSD for the interface address, the one after the gateway. \
+Without `gateway`, the systems differ: Xray assigns no address on Linux, Windows gives the interface link-local addresses itself (an IPv6 one at once, an IPv4 one from `169.254.0.0/16` after a few seconds), and macOS and FreeBSD use `169.254.10.1/30`. \
+Windows, Linux, macOS and FreeBSD can also apply system routes from `autoSystemRoutingTable`.
+macOS does not configure system DNS from the `dns` field, and neither do Linux and FreeBSD by default; system DNS remains managed by the OS or distribution-specific network services. \
 For more advanced routing policies or rules, OS level configuration can still manage the named interface (e.g. xray0) when it appears.
 This keeps complex system level routing and rules in a single place of responsibility - the OS itself. \
 Examples of how to achieve this on a simple Linux system (Ubuntu with systemd-networkd) can be found at the end of this README.
+
+### SYSTEM DNS ON LINUX AND FREEBSD (`autoSystemDnsToGateway`)
+
+On Linux and FreeBSD, setting `autoSystemDnsToGateway` to `true` lets the inbound point the system resolver at the tun interface, so name lookups resolve through Xray instead of going out over the physical link. It is off by default, and it exists only on those two systems. This section describes Linux; the FreeBSD differences follow in [SYSTEM DNS ON FREEBSD](#system-dns-on-freebsd).
+
+It uses `resolvectl`, which means it only works when all of these hold. Where Xray can tell that one does not, it does not start:
+
+- the system runs systemd and `resolvectl` is on `PATH`
+- `systemd-resolved` is enabled and actually managing DNS (installed but not running is not enough)
+- systemd-resolved is version 240 or newer, where `default-route` exists
+- no `dns` upstream resolves through the system resolver, directly or through its own bootstrap (see below)
+
+The address handed over is the first IPv4 `gateway`, or without one the first IPv6 `gateway`, incremented by one (e.g. `192.168.100.1/30` -> `192.168.100.2`, `fc00::1/64` -> `fc00::2`). Without any `gateway`, the config is rejected. It is not taken from `dns`: handing `1.1.1.1` to `resolvectl dns` would make systemd-resolved query that server directly over the physical link, which is the leak this option exists to close.
+
+Because that address has to actually answer, the takeover is checked before it happens. A query from the interface address to that address is routed through the configured rules, and host-wide DNS is only changed when the result is a DNS-capable outbound. Otherwise DNS is left alone and Xray does not start. In practice this means you also need a routing rule sending the interface's port 53 to a `dns` outbound, for example:
+
+```json
+"routing": {
+  "rules": [
+    { "type": "field", "inboundTag": ["tun"], "port": 53, "outboundTag": "dns" }
+  ]
+}
+```
+
+The check is a preflight, not a proof for arbitrary rules. It sends its query from the interface address and from a representative ephemeral source port, so a rule that matches on the source port cannot be predicted ahead of time: if the interface's port 53 reaches the `dns` outbound only from some source ports, the takeover is accepted and queries from the other ports fail. Supported configurations are those where the DNS path does not depend on the source port, that is, where the interface's port 53 reaches a `dns` outbound whatever its source.
+
+It is also a check for the dependencies it knows about, not a proof that no indirect one exists. A hostname-based upstream that bootstraps through system DNS is the case in point: `https+local://dns.google/dns-query` resolves its own hostname with `DialSystem`, so once the takeover is in place that bootstrap goes `resolved -> TUN -> DNS outbound -> bootstrap -> resolved` and the query times out. The preflight does not see it, because the dependency sits in the upstream's bootstrap rather than in the clients it inspects. Upstream resolution, bootstrap included, therefore has to stay independent of the resolver path being redirected; configuring the address instead of the hostname, or resolving the hostname beforehand, avoids it.
+
+The upstream requirement in the list above matters as much as the routing rule. With no name servers configured, Core resolves through a client that forwards to the system resolver; pointing the system resolver at the TUN would then close a loop through the DNS outbound, `resolved -> TUN -> DNS outbound -> system resolver -> resolved`, and resolution stops. The takeover is refused in that case, and Xray does not start.
+
+The same applies to a name server pointed at `localhost`, and to a `dns` section that is present but lists no name servers. One such upstream is enough to refuse the takeover even when independent upstreams are configured alongside it: name servers are selected per domain, so a domain-specific rule can still choose the local one, and the loop then affects whichever domains reach it. The check is deliberately broader than the loop it observed, because the alternative would be to drop a name server the user configured.
+
+Where it cannot apply, Xray does not start, rather than run with the leak described in XTLS/Xray-core#6454, so leave the option off there:
+
+| Environment | Behaviour |
+|---|---|
+| systemd distribution with systemd-resolved enabled | applies |
+| Alpine, Void, Devuan, OpenRC-based, OpenWrt | no `resolvectl`, does not start |
+| DNS managed by dnsmasq / unbound / BIND / static `resolv.conf` | unreachable by `resolvectl`, does not start |
+| Containers without a systemd-resolved daemon | does not start |
+| systemd older than 240 | `default-route` unavailable, does not start |
+
+On `Close()` the setting is reverted. It is **not** reverted if the process is killed with `SIGKILL`, since a process cannot handle that signal; run `resolvectl revert <iface>` to clean up by hand. An application that brings its own DNS endpoint is unaffected either way — this only covers the system resolver.
+
+### SYSTEM DNS ON FREEBSD
+
+On FreeBSD the same option goes through `resolvconf(8)`, the openresolv that ships in the base system, instead of `resolvectl`. The checks on Xray's own `dns` and routing configuration above apply unchanged, as does the loop through a `dns` upstream that bootstraps over the system resolver.
+
+The address handed over is the gateway itself, not the next address: on FreeBSD the interface gets the address after the first IPv4 `gateway` (as on macOS), and the gateway, which nothing owns, is routed into the TUN, so a query to it is what Xray answers (e.g. `169.254.10.1/30` -> resolver `169.254.10.1`, local address `169.254.10.2`). Without `gateway` the config is rejected, as on Linux.
+
+The entry is added with `resolvconf -a <iface> -x`, which makes the TUN's nameserver the only one in use, the equivalent of `domain ~.` plus `default-route true` above; without `-x` the nameservers DHCP supplied stay listed alongside it, and the system falls back to them. `resolvconf` exits successfully, and still records the entry, when `resolvconf=NO` is set in `resolvconf.conf`, but then runs none of the subscribers that write the resolver files, so Xray confirms the takeover in those files and does not start when the nameserver reached none of them: `/etc/resolv.conf` first, where it also has to be the only nameserver besides loopback ones (`inclusive_interfaces` in `resolvconf.conf` makes `resolvconf` ignore `-x` and keep the DHCP nameservers listed, which would be the leak again), and then, when `resolvconf.conf` names an `unbound_conf` file, that file. The latter is the `local_unbound` layout, where `local-unbound-setup` turns the `libc` subscriber off and has `resolvconf` write unbound's forwarders instead, with `resolv.conf` left pointed at loopback; the system then resolves through unbound, which forwards into the TUN. That only works with unbound's DNSSEC validation turned off, which `local_unbound` has on by default: the extra queries validation makes get no answer through the `dns` outbound, and resolution times out. A drop-in such as `/var/unbound/conf.d/xray.conf` with `server:` and `module-config: "iterator"`, followed by `service local_unbound restart`, turns it off (verified on FreeBSD 15.1).
+
+| Environment | Behaviour |
+|---|---|
+| default FreeBSD, `resolv.conf` managed by `resolvconf` (DHCP or static) | applies |
+| `local_unbound` enabled | applies, through unbound's forwarders; needs validation off (see above) |
+| `resolvconf=NO` in `resolvconf.conf` | no resolver file changes, does not start |
+| `inclusive_interfaces` covering the TUN in `resolvconf.conf` | DHCP nameservers stay listed, does not start |
+| another resolver in front of `resolv.conf` that `resolvconf` is not configured to feed | nameserver reaches no resolver file, does not start |
+
+On `Close()` the entry is removed with `resolvconf -d <iface>`. It is **not** removed if the process is killed with `SIGKILL`; run `resolvconf -d <iface>` to clean up by hand. The next start with the same interface name replaces the stale entry on its own.
 
 Due to this inbound not actually being a proxy, the configuration ignore required listen and port options, and never listen on any port. \
 Here is simple Xray config snippet to enable the inbound:
@@ -155,6 +217,22 @@ To make it start, wintun.dll specific for your Windows/arch must be present next
 
 After the start network adapter with the name you chose in the config will be created in the system, and exist while Xray is running.
 
+When `dns` is set, those servers are applied to the adapter. Windows is kept from registering the TUN's addresses in DNS, and its DNS cache is flushed when the TUN starts and stops.
+
+With `autoSystemWfpBlockLeak`, which needs `autoSystemRoutingTable` (the config is rejected otherwise), Xray also adds Windows Filtering Platform filters that keep two kinds of traffic of every program but Xray itself from leaving outside the TUN, each chosen by a value in the list, e.g. `"autoSystemWfpBlockLeak": ["dns", "misconfigtun"]`:
+- `"dns"` (needs `dns`, the config is rejected otherwise): DNS (port 53) only goes through the TUN. Windows keeps sending name queries to the DNS servers of the other interfaces as well, out through those interfaces whatever the routes say, and other programs reach a resolver on the local network (e.g. `192.168.1.1` handed out by DHCP) through its more specific LAN route instead of the TUN. On Windows 11 and Server 2022 and later, where those queries may also go over HTTPS or TLS, Windows' DNS Client service cannot connect outside the TUN at all, except for name resolution on the local network (LLMNR, mDNS). The `dns` servers therefore have to lie within `gateway` or `autoSystemRoutingTable` (a warning is logged otherwise), and DNS servers that should be reached directly belong in Xray's own `dns` settings.
+- `"misconfigtun"`: an IP version without routes in `autoSystemRoutingTable`, IPv4 or IPv6, is blocked entirely, in both directions, as it would bypass the TUN. Only loopback and what Windows itself needs on the local link (DHCP, and for IPv6 neighbor and multicast listener discovery) remain allowed. An address of that version in `gateway` is not needed: without one, Windows gives the TUN link-local addresses itself, an IPv6 one at once and an IPv4 one from `169.254.0.0/16` after some seconds (until then, IPv4 routed to the TUN is unreachable), and what is routed to the TUN goes through it with those.
+
+With the filters in place, Xray's own connections out also get past Windows Firewall's block rules (other firewalls may still block them), while connections to Xray's inbounds stay subject to them.
+
+Names that Xray resolves through the system resolver, such as an outbound's server address given as a domain with the default `AsIs` domain strategy, would be looked up by Windows on Xray's behalf, and those queries would then go into the TUN too. While DNS is restricted this way and `autoOutboundsInterface` is in use (the default with `autoSystemRoutingTable`), Xray therefore resolves them itself, with its own queries to the DNS servers of the other interfaces. That bypasses Windows' DNS cache, and its name resolution on the local network (LLMNR, mDNS): a server address given as a domain is looked up again for every connection, and a DNS server that does not answer delays each lookup. Having Xray's own `dns` resolve it, through the outbound's `sockopt.domainStrategy`, avoids that. The `localhost` DNS server queries the same servers whenever `autoOutboundsInterface` is in use. Both skip the TUN's own DNS servers, unless another interface uses them as well: queried from Xray itself, they would lead back into it, or nowhere.
+
+If the filters cannot be added, Xray does not start. They are removed when Xray exits. Not covered is name resolution on the local network (LLMNR, mDNS, NetBIOS), except over an IP version that is blocked.
+
+`autoSystemWfpBlockLeak` (Windows only) is empty by default, as the filters break some setups: with `"dns"`, a local DNS resolver other programs use (e.g. on `127.0.0.1:53`), the DNS of another VPN on its own interface, virtual machines whose NAT resolves names on the host, or signing in to a captive portal; with `"misconfigtun"`, IPv4 or IPv6 on the local network while no route of that version leads to the TUN. Without the filters, DNS may leak as described above. To keep an IP version out of the TUN on purpose while still blocking DNS leaks, use only `["dns"]`.
+
+`autoOutboundsInterface` (the default with `autoSystemRoutingTable`) keeps Xray's own connections out of the TUN by binding them to another interface, which Windows only honors while that interface has weak host send and forwarding off for the IP versions routed to the TUN. Otherwise, Windows sends them into the TUN, from that interface's address, and they stall. While the TUN runs, Xray therefore turns weak host send off on that interface, and on again when it stops or another interface takes over. Forwarding cannot be turned off this way, as Mobile Hotspot and Internet Connection Sharing need it, so a warning is logged while it is on. Having the hotspot share the TUN instead of that interface (Settings, Mobile hotspot, Share my internet connection from) moves forwarding to the TUN, where it does no harm, and sends the hotspot's devices through Xray as well.
+
 You can give the adapter ip address manually, you can live Windows to give it autogenerated ip address (which take few seconds), it doesn't matter, the traffic going _through_ the interface will be forwarded into the app for proxying. \
 Minimal configuration that will work for local machine is routing passing the traffic on-link through the interface.
 You will need the interface id for that, unfortunately it is going to change with every Xray start due to implementation ambiguity between Xray and wintun driver.
@@ -185,10 +263,10 @@ So everything applicable for ipv4 above also works for ipv6, you only need to gi
 FreeBSD support of the same functionality is implemented through tun(4).
 
 Interface name in the configuration must comply to the scheme "tunN", where N is some number. \
-It's necessary to set an IP address to the interface, ex.:
-```
-ifconfig tun0 inet 169.254.10.1/30
-```
+FreeBSD requires the tun interface to have an IPv4 address before IPv4 routes can use it. \
+By default Xray uses `169.254.10.1/30` as the gateway and assigns the next address in the prefix to the tun interface; the gateway itself belongs to nothing and is routed into the TUN. \
+You can override this by setting `gateway`; FreeBSD uses the first IPv4 prefix in the list, and IPv6 `gateway` entries are not used for addressing.
+
 To attach routing to the interface, route command like following can be executed:
 ```
 route add -net 1.1.1.0/24 -iface tun10
@@ -197,6 +275,10 @@ route add -net 1.1.1.0/24 -iface tun10
 route add -inet6 -host 2606:4700:4700::1111 -iface tun10
 route add -inet6 -host 2606:4700:4700::1001 -iface tun10
 ```
+Alternatively, configure `autoSystemRoutingTable` and Xray will add and remove those system routes while it is running. \
+With `autoSystemRoutingTable`, Xray's own connections are kept out of the TUN through `autoOutboundsInterface` (the default), which on FreeBSD switches them to a second routing table (FIB 1) that mirrors the physical default route; this needs the boot tunable `net.fibs` set to at least 2, and Xray does not start otherwise. \
+`autoSystemDnsToGateway` points the system resolver at the TUN through `resolvconf(8)`, see [SYSTEM DNS ON FREEBSD](#system-dns-on-freebsd).
+
 Important to remember that everything written above about Linux routing concept, also apply to FreeBSD. If you simply route default route through tun interface, that will result network loop and immediate network failure.
 
 ## MAC OS X SUPPORT

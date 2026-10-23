@@ -1,0 +1,13 @@
+cd v2ray-src
+git fetch
+git checkout last_tag
+cd ..
+git add v2ray-src
+git commit -m "Update v2ray-src last_tag"
+
+cd app/src/main/go/builder
+go mod tidy
+go mod vendor
+cd ../../../../..
+./gradlew :app:buildAllGoLibraries
+git add app/src/main/go/builder

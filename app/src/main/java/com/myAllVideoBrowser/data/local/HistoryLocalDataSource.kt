@@ -18,6 +18,11 @@ class HistoryLocalDataSource @Inject constructor(private val historyDao: History
         historyDao.insertHistoryItem(history)
     }
 
+    override fun bulkSaveHistory(historyList: List<HistoryItem>) {
+        historyDao.bulkInsertHistoryItem(historyList)
+    }
+
+
     override fun deleteHistory(history: HistoryItem) {
         historyDao.deleteHistoryItem(history)
     }

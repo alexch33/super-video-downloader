@@ -24,6 +24,7 @@ import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.ActivityMainBinding
 import com.myAllVideoBrowser.ui.component.adapter.MainAdapter
 import com.myAllVideoBrowser.ui.main.base.BaseActivity
+import com.myAllVideoBrowser.ui.main.history.HistoryViewModel
 import com.myAllVideoBrowser.ui.main.progress.ProgressViewModel
 import com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
@@ -53,6 +54,8 @@ class MainActivity : BaseActivity() {
     lateinit var proxiesViewModel: ProxiesViewModel
 
     lateinit var settingsViewModel: SettingsViewModel
+
+    lateinit var historyViewModel: HistoryViewModel
 
     private lateinit var dataBinding: ActivityMainBinding
 
@@ -99,6 +102,7 @@ class MainActivity : BaseActivity() {
         progressViewModel = ViewModelProvider(this, viewModelFactory)[ProgressViewModel::class.java]
         proxiesViewModel = ViewModelProvider(this, viewModelFactory)[ProxiesViewModel::class.java]
         settingsViewModel = ViewModelProvider(this, viewModelFactory)[SettingsViewModel::class.java]
+        historyViewModel = ViewModelProvider(this, viewModelFactory)[HistoryViewModel::class.java]
 
         val isWebViewAvailable = (application as DLApplication).isWebViewAvailable
         mainViewModel.isWebViewAvailable.set(isWebViewAvailable)

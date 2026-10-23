@@ -13,6 +13,9 @@ interface HistoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertHistoryItem(item: HistoryItem)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun bulkInsertHistoryItem(historyList: List<HistoryItem>)
+
     @Delete
     fun deleteHistoryItem(historyItem: HistoryItem)
 

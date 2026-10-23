@@ -1,8 +1,8 @@
 [versions]
 # Android and Gradle
 conscryptAndroid = "2.8.0"
-gradlePlugin = "9.0.1"
-kotlin = "2.2.10"
+gradlePlugin = "9.4.1"
+kotlin = "2.4.10"
 kotlinxCoroutinesRx3 = "1.11.0"
 ksp = "2.3.12"
 
@@ -16,7 +16,7 @@ recyclerview = "1.4.0"
 webkit = "1.16.0-rc01"
 
 
-coreKtx = "1.18.0"
+coreKtx = "1.19.1"
 coreSplashscreen = "1.2.0"
 legacySupportV4 = "1.0.0"
 
@@ -70,8 +70,8 @@ jsoup = "1.23.2"
 
 timeago = "4.3.0"
 persistentCookieJar = "1.0.1"
-kotlinxSerializationJson = "1.11.0"
-kotlinxSerializationCore = "1.11.0"
+kotlinxSerializationJson = "1.12.0"
+kotlinxSerializationCore = "1.12.0"
 
 # Media3
 media3 = "1.11.1"

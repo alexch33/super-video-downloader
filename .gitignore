@@ -11,3 +11,4 @@ captures/*
 
 !rust_adblock/vendor/
 !rust_adblock/.cargo/
+!rust_adblock/vendor/*/build/

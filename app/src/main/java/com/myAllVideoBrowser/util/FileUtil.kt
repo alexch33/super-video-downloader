@@ -408,13 +408,13 @@ class FileUtil @Inject constructor() {
     }
 
     private fun getTmpDataDir(context: Context, isExternal: Boolean): File {
-        val path = if (isExternal) {
-            "${context.getExternalFilesDir(null)}/$TMP_DATA_FOLDER_NAME"
+        val baseDir = if (isExternal) {
+            context.externalCacheDir ?: context.cacheDir
         } else {
-            "${context.filesDir.absolutePath}/$TMP_DATA_FOLDER_NAME"
+            context.cacheDir
         }
 
-        val file = File(path)
+        val file = File(baseDir, TMP_DATA_FOLDER_NAME)
         if (!file.exists()) {
             file.mkdirs()
         }

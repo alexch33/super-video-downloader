@@ -139,7 +139,7 @@ class AdBlockEngine @Inject constructor(
             pointerLock.readLock().withLock {
                 if (nativeEnginePtr == 0L) return false
 
-                if (url.length > 1024 || url.startsWith("data:")) {
+                if (url.startsWith("data:") || url.isBlank()) {
                     return false
                 }
 

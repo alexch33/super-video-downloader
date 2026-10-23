@@ -1,0 +1,17 @@
+/home/user/android_projects/super-video-downloader/rust_adblock/target/debug/deps/thiserror_impl-76282709588967d0.d: /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/lib.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/ast.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/attr.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/expand.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/fallback.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/fmt.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/generics.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/prop.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/scan_expr.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/unraw.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/valid.rs
+
+/home/user/android_projects/super-video-downloader/rust_adblock/target/debug/deps/libthiserror_impl-76282709588967d0.so: /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/lib.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/ast.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/attr.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/expand.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/fallback.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/fmt.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/generics.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/prop.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/scan_expr.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/unraw.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/valid.rs
+
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/lib.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/ast.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/attr.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/expand.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/fallback.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/fmt.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/generics.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/prop.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/scan_expr.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/unraw.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/thiserror-impl/src/valid.rs:
+
+# env-dep:CARGO_PKG_VERSION_PATCH=21

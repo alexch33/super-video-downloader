@@ -1,0 +1,11 @@
+/home/user/android_projects/super-video-downloader/rust_adblock/target/debug/deps/arrayvec-34d443e6c1890bcd.d: /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/lib.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/arrayvec_impl.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/arrayvec.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/array_string.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/char.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/errors.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/utils.rs
+
+/home/user/android_projects/super-video-downloader/rust_adblock/target/debug/deps/libarrayvec-34d443e6c1890bcd.rmeta: /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/lib.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/arrayvec_impl.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/arrayvec.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/array_string.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/char.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/errors.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/utils.rs
+
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/lib.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/arrayvec_impl.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/arrayvec.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/array_string.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/char.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/errors.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/arrayvec/src/utils.rs:

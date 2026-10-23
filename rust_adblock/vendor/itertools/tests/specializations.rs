@@ -1,3 +1,10 @@
+//! Test specializations of methods with default impls match the behavior of the
+//! default impls.
+//!
+//! **NOTE:** Due to performance limitations, these tests are not run with miri!
+//! They cannot be relied upon to discover soundness issues.
+
+#![cfg(not(miri))]
 #![allow(unstable_name_collisions)]
 
 use itertools::Itertools;
@@ -266,6 +273,16 @@ quickcheck! {
         test_specializations(&v.into_iter().intersperse_with(|| 0));
     }
 
+    fn array_combinations(v: Vec<u8>) -> TestResult {
+        if v.len() > 10 {
+            return TestResult::discard();
+        }
+        test_specializations(&v.iter().array_combinations::<1>());
+        test_specializations(&v.iter().array_combinations::<2>());
+        test_specializations(&v.iter().array_combinations::<3>());
+        TestResult::passed()
+    }
+
     fn combinations(a: Vec<u8>, n: u8) -> TestResult {
         if n > 3 || a.len() > 8 {
             return TestResult::discard();
@@ -447,11 +464,15 @@ quickcheck! {
     }
 
     fn filter_ok(v: Vec<Result<u8, char>>) -> () {
-        test_specializations(&v.into_iter().filter_ok(|&i| i < 20));
+        let it = v.into_iter().filter_ok(|&i| i < 20);
+        test_specializations(&it);
+        test_double_ended_specializations(&it);
     }
 
     fn filter_map_ok(v: Vec<Result<u8, char>>) -> () {
-        test_specializations(&v.into_iter().filter_map_ok(|i| if i < 20 { Some(i * 2) } else { None }));
+        let it = v.into_iter().filter_map_ok(|i| if i < 20 { Some(i * 2) } else { None });
+        test_specializations(&it);
+        test_double_ended_specializations(&it);
     }
 
     // `SmallIter2<u8>` because `Vec<u8>` is too slow and we get bad coverage from a singleton like Option<u8>

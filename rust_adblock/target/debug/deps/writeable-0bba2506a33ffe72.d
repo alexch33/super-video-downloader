@@ -1,0 +1,11 @@
+/home/user/android_projects/super-video-downloader/rust_adblock/target/debug/deps/writeable-0bba2506a33ffe72.d: /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/lib.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/cmp.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/concat.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/impls.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/ops.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/parts_write_adapter.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/try_writeable.rs
+
+/home/user/android_projects/super-video-downloader/rust_adblock/target/debug/deps/libwriteable-0bba2506a33ffe72.rmeta: /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/lib.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/cmp.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/concat.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/impls.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/ops.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/parts_write_adapter.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/try_writeable.rs
+
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/lib.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/cmp.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/concat.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/impls.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/ops.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/parts_write_adapter.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/writeable/src/try_writeable.rs:

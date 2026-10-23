@@ -1,10 +1,8 @@
-[![Build Status](https://github.com/jni-rs/jni-rs/workflows/CI/badge.svg)](https://github.com/jni-rs/jni-rs/actions)
+[![Build Status](https://github.com/jni-rs/jni-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/jni-rs/jni-rs/actions)
 [![Docs](https://docs.rs/jni/badge.svg)](https://docs.rs/jni)
 [![Crates.io](https://img.shields.io/crates/v/jni.svg)](https://crates.io/crates/jni)
 
 # JNI Bindings for Rust
-
-[![Join the chat at https://gitter.im/jni-rs/Lobby](https://badges.gitter.im/jni-rs/Lobby.svg)](https://gitter.im/jni-rs/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This project provides complete JNI bindings for Rust, allowing to:
 
@@ -13,10 +11,12 @@ This project provides complete JNI bindings for Rust, allowing to:
 - Embed JVM in Rust applications and use any Java libraries
 
 See the [docs](https://docs.rs/jni) for more details.
+See the [examples](https://github.com/jni-rs/jni-rs/tree/master/crates/jni/examples) directory.
 
-## Example
-```
-cd example
+## Shared-library Example
+
+```shell
+cd crates/jni/mylib-example
 make
 ```
 
@@ -24,11 +24,11 @@ make
 
 See the [Contribution Guide](CONTRIBUTING.md) for details.
 
-
 ## License
 
 Licensed under either of
 
- * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or https://www.apache.org/licenses/LICENSE-2.0)
+* MIT license ([LICENSE-MIT](LICENSE-MIT) or https://opensource.org/license/mit)
+
 at your option.

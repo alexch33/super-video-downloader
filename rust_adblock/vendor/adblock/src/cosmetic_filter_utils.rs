@@ -21,13 +21,12 @@ pub(crate) fn key_from_selector(selector: &str) -> Option<String> {
 
     // If there are no escape characters in the selector, just take the first class or id token.
     let mat = RE_PLAIN_SELECTOR.find(selector);
-    if let Some(location) = mat {
+    {
+        let location = mat?;
         let key = &location.as_str();
         if find_char(b'\\', key.as_bytes()).is_none() {
             return Some((*key).into());
         }
-    } else {
-        return None;
     }
 
     // Otherwise, the characters in the selector must be escaped.
@@ -52,7 +51,7 @@ pub(crate) fn key_from_selector(selector: &str) -> Option<String> {
                 let codepoint = u32::from_str_radix(&capture[..capture.len() - 1], 16).ok()?;
 
                 // Not all u32s are valid Unicode codepoints
-                key += &core::char::from_u32(codepoint)?.to_string();
+                key.push(core::char::from_u32(codepoint)?);
             }
         }
         Some(key + &escaped[beginning..])

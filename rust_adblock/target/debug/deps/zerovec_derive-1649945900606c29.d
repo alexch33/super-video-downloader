@@ -1,0 +1,10 @@
+/home/user/android_projects/super-video-downloader/rust_adblock/target/debug/deps/zerovec_derive-1649945900606c29.d: /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/lib.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/make_ule.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/make_varule.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/ule.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/utils.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/varule.rs
+
+/home/user/android_projects/super-video-downloader/rust_adblock/target/debug/deps/libzerovec_derive-1649945900606c29.so: /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/lib.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/make_ule.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/make_varule.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/ule.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/utils.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/varule.rs
+
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/lib.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/make_ule.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/make_varule.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/ule.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/utils.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/zerovec-derive/src/varule.rs:

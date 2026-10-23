@@ -7,13 +7,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 interface HistoryRepository {
-    fun getAllHistory() : Flowable<List<HistoryItem>>
+    fun getAllHistory(): Flowable<List<HistoryItem>>
 
     fun saveHistory(history: HistoryItem)
 
     fun deleteHistory(history: HistoryItem)
 
     fun deleteAllHistory()
+    fun bulkSaveHistory(historyList: List<HistoryItem>)
 }
 
 @Singleton
@@ -34,6 +35,10 @@ class HistoryRepositoryImpl @Inject constructor(
 
     override fun deleteAllHistory() {
         localDataSource.deleteAllHistory()
+    }
+
+    override fun bulkSaveHistory(historyList: List<HistoryItem>) {
+        localDataSource.bulkSaveHistory(historyList)
     }
 
 }

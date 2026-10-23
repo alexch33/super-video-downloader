@@ -54,8 +54,7 @@ class HistoryFragment : BaseFragment() {
     ): View {
         mainViewModel = mainActivity.mainViewModel
 
-        historyModel =
-            ViewModelProvider(this, viewModelFactory)[HistoryViewModel::class.java]
+        historyModel = mainActivity.historyViewModel
 
         historyAdapter = HistoryAdapter(emptyList(), historyListener)
         searchHistoryAdapter = HistorySearchAdapter(emptyList(), searchHistoryListener)

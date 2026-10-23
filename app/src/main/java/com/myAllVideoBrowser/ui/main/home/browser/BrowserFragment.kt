@@ -281,7 +281,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     ): View {
         mainViewModel = mainActivity.mainViewModel
         browserViewModel = ViewModelProvider(this, viewModelFactory)[BrowserViewModel::class.java]
-        historyModel = ViewModelProvider(this, viewModelFactory)[HistoryViewModel::class.java]
+        historyModel = mainActivity.historyViewModel
         videoDetectionModel =
             ViewModelProvider(this, viewModelFactory)[GlobalVideoDetectionModel::class.java]
 

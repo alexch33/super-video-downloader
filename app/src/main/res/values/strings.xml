@@ -190,4 +190,10 @@
     <string name="checkingForUpdatesFailed">Failed to check for updates.</string>
     <string name="clear">Clear</string>
     <string name="logs">Detection Logs</string>
+    <string name="settings_export_history" translatable="false">Export browser history</string>
+    <string name="history_exported_success" translatable="false">Browser history exported successfully to Downloads</string>
+    <string name="history_exported_error" translatable="false">Failed to export browser history</string>
+    <string name="settings_import_history" translatable="false">Import browser history</string>
+    <string name="history_imported_success" translatable="false">Browser history imported successfully</string>
+    <string name="history_imported_error" translatable="false">Failed to import browser history</string>
 </resources>

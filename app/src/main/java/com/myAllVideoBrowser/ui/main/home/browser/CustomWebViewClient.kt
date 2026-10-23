@@ -133,11 +133,15 @@ class CustomWebViewClient(
     override fun shouldInterceptRequest(
         view: WebView?, request: WebResourceRequest?
     ): WebResourceResponse? {
-        if (request == null || request.url == null) {
+        if (request?.url == null) {
             return super.shouldInterceptRequest(view, request)
         }
 
         val url = request.url.toString()
+
+        if (url.contains(".within.website/x/cmd/anubis")) {
+            return super.shouldInterceptRequest(view, request)
+        }
 
         val resourceType = when {
             request.isForMainFrame -> "main_frame"

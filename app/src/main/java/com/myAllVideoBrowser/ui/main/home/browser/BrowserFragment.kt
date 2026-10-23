@@ -86,20 +86,6 @@ interface CurrentTabIndexProvider {
     fun getCurrentTabIndex(): ObservableInt
 }
 
-interface BrowserListener {
-    fun onBrowserMenuClicked()
-
-    fun onBrowserReloadClicked()
-
-    fun onTabCloseClicked()
-
-    fun onBrowserStopClicked()
-
-    fun onBrowserBackClicked()
-
-    fun onBrowserForwardClicked()
-}
-
 const val HOME_TAB_INDEX = 0
 
 const val TAB_INDEX_KEY = "TAB_INDEX_KEY"
@@ -295,7 +281,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     ): View {
         mainViewModel = mainActivity.mainViewModel
         browserViewModel = ViewModelProvider(this, viewModelFactory)[BrowserViewModel::class.java]
-        historyModel = ViewModelProvider(this, viewModelFactory)[HistoryViewModel::class.java]
+        historyModel = mainActivity.historyViewModel
         videoDetectionModel =
             ViewModelProvider(this, viewModelFactory)[GlobalVideoDetectionModel::class.java]
 

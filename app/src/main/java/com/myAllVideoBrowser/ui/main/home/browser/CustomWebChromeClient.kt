@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.os.Message
 import android.view.View
 import android.view.WindowManager
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.widget.Toast
@@ -27,6 +28,17 @@ class CustomWebChromeClient(
     private val appUtil: AppUtil,
     private val mainActivity: MainActivity
 ) : WebChromeClient() {
+
+    override fun onPermissionRequest(request: PermissionRequest?) {
+        val resources = request?.resources
+        if (resources?.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE) == true ||
+            resources?.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE) == true
+        ) {
+            request.deny()
+        } else {
+            super.onPermissionRequest(request)
+        }
+    }
 
     override fun onCreateWindow(
         view: WebView?,
@@ -68,7 +80,8 @@ class CustomWebChromeClient(
             return true
         } catch (e: Exception) {
             AppLogger.e("Failed to create new WebView window: ${e.message}")
-            Toast.makeText(view.context, "WebView provider not available.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(view.context, "WebView provider not available.", Toast.LENGTH_SHORT)
+                .show()
             return false
         }
     }

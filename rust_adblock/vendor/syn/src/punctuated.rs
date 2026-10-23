@@ -204,13 +204,13 @@ impl<T, P> Punctuated<T, P> {
         self.inner.push((*last, punctuation));
     }
 
-    /// Removes the last punctuated pair from this sequence, or `None` if the
-    /// sequence is empty.
-    pub fn pop(&mut self) -> Option<Pair<T, P>> {
+    /// Removes the last element from this sequence, discarding the trailing
+    /// punctuation if any.
+    pub fn pop(&mut self) -> Option<T> {
         if self.last.is_some() {
-            self.last.take().map(|t| Pair::End(*t))
+            self.last.take().map(|t| *t)
         } else {
-            self.inner.pop().map(|(t, p)| Pair::Punctuated(t, p))
+            self.inner.pop().map(|(t, _p)| t)
         }
     }
 
@@ -223,6 +223,16 @@ impl<T, P> Punctuated<T, P> {
             let (t, p) = self.inner.pop()?;
             self.last = Some(Box::new(t));
             Some(p)
+        }
+    }
+
+    /// Removes the last punctuated pair from this sequence, or `None` if the
+    /// sequence is empty.
+    pub fn pop_pair(&mut self) -> Option<Pair<T, P>> {
+        if self.last.is_some() {
+            self.last.take().map(|t| Pair::End(*t))
+        } else {
+            self.inner.pop().map(|(t, p)| Pair::Punctuated(t, p))
         }
     }
 
@@ -281,6 +291,26 @@ impl<T, P> Punctuated<T, P> {
     pub fn clear(&mut self) {
         self.inner.clear();
         self.last = None;
+    }
+
+    /// Retains only the elements specified by the predicate.
+    ///
+    /// In other words, remove all elements `t` such that `f(&mut t)` returns
+    /// false.
+    pub fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut T) -> bool,
+    {
+        self.inner.retain_mut(|(t, _p)| f(t));
+        if let Some(last) = &mut self.last {
+            if !f(last) {
+                if let Some((second_last, _p)) = self.inner.pop() {
+                    **last = second_last;
+                } else {
+                    self.last = None;
+                }
+            }
+        }
     }
 
     /// Parses zero or more occurrences of `T` separated by punctuation of type

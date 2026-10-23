@@ -35,7 +35,7 @@ class AdBlockRepository @Inject constructor(
         if (count == 0) {
             val defaults = listOf(
                 AdBlockList(
-                    name = "EasyPrivacy (Built-in)",
+                    name = "OISD Privacy",
                     url = null,
                     isEnabled = true,
                     isDownloaded = true

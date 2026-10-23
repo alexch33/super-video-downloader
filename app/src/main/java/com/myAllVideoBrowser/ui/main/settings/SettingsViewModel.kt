@@ -1,15 +1,20 @@
 package com.myAllVideoBrowser.ui.main.settings
 
+import android.os.Environment
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.databinding.ObservableBoolean
 import androidx.databinding.ObservableField
 import androidx.databinding.ObservableInt
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 //import com.allVideoDownloaderXmaster.OpenForTesting
+import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
+import com.myAllVideoBrowser.data.repository.HistoryRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
 import com.myAllVideoBrowser.util.SingleLiveEvent
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -25,6 +30,7 @@ enum class StorageType {
 //@OpenForTesting
 class SettingsViewModel @Inject constructor(
     private val sharedPrefHelper: SharedPrefHelper,
+    private val historyRepository: HistoryRepository,
 ) :
     BaseViewModel() {
     val isAskRedirection = ObservableBoolean(false)
@@ -34,6 +40,9 @@ class SettingsViewModel @Inject constructor(
     val storageType = ObservableField(StorageType.SD)
 
     val clearCookiesEvent = SingleLiveEvent<Void?>()
+    val exportHistoryEvent = SingleLiveEvent<Boolean?>()
+    val openImportHistoryEvent = SingleLiveEvent<Void?>()
+    val importHistoryEvent = SingleLiveEvent<Boolean?>()
     val openVideoFolderEvent = SingleLiveEvent<Void?>()
     val openAdBlockSettingsEvent = SingleLiveEvent<Unit?>()
     val isDesktopMode = ObservableBoolean(false)
@@ -410,6 +419,41 @@ class SettingsViewModel @Inject constructor(
         videoDetectionJob = viewModelScope.launch(Dispatchers.IO) {
             delay(10)
             sharedPrefHelper.setVideoDetectionTreshold(finalResult)
+        }
+    }
+
+    fun exportHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val historyList = historyRepository.getAllHistory().blockingFirst()
+                val json = Gson().toJson(historyList)
+                val targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                if (!targetDir.exists()) {
+                    targetDir.mkdirs()
+                }
+                val file = File(targetDir, "browser_history.json")
+                file.writeText(json)
+                exportHistoryEvent.postValue(true)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                exportHistoryEvent.postValue(false)
+            }
+        }
+    }
+
+    fun openImportHistory() {
+        openImportHistoryEvent.call()
+    }
+
+    fun importHistory(items: List<HistoryItem>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                historyRepository.bulkSaveHistory(items)
+                importHistoryEvent.postValue(true)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                importHistoryEvent.postValue(false)
+            }
         }
     }
 }

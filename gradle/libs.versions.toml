@@ -1,32 +1,32 @@
 [versions]
 # Android and Gradle
-conscryptAndroid = "2.6.1"
-gradlePlugin = "9.0.1"
-kotlin = "2.2.10"
+conscryptAndroid = "2.8.0"
+gradlePlugin = "9.4.1"
+kotlin = "2.4.10"
 kotlinxCoroutinesRx3 = "1.11.0"
-ksp = "2.3.2"
+ksp = "2.3.12"
 
 # AndroidX Core
 activity = "1.13.0"
-appcompat = "1.7.1"
+appcompat = "1.8.0"
 material = "1.14.0"
-constraintlayout = "2.2.1"
+constraintlayout = "2.2.2"
 recyclerview = "1.4.0"
 
 webkit = "1.16.0-rc01"
 
 
-coreKtx = "1.18.0"
+coreKtx = "1.19.1"
 coreSplashscreen = "1.2.0"
 legacySupportV4 = "1.0.0"
 
 # AndroidX Work
-workRuntime = "2.11.2"
-workRxjava = "2.11.2"
-workMultiprocess = "2.11.2"
+workRuntime = "2.12.0"
+workRxjava = "2.12.0"
+workMultiprocess = "2.12.0"
 
 # AndroidX Fragment
-fragmentKtx = "1.8.9"
+fragmentKtx = "1.9.1"
 
 # AndroidX Concurrent
 concurrentFutures = "1.3.0"
@@ -39,10 +39,10 @@ lifecycleLivedata = "2.11.0"
 lifecycleViewmodel = "2.11.0"
 
 # AndroidX Room
-room = "2.8.4"
+room = "2.8.5"
 
 # 1.3.x for 32-bit support
-mmkv = "1.3.16"
+mmkv = "1.3.17"
 
 # AndroidX Arch Core
 archCore = "2.2.0"
@@ -51,7 +51,7 @@ archCore = "2.2.0"
 dagger = "2.60.1"
 
 # OkHttp
-okhttp = "5.4.0"
+okhttp = "5.5.1"
 
 # Retrofit
 retrofit = "3.0.0"
@@ -61,26 +61,26 @@ rxjava3 = "3.1.12"
 rxandroid3 = "3.0.2"
 
 # Other Dependencies
-glide = "5.0.7"
+glide = "5.0.9"
 youtubedl = "0.18.1"
-ffmpegKit = "2.2.1"
+ffmpegKit = "2.2.3"
 
 # version change can break build
-jsoup = "1.22.2"
+jsoup = "1.23.2"
 
 timeago = "4.3.0"
 persistentCookieJar = "1.0.1"
-kotlinxSerializationJson = "1.11.0"
-kotlinxSerializationCore = "1.11.0"
+kotlinxSerializationJson = "1.12.0"
+kotlinxSerializationCore = "1.12.0"
 
 # Media3
-media3 = "1.10.1"
+media3 = "1.11.1"
 
 # Testing
 testRunner = "1.1.0"
 junit = "4.13.2"
 espresso = "3.0.2"
-mockito = "5.23.0"
+mockito = "5.24.0"
 mockitoKotlin = "1.6.0"
 androidxTestJunit = "1.3.0"
 androidxTestEspresso = "3.7.0"
@@ -96,11 +96,11 @@ ndk = "29.0.14206865"
 
 # Build SDK versions
 minSdk = "24"
-targetSdk = "36"
+targetSdk = "37"
 jvmToolchain = "21"
 
 # Go
-goVersion = "1.26.0"
+goVersion = "1.27.0"
 
 relinker = "1.4.5"
 

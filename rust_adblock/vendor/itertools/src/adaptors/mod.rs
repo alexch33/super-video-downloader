@@ -515,7 +515,7 @@ pub struct TakeWhileRef<'a, I: 'a, F> {
     f: F,
 }
 
-impl<'a, I, F> fmt::Debug for TakeWhileRef<'a, I, F>
+impl<I, F> fmt::Debug for TakeWhileRef<'_, I, F>
 where
     I: Iterator + fmt::Debug,
 {
@@ -530,7 +530,7 @@ where
     TakeWhileRef { iter, f }
 }
 
-impl<'a, I, F> Iterator for TakeWhileRef<'a, I, F>
+impl<I, F> Iterator for TakeWhileRef<'_, I, F>
 where
     I: Iterator + Clone,
     F: FnMut(&I::Item) -> bool,
@@ -773,16 +773,28 @@ macro_rules! impl_tuple_combination {
             where
                 F: FnMut(B, Self::Item) -> B,
             {
+                // We outline this closure to prevent it from unnecessarily
+                // capturing the type parameters `I`, `B`, and `F`. Not doing
+                // so ended up causing exponentially big types during MIR
+                // inlining when building itertools with optimizations enabled.
+                //
+                // This change causes a small improvement to compile times in
+                // release mode.
+                type CurrTuple<A> = (A, $(ignore_ident!($X, A)),*);
+                type PrevTuple<A> = ($(ignore_ident!($X, A),)*);
+                fn map_fn<A: Clone>(z: &A) -> impl FnMut(PrevTuple<A>) -> CurrTuple<A> + '_ {
+                    move |($($X,)*)| (z.clone(), $($X),*)
+                }
                 let Self { c, item, mut iter } = self;
                 if let Some(z) = item.as_ref() {
                     init = c
-                        .map(|($($X,)*)| (z.clone(), $($X),*))
+                        .map(map_fn::<A>(z))
                         .fold(init, &mut f);
                 }
                 while let Some(z) = iter.next() {
                     let c: $P<I> = iter.clone().into();
                     init = c
-                        .map(|($($X,)*)| (z.clone(), $($X),*))
+                        .map(map_fn::<A>(&z))
                         .fold(init, &mut f);
                 }
                 init
@@ -924,6 +936,30 @@ where
     }
 }
 
+impl<I, F, T, E> DoubleEndedIterator for FilterOk<I, F>
+where
+    I: DoubleEndedIterator<Item = Result<T, E>>,
+    F: FnMut(&T) -> bool,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let f = &mut self.f;
+        self.iter.rfind(|res| match res {
+            Ok(t) => f(t),
+            _ => true,
+        })
+    }
+
+    fn rfold<Acc, Fold>(self, init: Acc, fold_f: Fold) -> Acc
+    where
+        Fold: FnMut(Acc, Self::Item) -> Acc,
+    {
+        let mut f = self.f;
+        self.iter
+            .filter(|v| v.as_ref().map(&mut f).unwrap_or(true))
+            .rfold(init, fold_f)
+    }
+}
+
 impl<I, F, T, E> FusedIterator for FilterOk<I, F>
 where
     I: FusedIterator<Item = Result<T, E>>,
@@ -1005,6 +1041,30 @@ where
     }
 }
 
+impl<I, F, T, U, E> DoubleEndedIterator for FilterMapOk<I, F>
+where
+    I: DoubleEndedIterator<Item = Result<T, E>>,
+    F: FnMut(T) -> Option<U>,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let f = &mut self.f;
+        self.iter.by_ref().rev().find_map(|res| match res {
+            Ok(t) => f(t).map(Ok),
+            Err(e) => Some(Err(e)),
+        })
+    }
+
+    fn rfold<Acc, Fold>(self, init: Acc, fold_f: Fold) -> Acc
+    where
+        Fold: FnMut(Acc, Self::Item) -> Acc,
+    {
+        let mut f = self.f;
+        self.iter
+            .filter_map(|v| transpose_result(v.map(&mut f)))
+            .rfold(init, fold_f)
+    }
+}
+
 impl<I, F, T, U, E> FusedIterator for FilterMapOk<I, F>
 where
     I: FusedIterator<Item = Result<T, E>>,
@@ -1048,9 +1108,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         let f = &mut self.f;
-        // TODO: once MSRV >= 1.62, use `then_some`.
-        self.iter
-            .find_map(|(count, val)| if f(val) { Some(count) } else { None })
+        self.iter.find_map(|(count, val)| f(val).then_some(count))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -1078,11 +1136,10 @@ where
 {
     fn next_back(&mut self) -> Option<Self::Item> {
         let f = &mut self.f;
-        // TODO: once MSRV >= 1.62, use `then_some`.
         self.iter
             .by_ref()
             .rev()
-            .find_map(|(count, val)| if f(val) { Some(count) } else { None })
+            .find_map(|(count, val)| f(val).then_some(count))
     }
 
     fn rfold<B, G>(self, init: B, mut func: G) -> B

@@ -25,14 +25,14 @@ pub struct BoxedSource {
 
 #[test]
 fn test_implicit_source() {
-    let io = io::Error::new(io::ErrorKind::Other, "oh no!");
+    let io = io::Error::other("oh no!");
     let error = ImplicitSource { source: io };
     error.source().unwrap().downcast_ref::<io::Error>().unwrap();
 }
 
 #[test]
 fn test_explicit_source() {
-    let io = io::Error::new(io::ErrorKind::Other, "oh no!");
+    let io = io::Error::other("oh no!");
     let error = ExplicitSource {
         source: String::new(),
         io,
@@ -42,7 +42,7 @@ fn test_explicit_source() {
 
 #[test]
 fn test_boxed_source() {
-    let source = Box::new(io::Error::new(io::ErrorKind::Other, "oh no!"));
+    let source = Box::new(io::Error::other("oh no!"));
     let error = BoxedSource { source };
     error.source().unwrap().downcast_ref::<io::Error>().unwrap();
 }
@@ -62,4 +62,21 @@ macro_rules! error_from_macro {
 error_from_macro! {
     #[error("Something")]
     Variant(#[from] io::Error)
+}
+
+#[test]
+fn test_not_source() {
+    #[derive(Error, Debug)]
+    #[error("{source} ==> {destination}")]
+    pub struct NotSource {
+        r#source: char,
+        destination: char,
+    }
+
+    let error = NotSource {
+        source: 'S',
+        destination: 'D',
+    };
+    assert_eq!(error.to_string(), "S ==> D");
+    assert!(error.source().is_none());
 }

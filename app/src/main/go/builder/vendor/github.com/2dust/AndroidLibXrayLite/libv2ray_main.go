@@ -176,7 +176,7 @@ func (x *CoreController) doStartLoop(configContent string) error {
 	log.Println("starting core...")
 	x.IsRunning = true
 	if err := x.coreInstance.Start(); err != nil {
-		x.IsRunning = false
+		x.doShutdown()
 		return fmt.Errorf("startup failed: %w", err)
 	}
 

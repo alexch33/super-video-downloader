@@ -180,6 +180,10 @@ class BrowserHomeFragment : BaseWebTabFragment() {
         override fun onBrowserMenuClicked() {
             showPopupMenu()
         }
+
+        override fun onShowLogsClicked() {
+
+        }
     }
 
     private fun handleFirstStartGuide() {

@@ -12,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.EditText
@@ -26,6 +27,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.bumptech.glide.Glide
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.myAllVideoBrowser.R
@@ -55,13 +58,13 @@ import com.myAllVideoBrowser.ui.main.home.browser.WorkerEventProvider
 import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
+import com.myAllVideoBrowser.ui.main.home.browser.disableWebRtcJs
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.FileNameCleaner
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
-import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -398,6 +401,14 @@ class WebTabFragment : BaseWebTabFragment() {
     private fun configureWebView(fragmentWebTabBinding: FragmentWebTabBinding) {
         val currentWebView = this.webTab.getWebView() ?: return
 
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            WebViewCompat.addDocumentStartJavaScript(
+                currentWebView,
+                disableWebRtcJs,
+                setOf("*")
+            )
+        }
+
         val webViewClient = CustomWebViewClient(
             tabViewModel,
             mainActivity.settingsViewModel,
@@ -665,6 +676,10 @@ class WebTabFragment : BaseWebTabFragment() {
                 videoDetectionTabViewModel.cancelAllCheckJobs()
             }
         }
+        
+        override fun onShowLogsClicked() {
+            navigateToDetectionLogs()
+        }
     }
 
     private fun getWebViewClientCompat(webView: WebView?): CustomWebViewClient? {
@@ -840,6 +855,14 @@ class WebTabFragment : BaseWebTabFragment() {
     }
 
     private val shouldInterceptPostRequests = WebPostBridge { url, body ->
+        if (url.contains("/challenges.cloudflare.com/")) {
+            return@WebPostBridge false
+        }
+
+        if (url.contains("/cdn-cgi/challenge-platform/")) {
+            return@WebPostBridge false
+        }
+
         val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
         val isAd = isAdBlockOn &&
                 adBlockEngine.isAd(

@@ -1,19 +1,26 @@
 package com.myAllVideoBrowser.ui.main.settings
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.slider.Slider
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.myAllVideoBrowser.R
+import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
 import com.myAllVideoBrowser.databinding.FragmentSettingsBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
@@ -47,6 +54,28 @@ class SettingsFragment : BaseFragment() {
 
     private lateinit var dataBinding: FragmentSettingsBinding
     private lateinit var settingsViewModel: SettingsViewModel
+
+    private val pickHistoryFileLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                try {
+                    val jsonString = context?.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    if (jsonString != null) {
+                        val type = object : TypeToken<List<HistoryItem>>() {}.type
+                        val items: List<HistoryItem> = Gson().fromJson(jsonString, type)
+                        settingsViewModel.importHistory(items)
+                    } else {
+                        Toast.makeText(context, R.string.history_imported_error, Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    Toast.makeText(context, R.string.history_imported_error, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     private var lastSavedRegularThreadsCount = -1
 
@@ -165,6 +194,29 @@ class SettingsFragment : BaseFragment() {
     private fun handleUIEvents() {
         settingsViewModel.clearCookiesEvent.observe(viewLifecycleOwner) {
             systemUtil.clearCookies(context)
+        }
+        settingsViewModel.exportHistoryEvent.observe(viewLifecycleOwner) { success ->
+            val msg = if (success == true) {
+                R.string.history_exported_success
+            } else {
+                R.string.history_exported_error
+            }
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
+        settingsViewModel.openImportHistoryEvent.observe(viewLifecycleOwner) {
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                type = "application/json"
+                addCategory(Intent.CATEGORY_OPENABLE)
+            }
+            pickHistoryFileLauncher.launch(intent)
+        }
+        settingsViewModel.importHistoryEvent.observe(viewLifecycleOwner) { success ->
+            val msg = if (success == true) {
+                R.string.history_imported_success
+            } else {
+                R.string.history_imported_error
+            }
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
         settingsViewModel.openVideoFolderEvent.observe(viewLifecycleOwner) {
             intentUtil.openVideoFolder(context, fileUtil.folderDir.path)

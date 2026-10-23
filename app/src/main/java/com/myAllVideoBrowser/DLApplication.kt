@@ -8,6 +8,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
+import com.getkeepsafe.relinker.ReLinker
 import com.myAllVideoBrowser.data.repository.AdBlockRepository
 import com.myAllVideoBrowser.di.component.DaggerAppComponent
 import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
@@ -98,7 +99,20 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
 
         val file: File = fileUtil.folderDir
 
-        MMKV.initialize(this)
+        try {
+            // Using ReLinker to load MMKV native library to prevent UnsatisfiedLinkError on some devices
+            MMKV.initialize(this) { libName ->
+                ReLinker.loadLibrary(this, libName)
+            }
+        } catch (e: Throwable) {
+            AppLogger.e("MMKV initialization with ReLinker failed: ${e.message}")
+            try {
+                // Fallback to default initialization if ReLinker fails
+                MMKV.initialize(this)
+            } catch (e2: Throwable) {
+                AppLogger.e("Critical: MMKV failed to initialize completely: ${e2.message}")
+            }
+        }
 
         // this should fix native ssl crash on old devices
         try {

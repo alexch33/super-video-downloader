@@ -1,4 +1,4 @@
-#![allow(unstable_name_collisions, clippy::incompatible_msrv)]
+#![allow(unstable_name_collisions)]
 
 use criterion::black_box;
 use criterion::BenchmarkId;
@@ -639,6 +639,7 @@ bench_specializations! {
         v.iter().copied().map_ok(|x| x + 1)
     }
     filter_ok {
+        DoubleEndedIterator
         {
             let v = black_box((0_u32..1024)
                 .map(|x| if x % 2 == 1 { Err(x) } else { Ok(x) })
@@ -647,6 +648,7 @@ bench_specializations! {
         v.iter().copied().filter_ok(|x| x % 3 == 0)
     }
     filter_map_ok {
+        DoubleEndedIterator
         {
             let v = black_box((0_u32..1024)
                 .map(|x| if x % 2 == 1 { Err(x) } else { Ok(x) })

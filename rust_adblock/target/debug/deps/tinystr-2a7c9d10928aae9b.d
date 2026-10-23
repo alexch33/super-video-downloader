@@ -1,0 +1,12 @@
+/home/user/android_projects/super-video-downloader/rust_adblock/target/debug/deps/tinystr-2a7c9d10928aae9b.d: /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/lib.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/macros.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/ascii.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/asciibyte.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/error.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/int_ops.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/unvalidated.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/ule.rs
+
+/home/user/android_projects/super-video-downloader/rust_adblock/target/debug/deps/libtinystr-2a7c9d10928aae9b.rmeta: /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/lib.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/macros.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/ascii.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/asciibyte.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/error.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/int_ops.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/unvalidated.rs /home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/ule.rs
+
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/lib.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/macros.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/ascii.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/asciibyte.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/error.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/int_ops.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/unvalidated.rs:
+/home/user/android_projects/super-video-downloader/rust_adblock/vendor/tinystr/src/ule.rs:

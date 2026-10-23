@@ -143,6 +143,16 @@ class CustomWebViewClient(
             return super.shouldInterceptRequest(view, request)
         }
 
+        if (url.contains("/challenges.cloudflare.com/")) {
+            return super.shouldInterceptRequest(view, request)
+        }
+
+        if (url.contains("/cdn-cgi/challenge-platform/")) {
+            return super.shouldInterceptRequest(view, request)
+        }
+
+        AppLogger.d("AAAA  $url")
+
         val resourceType = when {
             request.isForMainFrame -> "main_frame"
             request.url.toString().contains(".js") -> "script"

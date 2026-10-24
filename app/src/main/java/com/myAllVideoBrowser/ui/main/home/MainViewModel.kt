@@ -78,7 +78,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun updateTopPages() {
+    fun loadBookmarks() {
         viewModelScope.launch(executorSingle) {
             val pages = try {
                 topPagesRepository.getTopPages()
@@ -87,10 +87,17 @@ class MainViewModel @Inject constructor(
                 null
             }
 
-            if (!pages.isNullOrEmpty()) {
+            if (pages != null) {
                 bookmarksList.set(pages.toMutableList())
+            } else {
+                bookmarksList.set(mutableListOf())
             }
+        }
+    }
 
+    private fun updateTopPages() {
+        loadBookmarks()
+        viewModelScope.launch(executorSingle) {
             try {
                 topPagesRepository.updateLocalStorageFavicons().collect { pageInfo ->
                     val bookmrks = bookmarksList.get()

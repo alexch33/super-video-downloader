@@ -9,7 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 //import com.allVideoDownloaderXmaster.OpenForTesting
 import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
+import com.myAllVideoBrowser.data.local.room.entity.PageInfo
 import com.myAllVideoBrowser.data.repository.HistoryRepository
+import com.myAllVideoBrowser.data.repository.TopPagesRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SharedPrefHelper
@@ -31,6 +33,7 @@ enum class StorageType {
 class SettingsViewModel @Inject constructor(
     private val sharedPrefHelper: SharedPrefHelper,
     private val historyRepository: HistoryRepository,
+    private val topPagesRepository: TopPagesRepository,
 ) :
     BaseViewModel() {
     val isAskRedirection = ObservableBoolean(false)
@@ -43,6 +46,9 @@ class SettingsViewModel @Inject constructor(
     val exportHistoryEvent = SingleLiveEvent<Boolean?>()
     val openImportHistoryEvent = SingleLiveEvent<Void?>()
     val importHistoryEvent = SingleLiveEvent<Boolean?>()
+    val exportBookmarksEvent = SingleLiveEvent<Boolean?>()
+    val openImportBookmarksEvent = SingleLiveEvent<Void?>()
+    val importBookmarksEvent = SingleLiveEvent<Boolean?>()
     val openVideoFolderEvent = SingleLiveEvent<Void?>()
     val openAdBlockSettingsEvent = SingleLiveEvent<Unit?>()
     val isDesktopMode = ObservableBoolean(false)
@@ -453,6 +459,43 @@ class SettingsViewModel @Inject constructor(
             } catch (e: Throwable) {
                 e.printStackTrace()
                 importHistoryEvent.postValue(false)
+            }
+        }
+    }
+
+    fun exportBookmarks() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val bookmarksList = topPagesRepository.getTopPages()
+                val json = Gson().toJson(bookmarksList)
+                val targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                if (!targetDir.exists()) {
+                    targetDir.mkdirs()
+                }
+                val file = File(targetDir, "bookmarks.json")
+                file.writeText(json)
+                exportBookmarksEvent.postValue(true)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                exportBookmarksEvent.postValue(false)
+            }
+        }
+    }
+
+    fun openImportBookmarks() {
+        openImportBookmarksEvent.call()
+    }
+
+    fun importBookmarks(items: List<PageInfo>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                for (item in items) {
+                    topPagesRepository.saveTopPage(item)
+                }
+                importBookmarksEvent.postValue(true)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                importBookmarksEvent.postValue(false)
             }
         }
     }

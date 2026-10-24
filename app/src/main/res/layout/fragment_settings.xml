@@ -187,6 +187,84 @@
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="56dp" />
 
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/layout_export_bookmarks"
+                            android:layout_width="match_parent"
+                            android:layout_height="64dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:onClick="@{() -> viewModel.exportBookmarks()}"
+                            android:paddingHorizontal="16dp"
+                            android:focusable="true"
+                            android:clickable="true">
+
+                            <ImageView
+                                android:id="@+id/iv_export_bookmarks"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/bookmarks_24px"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:tint="?attr/colorOnSurface" />
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:text="@string/settings_export_bookmarks"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintStart_toEndOf="@id/iv_export_bookmarks"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                        <com.google.android.material.divider.MaterialDivider
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:dividerInsetStart="56dp" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/layout_import_bookmarks"
+                            android:layout_width="match_parent"
+                            android:layout_height="64dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:onClick="@{() -> viewModel.openImportBookmarks()}"
+                            android:paddingHorizontal="16dp"
+                            android:focusable="true"
+                            android:clickable="true">
+
+                            <ImageView
+                                android:id="@+id/iv_import_bookmarks"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/bookmarks_24px"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:tint="?attr/colorOnSurface" />
+
+                            <com.google.android.material.textview.MaterialTextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="16dp"
+                                android:text="@string/settings_import_bookmarks"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintStart_toEndOf="@id/iv_import_bookmarks"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                        <com.google.android.material.divider.MaterialDivider
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:dividerInsetStart="56dp" />
+
                         <com.google.android.material.materialswitch.MaterialSwitch
                             android:id="@+id/is_auto_theme_check_box"
                             android:layout_width="match_parent"

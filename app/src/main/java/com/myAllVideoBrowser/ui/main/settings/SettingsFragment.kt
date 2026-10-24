@@ -21,6 +21,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
+import com.myAllVideoBrowser.data.local.room.entity.PageInfo
 import com.myAllVideoBrowser.databinding.FragmentSettingsBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
@@ -72,6 +73,28 @@ class SettingsFragment : BaseFragment() {
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     Toast.makeText(context, R.string.history_imported_error, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private val pickBookmarksFileLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                try {
+                    val jsonString = context?.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    if (jsonString != null) {
+                        val type = object : TypeToken<List<PageInfo>>() {}.type
+                        val items: List<PageInfo> = Gson().fromJson(jsonString, type)
+                        settingsViewModel.importBookmarks(items)
+                    } else {
+                        Toast.makeText(context, R.string.bookmarks_imported_error, Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    Toast.makeText(context, R.string.bookmarks_imported_error, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -215,6 +238,30 @@ class SettingsFragment : BaseFragment() {
                 R.string.history_imported_success
             } else {
                 R.string.history_imported_error
+            }
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
+        settingsViewModel.exportBookmarksEvent.observe(viewLifecycleOwner) { success ->
+            val msg = if (success == true) {
+                R.string.bookmarks_exported_success
+            } else {
+                R.string.bookmarks_exported_error
+            }
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
+        settingsViewModel.openImportBookmarksEvent.observe(viewLifecycleOwner) {
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                type = "application/json"
+                addCategory(Intent.CATEGORY_OPENABLE)
+            }
+            pickBookmarksFileLauncher.launch(intent)
+        }
+        settingsViewModel.importBookmarksEvent.observe(viewLifecycleOwner) { success ->
+            val msg = if (success == true) {
+                mainActivity.mainViewModel.loadBookmarks()
+                R.string.bookmarks_imported_success
+            } else {
+                R.string.bookmarks_imported_error
             }
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }

@@ -295,15 +295,38 @@
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/ask_redirection_check_box"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:checked="@{viewModel.isAskRedirection}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsAskRedirection(isChecked)}"
-                            android:paddingHorizontal="16dp"
-                            android:text="@string/ask_redirection_title"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:layout_height="wrap_content"
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/ask_redirection_check_box"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isAskRedirection}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsAskRedirection(isChecked)}"
+                                android:text="@string/ask_redirection_title"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_ask_redirection"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -336,130 +359,342 @@
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_interrupt_intrecepted_resources"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:checked="@{viewModel.isInterruptIntreceptedResources}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsInterruptInterceptedResources(isChecked)}"
-                            android:padding="16dp"
-                            android:text="@string/is_interrupt_intrecepted_resources"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/show_video_alert_check_box"
-                            android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:checked="@{viewModel.getVideoAlertState()}"
-                            android:onCheckedChanged="@{(_, isChecked) -> isChecked ? viewModel.setShowVideoAlertOn() : viewModel.setShowVideoAlertOff()}"
-                            android:paddingHorizontal="16dp"
-                            android:text="@string/show_video_found_alert"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_interrupt_intrecepted_resources"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isInterruptIntreceptedResources}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsInterruptInterceptedResources(isChecked)}"
+                                android:text="@string/is_interrupt_intrecepted_resources"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_interrupt_intercepted"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/show_video_action_button_check_box"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:checked="@{viewModel.getVideoButtonState()}"
-                            android:onCheckedChanged="@{(_, isChecked) -> isChecked ? viewModel.setShowVideoActionButtonOn() : viewModel.setShowVideoActionButtonOff()}"
-                            android:paddingHorizontal="16dp"
-                            android:text="@string/show_action_button"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:layout_height="wrap_content"
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/show_video_alert_check_box"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.getVideoAlertState()}"
+                                android:onCheckedChanged="@{(_, isChecked) -> isChecked ? viewModel.setShowVideoAlertOn() : viewModel.setShowVideoAlertOff()}"
+                                android:text="@string/show_video_found_alert"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_show_video_alert"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/find_videos_by_url"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:checked="@{viewModel.isFindVideoByUrl}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsFindVideoByUrl(isChecked)}"
-                            android:paddingHorizontal="16dp"
-                            android:text="@string/find_videos_by_url"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:layout_height="wrap_content"
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/show_video_action_button_check_box"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.getVideoButtonState()}"
+                                android:onCheckedChanged="@{(_, isChecked) -> isChecked ? viewModel.setShowVideoActionButtonOn() : viewModel.setShowVideoActionButtonOff()}"
+                                android:text="@string/show_action_button"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_show_action_button"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_check_every_request_on_mp4"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:checked="@{viewModel.isCheckEveryRequestOnMp4Video}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsCheckEveryRequestOnVideo(isChecked)}"
-                            android:paddingHorizontal="16dp"
-                            android:text="@string/check_every_request_on_video_mp4"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:layout_height="wrap_content"
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/find_videos_by_url"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isFindVideoByUrl}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsFindVideoByUrl(isChecked)}"
+                                android:text="@string/find_videos_by_url"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_find_videos_by_url"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_check_every_request_on_m3u8"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:checked="@{viewModel.isCheckIfEveryRequestOnM3u8}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsCheckIfEveryUrlOnM3u8(isChecked)}"
-                            android:paddingHorizontal="16dp"
-                            android:text="@string/check_every_request_on_video_m3u8"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:layout_height="wrap_content"
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_check_every_request_on_mp4"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isCheckEveryRequestOnMp4Video}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsCheckEveryRequestOnVideo(isChecked)}"
+                                android:text="@string/check_every_request_on_video_mp4"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_check_every_mp4"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_check_every_request_on_audio"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:checked="@{viewModel.isCheckOnAudio}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsCheckOnAudio(isChecked)}"
-                            android:paddingHorizontal="16dp"
-                            android:text="@string/check_every_request_on_audio"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:layout_height="wrap_content"
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_check_every_request_on_m3u8"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isCheckIfEveryRequestOnM3u8}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsCheckIfEveryUrlOnM3u8(isChecked)}"
+                                android:text="@string/check_every_request_on_video_m3u8"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_check_every_m3u8"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_force_stream_detection"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:checked="@{viewModel.isForceStreamDetection}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setForceStreamDetection(isChecked)}"
-                            android:paddingHorizontal="16dp"
-                            android:text="@string/force_stream_detection"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:layout_height="wrap_content"
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_check_every_request_on_audio"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isCheckOnAudio}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsCheckOnAudio(isChecked)}"
+                                android:text="@string/check_every_request_on_audio"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_check_every_audio"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_use_legacy_m3u8_detection"
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:checked="@{viewModel.isUseLegacyM3u8Detection}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setUseLegacyM3u8Detection(isChecked)}"
-                            android:paddingHorizontal="16dp"
-                            android:text="@string/use_legacy_m3u8_detection"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:layout_height="wrap_content"
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_force_stream_detection"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isForceStreamDetection}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setForceStreamDetection(isChecked)}"
+                                android:text="@string/force_stream_detection"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_force_stream_detection"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
+
+                        <com.google.android.material.divider.MaterialDivider
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:dividerInsetStart="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_use_legacy_m3u8_detection"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isUseLegacyM3u8Detection}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setUseLegacyM3u8Detection(isChecked)}"
+                                android:text="@string/use_legacy_m3u8_detection"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_use_legacy_m3u8_detection"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
@@ -472,7 +707,8 @@
                             android:layout_height="64dp"
                             android:background="?attr/selectableItemBackground"
                             android:onClick="@{() -> viewModel.openAdBlockSettings()}"
-                            android:paddingHorizontal="16dp"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp"
                             android:focusable="true"
                             android:clickable="true">
 
@@ -482,8 +718,23 @@
                                 android:text="@string/adblock_lists_title"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
                                 app:layout_constraintBottom_toBottomOf="parent"
-                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintEnd_toStartOf="@id/btn_help_adblock_settings"
                                 app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_adblock_settings"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintEnd_toEndOf="parent"
                                 app:layout_constraintTop_toTopOf="parent" />
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -500,13 +751,34 @@
                             android:orientation="vertical"
                             android:padding="16dp">
 
-                            <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/ads_treshold_text"
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@string/ads_detection_treshold"
-                                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                                tools:text="Ads detection treshold is 4Mb" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/ads_treshold_text"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@string/ads_detection_treshold"
+                                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                                    tools:text="Ads detection treshold is 4Mb" />
+
+                                <ImageView
+                                    android:id="@+id/btn_help_ads_treshold"
+                                    android:layout_width="36dp"
+                                    android:layout_height="36dp"
+                                    android:layout_marginStart="8dp"
+                                    android:padding="6dp"
+                                    android:src="@drawable/help_24px"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:contentDescription="@string/help"
+                                    android:clickable="true"
+                                    android:focusable="true"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+                            </LinearLayout>
 
                             <com.google.android.material.slider.Slider
                                 android:id="@+id/seekBarAdsTreshold"
@@ -544,61 +816,152 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_download_subtitles"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:checked="@{viewModel.isDownloadSubtitles}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsDownloadSubtitles(isChecked)}"
-                            android:padding="16dp"
-                            android:text="@string/download_subtitles"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_download_subtitles"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isDownloadSubtitles}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsDownloadSubtitles(isChecked)}"
+                                android:text="@string/download_subtitles"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_download_subtitles"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_force_stream_downloading"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:checked="@{viewModel.isForceStreamDownloading}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setForceStreamDownloading(isChecked)}"
-                            android:padding="16dp"
-                            android:text="@string/force_stream_downloading"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_force_stream_downloading"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isForceStreamDownloading}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setForceStreamDownloading(isChecked)}"
+                                android:text="@string/force_stream_downloading"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_force_stream_downloading"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_always_remux_regular_downloads"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:checked="@{viewModel.isAlwaysRemuxRegularDownloads}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsRemuxOnlyRegularDownloads(isChecked)}"
-                            android:padding="16dp"
-                            android:text="@string/is_always_remux_regular_downloads"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_always_remux_regular_downloads"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isAlwaysRemuxRegularDownloads}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsRemuxOnlyRegularDownloads(isChecked)}"
+                                android:text="@string/is_always_remux_regular_downloads"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_always_remux_regular"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
-                        <com.google.android.material.materialswitch.MaterialSwitch
-                            android:id="@+id/is_remux_only_live_regular_downloads"
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:checked="@{viewModel.isRemuxOnlyLiveRegularDownloads}"
-                            android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsRemuxOnlyLiveRegularDownloads(isChecked)}"
-                            android:padding="16dp"
-                            android:text="@string/is_remux_only_live_regular_downloads"
-                            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
 
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_remux_only_live_regular_downloads"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isRemuxOnlyLiveRegularDownloads}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsRemuxOnlyLiveRegularDownloads(isChecked)}"
+                                android:text="@string/is_remux_only_live_regular_downloads"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_remux_only_live"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
 
                         <com.google.android.material.divider.MaterialDivider
                             android:layout_width="match_parent"
@@ -612,13 +975,34 @@
                             android:orientation="vertical"
                             android:padding="16dp">
 
-                            <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/regular_threads_count_text"
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@{(context.getString(R.string.regular_threads_count) + viewModel.regularThreadsCount)}"
-                                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                                tools:text="Regular Download Threads: 4" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/regular_threads_count_text"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@{(context.getString(R.string.regular_threads_count) + viewModel.regularThreadsCount)}"
+                                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                                    tools:text="Regular Download Threads: 4" />
+
+                                <ImageView
+                                    android:id="@+id/btn_help_regular_threads"
+                                    android:layout_width="36dp"
+                                    android:layout_height="36dp"
+                                    android:layout_marginStart="8dp"
+                                    android:padding="6dp"
+                                    android:src="@drawable/help_24px"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:contentDescription="@string/help"
+                                    android:clickable="true"
+                                    android:focusable="true"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+                            </LinearLayout>
 
                             <com.google.android.material.slider.Slider
                                 android:id="@+id/seekBarRegular"
@@ -643,13 +1027,34 @@
                             android:orientation="vertical"
                             android:padding="16dp">
 
-                            <com.google.android.material.textview.MaterialTextView
-                                android:id="@+id/m3u8_threads_count_text"
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="@{context.getString(R.string.m3u8_threads_count) + viewModel.m3u8ThreadsCount}"
-                                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                                tools:text="M3U8 Download Threads: 8" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <com.google.android.material.textview.MaterialTextView
+                                    android:id="@+id/m3u8_threads_count_text"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:text="@{context.getString(R.string.m3u8_threads_count) + viewModel.m3u8ThreadsCount}"
+                                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                                    tools:text="M3U8 Download Threads: 8" />
+
+                                <ImageView
+                                    android:id="@+id/btn_help_m3u8_threads"
+                                    android:layout_width="36dp"
+                                    android:layout_height="36dp"
+                                    android:layout_marginStart="8dp"
+                                    android:padding="6dp"
+                                    android:src="@drawable/help_24px"
+                                    android:background="?attr/selectableItemBackgroundBorderless"
+                                    android:contentDescription="@string/help"
+                                    android:clickable="true"
+                                    android:focusable="true"
+                                    app:tint="?attr/colorOnSurfaceVariant" />
+                            </LinearLayout>
 
                             <com.google.android.material.slider.Slider
                                 android:id="@+id/seekBarM3u8"
@@ -666,14 +1071,34 @@
                 </com.google.android.material.card.MaterialCardView>
 
                 <!-- Storage Location Section -->
-                <com.google.android.material.textview.MaterialTextView
-                    style="@style/TextAppearance.Material3.LabelLarge"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:layout_marginTop="24dp"
-                    android:layout_marginBottom="8dp"
-                    android:text="@string/downloads_location"
-                    android:textColor="?attr/colorPrimary" />
+                    android:layout_marginBottom="8dp">
+
+                    <com.google.android.material.textview.MaterialTextView
+                        style="@style/TextAppearance.Material3.LabelLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/downloads_location"
+                        android:textColor="?attr/colorPrimary" />
+
+                    <ImageView
+                        android:id="@+id/btn_help_downloads_location"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:padding="6dp"
+                        android:src="@drawable/help_24px"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/help"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:tint="?attr/colorPrimary" />
+                </LinearLayout>
 
                 <com.google.android.material.card.MaterialCardView
                     style="?attr/materialCardViewElevatedStyle"

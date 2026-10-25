@@ -503,8 +503,13 @@ class MpdDownloader(
             override fun onChunkFailure(e: Throwable, index: CustomFileDownloader.Chunk) {}
         }
 
+        val firstUrl = urls.firstOrNull() ?: run {
+            listener.onFailure(IllegalArgumentException("No URLs provided for MPD download"))
+            return@suspendCancellableCoroutine
+        }
+
         val downloader = CustomFileDownloader(
-            URL(urls.first()),
+            URL(firstUrl),
             outputFile,
             threadCount,
             headers,

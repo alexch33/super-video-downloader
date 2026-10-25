@@ -407,13 +407,13 @@ open class VideoDetectionTabViewModel @Inject constructor(
             }
 
             is DownloadButtonStateCanNotDownload -> {
-                val detectedSize = detectedVideosList.get()?.size
-                if (detectedSize == null || detectedSize == 0) {
+                val list = detectedVideosList.get()
+                if (list.isNullOrEmpty()) {
                     downloadButtonState.set(DownloadButtonStateCanNotDownload())
                 } else {
                     downloadButtonState.set(
                         DownloadButtonStateCanDownload(
-                            detectedVideosList.get()?.first()
+                            list.firstOrNull()
                         )
                     )
                 }
@@ -424,7 +424,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 if (list.isEmpty()) {
                     downloadButtonState.set(DownloadButtonStateLoading())
                 } else {
-                    downloadButtonState.set(DownloadButtonStateCanDownload(list.first()))
+                    downloadButtonState.set(DownloadButtonStateCanDownload(list.firstOrNull()))
                 }
             }
         }
@@ -657,8 +657,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
                                 format = if (isAudio) "audio" else ContextUtils.getApplicationContext()
                                     .getString(R.string.player_resolution),
                                 ext = if (isAudio) "mp3" else "mp4",
-                                url = downloadUrls.first().url.toString(),
-                                httpHeaders = downloadUrls.first().headers.toMap(),
+                                url = downloadUrls.firstOrNull()?.url?.toString() ?: "",
+                                httpHeaders = downloadUrls.firstOrNull()?.headers?.toMap() ?: emptyMap(),
                                 fileSize = contentLength
                             )
                         )

@@ -89,7 +89,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Added detection logging to UI\nImport/Export history added\nApp's temporary directory moved to cache directory\nAnubis firewall bypass fix\nTikTok fix\nBlackListed Cloudflare challenges\nWebRTC disabled\nUpgraded all dependencies\nBuilt-in list replaced with osid\nCrashes fixes\nMinor fixes"
+          body: "Added more captcha skip for detectors\nAdded import/export bookmarks\nAdded advanced guide\nAdded additional info for settings\nCrash fixes"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

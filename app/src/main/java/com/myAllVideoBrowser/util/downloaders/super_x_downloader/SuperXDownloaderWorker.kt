@@ -516,12 +516,14 @@ class SuperXDownloaderWorker(appContext: Context, workerParams: WorkerParameters
 
         val manifest = MpdPlaylistParser.parse(content, manifestUrl)
 
+        val firstPeriod = manifest.periods.firstOrNull() ?: throw IOException("MPD manifest has no periods")
+
         val videoRepresentations =
-            manifest.periods.first().adaptationSets.filter { it.mimeType?.startsWith("video/") == true }
+            firstPeriod.adaptationSets.filter { it.mimeType?.startsWith("video/") == true }
                 .flatMap { it.representations }
 
         val audioRepresentations =
-            manifest.periods.first().adaptationSets.filter { it.mimeType?.startsWith("audio/") == true }
+            firstPeriod.adaptationSets.filter { it.mimeType?.startsWith("audio/") == true }
                 .flatMap { it.representations }
 
         // 1. Get the selected format ID from the worker's input data.

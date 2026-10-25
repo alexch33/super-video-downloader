@@ -80,6 +80,7 @@
     <string name="is_auto_dark">Автоматический режим темы</string>
     <string name="video_menu_delete">Удалить</string>
     <string name="video_rename_invalid">Неверное имя. Пожалуйста, попробуйте еще раз!</string>
+    <string name="about">О программе</string>
     <string name="ok">Ладно</string>
     <string name="browser_search_hint">Поиск в DuckDuckGo или введите URL-адрес</string>
     <string name="dialog_preview_video">Предпросмотр видео</string>
@@ -171,4 +172,44 @@
     <string name="accessibility_forward">Вперёд</string>
     <string name="accessibility_refresh">Перезагрузить</string>
     <string name="accessibility_stop">Стоп</string>
+
+    <string name="clear">Очистить логи</string>
+    <string name="logs">Логи детектора</string>
+    <string name="settings_export_history">Экспорт истории браузера</string>
+    <string name="history_exported_success">История браузера успешно экспортирована в Загрузки</string>
+    <string name="history_exported_error">Не удалось экспортировать историю браузера</string>
+    <string name="settings_import_history">Импорт истории браузера</string>
+    <string name="history_imported_success">История браузера успешно импортирована</string>
+    <string name="history_imported_error">Не удалось импортировать историю браузера</string>
+    <string name="settings_export_bookmarks">Экспорт закладок</string>
+    <string name="bookmarks_exported_success">Закладки успешно экспортированы в Загрузки</string>
+    <string name="bookmarks_exported_error">Не удалось экспортировать закладки</string>
+    <string name="settings_import_bookmarks">Импорт закладок</string>
+    <string name="bookmarks_imported_success">Закладки успешно импортированы</string>
+    <string name="bookmarks_imported_error">Не удалось импортировать закладки</string>
+
+    <!-- Объяснения настроек -->
+    <string name="setting_explanation_ask_redirection">Отображает диалоговое окно подтверждения перед перенаправлением на другой домен.</string>
+    <string name="setting_explanation_interrupt_intercepted">Останавливает загрузку и воспроизведение медиапотока на веб-странице после его перехвата для скачивания.</string>
+    <string name="setting_explanation_show_video_alert">Автоматически показывает всплывающее окно при обнаружении доступного для скачивания видео на веб-странице.</string>
+    <string name="setting_explanation_show_action_button">Показывает плавающую кнопку скачивания на экране браузера при обнаружении медиафайлов.</string>
+    <string name="setting_explanation_find_videos_by_url">Сканирует URL-адреса веб-страниц напрямую для поиска встроенных видео и медиа-ссылок.</string>
+    <string name="setting_explanation_check_every_mp4">Отслеживает все сетевые запросы веб-страницы для обнаружения видеофайлов MP4.</string>
+    <string name="setting_explanation_check_every_m3u8">Отслеживает все сетевые запросы для обнаружения плейлистов потокового видео HLS (M3U8) и DASH (MPD).</string>
+    <string name="setting_explanation_check_every_audio">Отслеживает все сетевые запросы для обнаружения аудиопотоков и звуковых файлов на веб-страницах.</string>
+    <string name="setting_explanation_force_stream_detection">Принудительно определяет медиапотоки с неизвестным или отсутствующим заголовком длины контента (часто используется для стримов).</string>
+    <string name="setting_explanation_use_legacy_m3u8_detection">Использует движок youtube-dlp для извлечения ссылок на потоковое видео M3U8 и MPD с веб-страниц. (Иначе будет использован SuperX детектор)</string>
+    <string name="setting_explanation_adblock_settings">Открывает настройки для управления списками фильтров блокировки рекламы и пользовательскими правилами.</string>
+    <string name="setting_explanation_ads_treshold">Игнорирует обнаруженные медиафайлы меньше этого размера, чтобы не определять рекламные ролики как видео для скачивания.</string>
+    <string name="setting_explanation_download_subtitles">Автоматически скачивает и сохраняет доступные дорожки субтитров при загрузке видео с помощью youtube-dlp.</string>
+    <string name="setting_explanation_force_stream_downloading">Включает непрерывную потоковую загрузку для обычных MP4 видео (не M3U8/MPD), как для прямых трансляций (может исправить некоторые поврежденные для скачивания MP4).</string>
+    <string name="setting_explanation_always_remux_regular">Обрабатывает скачанные обычные MP4 файлы с помощью FFmpeg после завершения для исправления заголовков видео, временных меток и формата контейнера.</string>
+    <string name="setting_explanation_remux_only_live">Применяет постобработку FFmpeg только к записанным прямым трансляциям для обеспечения правильной перемотки и длительности видео.</string>
+    <string name="setting_explanation_regular_threads">Задает количество параллельных потоков скачивания для обычных файлов. Большее количество потоков может увеличить скорость, но может вызвать сбои для некоторых загрузок.</string>
+    <string name="setting_explanation_m3u8_threads">Задает количество параллельных потоков для скачивания сегментов потокового видео M3U8/HLS.</string>
+    <string name="setting_explanation_downloads_location">Выберите папку для сохранения скачанных видео: общедоступная папка Загрузки, приватная скрытая папка во внутренней памяти или память SD-карты.</string>
+
+    <string name="advanced_guide">Продвинутое руководство</string>
+    <string name="advanced_guide_title">Продвинутое руководство по детекторам</string>
+    <string name="advanced_guide_text">В SuperX есть 3 различных типа детекторов видео:\n\n1. Детектор по URL:\nСканирует адреса страниц напрямую. Подходит для сайтов вроде Facebook или TikTok, где ссылки на видео находятся в URL.\n\n2. Детектор обычных файлов:\nОтслеживает сетевые запросы для обнаружения прямых медиафайлов (MP4, WebM, аудио и т. д.).\n\n3. Детектор M3U8 / MPD потоков:\nОбнаруживает плейлисты потокового видео (HLS / DASH). Работает в двух вариантах:\n • Движок youtube-dlp: Очень стабильный и надежный, но более медленный.\n • Детектор SuperX: Новый, экспериментальный и сверхбыстрый (менее секунды).\n\nКак настроить под конкретные сайты:\nПо умолчанию все детекторы включены. В Настройках вы можете настроить их более точечно:\n • Для Facebook или TikTok (где обнаружение работает только по URL): Вы можете отключить детекторы обычных файлов и M3U8/MPD.\n • Для сайтов с перехватом сетевых запросов: Вы можете отключить поиск по URL.\n • Посмотреть, какой именно детектор сработал, можно в «Логах детектора» в меню. Отключайте ненужные детекторы для более быстрой работы!</string>
 </resources>

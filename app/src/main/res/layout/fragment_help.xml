@@ -26,13 +26,28 @@
             android:focusable="true" />
     </ScrollView>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/get_started_ok_button"
-        style="@style/Widget.Material3.Button"
-        android:layout_width="150dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="@string/ok" />
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/advanced_guide_button"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="@string/advanced_guide" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/get_started_ok_button"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="@string/ok" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/bottom_bar"

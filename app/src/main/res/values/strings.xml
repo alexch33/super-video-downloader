@@ -190,10 +190,41 @@
     <string name="checkingForUpdatesFailed">Failed to check for updates.</string>
     <string name="clear">Clear</string>
     <string name="logs">Detection Logs</string>
-    <string name="settings_export_history" translatable="false">Export browser history</string>
-    <string name="history_exported_success" translatable="false">Browser history exported successfully to Downloads</string>
-    <string name="history_exported_error" translatable="false">Failed to export browser history</string>
-    <string name="settings_import_history" translatable="false">Import browser history</string>
-    <string name="history_imported_success" translatable="false">Browser history imported successfully</string>
-    <string name="history_imported_error" translatable="false">Failed to import browser history</string>
+    <string name="settings_export_history">Export browser history</string>
+    <string name="history_exported_success">Browser history exported successfully to Downloads</string>
+    <string name="history_exported_error">Failed to export browser history</string>
+    <string name="settings_import_history">Import browser history</string>
+    <string name="history_imported_success">Browser history imported successfully</string>
+    <string name="history_imported_error">Failed to import browser history</string>
+    <string name="settings_export_bookmarks">Export bookmarks</string>
+    <string name="bookmarks_exported_success">Bookmarks exported successfully to Downloads</string>
+    <string name="bookmarks_exported_error">Failed to export bookmarks</string>
+    <string name="settings_import_bookmarks">Import bookmarks</string>
+    <string name="bookmarks_imported_success">Bookmarks imported successfully</string>
+    <string name="bookmarks_imported_error">Failed to import bookmarks</string>
+
+    <!-- Settings Explanations -->
+    <string name="setting_explanation_ask_redirection">Prompts a confirmation dialog before allowing web pages to redirect you to a different domain.</string>
+    <string name="setting_explanation_interrupt_intercepted">Stops the browser from loading or playing media streams directly on the web page once they have been detected for download.</string>
+    <string name="setting_explanation_show_video_alert">Displays an automatic pop-up alert dialog whenever a downloadable video is detected on a web page.</string>
+    <string name="setting_explanation_show_action_button">Shows a floating download button on the browser screen when downloadable media is found.</string>
+    <string name="setting_explanation_find_videos_by_url">Scans web page URLs directly to discover embedded video and media links.</string>
+    <string name="setting_explanation_check_every_mp4">Monitors all network requests sent by web pages to detect downloadable MP4 video files.</string>
+    <string name="setting_explanation_check_every_m3u8">Monitors network requests for HLS (M3U8) and DASH (MPD) video streaming playlists.</string>
+    <string name="setting_explanation_check_every_audio">Monitors network requests to detect audio streams and sound files on web pages.</string>
+    <string name="setting_explanation_force_stream_detection">Forces detection of media streams with unknown or missing content length headers (commonly used by live streams).</string>
+    <string name="setting_explanation_use_legacy_m3u8_detection">Uses the youtube-dlp engine to extract M3U8 and MPD streaming video links from web pages. (Otherwise SuperX detector will be used)</string>
+    <string name="setting_explanation_adblock_settings">Opens settings to manage ad-blocking filter lists and custom blocking rules.</string>
+    <string name="setting_explanation_ads_treshold">Ignores detected media files smaller than this size threshold to prevent detecting video advertisements as downloadable content.</string>
+    <string name="setting_explanation_download_subtitles">Automatically fetches and saves available subtitle tracks when downloading videos using youtube-dlp.</string>
+    <string name="setting_explanation_force_stream_downloading">Enables continuous stream downloading for regular (MP4) videos (non-M3U8/MPD) like for live video streams.(Can fix some broken MP4 downloads)</string>
+    <string name="setting_explanation_always_remux_regular">Processes downloaded regular MP4 files with FFmpeg after completion to fix video headers, timestamps, and container formats.</string>
+    <string name="setting_explanation_remux_only_live">Applies FFmpeg postprocessing only to recorded live stream downloads to ensure proper video seeking and duration.</string>
+    <string name="setting_explanation_regular_threads">Sets the number of parallel download threads for regular files. Higher thread counts can increase speed but may cause corruption on some servers.</string>
+    <string name="setting_explanation_m3u8_threads">Sets the number of parallel threads used to download segment chunks of M3U8/HLS streaming videos.</string>
+    <string name="setting_explanation_downloads_location">Choose the storage folder for downloaded videos: Public Downloads folder, Private Hidden folder inside internal storage, or SD card storage.</string>
+
+    <string name="advanced_guide">Advanced guide</string>
+    <string name="advanced_guide_title">Advanced Detection Guide</string>
+    <string name="advanced_guide_text">SuperX has 3 different types of video detection engines:\n\n1. Detection by URL:\nScans web page URLs directly. Ideal for websites like Facebook or TikTok where video URLs are embedded in web links.\n\n2. Regular File Detection:\nInspects network requests for direct media files like MP4, WebM, audio, etc.\n\n3. M3U8 / MPD Streaming Detection:\nDetects streaming playlists (HLS / DASH). Available in two variants:\n • youtube-dlp engine: Very stable and reliable, but slightly slower.\n • SuperX detector: New, experimental, and extremely fast (less than a second).\n\nHow to optimize for specific websites:\nBy default, all detectors are enabled. You can fine-tune them in Settings for specific sites:\n • For Facebook or TikTok (where detection works only by URL): You can turn OFF Regular file detection and M3U8/MPD detection.\n • For streaming sites (where detection works by intercepting network requests): You can turn OFF URL detection.\n • You can check Detection Logs in the menu to see which detector is finding videos, and turn off unused detectors for faster performance!</string>
 </resources>

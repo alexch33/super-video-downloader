@@ -21,6 +21,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
+import com.myAllVideoBrowser.data.local.room.entity.PageInfo
 import com.myAllVideoBrowser.databinding.FragmentSettingsBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
@@ -72,6 +73,28 @@ class SettingsFragment : BaseFragment() {
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     Toast.makeText(context, R.string.history_imported_error, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private val pickBookmarksFileLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                try {
+                    val jsonString = context?.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    if (jsonString != null) {
+                        val type = object : TypeToken<List<PageInfo>>() {}.type
+                        val items: List<PageInfo> = Gson().fromJson(jsonString, type)
+                        settingsViewModel.importBookmarks(items)
+                    } else {
+                        Toast.makeText(context, R.string.bookmarks_imported_error, Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    Toast.makeText(context, R.string.bookmarks_imported_error, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -147,6 +170,7 @@ class SettingsFragment : BaseFragment() {
 
         setupSliderListeners()
         setupTextUpdateCallbacks()
+        setupHelpButtons()
         handleUIEvents()
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
@@ -218,6 +242,30 @@ class SettingsFragment : BaseFragment() {
             }
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
+        settingsViewModel.exportBookmarksEvent.observe(viewLifecycleOwner) { success ->
+            val msg = if (success == true) {
+                R.string.bookmarks_exported_success
+            } else {
+                R.string.bookmarks_exported_error
+            }
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
+        settingsViewModel.openImportBookmarksEvent.observe(viewLifecycleOwner) {
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                type = "application/json"
+                addCategory(Intent.CATEGORY_OPENABLE)
+            }
+            pickBookmarksFileLauncher.launch(intent)
+        }
+        settingsViewModel.importBookmarksEvent.observe(viewLifecycleOwner) { success ->
+            val msg = if (success == true) {
+                mainActivity.mainViewModel.loadBookmarks()
+                R.string.bookmarks_imported_success
+            } else {
+                R.string.bookmarks_imported_error
+            }
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
         settingsViewModel.openVideoFolderEvent.observe(viewLifecycleOwner) {
             intentUtil.openVideoFolder(context, fileUtil.folderDir.path)
         }
@@ -242,5 +290,77 @@ class SettingsFragment : BaseFragment() {
                 dialog.dismiss()
             }
             .show()
+    }
+
+    private fun showExplanationDialog(titleResId: Int, messageResId: Int) {
+        context?.let { ctx ->
+            MaterialAlertDialogBuilder(ctx)
+                .setTitle(titleResId)
+                .setMessage(messageResId)
+                .setPositiveButton(R.string.ok) { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
+        }
+    }
+
+    private fun setupHelpButtons() {
+        dataBinding.btnHelpAskRedirection.setOnClickListener {
+            showExplanationDialog(R.string.ask_redirection_title, R.string.setting_explanation_ask_redirection)
+        }
+        dataBinding.btnHelpInterruptIntercepted.setOnClickListener {
+            showExplanationDialog(R.string.is_interrupt_intrecepted_resources, R.string.setting_explanation_interrupt_intercepted)
+        }
+        dataBinding.btnHelpShowVideoAlert.setOnClickListener {
+            showExplanationDialog(R.string.show_video_found_alert, R.string.setting_explanation_show_video_alert)
+        }
+        dataBinding.btnHelpShowActionButton.setOnClickListener {
+            showExplanationDialog(R.string.show_action_button, R.string.setting_explanation_show_action_button)
+        }
+        dataBinding.btnHelpFindVideosByUrl.setOnClickListener {
+            showExplanationDialog(R.string.find_videos_by_url, R.string.setting_explanation_find_videos_by_url)
+        }
+        dataBinding.btnHelpCheckEveryMp4.setOnClickListener {
+            showExplanationDialog(R.string.check_every_request_on_video_mp4, R.string.setting_explanation_check_every_mp4)
+        }
+        dataBinding.btnHelpCheckEveryM3u8.setOnClickListener {
+            showExplanationDialog(R.string.check_every_request_on_video_m3u8, R.string.setting_explanation_check_every_m3u8)
+        }
+        dataBinding.btnHelpCheckEveryAudio.setOnClickListener {
+            showExplanationDialog(R.string.check_every_request_on_audio, R.string.setting_explanation_check_every_audio)
+        }
+        dataBinding.btnHelpForceStreamDetection.setOnClickListener {
+            showExplanationDialog(R.string.force_stream_detection, R.string.setting_explanation_force_stream_detection)
+        }
+        dataBinding.btnHelpUseLegacyM3u8Detection.setOnClickListener {
+            showExplanationDialog(R.string.use_legacy_m3u8_detection, R.string.setting_explanation_use_legacy_m3u8_detection)
+        }
+        dataBinding.btnHelpAdblockSettings.setOnClickListener {
+            showExplanationDialog(R.string.adblock_lists_title, R.string.setting_explanation_adblock_settings)
+        }
+        dataBinding.btnHelpAdsTreshold.setOnClickListener {
+            showExplanationDialog(R.string.ads_detection_treshold, R.string.setting_explanation_ads_treshold)
+        }
+        dataBinding.btnHelpDownloadSubtitles.setOnClickListener {
+            showExplanationDialog(R.string.download_subtitles, R.string.setting_explanation_download_subtitles)
+        }
+        dataBinding.btnHelpForceStreamDownloading.setOnClickListener {
+            showExplanationDialog(R.string.force_stream_downloading, R.string.setting_explanation_force_stream_downloading)
+        }
+        dataBinding.btnHelpAlwaysRemuxRegular.setOnClickListener {
+            showExplanationDialog(R.string.is_always_remux_regular_downloads, R.string.setting_explanation_always_remux_regular)
+        }
+        dataBinding.btnHelpRemuxOnlyLive.setOnClickListener {
+            showExplanationDialog(R.string.is_remux_only_live_regular_downloads, R.string.setting_explanation_remux_only_live)
+        }
+        dataBinding.btnHelpRegularThreads.setOnClickListener {
+            showExplanationDialog(R.string.regular_threads_count, R.string.setting_explanation_regular_threads)
+        }
+        dataBinding.btnHelpM3u8Threads.setOnClickListener {
+            showExplanationDialog(R.string.m3u8_threads_count, R.string.setting_explanation_m3u8_threads)
+        }
+        dataBinding.btnHelpDownloadsLocation.setOnClickListener {
+            showExplanationDialog(R.string.downloads_location, R.string.setting_explanation_downloads_location)
+        }
     }
 }

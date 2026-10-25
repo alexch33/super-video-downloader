@@ -263,7 +263,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         )
                     } else {
                         videoRepository.getVideoInfo(
-                            resourceRequest, false, settingsModel.isCheckOnAudio.get()
+                            resourceRequest, isM3u8 || isMpd, settingsModel.isCheckOnAudio.get()
                         )
                     }
                 } catch (e: Throwable) {
@@ -556,7 +556,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         contentLength
                     )
                 } else if (isAudioContent) {
-                    DetectionLogger.log("REGULAR", "SUCCESS", url)
+                    DetectionLogger.log("REGULAR AUDIO", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
                         webTabModel?.getTabTextInput()?.get(),
@@ -564,6 +564,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         contentLength,
                         isAudio = true
                     )
+                } else {
+                    DetectionLogger.log("REGULAR", "FAILED", url)
                 }
             }
         }.onFailure { e ->
@@ -581,6 +583,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }.getOrNull() ?: return
 
         runCatching {
+            DetectionLogger.log("REGULAR", "START", url)
             val request = Request.Builder().url(finalUrlPairEmpty.first).build()
             okHttpProxyClient.getProxyOkHttpClient().newCall(request).execute().use { response ->
                 val contentType = response.body.contentType().toString()

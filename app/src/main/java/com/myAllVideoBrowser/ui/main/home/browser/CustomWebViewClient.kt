@@ -159,6 +159,28 @@ class CustomWebViewClient(
                 ByteArrayInputStream("".toByteArray())
             )
         }
+
+        fun isBotChallengeOrCaptcha(url: String): Boolean {
+            val lowerUrl = url.lowercase()
+            return lowerUrl.contains(".within.website/x/cmd/anubis") ||
+                    lowerUrl.contains("/challenges.cloudflare.com/") ||
+                    lowerUrl.contains("/cdn-cgi/challenge-platform/") ||
+                    // Google reCAPTCHA & Google bot challenges / CAPTCHAs
+                    lowerUrl.contains("/recaptcha") ||
+                    lowerUrl.contains("recaptcha.net") ||
+                    lowerUrl.contains("gstatic.com/recaptcha") ||
+                    lowerUrl.contains("google.com/recaptcha") ||
+                    lowerUrl.contains("google.com/sorry") ||
+                    lowerUrl.contains("google.com/captcha") ||
+                    lowerUrl.contains("google.com/botguard") ||
+                    lowerUrl.contains("accounts.google.com/signin/v2/challenge") ||
+                    lowerUrl.contains("accounts.google.com/v3/signin/challenge") ||
+                    // Other common CAPTCHAs and bot challenges
+                    lowerUrl.contains("hcaptcha.com") ||
+                    lowerUrl.contains("/hcaptcha") ||
+                    lowerUrl.contains("arkoselabs.com") ||
+                    lowerUrl.contains("funcaptcha.com")
+        }
     }
 
     override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
@@ -208,15 +230,7 @@ class CustomWebViewClient(
 
         val url = request.url.toString()
 
-        if (url.contains(".within.website/x/cmd/anubis")) {
-            return super.shouldInterceptRequest(view, request)
-        }
-
-        if (url.contains("/challenges.cloudflare.com/")) {
-            return super.shouldInterceptRequest(view, request)
-        }
-
-        if (url.contains("/cdn-cgi/challenge-platform/")) {
+        if (isBotChallengeOrCaptcha(url)) {
             return super.shouldInterceptRequest(view, request)
         }
 

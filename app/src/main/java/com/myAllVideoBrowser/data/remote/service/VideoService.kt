@@ -41,9 +41,7 @@ open class VideoServiceLocal(
         isAudioCheck: Boolean
     ): VideoInfoWrapper? {
         val urlType = if (isM3u8) {
-            "M3U8"
-        } else if (isMpd) {
-            "MPD"
+            "M3U8/MPD"
         } else {
             "URL"
         }

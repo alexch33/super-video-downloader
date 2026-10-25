@@ -855,11 +855,7 @@ class WebTabFragment : BaseWebTabFragment() {
     }
 
     private val shouldInterceptPostRequests = WebPostBridge { url, body ->
-        if (url.contains("/challenges.cloudflare.com/")) {
-            return@WebPostBridge false
-        }
-
-        if (url.contains("/cdn-cgi/challenge-platform/")) {
+        if (CustomWebViewClient.isBotChallengeOrCaptcha(url)) {
             return@WebPostBridge false
         }
 

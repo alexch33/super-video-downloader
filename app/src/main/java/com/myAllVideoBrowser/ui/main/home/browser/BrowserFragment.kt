@@ -162,6 +162,10 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? {
             val url = request.url.toString()
 
+            if (CustomWebViewClient.isBotChallengeOrCaptcha(url)) {
+                return super.shouldInterceptRequest(request)
+            }
+
             if (!::settingsModel.isInitialized || !::videoDetectionModel.isInitialized) {
                 return super.shouldInterceptRequest(request)
             }

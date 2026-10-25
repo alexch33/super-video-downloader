@@ -5,6 +5,7 @@ import com.myAllVideoBrowser.data.local.model.VideoInfoWrapper
 import com.myAllVideoBrowser.data.local.room.entity.VideFormatEntityList
 import com.myAllVideoBrowser.data.local.room.entity.VideoFormatEntity
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
+import com.myAllVideoBrowser.ui.main.home.browser.CustomWebViewClient
 import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.AppLogger
@@ -40,6 +41,10 @@ open class VideoServiceLocal(
         isMpd: Boolean,
         isAudioCheck: Boolean
     ): VideoInfoWrapper? {
+        if (CustomWebViewClient.isBotChallengeOrCaptcha(url.url.toString())) {
+            return null
+        }
+
         val urlType = if (isM3u8) {
             "M3U8/MPD"
         } else {

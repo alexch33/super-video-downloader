@@ -5,6 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.addCallback
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentHelpBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
@@ -31,6 +33,15 @@ class HelpFragment : BaseFragment() {
         dataBinding = FragmentHelpBinding.inflate(inflater, container, false).apply {
             this.getStartedOkButton.setOnClickListener {
                 parentFragmentManager.popBackStack()
+            }
+            this.advancedGuideButton.setOnClickListener {
+                context?.let { ctx ->
+                    MaterialAlertDialogBuilder(ctx)
+                        .setTitle(R.string.advanced_guide_title)
+                        .setMessage(R.string.advanced_guide_text)
+                        .setPositiveButton(R.string.ok, null)
+                        .show()
+                }
             }
             this.helpContainer.setBackgroundColor(color)
         }

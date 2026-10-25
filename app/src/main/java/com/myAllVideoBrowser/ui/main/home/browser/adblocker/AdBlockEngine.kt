@@ -155,19 +155,6 @@ class AdBlockEngine @Inject constructor(
             false
         }
     }
-
-    protected fun finalize() {
-        try {
-            pointerLock.writeLock().withLock {
-                if (nativeEnginePtr != 0L) {
-                    native.destroyEngine(nativeEnginePtr)
-                    nativeEnginePtr = 0L
-                }
-            }
-        } catch (e: Throwable) {
-            e.printStackTrace()
-        }
-    }
 }
 
 class AdBlockNative(context: Context) {

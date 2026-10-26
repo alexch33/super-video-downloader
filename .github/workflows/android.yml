@@ -89,7 +89,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
-          body: "Added more captcha skip for detectors\nAdded import/export bookmarks\nAdded advanced guide\nAdded additional info for settings\nCrash fixes"
+          body: "Cloudflare verefication fix"
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

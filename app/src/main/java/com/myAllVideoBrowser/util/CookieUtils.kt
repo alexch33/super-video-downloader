@@ -24,23 +24,111 @@ object CookieUtils {
     val chromeDefaultPathApi28Less =
         "${ContextUtils.getApplicationContext().filesDir.parentFile}/app_webview/"
 
-    fun webResourceRequestToOkHttpRequest(webResourceRequest: WebResourceRequest): Request? {
+    fun webResourceRequestToOkHttpRequest(
+        webResourceRequest: WebResourceRequest,
+        pageUrl: String? = null,
+        pageUserAgent: String? = null
+    ): Request? {
         val url = webResourceRequest.url.toString().toHttpUrlOrNull() ?: return null
         val method = webResourceRequest.method
-        val headers = webResourceRequest.requestHeaders.toHeaders()
+        val requestHeaders = webResourceRequest.requestHeaders.toMutableMap()
 
         val cookieManager = CookieManager.getInstance()
-        val cookies = cookieManager.getCookie(url.toString())
+        val targetUrlStr = url.toString()
+        val targetCookies = cookieManager.getCookie(targetUrlStr) ?: ""
+
+        val referer = pageUrl ?: requestHeaders.entries.firstOrNull {
+            it.key.equals(
+                "Referer",
+                ignoreCase = true
+            )
+        }?.value
+        val refererCookies = referer?.let { cookieManager.getCookie(it) } ?: ""
+
+        val targetHost = url.host
+        val targetHostCookies = cookieManager.getCookie("https://$targetHost") ?: ""
+
+        val refererHost = referer?.toHttpUrlOrNull()?.host
+        val refererHostCookies = refererHost?.let { cookieManager.getCookie("https://$it") } ?: ""
+
+        val topDomainCookies = runCatching {
+            val domainToTry = refererHost ?: targetHost
+            val topDomain = InternetDomainName.from(domainToTry).topPrivateDomain().toString()
+            val c1 = cookieManager.getCookie("https://$topDomain") ?: ""
+            val c2 = cookieManager.getCookie("http://$topDomain") ?: ""
+            val c3 = cookieManager.getCookie("https://.$topDomain") ?: ""
+            "$c1; $c2; $c3"
+        }.getOrNull() ?: ""
+
+        val combinedCookies = listOf(
+            targetCookies,
+            refererCookies,
+            targetHostCookies,
+            refererHostCookies,
+            topDomainCookies
+        )
+            .asSequence()
+            .filter { it.isNotBlank() }
+            .flatMap { it.split(";") }
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .joinToString("; ")
 
         val requestBuilder = Request.Builder()
             .url(url)
-            .headers(headers)
+            .headers(requestHeaders.toHeaders())
 
-        if (!cookies.isNullOrEmpty()) {
-            requestBuilder.header("Cookie", cookies)
+        if (combinedCookies.isNotEmpty()) {
+            requestBuilder.header("Cookie", combinedCookies)
         }
-        // WebResourceRequest does not expose the request body, so this is
-        // primarily for GET requests. Set the method without a request body.
+
+        val existingUa = requestHeaders.entries.firstOrNull {
+            it.key.equals(
+                "User-Agent",
+                ignoreCase = true
+            )
+        }?.value
+        if (existingUa.isNullOrBlank()) {
+            val uaToUse = if (!pageUserAgent.isNullOrBlank()) {
+                pageUserAgent
+            } else {
+                "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
+            }
+            requestBuilder.header("User-Agent", uaToUse)
+        }
+
+        if (requestBuilder.build().header("Referer") == null) {
+            val refererToUse = when {
+                !pageUrl.isNullOrBlank() -> pageUrl
+                referer != null -> referer
+                else -> "https://${url.host}/"
+            }
+            requestBuilder.header("Referer", refererToUse)
+        }
+
+        if (requestBuilder.build().header("Origin") == null) {
+            val originHost =
+                pageUrl?.toHttpUrlOrNull()?.host ?: referer?.toHttpUrlOrNull()?.host ?: url.host
+            val originScheme =
+                pageUrl?.toHttpUrlOrNull()?.scheme ?: referer?.toHttpUrlOrNull()?.scheme
+                ?: url.scheme
+            requestBuilder.header("Origin", "$originScheme://$originHost")
+        }
+
+        if (requestHeaders.entries.none { it.key.equals("Sec-Fetch-Site", ignoreCase = true) }) {
+            requestBuilder.header("Sec-Fetch-Site", "cross-site")
+        }
+        if (requestHeaders.entries.none { it.key.equals("Sec-Fetch-Mode", ignoreCase = true) }) {
+            requestBuilder.header("Sec-Fetch-Mode", "cors")
+        }
+        if (requestHeaders.entries.none { it.key.equals("Sec-Fetch-Dest", ignoreCase = true) }) {
+            requestBuilder.header("Sec-Fetch-Dest", "empty")
+        }
+        if (requestHeaders.entries.none { it.key.equals("Accept-Language", ignoreCase = true) }) {
+            requestBuilder.header("Accept-Language", "en-US,en;q=0.9")
+        }
+
         requestBuilder.method(method, null)
 
         return requestBuilder.build()

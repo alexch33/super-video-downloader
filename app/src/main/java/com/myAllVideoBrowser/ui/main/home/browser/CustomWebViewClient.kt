@@ -139,7 +139,13 @@ class CustomWebViewClient(
                     lowerUrl.contains("hcaptcha.com") ||
                     lowerUrl.contains("/hcaptcha") ||
                     lowerUrl.contains("arkoselabs.com") ||
-                    lowerUrl.contains("funcaptcha.com")
+                    lowerUrl.contains("funcaptcha.com") ||
+                    // Facebook checkpoint & identity verification
+                    lowerUrl.contains("facebook.com/checkpoint") ||
+                    lowerUrl.contains("facebook.com/login/checkpoint") ||
+                    lowerUrl.contains("facebook.com/identity") ||
+                    lowerUrl.contains("facebook.com/confirm_code") ||
+                    lowerUrl.contains("facebook.com/two_step_verification")
         }
     }
 

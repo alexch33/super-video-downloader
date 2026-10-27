@@ -7,6 +7,7 @@ import android.os.Build
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
 import com.google.common.net.InternetDomainName
+import com.myAllVideoBrowser.ui.main.home.browser.BrowserFragment
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import okhttp3.Headers
 import okhttp3.Headers.Companion.toHeaders
@@ -93,7 +94,7 @@ object CookieUtils {
             val uaToUse = if (!pageUserAgent.isNullOrBlank()) {
                 pageUserAgent
             } else {
-                "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
+                BrowserFragment.MOBILE_USER_AGENT
             }
             requestBuilder.header("User-Agent", uaToUse)
         }

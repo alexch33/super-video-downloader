@@ -88,9 +88,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: true
-          body: "Cloudflare verefication fix"
+          prerelease: false
+          body: "Detection enhanced(lulvdo added, may be more)\nFacebook verification added to blacklist"
           draft: false
-          make_latest: false
+          make_latest: true
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

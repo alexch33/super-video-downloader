@@ -89,7 +89,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
           prerelease: false
-          body: "Detection enhanced(lulvdo added, may be more)\nFacebook verification added to blacklist"
+          body: "Implemented Nested WebView (it fixes facebook scroll issue on verification screen for mobile mode)"
           draft: false
           make_latest: true
           tag_name: ${{ github.ref_name }}

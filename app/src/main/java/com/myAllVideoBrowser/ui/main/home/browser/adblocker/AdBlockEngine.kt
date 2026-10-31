@@ -139,15 +139,19 @@ class AdBlockEngine @Inject constructor(
             pointerLock.readLock().withLock {
                 if (nativeEnginePtr == 0L) return false
 
-                if (url.startsWith("data:") || url.isBlank()) {
+                if (url.startsWith("data:") || url.isBlank() || url.length > 4096) {
                     return false
                 }
 
+                val safeUrl = url.trim()
+                val safeSourceUrl = sourceUrl.trim()
+                val safeResourceType = if (resourceType.isBlank()) "other" else resourceType.trim()
+
                 native.shouldBlock(
                     nativeEnginePtr,
-                    url,
-                    sourceUrl,
-                    resourceType
+                    safeUrl,
+                    safeSourceUrl,
+                    safeResourceType
                 )
             }
         } catch (e: Throwable) {

@@ -302,15 +302,24 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
         val detectedVideos = detectedVideosList.get() ?: ConcurrentHashMap.newKeySet()
 
-        if (detectedVideos.any { isVideoInfoDuplicate(it, newInfo) }) {
+        val hasMaster = detectedVideos.any { it.isMaster }
+        if (hasMaster && !newInfo.isMaster) {
+            AppLogger.d("VideoDetection: Skipping rendition/non-master info because master playlist already exists.")
+            return
+        }
+
+        val nextSet = if (newInfo.isMaster) {
+            detectedVideos.filter { it.isMaster }.toMutableSet()
+        } else {
+            detectedVideos.toMutableSet()
+        }
+
+        if (nextSet.any { isVideoInfoDuplicate(it, newInfo) }) {
             AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
             return
         }
 
         AppLogger.d("PUSHING $newInfo to list")
-
-        val nextSet = ConcurrentHashMap.newKeySet<VideoInfo>()
-        nextSet.addAll(detectedVideos)
         nextSet.add(newInfo)
 
         detectedVideosList.set(nextSet)
@@ -321,7 +330,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
-    private fun isVideoInfoDuplicate(existing: VideoInfo, newInfo: VideoInfo): Boolean {
+    fun isVideoInfoDuplicate(existing: VideoInfo, newInfo: VideoInfo): Boolean {
         return if (newInfo.isRegularDownload) {
             existing.firstUrlToString == newInfo.firstUrlToString
         } else {

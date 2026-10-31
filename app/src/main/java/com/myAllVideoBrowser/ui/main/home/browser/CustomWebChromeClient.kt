@@ -11,6 +11,7 @@ import android.webkit.WebView
 import android.widget.Toast
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.databinding.FragmentWebTabBinding
+import com.myAllVideoBrowser.ui.component.widget.NestedWebView
 import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTab
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabViewModel
@@ -65,7 +66,7 @@ class CustomWebChromeClient(
 
         try {
             val transport = resultMsg.obj as WebView.WebViewTransport
-            val newWebView = WebView(view.context)
+            val newWebView = NestedWebView(view.context)
             transport.webView = newWebView
 
             tabViewModel.openPageEvent.value =

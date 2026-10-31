@@ -35,8 +35,8 @@
             android:id="@+id/customView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone"
-            android:importantForAccessibility="no" />
+            android:importantForAccessibility="no"
+            android:visibility="gone" />
 
         <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:id="@+id/containerBrowser"
@@ -177,8 +177,8 @@
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="3dp"
-                    android:progress="@{viewModel.progress}"
                     android:importantForAccessibility="no"
+                    android:progress="@{viewModel.progress}"
                     android:progressTint="?attr/colorPrimary"
                     android:visibility="@{viewModel.isShowProgress ? View.VISIBLE : View.GONE}" />
 
@@ -191,14 +191,17 @@
 
                 <FrameLayout
                     android:id="@+id/webview_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_marginBottom="@dimen/home_bottom_bar_size" />
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <FrameLayout
                     android:layout_width="4dp"
-                    android:layout_margin="1dp"
                     android:layout_height="match_parent"
+                    android:layout_margin="1dp"
                     android:importantForAccessibility="no"
                     android:visibility="@{(videoTabVModel.hasCheckLoadingsM3u8() || videoTabVModel.hasCheckLoadingsRegular()) ? View.VISIBLE : View.GONE }"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -209,8 +212,8 @@
                         style="@android:style/Widget.ProgressBar.Horizontal"
                         android:layout_width="700dp"
                         android:layout_height="match_parent"
-                        android:indeterminate="true"
                         android:importantForAccessibility="no"
+                        android:indeterminate="true"
                         android:indeterminateDrawable="@drawable/progress_load_data"
                         android:rotation="90" />
                 </FrameLayout>
@@ -219,8 +222,8 @@
                     android:id="@+id/fullscreen_container"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:visibility="gone"
-                    android:importantForAccessibility="no" />
+                    android:importantForAccessibility="no"
+                    android:visibility="gone" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

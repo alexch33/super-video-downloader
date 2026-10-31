@@ -39,6 +39,7 @@ import com.myAllVideoBrowser.databinding.FragmentWebTabBinding
 import com.myAllVideoBrowser.ui.component.adapter.SuggestionTabListener
 import com.myAllVideoBrowser.ui.component.adapter.TabSuggestionAdapter
 import com.myAllVideoBrowser.ui.component.adapter.DownloadTabListener
+import com.myAllVideoBrowser.ui.component.widget.NestedWebView
 import com.myAllVideoBrowser.ui.main.home.browser.BaseWebTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.BrowserFragment
 import com.myAllVideoBrowser.ui.main.home.browser.BrowserListener
@@ -379,7 +380,7 @@ class WebTabFragment : BaseWebTabFragment() {
     private fun recreateWebView(savedInstanceState: Bundle?) {
         try {
             if (webTab.getMessage() == null || webTab.getWebView() == null) {
-                webTab.setWebView(WebView(requireContext()))
+                webTab.setWebView(NestedWebView(requireContext()))
             }
 
             if (savedInstanceState != null) {

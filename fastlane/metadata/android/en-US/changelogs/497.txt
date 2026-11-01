@@ -1,0 +1,20 @@
+### Added
+- Added detection logging to UI (for now it shows what type of detector what do (detector type, state(start, error success) and url))
+- Import/Export history from\to file added
+- Import/Export bookmarks from\to file added
+- App's temporary directory moved to cache directory
+- Added advanced guide
+- Added additional info for settings
+- Detection enhanced(more streaming platforms support)
+
+
+### Fixed
+- Fixed detector's bug, when master M3U8/MPD master list could skip if early was detected smth from it
+- Implemented Nested WebView (it fixes facebook scroll issue on verification screen for mobile mode)
+- Anubis firewall bypass fix
+- TikTok fix (for now working only by video url like facebook)
+- Blacklisted Cloudflare challenges for check on video
+- Upgraded all dependencies(also rust-adblocker upgaded to 0.13.3)
+- Built-in list replaced with osid
+- Crashes fixes
+- Minor fixes

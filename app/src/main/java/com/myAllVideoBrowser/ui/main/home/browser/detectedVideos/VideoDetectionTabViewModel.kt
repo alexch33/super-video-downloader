@@ -551,12 +551,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val isAboveUserThreshold = contentLength > threshold
                 val isStreamDetectionOn = isRegularStreamDetectionOn
 
-                val isVideoContent =
-                    isVideo && isCheckOnVideo && (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)
+                val isVideoContent = isVideo && isCheckOnVideo
 
                 val isAudioContent = isAudio && isCheckOnAudio
 
-                if (isVideoContent) {
+                if (isVideoContent && (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)) {
                     DetectionLogger.log("REGULAR", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
@@ -564,7 +563,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         finalUrlPair.second.toMap(),
                         contentLength
                     )
-                } else if (isAudioContent) {
+                } else if (isAudioContent && (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)) {
                     DetectionLogger.log("REGULAR AUDIO", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
@@ -574,7 +573,10 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         isAudio = true
                     )
                 } else {
-                    DetectionLogger.log("REGULAR", "FAILED", url)
+                    if (isAudioContent || isVideoContent) {
+                        val reason = "Below User's Threshold"
+                        DetectionLogger.log("REGULAR", "FAILED", url, reason)
+                    }
                 }
             }
         }.onFailure { e ->
@@ -667,7 +669,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
                                     .getString(R.string.player_resolution),
                                 ext = if (isAudio) "mp3" else "mp4",
                                 url = downloadUrls.firstOrNull()?.url?.toString() ?: "",
-                                httpHeaders = downloadUrls.firstOrNull()?.headers?.toMap() ?: emptyMap(),
+                                httpHeaders = downloadUrls.firstOrNull()?.headers?.toMap()
+                                    ?: emptyMap(),
                                 fileSize = contentLength
                             )
                         )

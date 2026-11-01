@@ -10,7 +10,6 @@ import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateCanDownload
 import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateCanNotDownload
 import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateLoading
 import com.myAllVideoBrowser.util.AppLogger
-import com.myAllVideoBrowser.util.DetectionLogger
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
@@ -19,6 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Request
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 class GlobalVideoDetectionModel @Inject constructor(
@@ -78,6 +78,11 @@ class GlobalVideoDetectionModel @Inject constructor(
         resourceRequest: Request, hlsTitle: String?, isM3u8: Boolean, isMpd: Boolean
     ) {
         val urlToVerify = resourceRequest.url.toString()
+
+        val detectedVideos = detectedVideosList.get()
+        if (detectedVideos != null && detectedVideos.any { it.isMaster } && (isM3u8 || isMpd)) {
+            return
+        }
 
         if (lastVerifiedLink != urlToVerify) {
             val currentPageUrl = "${resourceRequest.url}"
@@ -209,6 +214,28 @@ class GlobalVideoDetectionModel @Inject constructor(
         if (newInfo.formats.allFormats().isEmpty()) {
             return
         }
+
+        val detectedVideos = detectedVideosList.get() ?: ConcurrentHashMap.newKeySet()
+
+        val hasMaster = detectedVideos.any { it.isMaster }
+        if (hasMaster && !newInfo.isMaster) {
+            AppLogger.d("GlobalDetection: Skipping rendition/non-master info because master playlist already exists.")
+            return
+        }
+
+        val updatedList = if (newInfo.isMaster) {
+            detectedVideos.filter { it.isMaster }.toMutableSet()
+        } else {
+            detectedVideos.toMutableSet()
+        }
+
+        if (updatedList.any { isVideoInfoDuplicate(it, newInfo) }) {
+            AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
+            return
+        }
+
+        updatedList.add(newInfo)
+        detectedVideosList.set(updatedList)
 
         // Cancel previous pending UI update to avoid flickering
         pushJob?.cancel()

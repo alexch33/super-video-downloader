@@ -302,15 +302,24 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
         val detectedVideos = detectedVideosList.get() ?: ConcurrentHashMap.newKeySet()
 
-        if (detectedVideos.any { isVideoInfoDuplicate(it, newInfo) }) {
+        val hasMaster = detectedVideos.any { it.isMaster }
+        if (hasMaster && !newInfo.isMaster) {
+            AppLogger.d("VideoDetection: Skipping rendition/non-master info because master playlist already exists.")
+            return
+        }
+
+        val nextSet = if (newInfo.isMaster) {
+            detectedVideos.filter { it.isMaster }.toMutableSet()
+        } else {
+            detectedVideos.toMutableSet()
+        }
+
+        if (nextSet.any { isVideoInfoDuplicate(it, newInfo) }) {
             AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
             return
         }
 
         AppLogger.d("PUSHING $newInfo to list")
-
-        val nextSet = ConcurrentHashMap.newKeySet<VideoInfo>()
-        nextSet.addAll(detectedVideos)
         nextSet.add(newInfo)
 
         detectedVideosList.set(nextSet)
@@ -321,7 +330,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
-    private fun isVideoInfoDuplicate(existing: VideoInfo, newInfo: VideoInfo): Boolean {
+    fun isVideoInfoDuplicate(existing: VideoInfo, newInfo: VideoInfo): Boolean {
         return if (newInfo.isRegularDownload) {
             existing.firstUrlToString == newInfo.firstUrlToString
         } else {
@@ -542,12 +551,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val isAboveUserThreshold = contentLength > threshold
                 val isStreamDetectionOn = isRegularStreamDetectionOn
 
-                val isVideoContent =
-                    isVideo && isCheckOnVideo && (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)
+                val isVideoContent = isVideo && isCheckOnVideo
 
                 val isAudioContent = isAudio && isCheckOnAudio
 
-                if (isVideoContent) {
+                if (isVideoContent && (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)) {
                     DetectionLogger.log("REGULAR", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
@@ -555,7 +563,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         finalUrlPair.second.toMap(),
                         contentLength
                     )
-                } else if (isAudioContent) {
+                } else if (isAudioContent && (isAboveUserThreshold || isLargeEnoughForTikTok || isStreamDetectionOn)) {
                     DetectionLogger.log("REGULAR AUDIO", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
@@ -565,7 +573,10 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         isAudio = true
                     )
                 } else {
-                    DetectionLogger.log("REGULAR", "FAILED", url)
+                    if (isAudioContent || isVideoContent) {
+                        val reason = "Below User's Threshold"
+                        DetectionLogger.log("REGULAR", "FAILED", url, reason)
+                    }
                 }
             }
         }.onFailure { e ->
@@ -658,7 +669,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
                                     .getString(R.string.player_resolution),
                                 ext = if (isAudio) "mp3" else "mp4",
                                 url = downloadUrls.firstOrNull()?.url?.toString() ?: "",
-                                httpHeaders = downloadUrls.firstOrNull()?.headers?.toMap() ?: emptyMap(),
+                                httpHeaders = downloadUrls.firstOrNull()?.headers?.toMap()
+                                    ?: emptyMap(),
                                 fileSize = contentLength
                             )
                         )

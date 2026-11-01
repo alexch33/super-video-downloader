@@ -123,8 +123,8 @@ github.com/pion/transport/v4/netctx
 github.com/pion/transport/v4/replaydetector
 github.com/pion/transport/v4/stdnet
 github.com/pion/transport/v4/utils/xor
-# github.com/pires/go-proxyproto v0.15.0
-## explicit; go 1.25.0
+# github.com/pires/go-proxyproto v0.16.0
+## explicit; go 1.26.9
 github.com/pires/go-proxyproto
 # github.com/quic-go/qpack v0.6.0
 ## explicit; go 1.24
@@ -162,7 +162,7 @@ github.com/xtls/reality
 github.com/xtls/reality/fips140tls
 github.com/xtls/reality/tls12
 github.com/xtls/reality/tls13
-# github.com/xtls/xray-core v1.260327.1-0.20261021115930-1b1647cd9ddf
+# github.com/xtls/xray-core v1.260327.1-0.20261029083850-0afec66085a8
 ## explicit; go 1.27
 github.com/xtls/xray-core/app/commander
 github.com/xtls/xray-core/app/dispatcher

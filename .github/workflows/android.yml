@@ -88,35 +88,14 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: true
+          prerelease: false
           body: |
-            ### Since 0.9.1-RC-2:
-            - Fixed detector's bug, when master M3U8/MPD master list could skip if early was detected smth from it
-            - Added reason fail for regular media, if it because treshold
-
-
-            ## Since 0.8.25.9:
-
-            ### Added
-            - Added detection logging to UI (for now it shows what type of detector what do (detector type, state(start, error success) and url))
-            - Import/Export history from\to file added
-            - Import/Export bookmarks from\to file added
-            - App's temporary directory moved to cache directory
-            - Added advanced guide
-            - Added additional info for settings
-            - Detection enhanced(more streaming platforms support)
-
-
-            ### Fixed
-            - Implemented Nested WebView (it fixes facebook scroll issue on verification screen for mobile mode)
-            - Anubis firewall bypass fix
-            - TikTok fix (for now working only by video url like facebook)
-            - Blacklisted Cloudflare challenges for check on video
-            - Upgraded all dependencies(also rust-adblocker upgaded to 0.13.3)
-            - Built-in list replaced with osid
-            - Crashes fixes
-            - Minor fixes
+            - Fixed bug with detection multiple master lists on one page
+            - Fixed bug with skipping regular mp4 video if master list detected
+            - Fixed bookmarks/history import for old devices
+            
+            Thanks anon reporter from twitter!
           draft: false
-          make_latest: false
+          make_latest: true
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

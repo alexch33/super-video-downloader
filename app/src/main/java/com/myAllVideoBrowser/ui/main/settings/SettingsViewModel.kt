@@ -428,6 +428,16 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    private fun getUniqueExportFile(dir: File, baseName: String, extension: String = "json"): File {
+        var file = File(dir, "$baseName.$extension")
+        var counter = 1
+        while (file.exists()) {
+            file = File(dir, "${baseName}_$counter.$extension")
+            counter++
+        }
+        return file
+    }
+
     fun exportHistory() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -437,7 +447,7 @@ class SettingsViewModel @Inject constructor(
                 if (!targetDir.exists()) {
                     targetDir.mkdirs()
                 }
-                val file = File(targetDir, "browser_history.json")
+                val file = getUniqueExportFile(targetDir, "browser_history")
                 file.writeText(json)
                 exportHistoryEvent.postValue(true)
             } catch (e: Throwable) {
@@ -472,7 +482,7 @@ class SettingsViewModel @Inject constructor(
                 if (!targetDir.exists()) {
                     targetDir.mkdirs()
                 }
-                val file = File(targetDir, "bookmarks.json")
+                val file = getUniqueExportFile(targetDir, "bookmarks")
                 file.writeText(json)
                 exportBookmarksEvent.postValue(true)
             } catch (e: Throwable) {

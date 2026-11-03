@@ -79,11 +79,6 @@ class GlobalVideoDetectionModel @Inject constructor(
     ) {
         val urlToVerify = resourceRequest.url.toString()
 
-        val detectedVideos = detectedVideosList.get()
-        if (detectedVideos != null && detectedVideos.any { it.isMaster } && (isM3u8 || isMpd)) {
-            return
-        }
-
         if (lastVerifiedLink != urlToVerify) {
             val currentPageUrl = "${resourceRequest.url}"
 
@@ -211,38 +206,42 @@ class GlobalVideoDetectionModel @Inject constructor(
     }
 
     override suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
-        if (newInfo.formats.allFormats().isEmpty()) {
+        if (newInfo.formats.allFormats().isEmpty() || newInfo.id.isEmpty()) {
             return
         }
 
         val detectedVideos = detectedVideosList.get() ?: ConcurrentHashMap.newKeySet()
+        val nextSet = ConcurrentHashMap.newKeySet<VideoInfo>()
+        nextSet.addAll(detectedVideos)
 
-        val hasMaster = detectedVideos.any { it.isMaster }
-        if (hasMaster && !newInfo.isMaster) {
-            AppLogger.d("GlobalDetection: Skipping rendition/non-master info because master playlist already exists.")
-            return
+        var isDuplicateFound = false
+
+        for (existing in detectedVideos) {
+            if (isVideoInfoDuplicate(existing, newInfo)) {
+                isDuplicateFound = true
+                if (newInfo.isMaster && !existing.isMaster) {
+                    nextSet.remove(existing)
+                    isDuplicateFound = false
+                    AppLogger.d("REPLACING single rendition with Master playlist for video: $newInfo")
+                } else {
+                    AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
+                    break
+                }
+            }
         }
 
-        val updatedList = if (newInfo.isMaster) {
-            detectedVideos.filter { it.isMaster }.toMutableSet()
-        } else {
-            detectedVideos.toMutableSet()
-        }
+        if (!isDuplicateFound) {
+            AppLogger.d("PUSHING $newInfo to list")
+            nextSet.add(newInfo)
+            detectedVideosList.set(nextSet)
 
-        if (updatedList.any { isVideoInfoDuplicate(it, newInfo) }) {
-            AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
-            return
-        }
-
-        updatedList.add(newInfo)
-        detectedVideosList.set(updatedList)
-
-        // Cancel previous pending UI update to avoid flickering
-        pushJob?.cancel()
-        pushJob = viewModelScope.launch(Dispatchers.Main) {
-            downloadButtonState.set(DownloadButtonStateLoading())
-            delay(400)
-            downloadButtonState.set(DownloadButtonStateCanDownload(newInfo))
+            // Cancel previous pending UI update to avoid flickering
+            pushJob?.cancel()
+            pushJob = viewModelScope.launch(Dispatchers.Main) {
+                downloadButtonState.set(DownloadButtonStateLoading())
+                delay(400)
+                downloadButtonState.set(DownloadButtonStateCanDownload(newInfo))
+            }
         }
     }
 

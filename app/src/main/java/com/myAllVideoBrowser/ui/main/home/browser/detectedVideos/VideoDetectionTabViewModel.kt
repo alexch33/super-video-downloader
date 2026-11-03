@@ -301,32 +301,35 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
 
         val detectedVideos = detectedVideosList.get() ?: ConcurrentHashMap.newKeySet()
+        val nextSet = ConcurrentHashMap.newKeySet<VideoInfo>()
+        nextSet.addAll(detectedVideos)
 
-        val hasMaster = detectedVideos.any { it.isMaster }
-        if (hasMaster && !newInfo.isMaster) {
-            AppLogger.d("VideoDetection: Skipping rendition/non-master info because master playlist already exists.")
-            return
+        var isDuplicateFound = false
+
+        for (existing in detectedVideos) {
+            if (isVideoInfoDuplicate(existing, newInfo)) {
+                isDuplicateFound = true
+                if (newInfo.isMaster && !existing.isMaster) {
+                    nextSet.remove(existing)
+                    isDuplicateFound = false
+                    AppLogger.d("REPLACING single rendition with Master playlist for video: $newInfo")
+                } else {
+                    AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
+                    break
+                }
+            }
         }
 
-        val nextSet = if (newInfo.isMaster) {
-            detectedVideos.filter { it.isMaster }.toMutableSet()
-        } else {
-            detectedVideos.toMutableSet()
-        }
+        if (!isDuplicateFound) {
+            AppLogger.d("PUSHING $newInfo to list")
+            nextSet.add(newInfo)
 
-        if (nextSet.any { isVideoInfoDuplicate(it, newInfo) }) {
-            AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
-            return
-        }
+            detectedVideosList.set(nextSet)
+            setButtonState(DownloadButtonStateCanDownload(newInfo))
 
-        AppLogger.d("PUSHING $newInfo to list")
-        nextSet.add(newInfo)
-
-        detectedVideosList.set(nextSet)
-        setButtonState(DownloadButtonStateCanDownload(newInfo))
-
-        viewModelScope.launch(Dispatchers.Main) {
-            videoPushedEvent.call()
+            viewModelScope.launch(Dispatchers.Main) {
+                videoPushedEvent.call()
+            }
         }
     }
 

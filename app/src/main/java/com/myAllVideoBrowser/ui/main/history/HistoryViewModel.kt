@@ -48,6 +48,10 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
+    fun loadHistory() {
+        fetchAllHistory()
+    }
+
     fun saveHistory(historyItem: HistoryItem) {
         viewModelScope.launch(historyExecutor) {
             try {

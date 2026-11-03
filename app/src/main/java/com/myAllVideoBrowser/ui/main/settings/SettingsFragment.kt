@@ -215,6 +215,30 @@ class SettingsFragment : BaseFragment() {
         dataBinding.seekBarAdsTreshold.addOnChangeListener(adsTresholdListener)
     }
 
+    private fun openFilePicker(launcher: androidx.activity.result.ActivityResultLauncher<Intent>, errorResId: Int) {
+        val openDocumentIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf("application/json", "text/plain", "application/octet-stream", "*/*")
+            )
+        }
+        try {
+            launcher.launch(openDocumentIntent)
+        } catch (_: Exception) {
+            val getContentIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"
+            }
+            try {
+                launcher.launch(getContentIntent)
+            } catch (_: Exception) {
+                Toast.makeText(context, errorResId, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun handleUIEvents() {
         settingsViewModel.clearCookiesEvent.observe(viewLifecycleOwner) {
             systemUtil.clearCookies(context)
@@ -228,14 +252,11 @@ class SettingsFragment : BaseFragment() {
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
         settingsViewModel.openImportHistoryEvent.observe(viewLifecycleOwner) {
-            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "application/json"
-                addCategory(Intent.CATEGORY_OPENABLE)
-            }
-            pickHistoryFileLauncher.launch(intent)
+            openFilePicker(pickHistoryFileLauncher, R.string.history_imported_error)
         }
         settingsViewModel.importHistoryEvent.observe(viewLifecycleOwner) { success ->
             val msg = if (success == true) {
+                mainActivity.historyViewModel.loadHistory()
                 R.string.history_imported_success
             } else {
                 R.string.history_imported_error
@@ -251,11 +272,7 @@ class SettingsFragment : BaseFragment() {
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
         settingsViewModel.openImportBookmarksEvent.observe(viewLifecycleOwner) {
-            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "application/json"
-                addCategory(Intent.CATEGORY_OPENABLE)
-            }
-            pickBookmarksFileLauncher.launch(intent)
+            openFilePicker(pickBookmarksFileLauncher, R.string.bookmarks_imported_error)
         }
         settingsViewModel.importBookmarksEvent.observe(viewLifecycleOwner) { success ->
             val msg = if (success == true) {

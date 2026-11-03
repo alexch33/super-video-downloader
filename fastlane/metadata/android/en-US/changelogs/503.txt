@@ -1,0 +1,5 @@
+### Fixed
+- Import history from file fix for old devices
+- Import bookmarks from file fix for old devices
+- Fixed bug with detection multiple master lists on one page
+- Fixed bug with skipping regular mp4 video if master list detected

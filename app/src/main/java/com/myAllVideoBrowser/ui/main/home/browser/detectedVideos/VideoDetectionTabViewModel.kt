@@ -314,6 +314,18 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     isDuplicateFound = false
                     AppLogger.d("REPLACING single rendition with Master playlist for video: $newInfo")
                 } else {
+                    val type = if (newInfo.isDetectedBySuperX) {
+                        "SUPERX"
+                    } else if (!newInfo.isRegularDownload) {
+                        "YOUTUBE-DLP"
+                    } else {
+                        "REGULAR"
+                    }
+                    DetectionLogger.log(
+                        type,
+                        "SKIP",
+                        newInfo.downloadUrls.firstOrNull()?.url.toString()
+                    )
                     AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
                     break
                 }

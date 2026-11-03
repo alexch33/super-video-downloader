@@ -321,10 +321,15 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     } else {
                         "REGULAR"
                     }
+                    val skippedUrl = if (newInfo.downloadUrls.firstOrNull() != null) {
+                        newInfo.downloadUrls.firstOrNull()?.url.toString()
+                    } else {
+                        newInfo.originalUrl
+                    }
                     DetectionLogger.log(
                         type,
                         "SKIP",
-                        newInfo.downloadUrls.firstOrNull()?.url.toString()
+                        skippedUrl
                     )
                     AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
                     break

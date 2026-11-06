@@ -1,0 +1,1 @@
+for update rust adblock should change ver number in Cargo.toml and call command "cargo vendor vendor"

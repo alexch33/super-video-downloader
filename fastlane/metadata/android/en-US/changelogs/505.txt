@@ -1,0 +1,6 @@
+### Added
+- Added missed translations
+
+### Fixed
+- Fixed native adblocker crash
+- Fixed rare youtube-dlp downloader crash

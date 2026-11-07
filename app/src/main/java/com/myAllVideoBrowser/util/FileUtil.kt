@@ -183,7 +183,6 @@ class FileUtil @Inject constructor() {
         }
     }
 
-    @Synchronized
     fun moveMedia(context: Context, from: Uri, to: Uri): Boolean {
         val fromFile = from.toFile()
         val toFile = to.toFile()

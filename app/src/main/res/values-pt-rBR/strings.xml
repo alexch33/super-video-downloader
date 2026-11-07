@@ -33,7 +33,7 @@
     <string name="settings">Configurações</string>
     <string name="about_an_hour_ago">há uma hora</string>
     <string name="remove">remover</string>
-    <string name="insert_your_regular_video">Colo a url do Há uma hora ou o link M3U8 aqui</string>
+    <string name="insert_your_regular_video">Coloque a url do vídeo regular ou o link M3U8 aqui</string>
     <string name="title_media_link">Baixar por url</string>
     <string name="clear_history">Limpar histórico</string>
     <string name="proxy">Proxy</string>
@@ -42,6 +42,7 @@
     <string name="loading_image_view">carregando visualizador de imagem</string>
     <string name="video_menu_open_in_folder">Abrir na pasta</string>
     <string name="help">Ajuda</string>
+    <string name="about">Sobre</string>
     <string name="ok">Certo</string>
     <string name="get_started_guide">Ola ;–) Para o vídeo ser detectado no navegador, clique para iniciar o vídeo e espera até que ele seja detectado (pode levar de 5 a 50 segundos) \n 1. Você pode configurar o intervalo de detecção de propaganda nas configurações.\n 2. Alguns vídeos pode corromper ao baixar usando múltiplas threads, use uma única thread nesses casos\n\n Para baixar vídeos: \n \n 1. Pressione no botão, no dialogo selecione a resolução, se disponível, e pressione no botão colorido.\n \n 2, 3. Pressione para reproduzir o vídeo na pagina, depois disso o vídeo deve de ser detectado.\n \nCaso contrario tente recarregar o vídeo na pagina ou recarregue a pagina inteira e repita o processo.\nCaso contrario entre em contato por email comigo.\n \n\n Após baixado o vídeo ficara disponível no aplicativo. \n</string>
     <string name="instruction">Ola ;–) \n Para o vídeo ser detectado no navegador, clique para iniciar o vídeo e espera até que ele seja detectado (pode levar de 5 a 50 segundos) \n 1. Você pode configurar o intervalo de detecção de propaganda nas configurações.\n 2. Se a detecção de video não estiver funcionando em sites para dispositivos moveis, tente usar a versão desktop do site.\nCaso contrario tente recarregar o vídeo na pagina ou recarregue a pagina inteira e repita o processo.\nCaso contrario entre em contato por email comigo.\n\n\n Para baixar vídeos: \n \n 1. Pressione no botão, no dialogo selecione a resolução, se disponível.\n \n 2. Pressione no botão para baixar\n \n\n Após baixado o vídeo ficara disponível no aplicativo. \n</string>
@@ -100,8 +101,8 @@
     <string name="go">Ir</string>
     <string name="force_stream_downloading">Forçar download de stream (para baixar transmissões ao vivo convencionais (exceto m3u8 ou mpd))</string>
     <string name="force_stream_detection">Forçar a detecção de transmissão (detecção da url com o conteúdo do corpo -1, as vezes é usado para transmissões ao vivo comum)</string>
-    <string name="is_always_remux_regular_downloads">Sempre postprocess todos os downloads regulares</string>
-    <string name="is_remux_only_live_regular_downloads">Postprocess apenas faz downloads regulares ao vivo</string>
+    <string name="is_always_remux_regular_downloads">Sempre processar todos os downloads regulares</string>
+    <string name="is_remux_only_live_regular_downloads">Processar apenas downloads regulares ao vivo</string>
     <string name="is_interrupt_intrecepted_resources">Interromper conteúdo de mídia interceptado para navegador</string>
     <string name="add_proxy">Adicionar Proxy</string>
     <string name="current_proxy_chain">Cadeia de proxy atual</string>
@@ -127,7 +128,6 @@
     <string name="settings_general">Geral</string>
     <string name="app_download_channel_description">Canal de download em segundo plano</string>
     <string name="view">Visualizar</string>
-    <string name="about">Sobre</string>
     <string name="proxy_service_channel_name">Proxy em segundo plano</string>
     <string name="proxy_service_channel_description">Worker de proxy em segundo plano.</string>
     <string name="download_paused">Pausado</string>
@@ -142,7 +142,7 @@
     <string name="progress_menu_stop_and_save">Parar e salvar</string>
     <string name="select_all">Selecionar Tudo</string>
     <string name="delete">Apagar</string>
-    <string name="stop_and_save_message">Pressione \"parar e salvar\" para interromper o download e salvar o conteúdo já baixado a qualquer momento...!</string>
+    <string name="stop_and_save_message">Pressione \"parar e salvar\" para interromper o download e salvar o conteúdo já baixado a qualquer momento…!</string>
     <string name="adblock_lists_title">Listas do AdBlocker</string>
     <string name="add_adblock_list">Adicionar a lista do AdBlock</string>
     <string name="list_name">Nome da Lista</string>
@@ -152,7 +152,7 @@
     <string name="add">Adicionar</string>
     <string name="tabs">Abas</string>
     <string name="add_custom_list">Adicionar lista personalizada</string>
-    <string name="downloading_rules">Baixando regras...</string>
+    <string name="downloading_rules">Baixando regras…</string>
     <string name="not_downloaded">Não baixado</string>
     <string name="last_updated">Última atualização</string>
     <string name="built_in_list">Lista integrada</string>
@@ -171,12 +171,43 @@
     <string name="latestVersion">Versão mais recente</string>
     <string name="supportString">Suporte ao projeto BTC</string>
     <string name="checkingForUpdatesFailed">Falha ao verificar atualizações.</string>
-    <string name="ask_redirection_title">Solicite o redirecionamento</string>
-    <string name="redirection_dialog_title">Redirecionamento</string>
-    <string name="redirection_dialog_message">Este site está redirecionando você para outro domínio. Deseja continuar?:</string>
-    <string name="yes">Sim</string>
-    <string name="no">Não</string>
-    <string name="download_preparing">preparando</string>
-    <string name="download_pending">pendente</string>
-    <string name="download_downloading">baixando…</string>
+    <string name="clear">Limpar</string>
+    <string name="logs">Logs de detecção</string>
+    <string name="settings_export_history">Exportar histórico do navegador</string>
+    <string name="history_exported_success">Histórico do navegador exportado com sucesso para Downloads</string>
+    <string name="history_exported_error">Falha ao exportar histórico do navegador</string>
+    <string name="settings_import_history">Importar histórico do navegador</string>
+    <string name="history_imported_success">Histórico do navegador importado com sucesso</string>
+    <string name="history_imported_error">Falha ao importar histórico do navegador</string>
+    <string name="settings_export_bookmarks">Exportar marcadores</string>
+    <string name="bookmarks_exported_success">Marcadores exportados com sucesso para Downloads</string>
+    <string name="bookmarks_exported_error">Falha ao exportar marcadores</string>
+    <string name="settings_import_bookmarks">Importar marcadores</string>
+    <string name="bookmarks_imported_success">Marcadores importados com sucesso</string>
+    <string name="bookmarks_imported_error">Falha ao importar marcadores</string>
+
+    <!-- Settings Explanations -->
+    <string name="setting_explanation_ask_redirection">Solicita um diálogo de confirmação antes de permitir que páginas da web redirecionem você para outro domínio.</string>
+    <string name="setting_explanation_interrupt_intercepted">Impede que o navegador carregue ou reproduza fluxos de mídia diretamente na página da web após serem detectados para download.</string>
+    <string name="setting_explanation_show_video_alert">Exibe uma caixa de diálogo de alerta pop-up automática sempre que um vídeo baixável é detectado em uma página da web.</string>
+    <string name="setting_explanation_show_action_button">Mostra um botão de download flutuante na tela do navegador quando mídia baixável é encontrada.</string>
+    <string name="setting_explanation_find_videos_by_url">Examina URLs de páginas da web diretamente para descobrir links de vídeo e mídia incorporados.</string>
+    <string name="setting_explanation_check_every_mp4">Monitora todas as solicitações de rede enviadas por páginas da web para detectar arquivos de vídeo MP4 baixáveis.</string>
+    <string name="setting_explanation_check_every_m3u8">Monitora solicitações de rede para listas de reprodução de streaming de vídeo HLS (M3U8) e DASH (MPD).</string>
+    <string name="setting_explanation_check_every_audio">Monitora solicitações de rede para detectar fluxos de áudio e arquivos de som em páginas da web.</string>
+    <string name="setting_explanation_force_stream_detection">Força a detecção de fluxos de mídia com cabeçalhos de tamanho de conteúdo desconhecidos ou ausentes (comumente usados por transmissões ao vivo).</string>
+    <string name="setting_explanation_use_legacy_m3u8_detection">Usa o motor youtube-dlp para extrair links de streaming de vídeo M3U8 e MPD de páginas da web. (Caso contrário, o detector SuperX será usado)</string>
+    <string name="setting_explanation_adblock_settings">Abre as configurações para gerenciar listas de filtros de bloqueio de anúncios e regras de bloqueio personalizadas.</string>
+    <string name="setting_explanation_ads_treshold">Ignora arquivos de mídia detectados menores que este limite de tamanho para evitar detectar anúncios em vídeo como conteúdo baixável.</string>
+    <string name="setting_explanation_download_subtitles">Busca e salva automaticamente legendas disponíveis ao baixar vídeos usando youtube-dlp.</string>
+    <string name="setting_explanation_force_stream_downloading">Ativa o download de stream contínuo para vídeos regulares (MP4) (não M3U8/MPD), como transmissões de vídeo ao vivo (pode corrigir alguns downloads de MP4 corrompidos).</string>
+    <string name="setting_explanation_always_remux_regular">Processa arquivos MP4 regulares baixados com o FFmpeg após a conclusão para corrigir cabeçalhos de vídeo, carimbos de data/hora e formatos de contêiner.</string>
+    <string name="setting_explanation_remux_only_live">Aplica o pós-processamento do FFmpeg apenas a downloads de transmissões ao vivo gravadas para garantir busca e duração corretas do vídeo.</string>
+    <string name="setting_explanation_regular_threads">Define o número de threads de download paralelas para arquivos regulares. Contagens de threads mais altas podem aumentar a velocidade, mas podem causar corrupção em alguns servidores.</string>
+    <string name="setting_explanation_m3u8_threads">Define o número de threads paralelas usadas para baixar partes de segmentos de vídeos em streaming M3U8/HLS.</string>
+    <string name="setting_explanation_downloads_location">Escolha a pasta de armazenamento para vídeos baixados: pasta de Downloads pública, pasta oculta privada no armazenamento interno ou armazenamento em cartão SD.</string>
+
+    <string name="advanced_guide">Guia avançado</string>
+    <string name="advanced_guide_title">Guia de detecção avançada</string>
+    <string name="advanced_guide_text">O SuperX possui 3 tipos diferentes de motores de detecção de vídeo:\n\n1. Detecção por URL:\nExamina URLs de páginas da web diretamente. Ideal para sites como Facebook ou TikTok, onde URLs de vídeo estão incorporadas em links da web.\n\n2. Detecção de arquivos regulares:\nInspeciona solicitações de rede para arquivos de mídia diretos como MP4, WebM, áudio, etc.\n\n3. Detecção de streaming M3U8 / MPD:\nDetecta listas de reprodução de streaming (HLS / DASH). Disponível em duas variantes:\n • Motor youtube-dlp: Muito estável e confiável, mas um pouco mais lento.\n • Detector SuperX: Novo, experimental e extremamente rápido (menos de um segundo).\n\nComo otimizar para sites específicos:\nPor padrão, todos os detetores estão ativados. Você pode ajustá-los finamente nas Configurações para sites específicos:\n • Para Facebook ou TikTok (onde a detecção funciona apenas por URL): Você pode desativar a detecção de arquivos regulares e a detecção M3U8/MPD.\n • Para sites de streaming (onde a detecção funciona interceptando solicitações de rede): Você pode desativar a detecção de URL.\n • Você pode verificar os Logs de detecção no menu para ver qual detetor está encontrando vídeos e desativar detetores não utilizados para obter um desempenho mais rápido!</string>
 </resources>

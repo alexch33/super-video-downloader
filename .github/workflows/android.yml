@@ -90,9 +90,9 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           prerelease: false
           body: |
-            - Fixed bug with detection multiple master lists on one page
-            - Fixed bug with skipping regular mp4 video if master list detected
-            - Fixed bookmarks/history import for old devices
+            - Added missed translations
+            - Fixed native adblocker crash
+            - Fixed rare youtube-dlp downloader crash
             
             Thanks anon reporter from twitter!
           draft: false

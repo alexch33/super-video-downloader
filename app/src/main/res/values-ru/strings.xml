@@ -75,7 +75,7 @@
     <string name="login_hint">Пользователь</string>
     <string name="password_hint">Пароль</string>
     <string name="save_proxy">Сохранить</string>
-    <string name="bookmark">Закладка</string>
+    <string name="bookmark">В Закладки</string>
     <string name="bookmarks_list">Закладки</string>
     <string name="is_auto_dark">Автоматический режим темы</string>
     <string name="video_menu_delete">Удалить</string>
@@ -109,6 +109,7 @@
     <string name="is_always_remux_regular_downloads">Всегда перекодировать все обычные скачивания в MP4</string>
     <string name="is_remux_only_live_regular_downloads">Перекодировать в MP4 только скачивания обычных живых передач</string>
     <string name="is_interrupt_intrecepted_resources">Прерывать перехваченные медиа для браузера</string>
+    <string name="proxy_service_channel_description">Ффоновый процесс для прокси</string>
     <string name="settings_detection">Настройки обнаружения</string>
     <string name="add_proxy">Добавить прокси</string>
     <string name="current_proxy_chain">текущая цепочка прокси</string>

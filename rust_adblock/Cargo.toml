@@ -8,7 +8,7 @@ name = "adblock_rust_jni"
 crate-type = ["cdylib"] # for .so generation
 
 [dependencies]
-adblock = "0.13.3" # Brave's engine
+adblock = { version = "0.13.5", default-features = false, features = ["embedded-domain-resolver", "full-regex-handling"] } # thread-safe (Arc/Mutex) features
 jni = "0.22.4"    # JNI bindings for Rust
 
 [profile.release]

@@ -15,7 +15,7 @@
         android:layout_height="match_parent"
         android:clipChildren="false">
 
-        <androidx.viewpager2.widget.ViewPager2
+        <com.myAllVideoBrowser.ui.main.home.browser.CustomViewPager2
             android:id="@+id/view_pager"
             android:layout_width="match_parent"
             android:layout_height="0dp"

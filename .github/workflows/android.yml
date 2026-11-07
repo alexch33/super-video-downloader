@@ -92,9 +92,7 @@ jobs:
           body: |
             - Added missed translations
             - Fixed native adblocker crash
-            - Fixed rare youtube-dlp downloader crash
-            
-            Thanks anon reporter from twitter!
+            - Fixed concurrent downloaders crash
           draft: false
           make_latest: true
           tag_name: ${{ github.ref_name }}

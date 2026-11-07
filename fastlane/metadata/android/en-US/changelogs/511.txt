@@ -3,4 +3,4 @@
 
 ### Fixed
 - Fixed native adblocker crash
-- Fixed rare youtube-dlp downloader crash
+- Fixed concurrent downloaders crash

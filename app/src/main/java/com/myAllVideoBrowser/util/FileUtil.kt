@@ -63,13 +63,25 @@ class FileUtil @Inject constructor() {
             }
         }
 
-        fun getFreeDiskSpace(path: File): Long {
-            if (!path.exists()) {
-                throw IllegalArgumentException("Path does not exist")
-            }
+        @JvmStatic
+        fun getFreeDiskSpace(path: File?): Long {
+            if (path == null) return 0L
+            return try {
+                var current: File? = path
+                while (current != null && !current.exists()) {
+                    current = current.parentFile
+                }
 
-            val stats = StatFs(path.absolutePath)
-            return stats.availableBlocksLong * stats.blockSizeLong
+                if (current != null && current.exists()) {
+                    val stats = StatFs(current.absolutePath)
+                    stats.availableBlocksLong * stats.blockSizeLong
+                } else {
+                    0L
+                }
+            } catch (e: Throwable) {
+                AppLogger.e("Failed to get free disk space for path: ${path.absolutePath} - ${e.message}")
+                0L
+            }
         }
 
         fun calculateFolderSize(directory: File): Long {
@@ -151,7 +163,12 @@ class FileUtil @Inject constructor() {
         }
 
     fun isFreeSpaceAvailable(): Boolean {
-        return getFreeDiskSpace(folderDir) > FREE_SPACE_TRESHOLD
+        return try {
+            getFreeDiskSpace(folderDir) > FREE_SPACE_TRESHOLD
+        } catch (e: Throwable) {
+            AppLogger.e("Error checking free space availability - ${e.message}")
+            false
+        }
     }
 
     fun isFileWithNameNotExists(context: Context, uri: Uri, newName: String): Boolean {

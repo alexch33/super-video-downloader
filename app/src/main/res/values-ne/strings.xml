@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SuperX</string>
     <string name="browser_search_hint">DuckDuckGo मा खोज्नुहोस् वा url प्रविष्ट गर्नुहोस्</string>
@@ -51,6 +52,7 @@
     <string name="loading_image_view">छवि लोड हुँदै</string>
     <string name="video_menu_open_in_folder">फोल्डरमा खोल्नुहोस्</string>
     <string name="help">सहायता</string>
+    <string name="about">बारेमा</string>
     <string name="ok">ठिक छ</string>
     <string name="get_started_guide">नमस्ते ;–)  भिडियो पत्ता लगाउनको लागि ब्राउजरमा भिडियोमा जानुहोस्, प्ले थिच्नुहोस् र पत्ता नलागेसम्म पर्खनुहोस्(5–50 सेकेन्ड लाग्न सक्छ) \n 1. तपाईं सेटिङमा विज्ञापन पत्ता लगाउने थ्रेसहोल्ड परिवर्तन गर्न सक्नुहुन्छ \n 2. मल्टि थ्रेड मोडमा केही भिडियो बिग्रिएर डाउनलोड हुन्छन्, यस्तो अवस्थामा डाउनलोडको लागि One थ्रेड प्रयोग गर्नुहोस् \n\n भिडियो डाउनलोड गर्नको लागि: \n \n 1. बटन थिच्नुहोस्, संवादमा उपलब्ध भए रिजोल्युसन छान्नुहोस्, र रंगीन बटन थिच्नुहोस् \n \n 2, 3. भिडियो भएको पृष्ठमा भिडियो प्लेयरमा प्ले थिच्नुहोस्, त्यसपछि भिडियो पत्ता लाग्नुपर्छ। \n \n यदि नभएमा भिडियो पृष्ठमा भिडियो पुनः लोड गर्ने प्रयास गर्नुहोस् वा पृष्ठ पुनः लोड गरेर दोहोर्याउनुहोस्। \n यदि अझै नभएमा मलाई इमेल गर्नुहोस्।\n \n \n डाउनलोड पछि भिडियो एपमा उपलब्ध हुन्छ। \n</string>
     <string name="instruction">नमस्ते ;–) \n भिडियो पत्ता लगाउनको लागि ब्राउजरमा भिडियोमा जानुहोस्, प्ले थिच्नुहोस् र भिडियो पत्ता नलागेसम्म पर्खनुहोस्(5–50 सेकेन्ड लाग्न सक्छ) \n 1. तपाईं सेटिङमा विज्ञापन पत्ता लगाउने थ्रेसहोल्ड परिवर्तन गर्न सक्नुहुन्छ \n 2. मोबाइल मोडमा केही वेबसाइटहरूको लागि भिडियो पत्ता लगाउने काम गर्दैन, यदि मोबाइल मोडमा भिडियो पत्ता लागेन भने वेबसाइटको डेस्कटप संस्करण प्रयोग गरेर हेर्नुहोस् \n यदि नभएमा भिडियो पृष्ठमा भिडियो पुनः लोड गर्ने प्रयास गर्नुहोस् वा पृष्ठ पुनः लोड गरेर दोहोर्याउनुहोस्। \n यदि अझै नभएमा मलाई इमेल गर्नुहोस्।\n \n\n भिडियो डाउनलोड गर्नको लागि: \n \n 1. डाउनलोड बटन थिच्नुहोस्, देखा परेको स्क्रिनमा उपलब्ध भए रिजोल्युसन छान्नुहोस् \n \n 2. डाउनलोड बटन थिच्नुहोस्। \n  \n \n डाउनलोड पछि भिडियो एपमा उपलब्ध हुन्छ। \n</string>
@@ -155,7 +157,7 @@
     <string name="progress_menu_stop_and_save">रोक्नुहोस् र सुरक्षित गर्नुहोस्</string>
     <string name="select_all">सबै छान्नुहोस्</string>
     <string name="delete">मेटाउनुहोस्</string>
-    <string name="stop_and_save_message">डाउनलोड रोक्न र जुनसुकै बेला डाउनलोड भइसकेको सुरक्षित गर्न रोक्नुहोस् र सुरक्षित गर्नुहोस् थिच्नुहोस्...!</string>
+    <string name="stop_and_save_message">डाउनलोड रोक्न र जुनसुकै बेला डाउनलोड भइसकेको सुरक्षित गर्न रोक्नुहोस् र सुरक्षित गर्नुहोस् थिच्नुहोस्…!</string>
 
     <string name="adblock_lists_title">एडब्लकर सूचीहरू</string>
     <string name="add_adblock_list">एडब्लक सूची थप्नुहोस्</string>
@@ -167,7 +169,7 @@
     <string name="app_icon">एप आइकन</string>
     <string name="tabs">ट्याबहरू</string>
     <string name="add_custom_list">कस्टम सूची थप्नुहोस्</string>
-    <string name="downloading_rules">नियमहरू डाउनलोड हुँदै...</string>
+    <string name="downloading_rules">नियमहरू डाउनलोड हुँदै…</string>
     <string name="not_downloaded">डाउनलोड नगरिएको</string>
     <string name="last_updated">अन्तिम अपडेट</string>
     <string name="built_in_list">बिल्ट-इन सूची</string>
@@ -178,4 +180,52 @@
     <string name="accessibility_refresh">पहुँच रिफ्रेस गर्नुहोस्</string>
     <string name="accessibility_stop">पहुँच रोक्नुहोस्</string>
     <string name="accessibility_close">पहुँच बन्द गर्नुहोस्</string>
+    <string name="currentVersion">हालको संस्करण</string>
+    <string name="checkingForUpdates">अपडेटहरूको लागि जाँच गर्दै…</string>
+    <string name="developer">विकासकर्ता</string>
+    <string name="copyBTC">BTC प्रतिलिपि गर्नुहोस्</string>
+    <string name="btcAddress">BTC ठेगाना</string>
+    <string name="btcCopied">BTC ठेगाना क्लिपबोर्डमा प्रतिलिपि गरियो</string>
+    <string name="latestVersion">पछिल्लो संस्करण</string>
+    <string name="supportString">परियोजना समर्थन BTC</string>
+    <string name="checkingForUpdatesFailed">अपडेटहरू जाँच गर्न असफल भयो।</string>
+    <string name="clear">खाली गर्नुहोस्</string>
+    <string name="logs">डिटेक्सन लगत (Logs)</string>
+    <string name="settings_export_history">ब्राउजर इतिहास निर्यात गर्नुहोस्</string>
+    <string name="history_exported_success">ब्राउजर इतिहास डाउनलोडहरूमा सफलतापूर्वक निर्यात गरियो</string>
+    <string name="history_exported_error">ब्राउजर इतिहास निर्यात गर्न असफल भयो</string>
+    <string name="settings_import_history">ब्राउजर इतिहास आयात गर्नुहोस्</string>
+    <string name="history_imported_success">ब्राउजर इतिहास सफलतापूर्वक आयात गरियो</string>
+    <string name="history_imported_error">ब्राउजर इतिहास आयात गर्न असफल भयो</string>
+    <string name="settings_export_bookmarks">बुकमार्कहरू निर्यात गर्नुहोस्</string>
+    <string name="bookmarks_exported_success">बुकमार्कहरू डाउनलोडहरूमा सफलतापूर्वक निर्यात गरियो</string>
+    <string name="bookmarks_exported_error">बुकमार्कहरू निर्यात गर्न असफल भयो</string>
+    <string name="settings_import_bookmarks">बुकमार्कहरू आयात गर्नुहोस्</string>
+    <string name="bookmarks_imported_success">बुकमार्कहरू सफलतापूर्वक आयात गरियो</string>
+    <string name="bookmarks_imported_error">बुकमार्कहरू आयात गर्न असफल भयो</string>
+
+    <!-- Settings Explanations -->
+    <string name="setting_explanation_ask_redirection">वेब पेजहरूले तपाईंलाई अर्को डोमेनमा रिडाइरेक्ट गर्न अनुमति दिनu अघि पुष्टिकरण संवाद प्रम्प्ट गर्दछ।</string>
+    <string name="setting_explanation_interrupt_intercepted">डाउनलोडको लागि पत्ता लगाइएपछि ब्राउजरलाई वेब पेजमा सीधा मिडिया स्ट्रिमहरू लोड गर्न वा प्ले गर्नबाट रोक्छ।</string>
+    <string name="setting_explanation_show_video_alert">वेब पेजमा डाउनलोड गर्न मिल्ने भिडियो फेला पर्दा प्रत्येक पटक पপ-अप एलर्ट संवाद देखाउँछ।</string>
+    <string name="setting_explanation_show_action_button">डाउनलोड गर्न मिल्ने मिडिया फेला पर्दा ब्राउजर स्क्रिनमा फ्लोटिङ डाउनलोड बटन देखाउँछ।</string>
+    <string name="setting_explanation_find_videos_by_url">इम्बेड गरिएका भिडियो र मिडिया लिङ्কहरू पत्ता लगाउन वेब पेज URL हरू सीधै स्क्यान गर्छ।</string>
+    <string name="setting_explanation_check_every_mp4">डाउनलोड गर्न मिल्ने MP4 भिडियो फाइलहरू पत्ता लगाउन वेब पेजहरूद्वारा पठाइने सबै नेटवर्क अनुरोधहरू निगरानी गर्छ।</string>
+    <string name="setting_explanation_check_every_m3u8">HLS (M3U8) र DASH (MPD) भिडियो स्ट्रिमिङ प्लेलिस्टहरूको लागि नेटवर्क अनुरोधहरू निगरानी गर्छ।</string>
+    <string name="setting_explanation_check_every_audio">वेब पेजहरूमा अडियो स्ट्रिम र साउन्ड फाइलहरू पत्ता लगाउन नेटवर्क अनुरोधहरू निगरानी गर्छ।</string>
+    <string name="setting_explanation_force_stream_detection">अज्ञात वा हराएको कन्टेन्ट लेन्थ हेडर भएका मिडिया स्ट्रिमहरूको पत्ता लगाउने कार्यलाई बल दिन्छ (सामान्यतया लाइभ स्ट्रिमहरूद्वारा प्रयोग गरिन्छ)।</string>
+    <string name="setting_explanation_use_legacy_m3u8_detection">वेब पेजहरूबाट M3U8 र MPD स्ट्रिमिङ भिडियो लिङ्कहरू निकाल्न youtube-dlp इन्जिन प्रयोग गर्छ। (अन्यथा SuperX डिटेक्टर प्रयोग गरिनेछ)</string>
+    <string name="setting_explanation_adblock_settings">विज्ञापन-ब्लकिङ फिल्टर सूचीहरू र कस्टम ब्लकिङ नियमहरू व्यवस्थापन गर्न सेटिङहरू खोल्छ।</string>
+    <string name="setting_explanation_ads_treshold">भिडियो विज्ञापनहरूलाई डाउनलोड गर्न मिल्ने सामग्रीको रूपमा पत्ता लगाउनबाट जोगिन यो साइज थ्रेसहोल्डभन्दा साना पत्ता लगाइएका मिडिया फाइलहरूलाई बेवास्ता गर्छ।</string>
+    <string name="setting_explanation_download_subtitles">youtube-dlp प्रयोग गरी भिडियो डाउनलोड गर्दा उपलब्ध उपशीर्षक (subtitle) ट्र्याकहरू स्वतः फेच र सेभ गर्छ।</string>
+    <string name="setting_explanation_force_stream_downloading">लाइभ भिडियो स्ट्रिमहरू जस्तै साधारण (MP4) भिडियोहरू (गैर-M3U8/MPD) को लागि निरन्तर स्ट्रिम डाउनलोड सक्षम गर्छ। (केही भाँचिएका MP4 डाउनलोडहरू ठीक गर्न सक्छ)</string>
+    <string name="setting_explanation_always_remux_regular">भिडियो हेडर, टाइमस्ट्याम्प र कन्टेनर ढाँचा ठीक गर्न पूरा भएपछि FFmpeg দিয়ে ডাউনলোড করা সাধারণ MP4 ফাইলগুলি প্রক্রিয়া করে।</string>
+    <string name="setting_explanation_remux_only_live">सঠিক ভিডিও সিকিং এবং সময়কাল নিশ্চিত করতে শুধুমাত্র রেকর্ড করা লাইভ স্ট্রিম ডাউনলোডে FFmpeg পোস্টপ্রসেসিং প্রয়োগ করে।</string>
+    <string name="setting_explanation_regular_threads">সাধারণ ফাইলের জন্য সমান্তরাল ডাউনলোড থ্রেডের সংখ্যা নির্ধারণ করে। উচ্চ থ্রেড সংখ্যা গতি বাড়াতে পারে কিন্তু কিছু সার্ভারে করাপশন ঘটাতে পারে।</string>
+    <string name="setting_explanation_m3u8_threads">M3U8/HLS স্ট্রিমিং ভিডিওর সেগমেন্ট অংশ ডাউনলোড করতে ব্যবহৃত সমান্তরাল থ্রেডের সংখ্যা নির্ধারণ করে।</string>
+    <string name="setting_explanation_downloads_location">ডাউনলোড করা ভিডিওগুলির জন্য স্টোরেজ ফোল্ডার বেছে নিন: পাবলিক ডাউনলোড ফোল্ডার, অভ্যন্তরীণ স্টোরেজের ভিতরে প্রাইভেট হিডেন ফোল্ডার বা SD কার্ড স্টোরেজ।</string>
+
+    <string name="advanced_guide">উন্নত নির্দেশিকা</string>
+    <string name="advanced_guide_title">উন্নত সনাক্তকরণ নির্দেশিকা</string>
+    <string name="advanced_guide_text">SuperX-এ ৩টি বিভিন্ন ধরণের ভিডিও সনাক্তকরণ ইঞ্জিন রয়েছে:\n\n১. URL দ্বারা সনাক্তকরণ:\nওয়েব পেজ URL সরাসরি স্ক্যান করে। Facebook বা TikTok-এর মতো সাইটগুলির জন্য আদর্শ যেখানে ভিডিও URL ওয়েব লিঙ্কে এম্বেড থাকে।\n\n২. সাধারণ ফাইল সনাক্তকরণ:\nMP4, WebM, অডিও ইত্যাদির মতো সরাসরি মিডিয়া ফাইলের জন্য নেটওয়ার্ক অনুরোধগুলি পরিদর্শন করে।\n\n৩. M3U8 / MPD স্ট্রিমিং সনাক্তকরণ:\nস্ট্রিমিং প্লেলিস্ট (HLS / DASH) সনাক্ত করে। দুটি ভেরিয়েন্টে উপলব্ধ:\n • youtube-dlp ইঞ্জিন: অত্যন্ত স্থিতিশীল এবং নির্ভরযোগ্য, তবে কিছুটা ধীরগতির।\n • SuperX ডিটেক্টর: নতুন, পরীক্ষামূলক এবং অত্যন্ত দ্রুত (এক সেকেন্ডের কম)।\n\nনির্দিষ্ট ওয়েবসাইটের জন্য কীভাবে অপ্টিমাইজ করবেন:\nডিফল্টভাবে, সমস্ত ডিটেক্টর সক্ষম থাকে। আপনি নির্দিষ্ট সাইটের জন্য সেটিংসে এগুলিকে ফাইন-টিউন করতে পারেন:\n • Facebook বা TikTok-এর জন্য (যেখানে সনাক্তকরণ শুধুমাত্র URL দ্বারা কাজ করে): আপনি সাধারণ ফাইল সনাক্তকরণ এবং M3U8/MPD সনাক্তকরণ বন্ধ করতে পারেন।\n • স্ট্রিমিং সাইটগুলির জন্য (যেখানে নেটওয়ার্ক অনুরোধ ইন্টারসেপ্ট করে সনাক্তকরণ কাজ করে): আপনি URL সনাক্তকরণ বন্ধ করতে পারেন।\n • কোন ডিটেক্টর ভিডিও খুঁজে পাচ্ছে তা দেখতে আপনি মেনুতে সনাক্তকরণ লগ পরীক্ষা করতে পারেন, এবং দ্রুত পারফরম্যান্সের জন্য অব্যবহৃত ডিটেক্টর বন্ধ করতে পারেন!</string>
 </resources>

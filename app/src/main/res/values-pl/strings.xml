@@ -29,6 +29,7 @@
     <string name="bookmarks_list">Zakładki</string>
     <string name="video_rename_invalid">Nieprawidłowa nazwa. Spróbuj ponownie!</string>
     <string name="help">Pomoc</string>
+    <string name="about">O aplikacji</string>
     <string name="ok">Ok</string>
     <string name="dontshow">Nie pokazuj ponownie</string>
     <string name="video_menu_open_with">Otwórz w…</string>
@@ -155,8 +156,56 @@
     <string name="builtin_list">Wbudowana lista</string>
     <string name="add">Dodaj</string>
     <string name="add_custom_list">Dodaj niestandardową listę</string>
-    <string name="downloading_rules">Pobieranie reguł...</string>
+    <string name="downloading_rules">Pobieranie reguł…</string>
     <string name="built_in_list">Wbudowana lista</string>
     <string name="not_downloaded">Nie pobrano</string>
     <string name="last_updated">Ostatnio zaktualizowano</string>
+    <string name="currentVersion">Aktualna wersja</string>
+    <string name="checkingForUpdates">Sprawdzanie aktualizacji…</string>
+    <string name="developer">Deweloper</string>
+    <string name="copyBTC">Kopiuj BTC</string>
+    <string name="btcAddress">Adres BTC</string>
+    <string name="btcCopied">Skopiowano adres BTC do schowka</string>
+    <string name="latestVersion">Najnowsza wersja</string>
+    <string name="supportString">Wspomóż projekt przez BTC</string>
+    <string name="checkingForUpdatesFailed">Nie udało się sprawdzić aktualizacji.</string>
+    <string name="clear">Wyczyść</string>
+    <string name="logs">Logi wykrywania</string>
+    <string name="settings_export_history">Eksportuj historię przeglądarki</string>
+    <string name="history_exported_success">Pomyślnie wyeksportowano historię przeglądarki do Pobranych</string>
+    <string name="history_exported_error">Nie udało się eksportować historii przeglądarki</string>
+    <string name="settings_import_history">Importuj historię przeglądarki</string>
+    <string name="history_imported_success">Pomyślnie zaimportowano historię przeglądarki</string>
+    <string name="history_imported_error">Nie udało się zaimportować historii przeglądarki</string>
+    <string name="settings_export_bookmarks">Eksportuj zakładki</string>
+    <string name="bookmarks_exported_success">Pomyślnie wyeksportowano zakładki do Pobranych</string>
+    <string name="bookmarks_exported_error">Nie udało się eksportować zakładek</string>
+    <string name="settings_import_bookmarks">Importuj zakładki</string>
+    <string name="bookmarks_imported_success">Pomyślnie zaimportowano zakładki</string>
+    <string name="bookmarks_imported_error">Nie udało się zaimportować zakładek</string>
+
+    <!-- Settings Explanations -->
+    <string name="setting_explanation_ask_redirection">Wyświetla okno potwierdzenia przed zezwoleniem na przekierowanie do innej domeny.</string>
+    <string name="setting_explanation_interrupt_intercepted">Zatrzymuje ładowanie lub odtwarzanie strumieni multimedialnych bezpośrednio na stronie po ich wykryciu do pobrania.</string>
+    <string name="setting_explanation_show_video_alert">Wyświetla automatyczne okno dialogowe powiadomienia po wykryciu pobieralnego wideo na stronie.</string>
+    <string name="setting_explanation_show_action_button">Pokazuje pływający przycisk pobierania na ekranie przeglądarki po znalezieniu pobieralnych mediów.</string>
+    <string name="setting_explanation_find_videos_by_url">Skanuje bezpośrednio adresy URL stron internetowych w celu wyszukania osadzonych filmów i linków multimedialnych.</string>
+    <string name="setting_explanation_check_every_mp4">Monitoruje wszystkie żądania sieciowe wysyłane przez strony w celu wykrycia plików wideo MP4 do pobrania.</string>
+    <string name="setting_explanation_check_every_m3u8">Monitoruje żądania sieciowe dla list odtwarzania transmisji wideo HLS (M3U8) i DASH (MPD).</string>
+    <string name="setting_explanation_check_every_audio">Monitoruje żądania sieciowe w celu wykrycia strumieni audio i plików dźwiękowych na stronach.</string>
+    <string name="setting_explanation_force_stream_detection">Wymusza wykrywanie strumieni multimedialnych z nieznanymi lub brakującymi nagłówkami długości treści (często używane w transmisjach na żywo).</string>
+    <string name="setting_explanation_use_legacy_m3u8_detection">Używa silnika youtube-dlp do wyodrębniania linków do transmisji wideo M3U8 i MPD ze stron internetowych. (W przeciwnym razie zostanie użyty detektor SuperX)</string>
+    <string name="setting_explanation_adblock_settings">Otwiera ustawienia zarządzania listami filtrów blokowania reklam i niestandardowymi regułami blokowania.</string>
+    <string name="setting_explanation_ads_treshold">Ignoruje wykryte pliki multimedialne mniejsze niż ten próg rozmiaru, aby zapobiec wykrywaniu reklam wideo jako treści do pobrania.</string>
+    <string name="setting_explanation_download_subtitles">Automatycznie pobiera i zapisuje dostępne ścieżki napisów podczas pobierania filmów za pomocą youtube-dlp.</string>
+    <string name="setting_explanation_force_stream_downloading">Włącza ciągłe pobieranie strumieniowe dla zwykłych filmów MP4 (nie M3U8/MPD), takich jak transmisje na żywo (może naprawić niektóre uszkodzone pobrania MP4).</string>
+    <string name="setting_explanation_always_remux_regular">Przetwarza pobrane zwykłe pliki MP4 za pomocą FFmpeg po zakończeniu w celu naprawy nagłówków wideo, znaczników czasu i formatów kontenera.</string>
+    <string name="setting_explanation_remux_only_live">Stosuje postprodukcję FFmpeg tylko do pobranych nagrań transmisji na żywo, aby zapewnić prawidłowe przewijanie i czas trwania wideo.</string>
+    <string name="setting_explanation_regular_threads">Ustawia liczbę równoległych wątków pobierania dla zwykłych plików. Wyższa liczba wątków może zwiększyć prędkość, ale na niektórych serwerach może powodować błędy.</string>
+    <string name="setting_explanation_m3u8_threads">Ustawia liczbę równoległych wątków używanych do pobierania segmentów wideo M3U8/HLS.</string>
+    <string name="setting_explanation_downloads_location">Wybierz folder docelowy dla pobranych filmów: publiczny folder Pobrane, prywatny ukryty folder w pamięci wewnętrznej lub karta SD.</string>
+
+    <string name="advanced_guide">Zaawansowany przewodnik</string>
+    <string name="advanced_guide_title">Zaawansowany przewodnik wykrywania</string>
+    <string name="advanced_guide_text">SuperX posiada 3 różne typy silników wykrywania wideo:\n\n1. Wykrywanie po adresie URL:\nSkanuje bezpośrednio adresy URL stron. Idealne dla stron takich jak Facebook czy TikTok, gdzie adresy URL wideo są osadzone w linkach.\n\n2. Wykrywanie zwykłych plików:\nSprawdza żądania sieciowe pod kątem bezpośrednich plików multimedialnych, takich jak MP4, WebM, audio itp.\n\n3. Wykrywanie strumieni M3U8 / MPD:\nWykrywa listy odtwarzania strumieniowego (HLS / DASH). Dostępne w dwóch wariantach:\n • Silnik youtube-dlp: Bardzo stabilny i niezawodny, ale nieco wolniejszy.\n • Detektor SuperX: Nowy, eksperymentalny i niezwykle szybki (mniej niż sekunda).\n\nJak optymalizować dla konkretnych stron:\nDomyślnie wszystkie detektory są włączone. Możesz je dostosować w Ustawieniach dla konkretnych stron:\n • Dla Facebooka lub TikTok (gdzie wykrywanie działa tylko po URL): Możesz wyłączyć wykrywanie zwykłych plików oraz wykrywanie M3U8/MPD.\n • Dla stron streamingowych (gdzie wykrywanie działa poprzez przechwytywanie żądań sieciowych): Możesz wyłączyć wykrywanie adresów URL.\n • Możesz sprawdzić "Logi wykrywania" w menu, aby zobaczyć, który detektor znajduje filmy, i wyłączyć nieużywane detektory dla lepszej wydajności!</string>
 </resources>

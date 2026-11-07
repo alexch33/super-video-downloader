@@ -179,4 +179,43 @@
     <string name="latestVersion">最新版</string>
     <string name="supportString">通过 BTC 支持项目</string>
     <string name="checkingForUpdatesFailed">检查更新失败。</string>
+    <string name="clear">清除日志</string>
+    <string name="logs">检测日志</string>
+    <string name="settings_export_history">导出浏览器历史记录</string>
+    <string name="history_exported_success">浏览器历史记录已成功导出到下载目录</string>
+    <string name="history_exported_error">导出浏览器历史记录失败</string>
+    <string name="settings_import_history">导入浏览器历史记录</string>
+    <string name="history_imported_success">浏览器历史记录导入成功</string>
+    <string name="history_imported_error">导入浏览器历史记录失败</string>
+    <string name="settings_export_bookmarks">导出书签</string>
+    <string name="bookmarks_exported_success">书签已成功导出到下载目录</string>
+    <string name="bookmarks_exported_error">导出书签失败</string>
+    <string name="settings_import_bookmarks">导入书签</string>
+    <string name="bookmarks_imported_success">书签导入成功</string>
+    <string name="bookmarks_imported_error">导入书签失败</string>
+
+    <!-- Settings Explanations -->
+    <string name="setting_explanation_ask_redirection">在允许网页将您重定向到其他域名之前提示确认对话框。</string>
+    <string name="setting_explanation_interrupt_intercepted">一旦检测到可下载的媒体流，即停止浏览器直接在网页上加载或播放它们。</string>
+    <string name="setting_explanation_show_video_alert">当网页上检测到可下载视频时，自动显示弹出式警告对话框。</string>
+    <string name="setting_explanation_show_action_button">当找到可下载媒体时，在浏览器屏幕上显示浮动下载按钮。</string>
+    <string name="setting_explanation_find_videos_by_url">直接扫描网页网址以发现嵌入的视频和媒体链接。</string>
+    <string name="setting_explanation_check_every_mp4">监控网页发送的所有网络请求以检测可下载的 MP4 视频文件。</string>
+    <string name="setting_explanation_check_every_m3u8">监控 HLS (M3U8) and DASH (MPD) 视频流播放列表的网络请求。</string>
+    <string name="setting_explanation_check_every_audio">监控网络请求以检测网页上的音频流和声音文件。</string>
+    <string name="setting_explanation_force_stream_detection">强制检测内容长度标头未知或缺失的媒体流（通常用于直播流）。</string>
+    <string name="setting_explanation_use_legacy_m3u8_detection">使用 youtube-dlp 引擎从网页提取 M3U8 和 MPD 流媒体视频链接。（否则将使用 SuperX 检测器）</string>
+    <string name="setting_explanation_adblock_settings">打开设置以管理广告拦截过滤列表和自定义拦截规则。</string>
+    <string name="setting_explanation_ads_treshold">忽略小于此大小阈值的检测到的媒体文件，以防止将视频广告检测为可下载内容。</string>
+    <string name="setting_explanation_download_subtitles">使用 youtube-dlp 下载视频时自动获取并保存可用的字幕轨道。</string>
+    <string name="setting_explanation_force_stream_downloading">为常规 (MP4) 视频（非 M3U8/MPD）启用连续流下载，例如直播视频流（可以修复某些损坏的 MP4 下载）。</string>
+    <string name="setting_explanation_always_remux_regular">完成后使用 FFmpeg 处理下载的常规 MP4 文件，以修复视频标头、时间戳和容器格式。</string>
+    <string name="setting_explanation_remux_only_live">仅对录制的直播流下载应用 FFmpeg 后期处理，以确保正确的视频定位和时长。</string>
+    <string name="setting_explanation_regular_threads">设置常规文件的并行下载线程数。较高的线程数可以提高速度，但可能会导致某些服务器出现损坏。</string>
+    <string name="setting_explanation_m3u8_threads">设置用于下载 M3U8/HLS 流媒体视频分段块的并行线程数。</string>
+    <string name="setting_explanation_downloads_location">选择下载视频的存储文件夹：公共下载文件夹、内部存储内的私有隐藏文件夹或 SD 卡存储。</string>
+
+    <string name="advanced_guide">高级指南</string>
+    <string name="advanced_guide_title">高级检测指南</string>
+    <string name="advanced_guide_text">SuperX 有 3 种不同类型的视频检测引擎：\n\n1. 按 URL 检测：\n直接扫描网页网址。非常适合 Facebook 或 TikTok 等视频网址嵌入在网页链接中的网站。\n\n2. 常规文件检测：\n检查 MP4、WebM、音频等直接媒体文件的网络请求。\n\n3. M3U8 / MPD 流媒体检测：\n检测流媒体播放列表（HLS / DASH）。提供两种变体：\n • youtube-dlp 引擎：非常稳定可靠，但稍慢。\n • SuperX 检测器：全新、实验性且速度极快（不到一秒）。\n\n如何针对特定网站进行优化：\n默认情况下，所有检测器都已启用。您可以在“设置”中针对特定网站对它们进行微调：\n • 对于 Facebook 或 TikTok（仅通过 URL 检测有效）：您可以关闭常规文件检测和 M3U8/MPD 检测。\n • 对于流媒体网站（通过拦截网络请求检测有效）：您可以关闭 URL 检测。\n • 您可以检查菜单中的“检测日志”以查看哪个检测器正在查找视频，并关闭未使用的检测器以获得更快的性能！</string>
 </resources>

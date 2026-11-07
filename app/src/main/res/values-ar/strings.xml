@@ -45,7 +45,10 @@
     <string name="loading_image_view">جارٍ تحميل عرض الصورة</string>
     <string name="video_menu_open_in_folder">فتح في المجلد</string>
     <string name="help">مساعدة</string>
+    <string name="about">حول</string>
     <string name="ok">حسنا</string>
+    <string name="get_started_guide">مرحباً ؛–) لكشف الفيديو، انتقل إلى الفيديو في المتصفح، واضغط تشغيل ثم انتظر حتى يتم كشفه (قد يستغرق ذلك من 5 إلى 50 ثانية).\n 1. يمكنك تغيير حد كشف الإعلانات من الإعدادات.\n 2. بعض الفيديوهات تنزل تالفة عند استخدام وضع خيوط المعالجة المتعددة (Multi-thread)، في مثل هذه الحالات استخدم خيط معالجة واحد للتنزيل.\n\n لتنزيل الفيديو:\n \n 1. اضغط على الزر، ومن نافذة الحوار اختر الدقة (إذا كانت متوفرة) ثم اضغط على الزر الملون.\n \n 2، 3. اضغط على زر التشغيل في مشغل الفيديو الموجود في صفحة الفيديو، بعد ذلك يفترض أن يتم كشف الفيديو.\n \n إذا لم يتم كشفه، جرب الضغط على إعادة تحميل الفيديوهات في صفحة الفيديو، أو جرب إعادة تحميل الصفحة وتكرار الخطوات.\n إذا لم ينجح الأمر، راسلني عبر البريد الإلكتروني.\n \n \n بعد التنزيل، سيكون الفيديو متاحاً في التطبيق. \n</string>
+    <string name="instruction">"مرحبًا ;–)\nلاكتشاف الفيديو، انتقل إلى الفيديو في المتصفح، واضغط على تشغيل، ثم انتظر حتى يتم اكتشاف الفيديو (قد يستغرق ذلك من 5 إلى 50 ثانية).\n\n1. يمكنك تغيير حد اكتشاف الإعلانات في الإعدادات.\n2. لا يعمل اكتشاف الفيديو في بعض مواقع الويب في وضع الهاتف، جرّب استخدام إصدار سطح المكتب للموقع إذا لم يتم اكتشاف الفيديو في وضع الهاتف.\n   إذا لم ينجح ذلك، فحاول الضغط على إعادة تحميل الفيديوهات في صفحة الفيديو، أو أعد تحميل الصفحة وكرر المحاولة.\n   إذا لم ينجح ذلك، فأرسل إليّ بريدًا إلكترونيًا.\n\nلتنزيل الفيديو:\n\n1. اضغط على زر التنزيل، وفي الشاشة التي ستظهر اختر الدقة، إذا كانت متوفرة.\n\n2. اضغط على زر التنزيل.\n\n\nبعد تنزيل الفيديو، سيكون متاحًا داخل التطبيق. \n"</string>
     <string name="new_tab">علامة تبويب جديدة</string>
     <string name="cookies_cleared">تم مسح ملفات تعريف الارتباط</string>
     <string name="download_started">تم بدء تنزيل الفيديو بنجاح!!!</string>
@@ -68,11 +71,6 @@
     <string name="video_title_edit">تعديل عنوان الفيديو</string>
     <string name="menu">القائمة</string>
     <string name="home">الصفحة الرئيسية</string>
-    <string name="accessibility_back">خلف</string>
-    <string name="accessibility_close">إغلاق</string>
-    <string name="app_download_channel_description">قناة التنزيل في الخلفية</string>
-    <string name="get_started_guide">مرحباً ؛–) لكشف الفيديو، انتقل إلى الفيديو في المتصفح، واضغط تشغيل ثم انتظر حتى يتم كشفه (قد يستغرق ذلك من 5 إلى 50 ثانية).\n 1. يمكنك تغيير حد كشف الإعلانات من الإعدادات.\n 2. بعض الفيديوهات تنزل تالفة عند استخدام وضع خيوط المعالجة المتعددة (Multi-thread)، في مثل هذه الحالات استخدم خيط معالجة واحد للتنزيل.\n\n لتنزيل الفيديو:\n \n 1. اضغط على الزر، ومن نافذة الحوار اختر الدقة (إذا كانت متوفرة) ثم اضغط على الزر الملون.\n \n 2، 3. اضغط على زر التشغيل في مشغل الفيديو الموجود في صفحة الفيديو، بعد ذلك يفترض أن يتم كشف الفيديو.\n \n إذا لم يتم كشفه، جرب الضغط على إعادة تحميل الفيديوهات في صفحة الفيديو، أو جرب إعادة تحميل الصفحة وتكرار الخطوات.\n إذا لم ينجح الأمر، راسلني عبر البريد الإلكتروني.\n \n \n بعد التنزيل، سيكون الفيديو متاحاً في التطبيق. \n</string>
-    <string name="instruction">"مرحبًا ;–)\nلاكتشاف الفيديو، انتقل إلى الفيديو في المتصفح، واضغط على تشغيل، ثم انتظر حتى يتم اكتشاف الفيديو (قد يستغرق ذلك من 5 إلى 50 ثانية).\n\n1. يمكنك تغيير حد اكتشاف الإعلانات في الإعدادات.\n2. لا يعمل اكتشاف الفيديو في بعض مواقع الويب في وضع الهاتف، جرّب استخدام إصدار سطح المكتب للموقع إذا لم يتم اكتشاف الفيديو في وضع الهاتف.\n   إذا لم ينجح ذلك، فحاول الضغط على إعادة تحميل الفيديوهات في صفحة الفيديو، أو أعد تحميل الصفحة وكرر المحاولة.\n   إذا لم ينجح ذلك، فأرسل إليّ بريدًا إلكترونيًا.\n\nلتنزيل الفيديو:\n\n1. اضغط على زر التنزيل، وفي الشاشة التي ستظهر اختر الدقة، إذا كانت متوفرة.\n\n2. اضغط على زر التنزيل.\n\nبعد تنزيل الفيديو، سيكون متاحًا داخل التطبيق. \n"</string>
     <string name="powerSave">تم اكتشاف وضع توفير الطاقة!\nميزة اكتشاف الفيديو لا تعمل، يرجى إيقاف وضع توفير الطاقة!</string>
     <string name="warning">تحذير! وضع توفير الطاقة.</string>
     <string name="download_text">تنزيل</string>
@@ -112,9 +110,14 @@
     <string name="add_proxy">إضافة بروكسي</string>
     <string name="current_proxy_chain">سلسلة البروكسي الحالية</string>
     <string name="add_http_proxy">إضافة بروكسي HTTP</string>
+    <string name="http" translatable="false">HTTP</string>
+    <string name="socks5" translatable="false">SOCKS5</string>
     <string name="secure_dns">DNS الآمن</string>
     <string name="dns_custom">مخصص</string>
     <string name="dns_custom_url_hint">أدخل رابط DoH أو DoT</string>
+    <string name="doh_cloudflare">Cloudflare DOH</string>
+    <string name="doh_quad9">Quad9 DOH</string>
+    <string name="doh_ad_guard">Adguard DOH</string>
     <string name="custom_dns_saved_message">تم حفظ DNS مخصص</string>
     <string name="proxy_service_channel_name">بروكسي الخلفية</string>
     <string name="proxy_service_channel_description">مشغل بروكسي الخلفية</string>
@@ -151,6 +154,7 @@
     <string name="adblock_lists_title">قوائم حظر الإعلانات</string>
     <string name="add_adblock_list">إضافة قائمة حظر الإعلانات</string>
     <string name="list_name">اسم القائمة</string>
+    <string name="url">URL</string>
     <string name="download_update">تنزيل/تحديث</string>
     <string name="builtin_list">القائمة المدمجة</string>
     <string name="add">إضافة</string>
@@ -162,8 +166,57 @@
     <string name="last_updated">آخر تحديث</string>
     <string name="built_in_list">قائمة مدمجة</string>
     <string name="download_subtitles">تنزيل الترجمة (youtube-dlp)</string>
-    <string name="accessibility_forward">إعادة توجيه</string>
+    <string name="accessibility_back">رجوع</string>
+    <string name="accessibility_forward">إمام</string>
     <string name="accessibility_refresh">تحديث</string>
     <string name="accessibility_stop">إيقاف</string>
-    <string name="doh_cloudflare">Cloudflare DOH</string>
+    <string name="accessibility_close">إغلاق</string>
+    <string name="currentVersion">الإصدار الحالي</string>
+    <string name="checkingForUpdates">جاري التحقق من وجود تحديثات…</string>
+    <string name="developer">المطور</string>
+    <string name="copyBTC">نسخ BTC</string>
+    <string name="btcAddress">عنوان BTC</string>
+    <string name="btcCopied">تم نسخ عنوان BTC إلى الحافظة</string>
+    <string name="latestVersion">أحدث إصدار</string>
+    <string name="supportString">دعم المشروع عبر BTC</string>
+    <string name="checkingForUpdatesFailed">فشل التحقق من التحديثات.</string>
+    <string name="clear">مسح</string>
+    <string name="logs">سجلات الكشف</string>
+    <string name="settings_export_history">تصدير سجل المتصفح</string>
+    <string name="history_exported_success">تم تصدير سجل المتصفح بنجاح إلى التنزيلات</string>
+    <string name="history_exported_error">فشل تصدير سجل المتصفح</string>
+    <string name="settings_import_history">استيراد سجل المتصفح</string>
+    <string name="history_imported_success">تم استيراد سجل المتصفح بنجاح</string>
+    <string name="history_imported_error">فشل استيراد سجل المتصفح</string>
+    <string name="settings_export_bookmarks">تصدير الإشارات المرجعية</string>
+    <string name="bookmarks_exported_success">تم تصدير الإشارات المرجعية بنجاح إلى التنزيلات</string>
+    <string name="bookmarks_exported_error">فشل تصدير الإشارات المرجعية</string>
+    <string name="settings_import_bookmarks">استيراد الإشارات المرجعية</string>
+    <string name="bookmarks_imported_success">تم استيراد الإشارات المرجعية بنجاح</string>
+    <string name="bookmarks_imported_error">فشل استيراد الإشارات المرجعية</string>
+
+    <!-- Settings Explanations -->
+    <string name="setting_explanation_ask_redirection">يعرض نافذة تأكيد قبل السماح لمواقع الويب بإعادة توجيهك إلى نطاق آخر.</string>
+    <string name="setting_explanation_interrupt_intercepted">يمنع المتصفح من تحميل أو تشغيل وسائط البث مباشرة على صفحة الويب بمجرد اكتشافها للتنزيل.</string>
+    <string name="setting_explanation_show_video_alert">يعرض نافذة تنبيه منبثقة تلقائية كلما تم اكتشاف فيديو قابل للتنزيل على صفحة ويب.</string>
+    <string name="setting_explanation_show_action_button">يعرض زر تنزيل عائم على شاشة المتصفح عند العثور على وسائط قابلة للتنزيل.</string>
+    <string name="setting_explanation_find_videos_by_url">يفحص عناوين URL لصفحات الويب مباشرة لاكتشاف روابط الفيديو والوسائط المضمنة.</string>
+    <string name="setting_explanation_check_every_mp4">يراقب جميع طلبات الشبكة المرسلة بواسطة صفحات الويب لاكتشاف ملفات فيديو MP4 القابلة للتنزيل.</string>
+    <string name="setting_explanation_check_every_m3u8">يراقب طلبات الشبكة لقوائم تشغيل بث الفيديو HLS (M3U8) و DASH (MPD).</string>
+    <string name="setting_explanation_check_every_audio">يراقب طلبات الشبكة لاكتشاف تدفقات الصوت وملفات الصوت على صفحات الويب.</string>
+    <string name="setting_explanation_force_stream_detection">يفرض اكتشاف تدفقات الوسائط التي تحتوي على رؤوس طول محتوى مجهولة أو مفقودة (تستخدم عادةً بواسطة البث المباشر).</string>
+    <string name="setting_explanation_use_legacy_m3u8_detection">يستخدم محرك youtube-dlp لاستخراج روابط بث الفيديو M3U8 و MPD من صفحات الويب. (وإلا سيتم استخدام كاشف SuperX)</string>
+    <string name="setting_explanation_adblock_settings">يفتح الإعدادات لإدارة قوائم تصفية حظر الإعلانات وقواعد الحظر المخصصة.</string>
+    <string name="setting_explanation_ads_treshold">يتجاهل ملفات الوسائط المكتشفة الأصغر من حد الحجم هذا لمنع اكتشاف إعلانات الفيديو كمحتوى قابل للتنزيل.</string>
+    <string name="setting_explanation_download_subtitles">يقوم تلقائياً جلب وحفظ مسارات الترجمة المتاحة عند تنزيل الفيديوهات باستخدام youtube-dlp.</string>
+    <string name="setting_explanation_force_stream_downloading">يُمكّن تنزيل البث المستمر لمقاطع الفيديو العادية (MP4) (غير M3U8/MPD) مثل البث المباشر للفيديو. (يمكنه إصلاح بعض تنزيلات MP4 التالفة)</string>
+    <string name="setting_explanation_always_remux_regular">يعالج ملفات MP4 العادية التي يتم تنزيلها باستخدام FFmpeg بعد اكتمالها لإصلاح رؤوس الفيديو والطابع الزمني وتنسيقات الحاويات.</string>
+    <string name="setting_explanation_remux_only_live">يُطبق المعالجة اللاحقة لـ FFmpeg فقط على تنزيلات البث المباشر المسجلة لضمان البحث عن الفيديو ومدة العرض بشكل صحيح.</string>
+    <string name="setting_explanation_regular_threads">يحدد عدد خيوط التنزيل المتوازية للملفات العادية. يمكن أن تعزز عدد الخيوط العالي السرعة ولكنها قد تسبب تلفاً في بعض الخوادم.</string>
+    <string name="setting_explanation_m3u8_threads">يحدد عدد الخيوط المتوازية المستخدمة لتنزيل أجزاء مقاطع فيديو البث M3U8/HLS.</string>
+    <string name="setting_explanation_downloads_location">اختر مجلد التخزين للفيديوهات التي تم تنزيلها: مجلد التنزيلات العام، المجلد المخفي الخاص داخل التخزين الداخلي، أو وحدة تخزين بطاقة SD.</string>
+
+    <string name="advanced_guide">دليل متقدم</string>
+    <string name="advanced_guide_title">دليل الكشف المتقدم</string>
+    <string name="advanced_guide_text">يحتوي SuperX على 3 أنواع مختلفة من محركات اكتشاف الفيديو:\n\n1. الكشف عن طريق URL:\nيفحص عناوين URL لصفحات الويب مباشرة. مثالي لمواقع مثل Facebook أو TikTok حيث تكون عناوين URL للفيديو مغروسة في الروابط.\n\n2. كشف الملفات العادية:\nيفحص طلبات الشبكة لملفات الوسائط المباشرة مثل MP4، WebM، الصوت، إلخ.\n\n3. كشف البث M3U8 / MPD:\nيكشف عن قوائم تشغيل البث (HLS / DASH). متوفر في نوعين:\n • محرك youtube-dlp: مستقر للغاية وموثوق، ولكنه أبطأ قليلاً.\n • كاشف SuperX: جديد، تجريبي، وسريع للغاية (أقل من ثانية).\n\nكيفية التحسين لمواقع معينة:\nبشكل افتراضي، يتم تمكين جميع الكواشف. يمكنك ضبطها بدقة في الإعدادات لمواقع معينة:\n • بالنسبة لـ Facebook أو TikTok (حيث يعمل الكشف عن طريق URL فقط): يمكنك إيقاف تشغيل كشف الملفات العادية وكشف M3U8/MPD.\n • بالنسبة لمواقع البث (حيث يعمل الكشف عن طريق اعتراض طلبات الشبكة): يمكنك إيقاف تشغيل كشف URL.\n • يمكنك التحقق من سجلات الكشف في القائمة لمعرفة أي كاشف يعثر على الفيديوهات، وإيقاف تشغيل الكواشف غير المستخدمة لتحقيق أداء أسرع!</string>
 </resources>

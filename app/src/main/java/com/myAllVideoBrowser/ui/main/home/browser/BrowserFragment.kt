@@ -471,7 +471,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     private fun onBackPressed() {
         val rootPagerIndex = mainActivity.mainViewModel.currentItem.get() ?: 0
         if (rootPagerIndex > 0) {
-            mainActivity.mainViewModel.currentItem.set(HOME_TAB_INDEX)
+            mainActivity.mainViewModel.setCurrentItem(HOME_TAB_INDEX)
         }
         if (rootPagerIndex == HOME_TAB_INDEX) {
             if (backPressedOnce) {
@@ -492,7 +492,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         override fun onRightGoThrough() {
             val currentTabIndex = browserViewModel.currentTab.get()
             if (currentTabIndex == 0) {
-                mainViewModel.currentItem.set((mainViewModel.currentItem.get() ?: 0) + 1)
+                mainViewModel.setCurrentItem((mainViewModel.currentItem.get() ?: 0) + 1)
             }
         }
     }

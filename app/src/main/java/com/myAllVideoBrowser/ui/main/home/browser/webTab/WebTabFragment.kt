@@ -745,13 +745,7 @@ class WebTabFragment : BaseWebTabFragment() {
     }
 
     private fun addChangeRouteCallBack() {
-        mainActivity.mainViewModel.currentItem.removeOnPropertyChangedCallback(changeRouteCallBack)
-        mainActivity.mainViewModel.currentItem.addOnPropertyChangedCallback(changeRouteCallBack)
-    }
-
-    private val changeRouteCallBack = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            val indexRoute = mainActivity.mainViewModel.currentItem.get()
+        mainActivity.mainViewModel.currentItem.observe(viewLifecycleOwner) { indexRoute ->
             val currentTabIndexSelected = currentTabIndexProvider.getCurrentTabIndex().get()
             val isCurrentTabSelected =
                 currentTabIndexSelected == requireArguments().getInt(TAB_INDEX_KEY)

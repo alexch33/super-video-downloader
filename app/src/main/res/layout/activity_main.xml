@@ -34,8 +34,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:menu="@menu/menu_bottom_bar"
-            app:selectedItemId="@{viewModel.currentItem}" />
+            app:menu="@menu/menu_bottom_bar" />
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragment_container_view"

@@ -15,7 +15,6 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.core.view.get
-import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
@@ -75,14 +74,6 @@ class VideoFragment : BaseFragment() {
 
     private var backPressedCallback: OnBackPressedCallback? = null
 
-    private val navCallback = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            if (videoAdapter.isSelectionMode) {
-                exitSelectionMode()
-            }
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -115,8 +106,16 @@ class VideoFragment : BaseFragment() {
     }
 
     private fun setupNavigationObservers() {
-        mainActivity.mainViewModel.isBrowserCurrent.addOnPropertyChangedCallback(navCallback)
-        mainActivity.mainViewModel.currentItem.addOnPropertyChangedCallback(navCallback)
+        mainActivity.mainViewModel.isBrowserCurrent.observe(viewLifecycleOwner) {
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
+        }
+        mainActivity.mainViewModel.currentItem.observe(viewLifecycleOwner) {
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
+        }
         mainActivity.mainViewModel.openNavDrawerEvent.observe(viewLifecycleOwner) {
             if (videoAdapter.isSelectionMode) {
                 exitSelectionMode()
@@ -125,9 +124,6 @@ class VideoFragment : BaseFragment() {
     }
 
     override fun onDestroyView() {
-        mainActivity.mainViewModel.isBrowserCurrent.removeOnPropertyChangedCallback(navCallback)
-        mainActivity.mainViewModel.currentItem.removeOnPropertyChangedCallback(navCallback)
-
         backPressedCallback?.remove()
         backPressedCallback = null
 

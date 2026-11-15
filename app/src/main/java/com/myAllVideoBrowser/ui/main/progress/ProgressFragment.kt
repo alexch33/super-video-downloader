@@ -117,7 +117,7 @@ class ProgressFragment : BaseFragment() {
     private fun handleDownloadVideoEvent() {
         mainViewModel.downloadVideoEvent.observe(viewLifecycleOwner) { videoInfo ->
             val currentOriginal = videoInfo.originalUrl
-            mainViewModel.currentOriginal.set(currentOriginal)
+            mainViewModel.setCurrentOriginal(currentOriginal)
             progressViewModel.downloadVideo(this.context, videoInfo)
         }
     }

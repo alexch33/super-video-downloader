@@ -271,8 +271,8 @@ class MainActivity : BaseActivity() {
             settingsViewModel.isLockPortrait.removeOnPropertyChangedCallback(
                 screenOrientationCallback
             )
-            val isNoActiveDownloadsNow = progressViewModel.progressInfos.get()
-                ?.find { it.downloadStatus == VideoTaskState.DOWNLOADING || it.downloadStatus == VideoTaskState.PREPARE || it.downloadStatus == VideoTaskState.PENDING } == null
+            val isNoActiveDownloadsNow = progressViewModel.progressInfos.value
+                .find { it.downloadStatus == VideoTaskState.DOWNLOADING || it.downloadStatus == VideoTaskState.PREPARE || it.downloadStatus == VideoTaskState.PENDING } == null
             if (isNoActiveDownloadsNow) {
                 AppLogger.d("No active downloads, shutdown local proxy worker...")
                 proxiesViewModel.shutdownProxyWorker()

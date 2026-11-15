@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
 import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
@@ -22,6 +24,7 @@ import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.home.MainViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AppLogger
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ProgressFragment : BaseFragment() {
@@ -91,6 +94,16 @@ class ProgressFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         handleDownloadVideoEvent()
         this.settingsViewModel.queueSize.addOnPropertyChangedCallback(queueSizeCallback)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+                progressViewModel.progressInfos.collect { lists ->
+                    progressAdapter.setData(lists)
+                    dataBinding.layoutEmpty.visibility =
+                        if (lists.isEmpty()) View.VISIBLE else View.GONE
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -122,7 +135,7 @@ class ProgressFragment : BaseFragment() {
 
     private fun showPopupMenu(view: View, downloadId: Long) {
         val menuCandidate =
-            progressViewModel.progressInfos.get()?.find { it.downloadId == downloadId }
+            progressViewModel.progressInfos.value.find { it.downloadId == downloadId }
 
         val popupMenu = PopupMenu(view.context, view)
         popupMenu.menuInflater.inflate(R.menu.menu_progress, popupMenu.menu)

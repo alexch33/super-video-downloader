@@ -31,6 +31,7 @@ import androidx.media3.ui.PlayerView.SHOW_BUFFERING_ALWAYS
 import com.myAllVideoBrowser.databinding.FragmentPlayerBinding
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.util.AppUtil
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -78,12 +79,12 @@ class VideoPlayerFragment : BaseFragment() {
                     Json.parseToJsonElement(rawHeaders).jsonObject.mapValues { (_, value) ->
                         value.toString().removeSurrounding("\"")
                     }
-                videoPlayerViewModel.videoHeaders.set(headers)
+                videoPlayerViewModel.setVideoHeaders(headers)
             } catch (_: Throwable) {
-                videoPlayerViewModel.videoHeaders.set(emptyMap())
+                videoPlayerViewModel.setVideoHeaders(emptyMap())
             }
         }
-        arguments?.getString(VIDEO_NAME)?.let { videoPlayerViewModel.videoName.set(it) }
+        arguments?.getString(VIDEO_NAME)?.let { videoPlayerViewModel.setVideoName(it) }
 
         val videoUrlStr = arguments?.getString(VIDEO_URL)
         if (videoUrlStr.isNullOrEmpty()) {
@@ -103,7 +104,7 @@ class VideoPlayerFragment : BaseFragment() {
             handleClose()
             return dataBinding.root
         }
-        videoPlayerViewModel.videoUrl.set(iUrl)
+        videoPlayerViewModel.setVideoUrl(iUrl)
 
         val url = videoPlayerViewModel.videoUrl.get() ?: Uri.EMPTY
         // The "Cookie" header will be passed here, but OkHttp using CookieJar
@@ -119,6 +120,7 @@ class VideoPlayerFragment : BaseFragment() {
         dataBinding.apply {
             val currentBinding = this
 
+            currentBinding.lifecycleOwner = viewLifecycleOwner
             currentBinding.viewModel = videoPlayerViewModel
             currentBinding.toolbar.setNavigationOnClickListener(navigationIconClickListener)
             currentBinding.videoView.player = player
@@ -160,7 +162,8 @@ class VideoPlayerFragment : BaseFragment() {
                     player?.prepare()
                     player?.playWhenReady = true
                 } catch (e: Throwable) {
-                    Toast.makeText(context, "Error loading video: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Error loading video: ${e.message}", Toast.LENGTH_LONG)
+                        .show()
                     handleClose()
                 }
             }

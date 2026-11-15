@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.ui.main.progress
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
@@ -7,7 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
-import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -24,6 +24,7 @@ import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.home.MainViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.get
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -49,18 +50,6 @@ class ProgressFragment : BaseFragment() {
 
     private lateinit var progressAdapter: ProgressAdapter
 
-    private val queueSizeCallback = object :
-        Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(
-            sender: Observable?,
-            propertyId: Int
-        ) {
-            val currentSize = settingsViewModel.queueSize.get()
-            this@ProgressFragment.dataBinding.simsCountSlider.value =
-                currentSize.coerceIn(1, Runtime.getRuntime().availableProcessors()).toFloat()
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -80,20 +69,27 @@ class ProgressFragment : BaseFragment() {
 
             val coreCount = Runtime.getRuntime().availableProcessors()
             this.simsCountSlider.valueTo = coreCount.toFloat()
-            this.simsCountSlider.value = settingsViewModel?.queueSize?.get()?.toFloat() ?: 1f
+            val initialSize = settingsViewModel?.queueSize?.get() ?: 1
+            this.simsCountSlider.value = initialSize.toFloat()
             this.simsCountSlider.addOnChangeListener(simsThreadsListener)
             val simsText =
-                getString(R.string.queue_downloads_size) + " ${settingsViewModel?.queueSize?.get()}"
+                getString(R.string.queue_downloads_size) + " $initialSize"
             this.simDownloadsCount.text = simsText
         }
 
         return dataBinding.root
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         handleDownloadVideoEvent()
-        this.settingsViewModel.queueSize.addOnPropertyChangedCallback(queueSizeCallback)
+
+        settingsViewModel.queueSize.observe(viewLifecycleOwner) { currentSize ->
+            val size = currentSize ?: 1
+            dataBinding.simsCountSlider.value = size.coerceIn(1, Runtime.getRuntime().availableProcessors()).toFloat()
+            dataBinding.simDownloadsCount.text = "${getString(R.string.queue_downloads_size)} $size"
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
@@ -108,7 +104,6 @@ class ProgressFragment : BaseFragment() {
 
     override fun onDestroy() {
         this.dataBinding.simsCountSlider.removeOnChangeListener(simsThreadsListener)
-        this.settingsViewModel.queueSize.removeOnPropertyChangedCallback(queueSizeCallback)
         super.onDestroy()
     }
 

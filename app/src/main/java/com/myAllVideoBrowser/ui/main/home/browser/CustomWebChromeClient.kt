@@ -19,6 +19,7 @@ import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.SingleLiveEvent
+import com.myAllVideoBrowser.util.get
 
 class CustomWebChromeClient(
     private val tabViewModel: WebTabViewModel,

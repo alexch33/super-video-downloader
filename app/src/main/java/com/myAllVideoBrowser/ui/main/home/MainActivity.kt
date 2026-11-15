@@ -30,6 +30,7 @@ import com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker
 import com.myAllVideoBrowser.util.fragment.FragmentFactory
@@ -68,17 +69,6 @@ class MainActivity : BaseActivity() {
             AppLogger.d("Notification permission granted")
         } else {
             AppLogger.d("Notification permission denied")
-        }
-    }
-
-    private val screenOrientationCallback = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            val isLock = settingsViewModel.isLockPortrait.get()
-            requestedOrientation = if (isLock) {
-                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            } else {
-                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            }
         }
     }
 
@@ -268,9 +258,6 @@ class MainActivity : BaseActivity() {
     override fun onDestroy() {
         if (isFinishing) {
             mainViewModel.stop()
-            settingsViewModel.isLockPortrait.removeOnPropertyChangedCallback(
-                screenOrientationCallback
-            )
             val isNoActiveDownloadsNow = progressViewModel.progressInfos.value
                 .find { it.downloadStatus == VideoTaskState.DOWNLOADING || it.downloadStatus == VideoTaskState.PREPARE || it.downloadStatus == VideoTaskState.PENDING } == null
             if (isNoActiveDownloadsNow) {
@@ -293,6 +280,12 @@ class MainActivity : BaseActivity() {
 
     private fun handleScreenOrientationSettingChange() {
         // CHANGES HANDLING
-        settingsViewModel.isLockPortrait.addOnPropertyChangedCallback(screenOrientationCallback)
+        settingsViewModel.isLockPortrait.observe(this) { isLock ->
+            requestedOrientation = if (isLock == true) {
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+        }
     }
 }

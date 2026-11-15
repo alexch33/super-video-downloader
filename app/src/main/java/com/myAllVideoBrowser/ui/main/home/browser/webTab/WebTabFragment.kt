@@ -65,6 +65,7 @@ import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.FileNameCleaner
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -677,7 +678,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 videoDetectionTabViewModel.cancelAllCheckJobs()
             }
         }
-        
+
         override fun onShowLogsClicked() {
             navigateToDetectionLogs()
         }

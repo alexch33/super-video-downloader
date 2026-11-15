@@ -29,6 +29,7 @@ import com.myAllVideoBrowser.ui.main.settings.adblock.AdBlockSettingsFragment
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.IntentUtil
 import com.myAllVideoBrowser.util.SystemUtil
+import com.myAllVideoBrowser.util.get
 import javax.inject.Inject
 
 class SettingsFragment : BaseFragment() {
@@ -62,17 +63,21 @@ class SettingsFragment : BaseFragment() {
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 try {
-                    val jsonString = context?.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    val jsonString =
+                        context?.contentResolver?.openInputStream(uri)?.bufferedReader()
+                            ?.use { it.readText() }
                     if (jsonString != null) {
                         val type = object : TypeToken<List<HistoryItem>>() {}.type
                         val items: List<HistoryItem> = Gson().fromJson(jsonString, type)
                         settingsViewModel.importHistory(items)
                     } else {
-                        Toast.makeText(context, R.string.history_imported_error, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.history_imported_error, Toast.LENGTH_SHORT)
+                            .show()
                     }
                 } catch (e: Throwable) {
                     e.printStackTrace()
-                    Toast.makeText(context, R.string.history_imported_error, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.history_imported_error, Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
@@ -84,17 +89,24 @@ class SettingsFragment : BaseFragment() {
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 try {
-                    val jsonString = context?.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    val jsonString =
+                        context?.contentResolver?.openInputStream(uri)?.bufferedReader()
+                            ?.use { it.readText() }
                     if (jsonString != null) {
                         val type = object : TypeToken<List<PageInfo>>() {}.type
                         val items: List<PageInfo> = Gson().fromJson(jsonString, type)
                         settingsViewModel.importBookmarks(items)
                     } else {
-                        Toast.makeText(context, R.string.bookmarks_imported_error, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            R.string.bookmarks_imported_error,
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 } catch (e: Throwable) {
                     e.printStackTrace()
-                    Toast.makeText(context, R.string.bookmarks_imported_error, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.bookmarks_imported_error, Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
@@ -123,19 +135,6 @@ class SettingsFragment : BaseFragment() {
     private val adsTresholdListener = Slider.OnChangeListener { _, value, fromUser ->
         if (fromUser) {
             settingsViewModel.setVideoDetectionTreshold(value.toInt())
-        }
-    }
-
-    private val tresholdCallback = object : Observable.OnPropertyChangedCallback() {
-        @SuppressLint("SetTextI18n")
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            if (!isAdded) {
-                return
-            }
-            val currentTreshold = settingsViewModel.videoDetectionTreshold.get()
-            val readableSize = FileUtil.getFileSizeReadable(currentTreshold.toDouble())
-            val readebleText = getString(R.string.ads_detection_treshold) + " $readableSize"
-            dataBinding.adsTresholdText.text = readebleText
         }
     }
 
@@ -200,7 +199,6 @@ class SettingsFragment : BaseFragment() {
 
     override fun onDestroyView() {
         settingsViewModel.stop()
-        settingsViewModel.videoDetectionTreshold.removeOnPropertyChangedCallback(tresholdCallback)
 
         dataBinding.seekBarRegular.removeOnChangeListener(regularThreadsListener)
         dataBinding.seekBarM3u8.removeOnChangeListener(m3u8ThreadsListener)
@@ -215,7 +213,10 @@ class SettingsFragment : BaseFragment() {
         dataBinding.seekBarAdsTreshold.addOnChangeListener(adsTresholdListener)
     }
 
-    private fun openFilePicker(launcher: androidx.activity.result.ActivityResultLauncher<Intent>, errorResId: Int) {
+    private fun openFilePicker(
+        launcher: androidx.activity.result.ActivityResultLauncher<Intent>,
+        errorResId: Int
+    ) {
         val openDocumentIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
@@ -295,8 +296,14 @@ class SettingsFragment : BaseFragment() {
     }
 
     private fun setupTextUpdateCallbacks() {
-        settingsViewModel.videoDetectionTreshold.addOnPropertyChangedCallback(tresholdCallback)
-        tresholdCallback.onPropertyChanged(null, 0)
+        settingsViewModel.videoDetectionTreshold.observe(viewLifecycleOwner) { currentTreshold ->
+            if (!isAdded) {
+                return@observe
+            }
+            val readableSize = FileUtil.getFileSizeReadable((currentTreshold ?: 0).toDouble())
+            val readableText = getString(R.string.ads_detection_treshold) + " $readableSize"
+            dataBinding.adsTresholdText.text = readableText
+        }
     }
 
     private fun showDownloadWarningDialog(context: Context) {
@@ -323,61 +330,118 @@ class SettingsFragment : BaseFragment() {
 
     private fun setupHelpButtons() {
         dataBinding.btnHelpAskRedirection.setOnClickListener {
-            showExplanationDialog(R.string.ask_redirection_title, R.string.setting_explanation_ask_redirection)
+            showExplanationDialog(
+                R.string.ask_redirection_title,
+                R.string.setting_explanation_ask_redirection
+            )
         }
         dataBinding.btnHelpInterruptIntercepted.setOnClickListener {
-            showExplanationDialog(R.string.is_interrupt_intrecepted_resources, R.string.setting_explanation_interrupt_intercepted)
+            showExplanationDialog(
+                R.string.is_interrupt_intrecepted_resources,
+                R.string.setting_explanation_interrupt_intercepted
+            )
         }
         dataBinding.btnHelpShowVideoAlert.setOnClickListener {
-            showExplanationDialog(R.string.show_video_found_alert, R.string.setting_explanation_show_video_alert)
+            showExplanationDialog(
+                R.string.show_video_found_alert,
+                R.string.setting_explanation_show_video_alert
+            )
         }
         dataBinding.btnHelpShowActionButton.setOnClickListener {
-            showExplanationDialog(R.string.show_action_button, R.string.setting_explanation_show_action_button)
+            showExplanationDialog(
+                R.string.show_action_button,
+                R.string.setting_explanation_show_action_button
+            )
         }
         dataBinding.btnHelpFindVideosByUrl.setOnClickListener {
-            showExplanationDialog(R.string.find_videos_by_url, R.string.setting_explanation_find_videos_by_url)
+            showExplanationDialog(
+                R.string.find_videos_by_url,
+                R.string.setting_explanation_find_videos_by_url
+            )
         }
         dataBinding.btnHelpCheckEveryMp4.setOnClickListener {
-            showExplanationDialog(R.string.check_every_request_on_video_mp4, R.string.setting_explanation_check_every_mp4)
+            showExplanationDialog(
+                R.string.check_every_request_on_video_mp4,
+                R.string.setting_explanation_check_every_mp4
+            )
         }
         dataBinding.btnHelpCheckEveryM3u8.setOnClickListener {
-            showExplanationDialog(R.string.check_every_request_on_video_m3u8, R.string.setting_explanation_check_every_m3u8)
+            showExplanationDialog(
+                R.string.check_every_request_on_video_m3u8,
+                R.string.setting_explanation_check_every_m3u8
+            )
         }
         dataBinding.btnHelpCheckEveryAudio.setOnClickListener {
-            showExplanationDialog(R.string.check_every_request_on_audio, R.string.setting_explanation_check_every_audio)
+            showExplanationDialog(
+                R.string.check_every_request_on_audio,
+                R.string.setting_explanation_check_every_audio
+            )
         }
         dataBinding.btnHelpForceStreamDetection.setOnClickListener {
-            showExplanationDialog(R.string.force_stream_detection, R.string.setting_explanation_force_stream_detection)
+            showExplanationDialog(
+                R.string.force_stream_detection,
+                R.string.setting_explanation_force_stream_detection
+            )
         }
         dataBinding.btnHelpUseLegacyM3u8Detection.setOnClickListener {
-            showExplanationDialog(R.string.use_legacy_m3u8_detection, R.string.setting_explanation_use_legacy_m3u8_detection)
+            showExplanationDialog(
+                R.string.use_legacy_m3u8_detection,
+                R.string.setting_explanation_use_legacy_m3u8_detection
+            )
         }
         dataBinding.btnHelpAdblockSettings.setOnClickListener {
-            showExplanationDialog(R.string.adblock_lists_title, R.string.setting_explanation_adblock_settings)
+            showExplanationDialog(
+                R.string.adblock_lists_title,
+                R.string.setting_explanation_adblock_settings
+            )
         }
         dataBinding.btnHelpAdsTreshold.setOnClickListener {
-            showExplanationDialog(R.string.ads_detection_treshold, R.string.setting_explanation_ads_treshold)
+            showExplanationDialog(
+                R.string.ads_detection_treshold,
+                R.string.setting_explanation_ads_treshold
+            )
         }
         dataBinding.btnHelpDownloadSubtitles.setOnClickListener {
-            showExplanationDialog(R.string.download_subtitles, R.string.setting_explanation_download_subtitles)
+            showExplanationDialog(
+                R.string.download_subtitles,
+                R.string.setting_explanation_download_subtitles
+            )
         }
         dataBinding.btnHelpForceStreamDownloading.setOnClickListener {
-            showExplanationDialog(R.string.force_stream_downloading, R.string.setting_explanation_force_stream_downloading)
+            showExplanationDialog(
+                R.string.force_stream_downloading,
+                R.string.setting_explanation_force_stream_downloading
+            )
         }
         dataBinding.btnHelpAlwaysRemuxRegular.setOnClickListener {
-            showExplanationDialog(R.string.is_always_remux_regular_downloads, R.string.setting_explanation_always_remux_regular)
+            showExplanationDialog(
+                R.string.is_always_remux_regular_downloads,
+                R.string.setting_explanation_always_remux_regular
+            )
         }
         dataBinding.btnHelpRemuxOnlyLive.setOnClickListener {
-            showExplanationDialog(R.string.is_remux_only_live_regular_downloads, R.string.setting_explanation_remux_only_live)
+            showExplanationDialog(
+                R.string.is_remux_only_live_regular_downloads,
+                R.string.setting_explanation_remux_only_live
+            )
         }
         dataBinding.btnHelpRegularThreads.setOnClickListener {
-            showExplanationDialog(R.string.regular_threads_count, R.string.setting_explanation_regular_threads)
+            showExplanationDialog(
+                R.string.regular_threads_count,
+                R.string.setting_explanation_regular_threads
+            )
         }
         dataBinding.btnHelpM3u8Threads.setOnClickListener {
-            showExplanationDialog(R.string.m3u8_threads_count, R.string.setting_explanation_m3u8_threads)
+            showExplanationDialog(
+                R.string.m3u8_threads_count,
+                R.string.setting_explanation_m3u8_threads
+            )
         }
         dataBinding.btnHelpDownloadsLocation.setOnClickListener {
-            showExplanationDialog(R.string.downloads_location, R.string.setting_explanation_downloads_location)
+            showExplanationDialog(
+                R.string.downloads_location,
+                R.string.setting_explanation_downloads_location
+            )
         }
     }
 }

@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.Toast
@@ -27,6 +28,7 @@ import com.myAllVideoBrowser.ui.main.settings.SettingsFragment
 import com.myAllVideoBrowser.ui.main.settings.adblock.AdBlockSettingsFragment
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -53,42 +55,6 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
     private var popupMenu: PopupMenu? = null
 
-    private val darkModeCallback = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            if (!isAdded) {
-                return
-            }
-            lifecycleScope.launch(Dispatchers.Main) {
-                popupMenu?.menu?.findItem(R.id.is_dark)?.isChecked =
-                    mainActivity.settingsViewModel.isDarkMode.get()
-            }
-        }
-    }
-
-    private val autoDarkModeCallback = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            if (!isAdded) {
-                return
-            }
-            lifecycleScope.launch(Dispatchers.Main) {
-                popupMenu?.menu?.findItem(R.id.is_dark)?.isEnabled =
-                    !mainActivity.settingsViewModel.isAutoDarkMode.get()
-            }
-        }
-    }
-
-    private val desktopModeCallback = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            if (!isAdded) {
-                return
-            }
-            lifecycleScope.launch(Dispatchers.Main) {
-                popupMenu?.menu?.findItem(R.id.desktop_mode)?.isChecked =
-                    mainActivity.settingsViewModel.isDesktopMode.get()
-            }
-        }
-    }
-
     private val proxyOnCallback = object : Observable.OnPropertyChangedCallback() {
         override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
             if (!isAdded) {
@@ -102,32 +68,30 @@ abstract class BaseWebTabFragment : BaseFragment() {
         }
     }
 
-    private val adBlockOnCallback = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            if (!isAdded) {
-                return
-            }
-            lifecycleScope.launch(Dispatchers.Main) {
-                val isOn = mainActivity.settingsViewModel.isAdBlockOn.get() == true
-                popupMenu?.menu?.findItem(R.id.adblock_toggle)?.isChecked = isOn
-                mainActivity.settingsViewModel.setIsAdBlockOn(isOn)
-            }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        observeSettings()
+    }
+
+    private fun observeSettings() {
+        mainActivity.settingsViewModel.isDarkMode.observe(viewLifecycleOwner) { isDark ->
+            popupMenu?.menu?.findItem(R.id.is_dark)?.isChecked = isDark == true
+        }
+        mainActivity.settingsViewModel.isAutoDarkMode.observe(viewLifecycleOwner) { isAuto ->
+            popupMenu?.menu?.findItem(R.id.is_dark)?.isEnabled = isAuto != true
+        }
+        mainActivity.settingsViewModel.isDesktopMode.observe(viewLifecycleOwner) { isDesktop ->
+            popupMenu?.menu?.findItem(R.id.desktop_mode)?.isChecked = isDesktop == true
+        }
+        mainActivity.settingsViewModel.isAdBlockOn.observe(viewLifecycleOwner) { isOn ->
+            popupMenu?.menu?.findItem(R.id.adblock_toggle)?.isChecked = isOn == true
         }
     }
 
     override fun onDestroyView() {
         popupMenu?.dismiss()
         popupMenu = null
-
-        mainActivity.settingsViewModel.isDarkMode.removeOnPropertyChangedCallback(darkModeCallback)
-        mainActivity.settingsViewModel.isAutoDarkMode.removeOnPropertyChangedCallback(
-            autoDarkModeCallback
-        )
-        mainActivity.settingsViewModel.isDesktopMode.removeOnPropertyChangedCallback(
-            desktopModeCallback
-        )
         mainActivity.proxiesViewModel.isProxyOn.removeOnPropertyChangedCallback(proxyOnCallback)
-        mainActivity.settingsViewModel.isAdBlockOn.removeOnPropertyChangedCallback(adBlockOnCallback)
 
         super.onDestroyView()
     }
@@ -157,18 +121,7 @@ abstract class BaseWebTabFragment : BaseFragment() {
             isDarkModeItem.isEnabled = !mainActivity.settingsViewModel.isAutoDarkMode.get()
 
             popupMenu!!.setForceShowIcon(true)
-
-            mainActivity.settingsViewModel.isDarkMode.addOnPropertyChangedCallback(darkModeCallback)
-            mainActivity.settingsViewModel.isAutoDarkMode.addOnPropertyChangedCallback(
-                autoDarkModeCallback
-            )
-            mainActivity.settingsViewModel.isDesktopMode.addOnPropertyChangedCallback(
-                desktopModeCallback
-            )
             mainActivity.proxiesViewModel.isProxyOn.addOnPropertyChangedCallback(proxyOnCallback)
-            mainActivity.settingsViewModel.isAdBlockOn.addOnPropertyChangedCallback(
-                adBlockOnCallback
-            )
         }
     }
 

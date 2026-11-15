@@ -10,6 +10,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateCanDownload
 import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateCanNotDownload
 import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateLoading
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
@@ -26,12 +27,13 @@ class GlobalVideoDetectionModel @Inject constructor(
     private val baseSchedulers: BaseSchedulers,
     okHttpProxyClient: OkHttpProxyClient,
 ) : VideoDetectionTabViewModel(videoRepository, baseSchedulers, okHttpProxyClient), IVideoDetector {
-    
+
     @Volatile
     private var lastVerifiedLink: String = ""
+
     @Volatile
     private var lastVerifiedM3u8PointUrl = Pair("", "")
-    
+
     private var pushJob: Job? = null
 
     private val butonStateCallBack = object :
@@ -150,10 +152,11 @@ class GlobalVideoDetectionModel @Inject constructor(
                         info.title = hlsTitle
                     }
                     val state = downloadButtonState.get()
-                    
-                    val shouldSkip = (state is DownloadButtonStateCanDownload && state.info?.isM3u8 == true && state.info.isMaster && isLastNotEmpty) || 
-                                     (state is DownloadButtonStateCanDownload && state.info?.isRegularDownload != true && info.isRegularDownload) || 
-                                     (state is DownloadButtonStateLoading && info.isRegularDownload)
+
+                    val shouldSkip =
+                        (state is DownloadButtonStateCanDownload && state.info?.isM3u8 == true && state.info.isMaster && isLastNotEmpty) ||
+                                (state is DownloadButtonStateCanDownload && state.info?.isRegularDownload != true && info.isRegularDownload) ||
+                                (state is DownloadButtonStateLoading && info.isRegularDownload)
 
                     if (!shouldSkip) {
                         viewModelScope.launch(executorPusher) {

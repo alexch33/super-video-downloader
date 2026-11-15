@@ -93,6 +93,7 @@ class VideoFragment : BaseFragment() {
             val managerL =
                 WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
+            this.lifecycleOwner = viewLifecycleOwner
             this.viewModel = videoViewModel
             this.mainViewModel = mainActivity.mainViewModel
             this.rvVideo.layoutManager = managerL
@@ -157,7 +158,7 @@ class VideoFragment : BaseFragment() {
             showDeleteConfirmationDialog {
                 val selectedIds = videoAdapter.selectedItems.toList()
                 val videosToDelete =
-                    videoViewModel.localVideos.get()?.filter { selectedIds.contains(it.id) }
+                    videoViewModel.localVideos.value?.filter { selectedIds.contains(it.id) }
                 videosToDelete?.forEach { video ->
                     context?.let { videoViewModel.deleteVideo(it, video) }
                 }
@@ -271,7 +272,7 @@ class VideoFragment : BaseFragment() {
     }
 
     private fun updateSelectionState() {
-        val totalItems = videoViewModel.localVideos.get()?.size ?: 0
+        val totalItems = videoViewModel.localVideos.value?.size ?: 0
         val selectedCount = videoAdapter.selectedItems.size
         dataBinding.isAllSelected = totalItems > 0 && selectedCount == totalItems
     }
@@ -327,7 +328,7 @@ class VideoFragment : BaseFragment() {
                     val target = File(targetDir, video.name)
 
                     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                        videoViewModel.isLoading.set(true)
+                        videoViewModel.setLoading(true)
                         try {
                             val isSuccess =
                                 fileUtil.moveMedia(requireContext(), video.uri, target.toUri())
@@ -345,7 +346,7 @@ class VideoFragment : BaseFragment() {
                                 ).show()
                             }
                         } finally {
-                            videoViewModel.isLoading.set(false)
+                            videoViewModel.setLoading(false)
                         }
                     }
                     true

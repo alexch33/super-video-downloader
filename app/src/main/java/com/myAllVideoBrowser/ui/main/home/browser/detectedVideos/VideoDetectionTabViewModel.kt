@@ -201,7 +201,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         val state = downloadButtonState.get()
 
         if (state is DownloadButtonStateCanNotDownload) {
-            webTabModel?.getTabTextInput()?.get()?.let {
+            webTabModel?.tabUrlInput.get()?.let {
                 if (it.startsWith("http")) {
                     viewModelScope.launch(executorRegular) {
                         onReloadPage(
@@ -580,7 +580,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     DetectionLogger.log("REGULAR", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
-                        webTabModel?.getTabTextInput()?.get(),
+                        webTabModel?.tabUrlInput?.get(),
                         finalUrlPair.second.toMap(),
                         contentLength
                     )
@@ -588,7 +588,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     DetectionLogger.log("REGULAR AUDIO", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
-                        webTabModel?.getTabTextInput()?.get(),
+                        webTabModel?.tabUrlInput?.get(),
                         finalUrlPair.second.toMap(),
                         contentLength,
                         isAudio = true
@@ -628,7 +628,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         DetectionLogger.log("REGULAR", "SUCCESS", url)
                         setMediaInfoWrapperFromUrl(
                             finalUrlPairEmpty.first,
-                            webTabModel?.getTabTextInput()?.get(),
+                            webTabModel?.tabUrlInput?.get(),
                             finalUrlPairEmpty.second.toMap(),
                             contentLength
                         )
@@ -638,7 +638,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         DetectionLogger.log("REGULAR", "SUCCESS", url)
                         setMediaInfoWrapperFromUrl(
                             finalUrlPairEmpty.first,
-                            webTabModel?.getTabTextInput()?.get(),
+                            webTabModel?.tabUrlInput?.get(),
                             finalUrlPairEmpty.second.toMap(),
                             contentLength,
                             true
@@ -680,7 +680,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     downloadUrls = downloadUrls,
                     title = webTabModel?.currentTitle?.get() ?: "no_title",
                     ext = if (isAudio) "mp3" else "mp4",
-                    originalUrl = webTabModel?.getTabTextInput()?.get() ?: "",
+                    originalUrl = webTabModel?.tabUrlInput?.get() ?: "",
                     // TODO format regular file link
                     formats = VideFormatEntityList(
                         mutableListOf(

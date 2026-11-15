@@ -225,7 +225,7 @@ class CustomWebViewClient(
         }
 
         if (settingsModel.isAdBlockOn.get()) {
-            val tabInputUrl = tabViewModel.getTabTextInput().get() ?: ""
+            val tabInputUrl = tabViewModel.tabUrlInput.get() ?: ""
             val sourceUrl = if (tabInputUrl.startsWith("http")) tabInputUrl else url
             val isAd = adBlockEngine.isAd(
                 url,
@@ -284,7 +284,7 @@ class CustomWebViewClient(
                             isCheckOnMp4
                         )
 
-                        val currentUrl = tabViewModel.getTabTextInput().get() ?: ""
+                        val currentUrl = tabViewModel.tabUrlInput.get() ?: ""
                         if (currentUrl != lastRegularCheckUrl) {
                             regularJobsStorage[lastRegularCheckUrl]?.forEach {
                                 it.dispose()

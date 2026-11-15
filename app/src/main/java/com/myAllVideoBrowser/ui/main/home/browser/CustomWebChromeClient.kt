@@ -107,9 +107,9 @@ class CustomWebChromeClient(
         super.onProgressChanged(view, newProgress)
         tabViewModel.setProgress(newProgress)
         if (newProgress == 100) {
-            tabViewModel.isShowProgress.set(false)
+            tabViewModel.setIsShowProgress(false)
         } else {
-            tabViewModel.isShowProgress.set(true)
+            tabViewModel.setIsShowProgress(true)
         }
     }
 

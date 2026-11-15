@@ -12,7 +12,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.EditText
@@ -20,7 +19,6 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.core.app.ShareCompat
-import androidx.databinding.Observable
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.Lifecycle
@@ -143,7 +141,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
         tabViewModel.openPageEvent = tabManagerProvider.getOpenTabEvent()
         tabViewModel.closePageEvent = tabManagerProvider.getCloseTabEvent()
-        tabViewModel.thisTabIndex.set(thisTabIndex)
+        tabViewModel.setThisTabIndex(thisTabIndex)
 
         webTab = pageTabProvider.getPageTab(thisTabIndex)
         videoDetectionTabViewModel.initialUrl = webTab.getUrl()
@@ -195,7 +193,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
         addChangeRouteCallBack()
 
-        tabViewModel.userAgent.set(
+        tabViewModel.setUserAgent(
             webTab.getWebView()?.settings?.userAgentString
                 ?: BrowserFragment.MOBILE_USER_AGENT
         )
@@ -524,10 +522,10 @@ class WebTabFragment : BaseWebTabFragment() {
                         dataBinding.etSearch.selectAll()
 
                     }
-                    tabViewModel.isTabInputFocused.set(true)
+                    tabViewModel.setIsTabInputFocused(true)
                     appUtil.showSoftKeyboard(dataBinding.etSearch)
                 } else {
-                    tabViewModel.isTabInputFocused.set(false)
+                    tabViewModel.setIsTabInputFocused(false)
                     appUtil.hideSoftKeyboard(
                         dataBinding.etSearch
                     )
@@ -587,7 +585,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 val webTab = tabs?.find { it.id == webTab.id }
                 val index = tabs?.indexOf(webTab)
                 if (index != null && index in tabs.indices) {
-                    tabViewModel.thisTabIndex.set(index)
+                    tabViewModel.setThisTabIndex(index)
                 }
             }
     }
@@ -692,7 +690,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
     private fun showAlertVideoFound() {
         if (!tabViewModel.isDownloadDialogShown.get()) {
-            tabViewModel.isDownloadDialogShown.set(true)
+            tabViewModel.setIsDownloadDialogShown(true)
             val client = getWebViewClientCompat(webTab.getWebView())
 
             client?.videoAlert =
@@ -704,14 +702,14 @@ class WebTabFragment : BaseWebTabFragment() {
                 R.string.view
             ) { dialog, _ ->
                 navigateToDownloads()
-                tabViewModel.isDownloadDialogShown.set(false)
+                tabViewModel.setIsDownloadDialogShown(false)
                 dialog.dismiss()
             }?.setNeutralButton(R.string.dontshow) { dialog, _ ->
                 mainActivity.settingsViewModel.setShowVideoAlertOff()
-                tabViewModel.isDownloadDialogShown.set(false)
+                tabViewModel.setIsDownloadDialogShown(false)
                 dialog.dismiss()
             }?.setNegativeButton(R.string.all_text_cancel) { dialog, _ ->
-                tabViewModel.isDownloadDialogShown.set(false)
+                tabViewModel.setIsDownloadDialogShown(false)
                 dialog.dismiss()
             }?.show()
         }
@@ -854,7 +852,7 @@ class WebTabFragment : BaseWebTabFragment() {
         val isAd = isAdBlockOn &&
                 adBlockEngine.isAd(
                     url,
-                    tabViewModel.getTabTextInput().get() ?: "",
+                    tabViewModel.tabUrlInput.get() ?: "",
                     "xmlhttprequest"
                 )
         if (isAd) {

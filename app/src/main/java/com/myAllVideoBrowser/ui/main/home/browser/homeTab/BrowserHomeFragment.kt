@@ -161,7 +161,7 @@ class BrowserHomeFragment : BaseWebTabFragment() {
     private val onInputHomeSearchChangeListener = object : TextWatcher {
         override fun afterTextChanged(s: Editable) {
             val input = s.toString()
-            homeViewModel.searchTextInput.set(input)
+            homeViewModel.setSearchTextInput(input)
             if (!(input.startsWith("http://") || input.startsWith("https://"))) {
                 homeViewModel.showSuggestions()
             }

@@ -1,11 +1,12 @@
 package com.myAllVideoBrowser.ui.main.home.browser.homeTab
 
-import androidx.databinding.ObservableBoolean
-import androidx.databinding.ObservableField
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.model.Suggestion
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.SuggestionsUtils
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.core.BackpressureStrategy
@@ -14,7 +15,6 @@ import io.reactivex.rxjava3.subjects.PublishSubject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -23,9 +23,14 @@ class BrowserHomeViewModel @Inject constructor(
     private val baseSchedulers: BaseSchedulers,
 ) :
     BaseViewModel() {
-    val isSearchInputFocused = ObservableBoolean(false)
-    val searchTextInput = ObservableField("")
-    val listSuggestions: ObservableField<MutableList<Suggestion>> = ObservableField(mutableListOf())
+    private val _isSearchInputFocused = MutableLiveData(false)
+    val isSearchInputFocused: LiveData<Boolean> = _isSearchInputFocused
+
+    private val _searchTextInput = MutableLiveData("")
+    val searchTextInput: LiveData<String> = _searchTextInput
+
+    private val _listSuggestions = MutableLiveData<List<Suggestion>>(emptyList())
+    val listSuggestions: LiveData<List<Suggestion>> = _listSuggestions
 
     lateinit var homePublishSubject: PublishSubject<String>
 
@@ -39,8 +44,12 @@ class BrowserHomeViewModel @Inject constructor(
 
     }
 
+    fun setSearchTextInput(input: String) {
+        _searchTextInput.value = input
+    }
+
     fun changeSearchFocus(isFocus: Boolean) {
-        this.isSearchInputFocused.set(isFocus)
+        _isSearchInputFocused.value = isFocus
     }
 
     fun showSuggestions() {
@@ -49,13 +58,11 @@ class BrowserHomeViewModel @Inject constructor(
         }
         suggestionJob = viewModelScope.launch(Dispatchers.IO) {
             try {
-                withContext(this.coroutineContext) {
-                    val list = fetchListSuggestions().blockingFirst()
-                    if (list.size > 50) {
-                        listSuggestions.set(list.subList(0, 50).toMutableList())
-                    } else {
-                        listSuggestions.set(list.toMutableList())
-                    }
+                val list = fetchListSuggestions().blockingFirst()
+                if (list.size > 50) {
+                    _listSuggestions.postValue(list.subList(0, 50).toMutableList())
+                } else {
+                    _listSuggestions.postValue(list.toMutableList())
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()

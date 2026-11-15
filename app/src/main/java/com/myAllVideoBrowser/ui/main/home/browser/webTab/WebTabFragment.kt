@@ -73,6 +73,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 class WebTabFragment : BaseWebTabFragment() {
 
@@ -154,6 +155,7 @@ class WebTabFragment : BaseWebTabFragment() {
         recreateWebView(savedInstanceState)
 
         dataBinding = FragmentWebTabBinding.inflate(inflater, container, false).apply {
+            this.lifecycleOwner = viewLifecycleOwner
             buildWebTabMenu(this.browserMenuButton, false)
 
             viewModel = tabViewModel
@@ -168,7 +170,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     this.etSearch.clearFocus()
                     viewModel?.viewModelScope?.launch {
-                        delay(400)
+                        delay(400.milliseconds)
                         tabViewModel.loadPage((this@apply.etSearch as EditText).text.toString())
                     }
                     false
@@ -289,8 +291,6 @@ class WebTabFragment : BaseWebTabFragment() {
         tabViewModel.stop()
         webTab.setWebView(null)
         videoDetectionTabViewModel.stop()
-        tabManagerProvider.getTabsListChangeEvent()
-            .removeOnPropertyChangedCallback(tabsListChangeListener)
     }
 
     private fun handleOpenDetectedVideos() {
@@ -583,18 +583,13 @@ class WebTabFragment : BaseWebTabFragment() {
 
     private fun handleIndexChangeEvent() {
         tabManagerProvider.getTabsListChangeEvent()
-            .addOnPropertyChangedCallback(tabsListChangeListener)
-    }
-
-    private val tabsListChangeListener = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            val tabs = tabManagerProvider.getTabsListChangeEvent().get()
-            val webTab = tabs?.find { it.id == webTab.id }
-            val index = tabs?.indexOf(webTab)
-            if (index != null && index in tabs.indices) {
-                tabViewModel.thisTabIndex.set(index)
+            .observe(viewLifecycleOwner) { tabs ->
+                val webTab = tabs?.find { it.id == webTab.id }
+                val index = tabs?.indexOf(webTab)
+                if (index != null && index in tabs.indices) {
+                    tabViewModel.thisTabIndex.set(index)
+                }
             }
-        }
     }
 
     private fun onWebViewPause() {

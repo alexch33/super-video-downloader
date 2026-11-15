@@ -22,10 +22,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.view.GravityCompat
 import androidx.databinding.Observable
-import androidx.databinding.ObservableField
-import androidx.databinding.ObservableInt
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -65,7 +63,7 @@ interface TabManagerProvider {
 
     fun getUpdateTabEvent(): SingleLiveEvent<WebTab>
 
-    fun getTabsListChangeEvent(): ObservableField<List<WebTab>>
+    fun getTabsListChangeEvent(): LiveData<List<WebTab>>
 }
 
 interface PageTabProvider {
@@ -77,13 +75,13 @@ interface HistoryProvider {
 }
 
 interface WorkerEventProvider {
-    fun getWorkerM3u8MpdEvent(): MutableLiveData<DownloadButtonState>
+    fun getWorkerM3u8MpdEvent(): LiveData<DownloadButtonState>
 
-    fun getWorkerMP4Event(): MutableLiveData<DownloadButtonState>
+    fun getWorkerMP4Event(): LiveData<DownloadButtonState>
 }
 
 interface CurrentTabIndexProvider {
-    fun getCurrentTabIndex(): ObservableInt
+    fun getCurrentTabIndex(): LiveData<Int>
 }
 
 const val HOME_TAB_INDEX = 0
@@ -146,8 +144,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         Observable.OnPropertyChangedCallback() {
         override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
             lifecycleScope.launch(Dispatchers.Main) {
-                browserViewModel.workerM3u8MpdEvent.value =
-                    videoDetectionModel.downloadButtonState.get()
+                browserViewModel.setM3U8Event(videoDetectionModel.downloadButtonState.get())
             }
         }
     }
@@ -257,7 +254,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         return browserViewModel.updateWebTabEvent
     }
 
-    override fun getTabsListChangeEvent(): ObservableField<List<WebTab>> {
+    override fun getTabsListChangeEvent(): LiveData<List<WebTab>> {
         return browserViewModel.tabs
     }
 
@@ -318,6 +315,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         val color = getThemeBackgroundColor()
 
         dataBinding = FragmentBrowserBinding.inflate(inflater, container, false).apply {
+            this.lifecycleOwner = viewLifecycleOwner
             this.viewPager.adapter = tabsAdapter
             this.viewPager.setSwipeThreshold(500)
             this.viewPager.setOnGoThroughListener(onGoThroughListener)
@@ -371,15 +369,15 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
         return this.historyModel
     }
 
-    override fun getWorkerM3u8MpdEvent(): MutableLiveData<DownloadButtonState> {
+    override fun getWorkerM3u8MpdEvent(): LiveData<DownloadButtonState> {
         return browserViewModel.workerM3u8MpdEvent
     }
 
-    override fun getWorkerMP4Event(): MutableLiveData<DownloadButtonState> {
+    override fun getWorkerMP4Event(): LiveData<DownloadButtonState> {
         return browserViewModel.workerMP4Event
     }
 
-    override fun getCurrentTabIndex(): ObservableInt {
+    override fun getCurrentTabIndex(): LiveData<Int> {
         return browserViewModel.currentTab
     }
 
@@ -397,7 +395,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     private fun handlePressWebTabEvent() {
         browserViewModel.selectWebTabEvent.observe(viewLifecycleOwner) { webTab ->
             val index = browserViewModel.tabs.get()?.indexOf(webTab) ?: 0
-            browserViewModel.currentTab.set(index.coerceAtLeast(0))
+            browserViewModel.setCurrentTab(index.coerceAtLeast(0))
         }
     }
 
@@ -405,9 +403,9 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     private fun handleOpenTabEvent() {
         browserViewModel.openPageEvent.observe(viewLifecycleOwner) { webTab ->
             val newList = browserViewModel.tabs.get()?.plus(webTab) ?: emptyList()
-            browserViewModel.tabs.set(newList)
+            browserViewModel.setTabs(newList)
             val index = newList.indexOf(webTab)
-            browserViewModel.currentTab.set(index.coerceAtLeast(0))
+            browserViewModel.setCurrentTab(index.coerceAtLeast(0))
         }
     }
 
@@ -423,10 +421,10 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
             if (browserViewModel.currentTab.get() == index) {
                 val newIndex = (index - 1).coerceAtLeast(0)
-                browserViewModel.currentTab.set(newIndex)
+                browserViewModel.setCurrentTab(newIndex)
             }
 
-            browserViewModel.tabs.set(tabs)
+            browserViewModel.setTabs(tabs)
         }
     }
 
@@ -440,7 +438,7 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
                 tabs[updateIndex] = webTab
             }
 
-            browserViewModel.tabs.set(tabs ?: emptyList())
+            browserViewModel.setTabs(tabs ?: emptyList())
         }
     }
 

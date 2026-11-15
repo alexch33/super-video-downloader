@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.model.Proxy
 import com.myAllVideoBrowser.data.local.model.ProxyType
@@ -17,9 +16,8 @@ import com.myAllVideoBrowser.ui.component.adapter.ProxiesAdapter
 import com.myAllVideoBrowser.ui.component.adapter.ProxiesListener
 import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ProxiesFragment : BaseFragment() {
@@ -40,20 +38,6 @@ class ProxiesFragment : BaseFragment() {
 
     private lateinit var proxiesAdapter: ProxiesAdapter
 
-    private val proxiesListCallback = object :
-        androidx.databinding.Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(
-            sender: androidx.databinding.Observable?,
-            propertyId: Int
-        ) {
-            proxiesViewModel.proxiesList.get()?.let {
-                lifecycleScope.launch(Dispatchers.Main) {
-                    proxiesAdapter.setData(it)
-                }
-            }
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -62,10 +46,11 @@ class ProxiesFragment : BaseFragment() {
         proxiesAdapter = ProxiesAdapter(mutableListOf(), proxiesListener)
 
         dataBinding = FragmentProxiesBinding.inflate(inflater, container, false).apply {
+            this.lifecycleOwner = viewLifecycleOwner
             this.viewModel = proxiesViewModel
             this.listener = proxiesListener
             this.proxiesRecyclerView.adapter = proxiesAdapter
-            proxiesAdapter.setData(proxiesViewModel.proxiesList.get()?.toList() ?: emptyList())
+            proxiesAdapter.setData(proxiesViewModel.proxiesList.value ?: emptyList())
 
             this.toolbar.setNavigationOnClickListener {
                 requireActivity().onBackPressedDispatcher.onBackPressed()
@@ -80,6 +65,14 @@ class ProxiesFragment : BaseFragment() {
                 ).show()
 
             }
+
+            this.customDnsEditText.addTextChangedListener(object : android.text.TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: android.text.Editable?) {
+                    proxiesViewModel.setCustomDnsUrl(s?.toString() ?: "")
+                }
+            })
 
             this.addProxyButton.setOnClickListener {
                 val host = this.hostEditText.text.toString()
@@ -130,7 +123,9 @@ class ProxiesFragment : BaseFragment() {
             }
         }
 
-        proxiesViewModel.proxiesList.addOnPropertyChangedCallback(proxiesListCallback)
+        proxiesViewModel.proxiesList.observe(viewLifecycleOwner) { list ->
+            proxiesAdapter.setData(list ?: emptyList())
+        }
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             parentFragmentManager.popBackStack()
@@ -140,7 +135,6 @@ class ProxiesFragment : BaseFragment() {
     }
 
     override fun onDestroyView() {
-        proxiesViewModel.proxiesList.removeOnPropertyChangedCallback(proxiesListCallback)
         super.onDestroyView()
     }
 

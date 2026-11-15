@@ -10,7 +10,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.app.ShareCompat
-import androidx.databinding.Observable
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.lifecycleScope
@@ -55,19 +54,6 @@ abstract class BaseWebTabFragment : BaseFragment() {
 
     private var popupMenu: PopupMenu? = null
 
-    private val proxyOnCallback = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            if (!isAdded) {
-                return
-            }
-            val isProxyOn = mainActivity.proxiesViewModel.isProxyOn.get() == true
-            lifecycleScope.launch(Dispatchers.Main) {
-                popupMenu?.menu?.findItem(R.id.proxies)?.isChecked = isProxyOn
-            }
-            sharedPrefHelper.setIsProxyOn(isProxyOn)
-        }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         observeSettings()
@@ -86,12 +72,16 @@ abstract class BaseWebTabFragment : BaseFragment() {
         mainActivity.settingsViewModel.isAdBlockOn.observe(viewLifecycleOwner) { isOn ->
             popupMenu?.menu?.findItem(R.id.adblock_toggle)?.isChecked = isOn == true
         }
+        mainActivity.proxiesViewModel.isProxyOn.observe(viewLifecycleOwner) { isProxyOn ->
+            val proxyActive = isProxyOn == true
+            popupMenu?.menu?.findItem(R.id.proxies)?.isChecked = proxyActive
+            sharedPrefHelper.setIsProxyOn(proxyActive)
+        }
     }
 
     override fun onDestroyView() {
         popupMenu?.dismiss()
         popupMenu = null
-        mainActivity.proxiesViewModel.isProxyOn.removeOnPropertyChangedCallback(proxyOnCallback)
 
         super.onDestroyView()
     }
@@ -121,7 +111,6 @@ abstract class BaseWebTabFragment : BaseFragment() {
             isDarkModeItem.isEnabled = !mainActivity.settingsViewModel.isAutoDarkMode.get()
 
             popupMenu!!.setForceShowIcon(true)
-            mainActivity.proxiesViewModel.isProxyOn.addOnPropertyChangedCallback(proxyOnCallback)
         }
     }
 

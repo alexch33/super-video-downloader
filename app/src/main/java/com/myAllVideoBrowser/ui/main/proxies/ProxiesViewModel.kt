@@ -1,6 +1,7 @@
 package com.myAllVideoBrowser.ui.main.proxies
 
-import androidx.databinding.ObservableField
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -15,17 +16,22 @@ import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import com.myAllVideoBrowser.util.proxy_utils.ProxyWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class ProxiesViewModel @Inject constructor(
     private val proxyController: CustomProxyController,
     private val sharedPrefHelper: SharedPrefHelper
 ) : BaseViewModel() {
-    val proxiesList: ObservableField<MutableList<Proxy>> = ObservableField(mutableListOf())
 
-    val realProxyCount: ObservableField<Int> = ObservableField(0)
+    private val _proxiesList = MutableLiveData<List<Proxy>>(emptyList())
+    val proxiesList: LiveData<List<Proxy>> = _proxiesList
 
-    val isProxyOn = ObservableField(false)
+    private val _realProxyCount = MutableLiveData(0)
+    val realProxyCount: LiveData<Int> = _realProxyCount
+
+    private val _isProxyOn = MutableLiveData(false)
+    val isProxyOn: LiveData<Boolean> = _isProxyOn
 
     enum class SecureDnsProvider(val url: String) {
         CLOUDFLARE("https://cloudflare-dns.com/dns-query"),
@@ -52,32 +58,40 @@ class ProxiesViewModel @Inject constructor(
         }
     }
 
-    val isSecureDnsOn = ObservableField(true)
+    private val _isSecureDnsOn = MutableLiveData(true)
+    val isSecureDnsOn: LiveData<Boolean> = _isSecureDnsOn
 
-    val selectedDnsProvider = ObservableField(SecureDnsProvider.CLOUDFLARE)
+    private val _selectedDnsProvider = MutableLiveData(SecureDnsProvider.CLOUDFLARE)
+    val selectedDnsProvider: LiveData<SecureDnsProvider> = _selectedDnsProvider
 
-    val customDnsUrl = ObservableField("")
+    private val _customDnsUrl = MutableLiveData("")
+    val customDnsUrl: LiveData<String> = _customDnsUrl
 
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
-            isSecureDnsOn.set(sharedPrefHelper.getIsDohOn())
+            val dohOn = sharedPrefHelper.getIsDohOn()
             val savedProviderName = sharedPrefHelper.getSelectedDnsProvider()
             val provider = SecureDnsProvider.entries.find { it.name == savedProviderName }
                 ?: SecureDnsProvider.ADGUARD
-            selectedDnsProvider.set(provider)
-            customDnsUrl.set(sharedPrefHelper.getCustomDnsUrl())
-
+            val customDns = sharedPrefHelper.getCustomDnsUrl()
             val usersProxy = sharedPrefHelper.getUserProxyChain()
-            proxiesList.set(usersProxy.toMutableList())
-            realProxyCount.set(usersProxy.count { it != Proxy.noProxy() })
-            isProxyOn.set(sharedPrefHelper.getIsProxyOn())
+            val proxyOn = sharedPrefHelper.getIsProxyOn()
+
+            withContext(Dispatchers.Main) {
+                _isSecureDnsOn.value = dohOn
+                _selectedDnsProvider.value = provider
+                _customDnsUrl.value = customDns
+                _proxiesList.value = usersProxy.toList()
+                _realProxyCount.value = usersProxy.count { it != Proxy.noProxy() }
+                _isProxyOn.value = proxyOn
+            }
             updateChain()
         }
     }
 
     fun setSecureDnsState(isOn: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            isSecureDnsOn.set(isOn)
+            _isSecureDnsOn.postValue(isOn)
             sharedPrefHelper.setIsDohOn(isOn)
             proxyController.updateProxyState()
             updateChain()
@@ -86,13 +100,13 @@ class ProxiesViewModel @Inject constructor(
 
     fun setSecureDnsProvider(provider: SecureDnsProvider) {
         viewModelScope.launch(Dispatchers.IO) {
-            selectedDnsProvider.set(provider)
+            _selectedDnsProvider.postValue(provider)
             sharedPrefHelper.saveSelectedDnsProvider(provider.name)
             if (provider == SecureDnsProvider.CUSTOM) {
                 saveCustomDns()
             }
             proxyController.updateProxyState()
-            if (isSecureDnsOn.get() == true) {
+            if (_isSecureDnsOn.value == true) {
                 updateChain()
             }
         }
@@ -100,17 +114,21 @@ class ProxiesViewModel @Inject constructor(
 
     fun saveCustomDns() {
         viewModelScope.launch(Dispatchers.IO) {
-            val url = customDnsUrl.get() ?: ""
+            val url = _customDnsUrl.value ?: ""
             sharedPrefHelper.saveCustomDnsUrl(url)
-            if (isSecureDnsOn.get() == true && selectedDnsProvider.get() == SecureDnsProvider.CUSTOM) {
+            if (_isSecureDnsOn.value == true && _selectedDnsProvider.value == SecureDnsProvider.CUSTOM) {
                 updateChain()
             }
         }
     }
 
+    fun setCustomDnsUrl(url: String) {
+        _customDnsUrl.value = url
+    }
+
     fun addProxy(newProxy: Proxy) {
         viewModelScope.launch(Dispatchers.IO) {
-            val currentList = proxiesList.get() ?: mutableListOf()
+            val currentList = _proxiesList.value?.toMutableList() ?: mutableListOf()
             currentList.add(newProxy)
             saveAndUpdateProxies(currentList)
         }
@@ -118,7 +136,7 @@ class ProxiesViewModel @Inject constructor(
 
     fun removeProxy(proxyToRemove: Proxy) {
         viewModelScope.launch(Dispatchers.IO) {
-            val currentList = proxiesList.get() ?: mutableListOf()
+            val currentList = _proxiesList.value?.toMutableList() ?: mutableListOf()
             currentList.remove(proxyToRemove)
             saveAndUpdateProxies(currentList)
         }
@@ -128,7 +146,7 @@ class ProxiesViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             sharedPrefHelper.setIsProxyOn(false)
             proxyController.updateProxyState()
-            isProxyOn.set(false)
+            _isProxyOn.postValue(false)
             updateChain()
         }
     }
@@ -137,7 +155,7 @@ class ProxiesViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             sharedPrefHelper.setIsProxyOn(true)
             proxyController.updateProxyState()
-            isProxyOn.set(true)
+            _isProxyOn.postValue(true)
             updateChain()
         }
     }
@@ -167,7 +185,6 @@ class ProxiesViewModel @Inject constructor(
         )
     }
 
-
     private fun saveAndUpdateProxies(updatedList: List<Proxy>) {
         viewModelScope.launch(Dispatchers.IO) {
             val cleanedList = if (updatedList.size > 1) {
@@ -178,16 +195,15 @@ class ProxiesViewModel @Inject constructor(
 
             sharedPrefHelper.saveUserProxyChain(cleanedList.toTypedArray())
 
-            proxiesList.set(cleanedList.toMutableList())
-            realProxyCount.set(cleanedList.count { it != Proxy.noProxy() })
+            _proxiesList.postValue(cleanedList)
+            _realProxyCount.postValue(cleanedList.count { it != Proxy.noProxy() })
             proxyController.updateProxyState()
-            if (isProxyOn.get() == true) {
+            if (_isProxyOn.value == true) {
                 updateChain()
             }
         }
     }
 
     override fun stop() {
-
     }
 }

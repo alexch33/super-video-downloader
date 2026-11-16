@@ -1,14 +1,17 @@
 package com.myAllVideoBrowser.ui.main.history
 
-import androidx.databinding.ObservableField
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
 import com.myAllVideoBrowser.data.repository.HistoryRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
@@ -17,13 +20,17 @@ class HistoryViewModel @Inject constructor(
 ) :
     BaseViewModel() {
 
-    var historyItems = ObservableField<List<HistoryItem>>(emptyList())
+    private val _historyItems = MutableLiveData<List<HistoryItem>>(emptyList())
+    val historyItems: LiveData<List<HistoryItem>> = _historyItems
 
-    var searchHistoryItems = ObservableField<List<HistoryItem>>(emptyList())
+    private val _searchHistoryItems = MutableLiveData<List<HistoryItem>>(emptyList())
+    val searchHistoryItems: LiveData<List<HistoryItem>> = _searchHistoryItems
 
-    val searchQuery = ObservableField("")
+    private val _searchQuery = MutableLiveData("")
+    val searchQuery: LiveData<String> = _searchQuery
 
-    val isLoadingHistory = ObservableField(true)
+    private val _isLoadingHistory = MutableLiveData(true)
+    val isLoadingHistory: LiveData<Boolean> = _isLoadingHistory
 
     val executorSingleHistory = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
@@ -39,12 +46,12 @@ class HistoryViewModel @Inject constructor(
     }
 
     private fun fetchAllHistory() {
-        isLoadingHistory.set(true)
+        _isLoadingHistory.value = true
 
         viewModelScope.launch(additionalExecutor) {
             val history = historyRepository.getAllHistory().blockingFirst()
-            historyItems.set(history)
-            isLoadingHistory.set(false)
+            _historyItems.postValue(history)
+            _isLoadingHistory.postValue(false)
         }
     }
 
@@ -65,8 +72,9 @@ class HistoryViewModel @Inject constructor(
     fun deleteHistory(historyItem: HistoryItem) {
         viewModelScope.launch(historyExecutor) {
             try {
-                val newItems = historyItems.get()?.filter { it.id != historyItem.id }
-                historyItems.set(newItems)
+                val currentItems = _historyItems.value ?: emptyList()
+                val newItems = currentItems.filter { it.id != historyItem.id }
+                _historyItems.postValue(newItems)
                 historyRepository.deleteHistory(historyItem)
             } catch (e: Throwable) {
                 e.printStackTrace()
@@ -75,23 +83,28 @@ class HistoryViewModel @Inject constructor(
     }
 
     fun queryHistory(query: String) {
+        _searchQuery.value = query
         if (query.isEmpty()) {
-            searchHistoryItems.set(emptyList())
+            _searchHistoryItems.value = emptyList()
         }
         if (query.isNotEmpty()) {
-            val filtered = historyItems.get()
+            val filtered = _historyItems.value
                 ?.filter { it.url.contains(query) || it.title?.contains(query) ?: false }
-            searchHistoryItems.set(filtered ?: emptyList())
+            _searchHistoryItems.value = filtered ?: emptyList()
         }
     }
 
     fun clearHistory() {
         viewModelScope.launch(historyExecutor) {
-            isLoadingHistory.set(true)
+            withContext(Dispatchers.Main) {
+                _isLoadingHistory.value = true
+            }
             historyRepository.deleteAllHistory()
-            historyItems.set(emptyList())
-            searchHistoryItems.set(emptyList())
-            isLoadingHistory.set(false)
+            withContext(Dispatchers.Main) {
+                _historyItems.value = emptyList()
+                _searchHistoryItems.value = emptyList()
+                _isLoadingHistory.value = false
+            }
         }
     }
 }

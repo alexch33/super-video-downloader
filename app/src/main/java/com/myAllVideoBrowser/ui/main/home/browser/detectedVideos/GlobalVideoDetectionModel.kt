@@ -18,8 +18,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Request
-import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 class GlobalVideoDetectionModel @Inject constructor(
     private val videoRepository: VideoRepository,
@@ -136,7 +136,7 @@ class GlobalVideoDetectionModel @Inject constructor(
                     if (info.isM3u8 && !hlsTitle.isNullOrEmpty()) {
                         info.title = hlsTitle
                     }
-                    val state = downloadButtonState.get()
+                    val state = downloadButtonState.value
 
                     val shouldSkip =
                         (state is DownloadButtonStateCanDownload && state.info?.isM3u8 == true && state.info.isMaster && isLastNotEmpty) ||
@@ -198,9 +198,8 @@ class GlobalVideoDetectionModel @Inject constructor(
             return
         }
 
-        val detectedVideos = detectedVideosList.get() ?: ConcurrentHashMap.newKeySet()
-        val nextSet = ConcurrentHashMap.newKeySet<VideoInfo>()
-        nextSet.addAll(detectedVideos)
+        val detectedVideos = detectedVideosList.value ?: emptySet()
+        val nextSet = detectedVideos.toMutableSet()
 
         var isDuplicateFound = false
 
@@ -222,11 +221,14 @@ class GlobalVideoDetectionModel @Inject constructor(
             AppLogger.d("PUSHING $newInfo to list")
             nextSet.add(newInfo)
 
+            val sortedList = nextSet.sortedBy { it.timestamp }.take(10)
+            setDetectedVideoList(sortedList.toSet())
+
             // Cancel previous pending UI update to avoid flickering
             pushJob?.cancel()
             pushJob = viewModelScope.launch(Dispatchers.Main) {
                 setButtonState(DownloadButtonStateLoading())
-                delay(400)
+                delay(400.milliseconds)
                 setButtonState(DownloadButtonStateCanDownload(newInfo))
             }
         }

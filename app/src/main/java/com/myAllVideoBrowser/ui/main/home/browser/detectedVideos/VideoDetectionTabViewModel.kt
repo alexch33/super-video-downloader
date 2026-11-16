@@ -31,6 +31,7 @@ import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Request
@@ -39,6 +40,7 @@ import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 open class VideoDetectionTabViewModel @Inject constructor(
     private val videoRepository: VideoRepository,
@@ -59,9 +61,9 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
     var initialUrl: String = ""
 
-    private val _m3u8LoadingList = MutableLiveData<Set<String>>(ConcurrentHashMap.newKeySet())
+    private val _m3u8LoadingList = MutableLiveData<Set<String>>(emptySet())
 
-    private val _regularLoadingList = MutableLiveData<Set<String>>(ConcurrentHashMap.newKeySet())
+    private val _regularLoadingList = MutableLiveData<Set<String>>(emptySet())
 
     val showDetectedVideosEvent = SingleLiveEvent<Void?>()
 
@@ -77,7 +79,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
     var webTabModel: WebTabViewModel? = null
     lateinit var settingsModel: SettingsViewModel
 
-    private val _detectedVideosList = MutableLiveData<Set<VideoInfo>>(ConcurrentHashMap.newKeySet())
+    private val _detectedVideosList = MutableLiveData(emptySet<VideoInfo>())
     val detectedVideosList: LiveData<Set<VideoInfo>> = _detectedVideosList
 
     val filterRegex =
@@ -100,6 +102,10 @@ open class VideoDetectionTabViewModel @Inject constructor(
     @Volatile
     private var lastUrl = ""
 
+    fun setDetectedVideoList(list: Set<VideoInfo>) {
+        _detectedVideosList.postValue(list)
+    }
+
     override fun start() {
         AppLogger.d("START")
         updateButtonIcon(_downloadButtonState.value)
@@ -120,7 +126,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
         if (url != initialUrl) {
             AppLogger.d("onStartPage: URL is not initial url. Clearing list.")
-            _detectedVideosList.postValue(ConcurrentHashMap.newKeySet())
+            setDetectedVideoList(emptySet())
             cancelAllCheckJobs()
         } else {
             AppLogger.d("onStartPage: URL is initial url. Skipped clearing list.")
@@ -135,12 +141,14 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
-    fun onReloadPage(url: String, userAgentString: String) {
+    suspend fun onReloadPage(url: String, userAgentString: String) {
         lastUrl = url
-        setButtonState(DownloadButtonStateCanNotDownload())
 
-        _detectedVideosList.postValue(ConcurrentHashMap.newKeySet())
+        setDetectedVideoList(emptySet())
         cancelAllCheckJobs()
+
+        delay(10.milliseconds)
+        setButtonState(DownloadButtonStateCanNotDownload())
 
         val req = getRequestWithHeadersForUrl(
             url, url, userAgentString
@@ -259,9 +267,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
             return
         }
 
-        val detectedVideos = _detectedVideosList.value ?: ConcurrentHashMap.newKeySet()
-        val nextSet = ConcurrentHashMap.newKeySet<VideoInfo>()
-        nextSet.addAll(detectedVideos)
+        val detectedVideos = _detectedVideosList.value ?: emptySet()
+        val nextSet = detectedVideos.toMutableSet()
 
         var isDuplicateFound = false
 
@@ -300,7 +307,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
             AppLogger.d("PUSHING $newInfo to list")
             nextSet.add(newInfo)
 
-            _detectedVideosList.postValue(nextSet)
+            val sortedList = nextSet.sortedBy { it.timestamp }.take(10)
+            setDetectedVideoList(sortedList.toSet())
             setButtonState(DownloadButtonStateCanDownload(newInfo))
 
             viewModelScope.launch(Dispatchers.Main) {
@@ -395,8 +403,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     fun addM3u8Loading(url: String) {
-        val current = _m3u8LoadingList.value?.toMutableSet() ?: ConcurrentHashMap.newKeySet()
-        current.add(url)
+        val current = (_m3u8LoadingList.value ?: emptySet()) + url
         _m3u8LoadingList.postValue(current)
         _hasCheckLoadingsM3u8.postValue(current.isNotEmpty())
         if (current.isNotEmpty()) {
@@ -405,20 +412,18 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     fun removeM3u8Loading(url: String) {
-        val current = _m3u8LoadingList.value?.toMutableSet() ?: ConcurrentHashMap.newKeySet()
-        current.remove(url)
+        val current = (_m3u8LoadingList.value ?: emptySet()) - url
         _m3u8LoadingList.postValue(current)
         _hasCheckLoadingsM3u8.postValue(current.isNotEmpty())
     }
 
     fun clearM3u8Loading() {
-        _m3u8LoadingList.postValue(ConcurrentHashMap.newKeySet())
+        _m3u8LoadingList.postValue(emptySet())
         _hasCheckLoadingsM3u8.postValue(false)
     }
 
     fun addRegularLoading(url: String) {
-        val current = _regularLoadingList.value?.toMutableSet() ?: ConcurrentHashMap.newKeySet()
-        current.add(url)
+        val current = (_regularLoadingList.value ?: emptySet()) + url
         _regularLoadingList.postValue(current)
         _hasCheckLoadingsRegular.postValue(current.isNotEmpty())
         if (current.isNotEmpty()) {
@@ -427,14 +432,13 @@ open class VideoDetectionTabViewModel @Inject constructor(
     }
 
     fun removeRegularLoading(url: String) {
-        val current = _regularLoadingList.value?.toMutableSet() ?: ConcurrentHashMap.newKeySet()
-        current.remove(url)
+        val current = (_regularLoadingList.value ?: emptySet()) - url
         _regularLoadingList.postValue(current)
         _hasCheckLoadingsRegular.postValue(current.isNotEmpty())
     }
 
     fun clearRegularLoading() {
-        _regularLoadingList.postValue(ConcurrentHashMap.newKeySet())
+        _regularLoadingList.postValue(emptySet())
         _hasCheckLoadingsRegular.postValue(false)
     }
 
@@ -443,7 +447,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         val targetState = when (state) {
             is DownloadButtonStateCanDownload -> state
             is DownloadButtonStateCanNotDownload -> {
-                val list = _detectedVideosList.value
+                val list = _detectedVideosList.value?.sortedBy { it.timestamp }
                 if (list.isNullOrEmpty()) {
                     DownloadButtonStateCanNotDownload()
                 } else {
@@ -452,7 +456,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
             }
 
             is DownloadButtonStateLoading -> {
-                val list = _detectedVideosList.value ?: emptySet()
+                val list =
+                    _detectedVideosList.value?.sortedBy { it.timestamp } ?: emptyList()
                 if (list.isEmpty()) {
                     DownloadButtonStateLoading()
                 } else {

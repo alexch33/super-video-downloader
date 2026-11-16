@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.util
 
+import android.annotation.SuppressLint
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
@@ -17,8 +18,8 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Date
-import java.util.Locale
 import androidx.core.net.toUri
+import androidx.webkit.WebViewFeature
 
 
 object CookieUtils {
@@ -27,109 +28,24 @@ object CookieUtils {
     val chromeDefaultPathApi28Less =
         "${ContextUtils.getApplicationContext().filesDir.parentFile}/app_webview/"
 
-    fun webResourceRequestToOkHttpRequest(
-        webResourceRequest: WebResourceRequest,
-        pageUrl: String? = null,
-        pageUserAgent: String? = null
-    ): Request? {
+    @SuppressLint("WrongConstant")
+    fun webResourceRequestToOkHttpRequest(webResourceRequest: WebResourceRequest): Request? {
         val url = webResourceRequest.url.toString().toHttpUrlOrNull() ?: return null
         val method = webResourceRequest.method
         val requestHeaders = webResourceRequest.requestHeaders.toMutableMap()
-
-        val cookieManager = CookieManager.getInstance()
-        val targetUrlStr = url.toString()
-        val targetCookies = cookieManager.getCookie(targetUrlStr) ?: ""
-
-        val referer = pageUrl ?: requestHeaders.entries.firstOrNull {
-            it.key.equals(
-                "Referer",
-                ignoreCase = true
-            )
-        }?.value
-        val refererCookies = referer?.let { cookieManager.getCookie(it) } ?: ""
-
-        val targetHost = url.host
-        val targetHostCookies = cookieManager.getCookie("https://$targetHost") ?: ""
-
-        val refererHost = referer?.toHttpUrlOrNull()?.host
-        val refererHostCookies = refererHost?.let { cookieManager.getCookie("https://$it") } ?: ""
-
-        val topDomainCookies = runCatching {
-            val domainToTry = refererHost ?: targetHost
-            val topDomain = InternetDomainName.from(domainToTry).topPrivateDomain().toString()
-            val c1 = cookieManager.getCookie("https://$topDomain") ?: ""
-            val c2 = cookieManager.getCookie("http://$topDomain") ?: ""
-            val c3 = cookieManager.getCookie("https://.$topDomain") ?: ""
-            "$c1; $c2; $c3"
-        }.getOrNull() ?: ""
-
-        val combinedCookies = listOf(
-            targetCookies,
-            refererCookies,
-            targetHostCookies,
-            refererHostCookies,
-            topDomainCookies
-        )
-            .asSequence()
-            .filter { it.isNotBlank() }
-            .flatMap { it.split(";") }
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .distinct()
-            .joinToString("; ")
 
         val requestBuilder = Request.Builder()
             .url(url)
             .headers(requestHeaders.toHeaders())
 
-        if (combinedCookies.isNotEmpty()) {
-            requestBuilder.header("Cookie", combinedCookies)
-        }
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.COOKIE_INTERCEPT)) {
+            val cookieManager = CookieManager.getInstance()
+            val targetHost = url.host
+            val targetHostCookies = cookieManager.getCookie("https://$targetHost") ?: ""
 
-        val existingUa = requestHeaders.entries.firstOrNull {
-            it.key.equals(
-                "User-Agent",
-                ignoreCase = true
-            )
-        }?.value
-        if (existingUa.isNullOrBlank()) {
-            val uaToUse = if (!pageUserAgent.isNullOrBlank()) {
-                pageUserAgent
-            } else {
-                BrowserFragment.MOBILE_USER_AGENT
+            if (requestHeaders["Cookie"] == null && targetHostCookies.isNotEmpty()) {
+                requestBuilder.addHeader("Cookie", targetHostCookies)
             }
-            requestBuilder.header("User-Agent", uaToUse)
-        }
-
-        if (requestBuilder.build().header("Referer") == null) {
-            val refererToUse = when {
-                !pageUrl.isNullOrBlank() -> pageUrl
-                referer != null -> referer
-                else -> "https://${url.host}/"
-            }
-            requestBuilder.header("Referer", refererToUse)
-        }
-
-        if (requestBuilder.build().header("Origin") == null) {
-            val originHost =
-                pageUrl?.toHttpUrlOrNull()?.host ?: referer?.toHttpUrlOrNull()?.host ?: url.host
-            val originScheme =
-                pageUrl?.toHttpUrlOrNull()?.scheme ?: referer?.toHttpUrlOrNull()?.scheme
-                ?: url.scheme
-            requestBuilder.header("Origin", "$originScheme://$originHost")
-        }
-
-        if (requestHeaders.entries.none { it.key.equals("Sec-Fetch-Site", ignoreCase = true) }) {
-            requestBuilder.header("Sec-Fetch-Site", "cross-site")
-        }
-        if (requestHeaders.entries.none { it.key.equals("Sec-Fetch-Mode", ignoreCase = true) }) {
-            requestBuilder.header("Sec-Fetch-Mode", "cors")
-        }
-        if (requestHeaders.entries.none { it.key.equals("Sec-Fetch-Dest", ignoreCase = true) }) {
-            requestBuilder.header("Sec-Fetch-Dest", "empty")
-        }
-        if (requestHeaders.entries.none { it.key.equals("Accept-Language", ignoreCase = true) }) {
-            requestBuilder.header("Accept-Language", getAcceptLanguage())
         }
 
         requestBuilder.method(method, null)
@@ -224,31 +140,6 @@ object CookieUtils {
         }
 
         return Pair(url, currentHeaders.toHeaders())
-    }
-
-    private fun getAcceptLanguage(): String {
-        val localeList = android.os.LocaleList.getDefault()
-        val locales = (0 until localeList.size()).map { localeList.get(it) }
-
-        val languages = mutableListOf<String>()
-        for ((index, locale) in locales.withIndex()) {
-            val tag = locale.toLanguageTag()
-            if (tag.isNotBlank() && !languages.contains(tag)) {
-                if (index == 0) {
-                    languages.add(tag)
-                } else {
-                    val q = String.format(Locale.US, "%.1f", (1.0 - index * 0.1).coerceAtLeast(0.3))
-                    languages.add("$tag;q=$q")
-                }
-            }
-        }
-
-        if (!languages.any { it.startsWith("en", ignoreCase = true) }) {
-            languages.add("en-US;q=0.8")
-            languages.add("en;q=0.7")
-        }
-
-        return languages.joinToString(",")
     }
 
     private fun readCookiesForUrlFromDb(url: String): String {

@@ -549,20 +549,14 @@ class WebTabFragment : BaseWebTabFragment() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     videoDetectionTabViewModel.pushNewVideoInfoToAll(state.info)
                 }
-                val loadings = videoDetectionTabViewModel.m3u8LoadingList.get()
-                loadings?.remove("m3u8")
-                videoDetectionTabViewModel.m3u8LoadingList.set(loadings?.toMutableSet())
+                videoDetectionTabViewModel.removeM3u8Loading("m3u8")
             }
             if (state is DownloadButtonStateLoading) {
-                val loadings = videoDetectionTabViewModel.m3u8LoadingList.get()
-                loadings?.add("m3u8")
-                videoDetectionTabViewModel.m3u8LoadingList.set(loadings?.toMutableSet())
+                videoDetectionTabViewModel.addM3u8Loading("m3u8")
                 videoDetectionTabViewModel.setButtonState(DownloadButtonStateLoading())
             }
             if (state is DownloadButtonStateCanNotDownload) {
-                val loadings = videoDetectionTabViewModel.m3u8LoadingList.get()
-                loadings?.remove("m3u8")
-                videoDetectionTabViewModel.m3u8LoadingList.set(loadings?.toMutableSet())
+                videoDetectionTabViewModel.removeM3u8Loading("m3u8")
                 videoDetectionTabViewModel.setButtonState(DownloadButtonStateCanNotDownload())
             }
         }
@@ -825,7 +819,7 @@ class WebTabFragment : BaseWebTabFragment() {
             val formats =
                 videoDetectionTabViewModel.selectedFormats.get()?.toMutableMap() ?: mutableMapOf()
             formats[videoInfo.id] = format
-            videoDetectionTabViewModel.selectedFormats.set(formats)
+            videoDetectionTabViewModel.setSelectedFormats(formats)
         }
 
         override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {

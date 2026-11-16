@@ -140,15 +140,6 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
 
     private var backPressedOnce = false
 
-    private val buttonStateCallback = object :
-        Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            lifecycleScope.launch(Dispatchers.Main) {
-                browserViewModel.setM3U8Event(videoDetectionModel.downloadButtonState.get())
-            }
-        }
-    }
-
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
@@ -331,7 +322,9 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
             onBackPressed()
         }
 
-        videoDetectionModel.downloadButtonState.addOnPropertyChangedCallback(buttonStateCallback)
+        videoDetectionModel.downloadButtonState.observe(viewLifecycleOwner) { state ->
+            browserViewModel.setM3U8Event(state)
+        }
 
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -358,7 +351,6 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     }
 
     override fun onDestroyView() {
-        videoDetectionModel.downloadButtonState.removeOnPropertyChangedCallback(buttonStateCallback)
         super.onDestroyView()
         browserViewModel.stop()
         videoDetectionModel.stop()

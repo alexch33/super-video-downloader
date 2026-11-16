@@ -1,9 +1,8 @@
 package com.myAllVideoBrowser.ui.main.home.browser.detectedVideos
 
-import androidx.databinding.Observable
-import androidx.databinding.ObservableBoolean
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.VideoRepository
 import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateCanDownload
@@ -36,25 +35,11 @@ class GlobalVideoDetectionModel @Inject constructor(
 
     private var pushJob: Job? = null
 
-    private val butonStateCallBack = object :
-        Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            when (downloadButtonState.get()) {
-                is DownloadButtonStateCanNotDownload -> downloadButtonIcon.set(R.drawable.refresh_24px)
-                is DownloadButtonStateCanDownload -> downloadButtonIcon.set(R.drawable.ic_download_24dp)
-                is DownloadButtonStateLoading -> {
-                    downloadButtonIcon.set(R.drawable.invisible_24px)
-                }
-            }
-        }
-    }
-
     override fun start() {
-        downloadButtonState.addOnPropertyChangedCallback(butonStateCallBack)
+        super.start()
     }
 
     override fun stop() {
-        downloadButtonState.removeOnPropertyChangedCallback(butonStateCallBack)
         super.stop()
     }
 
@@ -67,12 +52,12 @@ class GlobalVideoDetectionModel @Inject constructor(
         pushJob?.cancel()
     }
 
-    override fun hasCheckLoadingsRegular(): ObservableBoolean {
-        return ObservableBoolean(false)
+    override fun hasCheckLoadingsRegular(): LiveData<Boolean> {
+        return MutableLiveData(false)
     }
 
-    override fun hasCheckLoadingsM3u8(): ObservableBoolean {
-        return ObservableBoolean(false)
+    override fun hasCheckLoadingsM3u8(): LiveData<Boolean> {
+        return MutableLiveData(false)
     }
 
     @Synchronized
@@ -116,7 +101,7 @@ class GlobalVideoDetectionModel @Inject constructor(
 
         verifyVideoLinkJobStorage[taskUrl] =
             io.reactivex.rxjava3.core.Observable.create { emitter ->
-                downloadButtonState.set(DownloadButtonStateLoading())
+                setButtonState(DownloadButtonStateLoading())
                 val info = try {
                     if (isM3u8 || isMpd) {
                         videoRepository.getVideoInfoBySuperXDetector(
@@ -164,7 +149,7 @@ class GlobalVideoDetectionModel @Inject constructor(
                         }
                     }
                 } else {
-                    downloadButtonState.set(DownloadButtonStateCanNotDownload())
+                    setButtonState(DownloadButtonStateCanNotDownload())
                 }
             }
     }
@@ -236,14 +221,13 @@ class GlobalVideoDetectionModel @Inject constructor(
         if (!isDuplicateFound) {
             AppLogger.d("PUSHING $newInfo to list")
             nextSet.add(newInfo)
-            detectedVideosList.set(nextSet)
 
             // Cancel previous pending UI update to avoid flickering
             pushJob?.cancel()
             pushJob = viewModelScope.launch(Dispatchers.Main) {
-                downloadButtonState.set(DownloadButtonStateLoading())
+                setButtonState(DownloadButtonStateLoading())
                 delay(400)
-                downloadButtonState.set(DownloadButtonStateCanDownload(newInfo))
+                setButtonState(DownloadButtonStateCanDownload(newInfo))
             }
         }
     }

@@ -25,6 +25,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.bumptech.glide.Glide
@@ -397,7 +398,7 @@ class WebTabFragment : BaseWebTabFragment() {
         }
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint("SetJavaScriptEnabled", "WrongConstant")
     private fun configureWebView(fragmentWebTabBinding: FragmentWebTabBinding) {
         val currentWebView = this.webTab.getWebView() ?: return
 
@@ -435,6 +436,13 @@ class WebTabFragment : BaseWebTabFragment() {
         currentWebView.webViewClient = webViewClient
 
         val webSettings = currentWebView.settings
+
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.COOKIE_INTERCEPT)) {
+            WebSettingsCompat.setCookiesIncludedInShouldInterceptRequest(
+                webSettings,
+                true
+            )
+        }
 
         currentWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
         currentWebView.isScrollbarFadingEnabled = true

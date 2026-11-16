@@ -84,7 +84,6 @@
                 android:layout_height="0dp"
                 android:clipToPadding="false"
                 android:paddingBottom="80dp"
-                app:items="@{viewModel.progressInfos}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -93,7 +92,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="@dimen/padding_large"
-                android:visibility="@{viewModel.progressInfos.size() == 0 ? View.VISIBLE : View.GONE}"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
@@ -103,9 +102,9 @@
                     android:layout_height="120dp"
                     android:layout_marginBottom="@dimen/padding_normal"
                     android:adjustViewBounds="true"
+                    android:importantForAccessibility="no"
                     android:scaleType="centerInside"
                     android:src="@drawable/ic_empty"
-                    android:importantForAccessibility="no"
                     app:layout_constraintBottom_toTopOf="@id/tv_empty_text"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintRight_toRightOf="parent"

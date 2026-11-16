@@ -24,6 +24,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.BrowserViewModel
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTab
 import com.myAllVideoBrowser.ui.main.progress.WrapContentLinearLayoutManager
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.get
 import javax.inject.Inject
 
 class HistoryFragment : BaseFragment() {
@@ -67,6 +68,7 @@ class HistoryFragment : BaseFragment() {
             val searchHistoryManagerLayout =
                 WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
+            this.lifecycleOwner = viewLifecycleOwner
             this.viewModel = historyModel
             this.historyList.layoutManager = historyManagerLayout
             this.historyList.adapter = historyAdapter

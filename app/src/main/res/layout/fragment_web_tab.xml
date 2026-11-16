@@ -117,7 +117,7 @@
                             android:paddingStart="16dp"
                             android:paddingEnd="48dp"
                             android:singleLine="true"
-                            android:text="@{viewModel.getTabTextInput()}"
+                            android:text="@{viewModel.tabUrlInput}"
                             android:textColor="?attr/colorOnSurface"
                             android:textColorHint="?attr/colorOnSurfaceVariant"
                             android:textSize="@dimen/text_small"

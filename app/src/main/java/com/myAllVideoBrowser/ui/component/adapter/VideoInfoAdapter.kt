@@ -7,8 +7,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import androidx.databinding.DataBindingUtil
-import androidx.databinding.Observable
-import androidx.databinding.Observable.OnPropertyChangedCallback
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.myAllVideoBrowser.R
@@ -17,6 +16,7 @@ import com.myAllVideoBrowser.databinding.ItemVideoInfoBinding
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.FileUtil
+import com.myAllVideoBrowser.util.get
 
 class VideoInfoAdapter(
     private var videoInfoList: List<VideoInfo>,
@@ -33,16 +33,13 @@ class VideoInfoAdapter(
         private val appUtil: AppUtil
     ) :
         RecyclerView.ViewHolder(binding.root) {
-        private val selectedFormatsCallback = object : OnPropertyChangedCallback() {
-            override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-                val currentVideoInfo = binding.videoInfo ?: return
+        private val selectedFormatsObserver = Observer<Map<String, String>> { selectedFormatsMap ->
+            val currentVideoInfo = binding.videoInfo ?: return@Observer
 
-                val curSelected = model.selectedFormats.get()?.get(currentVideoInfo.id)
-                val foundFormat = currentVideoInfo.formats.allFormats().find { it.format == curSelected }
-
-                if (foundFormat != null) {
-                    model.selectedFormatUrl.set(foundFormat.url)
-                }
+            val curSelected = selectedFormatsMap[currentVideoInfo.id]
+            val foundFormat = currentVideoInfo.formats.allFormats().find { it.format == curSelected }
+            if (foundFormat != null) {
+                model.setSelectedFormatUrl(foundFormat.url ?: "")
             }
         }
 
@@ -53,7 +50,7 @@ class VideoInfoAdapter(
                 binding.videoInfo?.id?.let { videoId ->
                     val titlesF = model.formatsTitles.get()?.toMutableMap() ?: mutableMapOf()
                     titlesF[videoId] = title
-                    model.formatsTitles.set(titlesF)
+                    model.setFormatsTitles(titlesF)
                 }
             }
 
@@ -68,7 +65,7 @@ class VideoInfoAdapter(
 
                 val titles = model.formatsTitles.get()?.toMutableMap() ?: mutableMapOf()
                 titles[info.id] = titles[info.id] ?: info.title
-                model.formatsTitles.set(titles)
+                model.setFormatsTitles(titles)
 
                 val frmts = model.selectedFormats.get()?.toMutableMap() ?: mutableMapOf()
                 val selected = frmts[info.id]
@@ -76,12 +73,12 @@ class VideoInfoAdapter(
                 if (selected == null) {
                     frmts[info.id] = defaultFormat
                 }
-                model.selectedFormats.set(frmts)
+                model.setSelectedFormats(frmts)
 
                 if (info.isRegularDownload) {
-                    model.selectedFormatUrl.set(info.firstUrlToString)
+                    model.setSelectedFormatUrl(info.firstUrlToString)
                 } else {
-                    model.selectedFormatUrl.set(info.formats.allFormats().lastOrNull()?.url)
+                    model.setSelectedFormatUrl(info.formats.allFormats().lastOrNull()?.url ?: "")
                 }
 
                 videoInfo = info
@@ -183,14 +180,14 @@ class VideoInfoAdapter(
 
         fun addCallback() {
             if (!isCallbackAdded) {
-                model.selectedFormats.addOnPropertyChangedCallback(selectedFormatsCallback)
+                model.selectedFormats.observeForever(selectedFormatsObserver)
                 isCallbackAdded = true
             }
         }
 
         fun removeCallback() {
             if (isCallbackAdded) {
-                model.selectedFormats.removeOnPropertyChangedCallback(selectedFormatsCallback)
+                model.selectedFormats.removeObserver(selectedFormatsObserver)
                 isCallbackAdded = false
             }
         }

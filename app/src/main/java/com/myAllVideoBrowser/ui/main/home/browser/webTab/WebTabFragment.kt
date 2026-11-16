@@ -12,7 +12,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.EditText
@@ -20,7 +19,6 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.core.app.ShareCompat
-import androidx.databinding.Observable
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.Lifecycle
@@ -65,6 +63,7 @@ import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.FileNameCleaner
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -72,6 +71,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 class WebTabFragment : BaseWebTabFragment() {
 
@@ -141,7 +141,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
         tabViewModel.openPageEvent = tabManagerProvider.getOpenTabEvent()
         tabViewModel.closePageEvent = tabManagerProvider.getCloseTabEvent()
-        tabViewModel.thisTabIndex.set(thisTabIndex)
+        tabViewModel.setThisTabIndex(thisTabIndex)
 
         webTab = pageTabProvider.getPageTab(thisTabIndex)
         videoDetectionTabViewModel.initialUrl = webTab.getUrl()
@@ -153,6 +153,7 @@ class WebTabFragment : BaseWebTabFragment() {
         recreateWebView(savedInstanceState)
 
         dataBinding = FragmentWebTabBinding.inflate(inflater, container, false).apply {
+            this.lifecycleOwner = viewLifecycleOwner
             buildWebTabMenu(this.browserMenuButton, false)
 
             viewModel = tabViewModel
@@ -167,7 +168,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     this.etSearch.clearFocus()
                     viewModel?.viewModelScope?.launch {
-                        delay(400)
+                        delay(400.milliseconds)
                         tabViewModel.loadPage((this@apply.etSearch as EditText).text.toString())
                     }
                     false
@@ -192,7 +193,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
         addChangeRouteCallBack()
 
-        tabViewModel.userAgent.set(
+        tabViewModel.setUserAgent(
             webTab.getWebView()?.settings?.userAgentString
                 ?: BrowserFragment.MOBILE_USER_AGENT
         )
@@ -288,8 +289,6 @@ class WebTabFragment : BaseWebTabFragment() {
         tabViewModel.stop()
         webTab.setWebView(null)
         videoDetectionTabViewModel.stop()
-        tabManagerProvider.getTabsListChangeEvent()
-            .removeOnPropertyChangedCallback(tabsListChangeListener)
     }
 
     private fun handleOpenDetectedVideos() {
@@ -523,10 +522,10 @@ class WebTabFragment : BaseWebTabFragment() {
                         dataBinding.etSearch.selectAll()
 
                     }
-                    tabViewModel.isTabInputFocused.set(true)
+                    tabViewModel.setIsTabInputFocused(true)
                     appUtil.showSoftKeyboard(dataBinding.etSearch)
                 } else {
-                    tabViewModel.isTabInputFocused.set(false)
+                    tabViewModel.setIsTabInputFocused(false)
                     appUtil.hideSoftKeyboard(
                         dataBinding.etSearch
                     )
@@ -550,20 +549,14 @@ class WebTabFragment : BaseWebTabFragment() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     videoDetectionTabViewModel.pushNewVideoInfoToAll(state.info)
                 }
-                val loadings = videoDetectionTabViewModel.m3u8LoadingList.get()
-                loadings?.remove("m3u8")
-                videoDetectionTabViewModel.m3u8LoadingList.set(loadings?.toMutableSet())
+                videoDetectionTabViewModel.removeM3u8Loading("m3u8")
             }
             if (state is DownloadButtonStateLoading) {
-                val loadings = videoDetectionTabViewModel.m3u8LoadingList.get()
-                loadings?.add("m3u8")
-                videoDetectionTabViewModel.m3u8LoadingList.set(loadings?.toMutableSet())
+                videoDetectionTabViewModel.addM3u8Loading("m3u8")
                 videoDetectionTabViewModel.setButtonState(DownloadButtonStateLoading())
             }
             if (state is DownloadButtonStateCanNotDownload) {
-                val loadings = videoDetectionTabViewModel.m3u8LoadingList.get()
-                loadings?.remove("m3u8")
-                videoDetectionTabViewModel.m3u8LoadingList.set(loadings?.toMutableSet())
+                videoDetectionTabViewModel.removeM3u8Loading("m3u8")
                 videoDetectionTabViewModel.setButtonState(DownloadButtonStateCanNotDownload())
             }
         }
@@ -582,18 +575,13 @@ class WebTabFragment : BaseWebTabFragment() {
 
     private fun handleIndexChangeEvent() {
         tabManagerProvider.getTabsListChangeEvent()
-            .addOnPropertyChangedCallback(tabsListChangeListener)
-    }
-
-    private val tabsListChangeListener = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            val tabs = tabManagerProvider.getTabsListChangeEvent().get()
-            val webTab = tabs?.find { it.id == webTab.id }
-            val index = tabs?.indexOf(webTab)
-            if (index != null && index in tabs.indices) {
-                tabViewModel.thisTabIndex.set(index)
+            .observe(viewLifecycleOwner) { tabs ->
+                val webTab = tabs?.find { it.id == webTab.id }
+                val index = tabs?.indexOf(webTab)
+                if (index != null && index in tabs.indices) {
+                    tabViewModel.setThisTabIndex(index)
+                }
             }
-        }
     }
 
     private fun onWebViewPause() {
@@ -677,7 +665,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 videoDetectionTabViewModel.cancelAllCheckJobs()
             }
         }
-        
+
         override fun onShowLogsClicked() {
             navigateToDetectionLogs()
         }
@@ -696,7 +684,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
     private fun showAlertVideoFound() {
         if (!tabViewModel.isDownloadDialogShown.get()) {
-            tabViewModel.isDownloadDialogShown.set(true)
+            tabViewModel.setIsDownloadDialogShown(true)
             val client = getWebViewClientCompat(webTab.getWebView())
 
             client?.videoAlert =
@@ -708,14 +696,14 @@ class WebTabFragment : BaseWebTabFragment() {
                 R.string.view
             ) { dialog, _ ->
                 navigateToDownloads()
-                tabViewModel.isDownloadDialogShown.set(false)
+                tabViewModel.setIsDownloadDialogShown(false)
                 dialog.dismiss()
             }?.setNeutralButton(R.string.dontshow) { dialog, _ ->
                 mainActivity.settingsViewModel.setShowVideoAlertOff()
-                tabViewModel.isDownloadDialogShown.set(false)
+                tabViewModel.setIsDownloadDialogShown(false)
                 dialog.dismiss()
             }?.setNegativeButton(R.string.all_text_cancel) { dialog, _ ->
-                tabViewModel.isDownloadDialogShown.set(false)
+                tabViewModel.setIsDownloadDialogShown(false)
                 dialog.dismiss()
             }?.show()
         }
@@ -744,13 +732,7 @@ class WebTabFragment : BaseWebTabFragment() {
     }
 
     private fun addChangeRouteCallBack() {
-        mainActivity.mainViewModel.currentItem.removeOnPropertyChangedCallback(changeRouteCallBack)
-        mainActivity.mainViewModel.currentItem.addOnPropertyChangedCallback(changeRouteCallBack)
-    }
-
-    private val changeRouteCallBack = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            val indexRoute = mainActivity.mainViewModel.currentItem.get()
+        mainActivity.mainViewModel.currentItem.observe(viewLifecycleOwner) { indexRoute ->
             val currentTabIndexSelected = currentTabIndexProvider.getCurrentTabIndex().get()
             val isCurrentTabSelected =
                 currentTabIndexSelected == requireArguments().getInt(TAB_INDEX_KEY)
@@ -837,7 +819,7 @@ class WebTabFragment : BaseWebTabFragment() {
             val formats =
                 videoDetectionTabViewModel.selectedFormats.get()?.toMutableMap() ?: mutableMapOf()
             formats[videoInfo.id] = format
-            videoDetectionTabViewModel.selectedFormats.set(formats)
+            videoDetectionTabViewModel.setSelectedFormats(formats)
         }
 
         override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
@@ -864,7 +846,7 @@ class WebTabFragment : BaseWebTabFragment() {
         val isAd = isAdBlockOn &&
                 adBlockEngine.isAd(
                     url,
-                    tabViewModel.getTabTextInput().get() ?: "",
+                    tabViewModel.tabUrlInput.get() ?: "",
                     "xmlhttprequest"
                 )
         if (isAd) {

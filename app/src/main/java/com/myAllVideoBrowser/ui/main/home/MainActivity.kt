@@ -30,6 +30,7 @@ import com.myAllVideoBrowser.ui.main.proxies.ProxiesViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker
 import com.myAllVideoBrowser.util.fragment.FragmentFactory
@@ -71,17 +72,6 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private val screenOrientationCallback = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            val isLock = settingsViewModel.isLockPortrait.get()
-            requestedOrientation = if (isLock) {
-                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            } else {
-                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            }
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
 
@@ -89,6 +79,7 @@ class MainActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
 
         dataBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        dataBinding.lifecycleOwner = this
 
         ViewCompat.setOnApplyWindowInsetsListener(dataBinding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -105,7 +96,7 @@ class MainActivity : BaseActivity() {
         historyViewModel = ViewModelProvider(this, viewModelFactory)[HistoryViewModel::class.java]
 
         val isWebViewAvailable = (application as DLApplication).isWebViewAvailable
-        mainViewModel.isWebViewAvailable.set(isWebViewAvailable)
+        mainViewModel.setIsWebViewAvailable(isWebViewAvailable)
         if (!isWebViewAvailable) {
             Toast.makeText(
                 this,
@@ -122,7 +113,7 @@ class MainActivity : BaseActivity() {
         dataBinding.bottomBar.setOnItemSelectedListener { menuItem ->
             val isBrowser = mainViewModel.currentItem.get() == 0
             var goingToBrowser = false
-            when (menuItem.itemId) {
+            val targetPosition = when (menuItem.itemId) {
                 R.id.tab_browser -> {
                     if (!mainViewModel.isWebViewAvailable.get()) {
                         Toast.makeText(
@@ -132,13 +123,17 @@ class MainActivity : BaseActivity() {
                         ).show()
                         return@setOnItemSelectedListener false
                     }
-                    mainViewModel.currentItem.set(0)
                     goingToBrowser = true
+                    0
                 }
 
-                R.id.tab_progress -> mainViewModel.currentItem.set(1)
-                R.id.tab_video -> mainViewModel.currentItem.set(2)
-                else -> mainViewModel.currentItem.set(3)
+                R.id.tab_progress -> 1
+                R.id.tab_video -> 2
+                else -> 3
+            }
+
+            if (dataBinding.viewPager.currentItem != targetPosition) {
+                dataBinding.viewPager.currentItem = targetPosition
             }
 
             if (isBrowser && goingToBrowser && mainViewModel.isBrowserCurrent.get()) {
@@ -157,14 +152,14 @@ class MainActivity : BaseActivity() {
         if (intent.action == Intent.ACTION_VIEW) {
             val videoUrl = intent.dataString
             if (videoUrl != null) {
-                mainViewModel.openedUrl.set(videoUrl)
+                mainViewModel.setOpenedUrl(videoUrl)
             }
         }
 
         if (intent.action == Intent.ACTION_SEND) {
             val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
             if (sharedText != null) {
-                mainViewModel.openedText.set(sharedText)
+                mainViewModel.setOpenedText(sharedText)
             }
         }
 
@@ -243,12 +238,19 @@ class MainActivity : BaseActivity() {
 
         override fun onPageSelected(postion: Int) {
             if (postion == 0) {
-                // Если без этого, дровер отркрываетс когда не надо
-                Handler(Looper.getMainLooper()).postDelayed({
-                    mainViewModel.isBrowserCurrent.set(true)
-                }, 1000)
+                mainViewModel.setIsBrowserCurrent(true)
             } else {
-                mainViewModel.isBrowserCurrent.set(false)
+                mainViewModel.setIsBrowserCurrent(false)
+            }
+
+            val targetItemId = when (postion) {
+                0 -> R.id.tab_browser
+                1 -> R.id.tab_progress
+                2 -> R.id.tab_video
+                else -> R.id.tab_browser
+            }
+            if (dataBinding.bottomBar.selectedItemId != targetItemId) {
+                dataBinding.bottomBar.selectedItemId = targetItemId
             }
 
             val childrenCount = dataBinding.fragmentContainerView.childCount
@@ -261,18 +263,15 @@ class MainActivity : BaseActivity() {
                 dataBinding.viewPager.isUserInputEnabled = false
             }
 
-            mainViewModel.currentItem.set(postion)
+            mainViewModel.setCurrentItem(postion)
         }
     }
 
     override fun onDestroy() {
         if (isFinishing) {
             mainViewModel.stop()
-            settingsViewModel.isLockPortrait.removeOnPropertyChangedCallback(
-                screenOrientationCallback
-            )
-            val isNoActiveDownloadsNow = progressViewModel.progressInfos.get()
-                ?.find { it.downloadStatus == VideoTaskState.DOWNLOADING || it.downloadStatus == VideoTaskState.PREPARE || it.downloadStatus == VideoTaskState.PENDING } == null
+            val isNoActiveDownloadsNow = progressViewModel.progressInfos.value
+                .find { it.downloadStatus == VideoTaskState.DOWNLOADING || it.downloadStatus == VideoTaskState.PREPARE || it.downloadStatus == VideoTaskState.PENDING } == null
             if (isNoActiveDownloadsNow) {
                 AppLogger.d("No active downloads, shutdown local proxy worker...")
                 proxiesViewModel.shutdownProxyWorker()
@@ -293,6 +292,12 @@ class MainActivity : BaseActivity() {
 
     private fun handleScreenOrientationSettingChange() {
         // CHANGES HANDLING
-        settingsViewModel.isLockPortrait.addOnPropertyChangedCallback(screenOrientationCallback)
+        settingsViewModel.isLockPortrait.observe(this) { isLock ->
+            requestedOrientation = if (isLock == true) {
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            }
+        }
     }
 }

@@ -3,13 +3,13 @@ package com.myAllVideoBrowser.ui.component.adapter
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.databinding.ObservableField
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.myAllVideoBrowser.data.local.room.entity.VideoFormatEntity
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.databinding.DownloadCandidateItemBinding
 import com.myAllVideoBrowser.util.FileUtil
+import com.myAllVideoBrowser.util.get
 
 
 interface DownloadVideoListener {
@@ -48,7 +48,7 @@ interface CandidateFormatListener {
 
 class CandidatesListRecyclerViewAdapter(
     private val downloadCandidates: VideoInfo,
-    private val selectedFormat: ObservableField<Map<String, String>>,
+    private val selectedFormat: androidx.lifecycle.LiveData<Map<String, String>>,
     private val downloadDialogListener: CandidateFormatListener
 ) : RecyclerView.Adapter<CandidatesListRecyclerViewAdapter.CandidatesViewHolder>() {
 

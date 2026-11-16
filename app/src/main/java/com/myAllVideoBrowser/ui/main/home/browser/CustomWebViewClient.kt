@@ -23,6 +23,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabViewModel
 import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.SingleLiveEvent
 import com.myAllVideoBrowser.util.VideoUtils
+import com.myAllVideoBrowser.util.get
 import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
@@ -201,8 +202,10 @@ class CustomWebViewClient(
         }
 
         val headers = request.requestHeaders ?: emptyMap()
-        val acceptHeader = headers.entries.find { it.key.equals("Accept", ignoreCase = true) }?.value ?: ""
-        val requestedWith = headers.entries.find { it.key.equals("X-Requested-With", ignoreCase = true) }?.value
+        val acceptHeader =
+            headers.entries.find { it.key.equals("Accept", ignoreCase = true) }?.value ?: ""
+        val requestedWith =
+            headers.entries.find { it.key.equals("X-Requested-With", ignoreCase = true) }?.value
         val lowerUrl = url.lowercase()
 
         val resourceType = when {
@@ -210,17 +213,19 @@ class CustomWebViewClient(
             lowerUrl.contains(".js") || acceptHeader.contains("javascript") -> "script"
             lowerUrl.contains(".css") || acceptHeader.contains("css") -> "stylesheet"
             lowerUrl.contains(".png") || lowerUrl.contains(".jpg") || lowerUrl.contains(".jpeg") ||
-                lowerUrl.contains(".gif") || lowerUrl.contains(".webp") || lowerUrl.contains(".svg") ||
-                acceptHeader.contains("image") -> "image"
+                    lowerUrl.contains(".gif") || lowerUrl.contains(".webp") || lowerUrl.contains(".svg") ||
+                    acceptHeader.contains("image") -> "image"
+
             lowerUrl.contains(".mp4") || lowerUrl.contains(".m3u8") || lowerUrl.contains(".mpd") ||
-                lowerUrl.contains(".webm") || lowerUrl.contains(".mp3") || lowerUrl.contains(".m4a") -> "media"
+                    lowerUrl.contains(".webm") || lowerUrl.contains(".mp3") || lowerUrl.contains(".m4a") -> "media"
+
             requestedWith != null -> "xmlhttprequest"
             acceptHeader.contains("html") -> "subdocument"
             else -> "other"
         }
 
         if (settingsModel.isAdBlockOn.get()) {
-            val tabInputUrl = tabViewModel.getTabTextInput().get() ?: ""
+            val tabInputUrl = tabViewModel.tabUrlInput.get() ?: ""
             val sourceUrl = if (tabInputUrl.startsWith("http")) tabInputUrl else url
             val isAd = adBlockEngine.isAd(
                 url,
@@ -279,7 +284,7 @@ class CustomWebViewClient(
                             isCheckOnMp4
                         )
 
-                        val currentUrl = tabViewModel.getTabTextInput().get() ?: ""
+                        val currentUrl = tabViewModel.tabUrlInput.get() ?: ""
                         if (currentUrl != lastRegularCheckUrl) {
                             regularJobsStorage[lastRegularCheckUrl]?.forEach {
                                 it.dispose()

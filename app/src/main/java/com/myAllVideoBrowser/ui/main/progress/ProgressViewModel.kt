@@ -2,7 +2,6 @@ package com.myAllVideoBrowser.ui.main.progress
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.VideoMetadataManager
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
@@ -16,6 +15,9 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.asFlow
 import kotlinx.coroutines.withContext
@@ -30,7 +32,9 @@ class ProgressViewModel @Inject constructor(
     @VisibleForTesting
     internal val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
-    var progressInfos: ObservableField<List<ProgressInfo>> = ObservableField(emptyList())
+    private val _progressInfos = MutableStateFlow<List<ProgressInfo>>(emptyList())
+    val progressInfos: StateFlow<List<ProgressInfo>> = _progressInfos.asStateFlow()
+
     private val progressExecutor = Executors.newFixedThreadPool(3).asCoroutineDispatcher()
     private val singleThreadExecutor = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 
@@ -44,7 +48,7 @@ class ProgressViewModel @Inject constructor(
 
     fun stopAndSaveDownload(id: Long) {
         viewModelScope.launch(singleThreadExecutor) {
-            val inf = progressInfos.get()?.find { it.downloadId == id }
+            val inf = _progressInfos.value.find { it.downloadId == id }
             inf?.let { info ->
                 val videoInfo = VideoMetadataManager.getVideoInfo(info.id)
                 videoInfo?.let { video ->
@@ -59,7 +63,7 @@ class ProgressViewModel @Inject constructor(
 
     fun cancelDownload(id: Long, removeFile: Boolean) {
         viewModelScope.launch(singleThreadExecutor) {
-            val inf = progressInfos.get()?.find { it.downloadId == id }
+            val inf = _progressInfos.value.find { it.downloadId == id }
             inf?.let { progressInfo ->
                 val videoInfo = VideoMetadataManager.getVideoInfo(progressInfo.id)
 
@@ -70,15 +74,15 @@ class ProgressViewModel @Inject constructor(
                     systemDownloadManager.cancelDownload(ctx, vInfo, removeFile)
                 }
 
-                val newList = progressInfos.get()?.filter { it.id != progressInfo.id }
-                progressInfos.set(newList?.sortedBy { it.id })
+                val newList = _progressInfos.value.filter { it.id != progressInfo.id }
+                _progressInfos.value = newList.sortedBy { it.id }
             }
         }
     }
 
     fun pauseDownload(id: Long) {
         viewModelScope.launch(singleThreadExecutor) {
-            val inf = progressInfos.get()?.find { it.downloadId == id }
+            val inf = _progressInfos.value.find { it.downloadId == id }
             inf?.let { info ->
                 val videoInfo = VideoMetadataManager.getVideoInfo(info.id)
                 videoInfo?.let { video ->
@@ -93,7 +97,7 @@ class ProgressViewModel @Inject constructor(
 
     fun resumeDownload(id: Long) {
         viewModelScope.launch(singleThreadExecutor) {
-            val inf = progressInfos.get()?.find { it.downloadId == id }
+            val inf = _progressInfos.value.find { it.downloadId == id }
             inf?.let { info ->
                 val videoInfo = VideoMetadataManager.getVideoInfo(info.id)
                 videoInfo?.let { video ->
@@ -146,7 +150,7 @@ class ProgressViewModel @Inject constructor(
         viewModelScope.launch(progressExecutor) {
             try {
                 progressObservable().asFlow().collect { progressInfoList ->
-                    progressInfos.set(progressInfoList.sortedBy { it.id })
+                    _progressInfos.value = progressInfoList.sortedBy { it.id }
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()

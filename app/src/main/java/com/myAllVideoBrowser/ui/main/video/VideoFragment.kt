@@ -15,7 +15,6 @@ import androidx.core.content.FileProvider
 import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.core.view.get
-import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
@@ -75,14 +74,6 @@ class VideoFragment : BaseFragment() {
 
     private var backPressedCallback: OnBackPressedCallback? = null
 
-    private val navCallback = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            if (videoAdapter.isSelectionMode) {
-                exitSelectionMode()
-            }
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -93,6 +84,7 @@ class VideoFragment : BaseFragment() {
             val managerL =
                 WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
+            this.lifecycleOwner = viewLifecycleOwner
             this.viewModel = videoViewModel
             this.mainViewModel = mainActivity.mainViewModel
             this.rvVideo.layoutManager = managerL
@@ -114,8 +106,16 @@ class VideoFragment : BaseFragment() {
     }
 
     private fun setupNavigationObservers() {
-        mainActivity.mainViewModel.isBrowserCurrent.addOnPropertyChangedCallback(navCallback)
-        mainActivity.mainViewModel.currentItem.addOnPropertyChangedCallback(navCallback)
+        mainActivity.mainViewModel.isBrowserCurrent.observe(viewLifecycleOwner) {
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
+        }
+        mainActivity.mainViewModel.currentItem.observe(viewLifecycleOwner) {
+            if (videoAdapter.isSelectionMode) {
+                exitSelectionMode()
+            }
+        }
         mainActivity.mainViewModel.openNavDrawerEvent.observe(viewLifecycleOwner) {
             if (videoAdapter.isSelectionMode) {
                 exitSelectionMode()
@@ -124,9 +124,6 @@ class VideoFragment : BaseFragment() {
     }
 
     override fun onDestroyView() {
-        mainActivity.mainViewModel.isBrowserCurrent.removeOnPropertyChangedCallback(navCallback)
-        mainActivity.mainViewModel.currentItem.removeOnPropertyChangedCallback(navCallback)
-
         backPressedCallback?.remove()
         backPressedCallback = null
 
@@ -157,7 +154,7 @@ class VideoFragment : BaseFragment() {
             showDeleteConfirmationDialog {
                 val selectedIds = videoAdapter.selectedItems.toList()
                 val videosToDelete =
-                    videoViewModel.localVideos.get()?.filter { selectedIds.contains(it.id) }
+                    videoViewModel.localVideos.value?.filter { selectedIds.contains(it.id) }
                 videosToDelete?.forEach { video ->
                     context?.let { videoViewModel.deleteVideo(it, video) }
                 }
@@ -271,7 +268,7 @@ class VideoFragment : BaseFragment() {
     }
 
     private fun updateSelectionState() {
-        val totalItems = videoViewModel.localVideos.get()?.size ?: 0
+        val totalItems = videoViewModel.localVideos.value?.size ?: 0
         val selectedCount = videoAdapter.selectedItems.size
         dataBinding.isAllSelected = totalItems > 0 && selectedCount == totalItems
     }
@@ -327,7 +324,7 @@ class VideoFragment : BaseFragment() {
                     val target = File(targetDir, video.name)
 
                     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                        videoViewModel.isLoading.set(true)
+                        videoViewModel.setLoading(true)
                         try {
                             val isSuccess =
                                 fileUtil.moveMedia(requireContext(), video.uri, target.toUri())
@@ -345,7 +342,7 @@ class VideoFragment : BaseFragment() {
                                 ).show()
                             }
                         } finally {
-                            videoViewModel.isLoading.set(false)
+                            videoViewModel.setLoading(false)
                         }
                     }
                     true

@@ -19,6 +19,7 @@ import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.SingleLiveEvent
+import com.myAllVideoBrowser.util.get
 
 class CustomWebChromeClient(
     private val tabViewModel: WebTabViewModel,
@@ -106,9 +107,9 @@ class CustomWebChromeClient(
         super.onProgressChanged(view, newProgress)
         tabViewModel.setProgress(newProgress)
         if (newProgress == 100) {
-            tabViewModel.isShowProgress.set(false)
+            tabViewModel.setIsShowProgress(false)
         } else {
-            tabViewModel.isShowProgress.set(true)
+            tabViewModel.setIsShowProgress(true)
         }
     }
 

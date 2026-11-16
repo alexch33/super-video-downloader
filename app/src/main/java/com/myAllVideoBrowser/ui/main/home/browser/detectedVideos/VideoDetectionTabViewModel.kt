@@ -554,7 +554,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
         val threshold = settingsModel.videoDetectionTreshold.get()
 
         val finalUrlPair = runCatching {
-            CookieUtils.getFinalRedirectURL(URL(url.toUri().toString()), headersMap)
+            CookieUtils.getFinalRedirectURL(
+                URL(
+                    CookieUtils.sanitizeUrlOrText(url).toUri().toString()
+                ), headersMap
+            )
         }.getOrNull() ?: return
 
         val cookies = runCatching {
@@ -632,7 +636,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
         url: String, threshold: Int, isCheckOnAudio: Boolean, isCheckOnVideo: Boolean
     ) {
         val finalUrlPairEmpty = runCatching {
-            CookieUtils.getFinalRedirectURL(URL(url.toUri().toString()), emptyMap())
+            CookieUtils.getFinalRedirectURL(
+                URL(
+                    CookieUtils.sanitizeUrlOrText(url).toUri().toString()
+                ), emptyMap()
+            )
         }.getOrNull() ?: return
 
         runCatching {

@@ -8,6 +8,7 @@ import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
 import com.myAllVideoBrowser.data.repository.HistoryRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
+import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.SingleLiveEvent
 import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
@@ -228,10 +229,10 @@ class WebTabViewModel @Inject constructor(
     }
 
     private fun setTabUrl(url: String) {
-        _tabUrl.postValue(url)
+        _tabUrl.postValue(CookieUtils.sanitizeUrlOrText(url))
     }
 
     private fun setCurrentTitle(title: String) {
-        _currentTitle.value = title
+        _currentTitle.value = CookieUtils.sanitizeUrlOrText(title)
     }
 }

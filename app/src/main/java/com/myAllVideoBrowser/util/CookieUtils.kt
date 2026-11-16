@@ -17,6 +17,8 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Date
+import java.util.Locale
+import androidx.core.net.toUri
 
 
 object CookieUtils {
@@ -127,7 +129,7 @@ object CookieUtils {
             requestBuilder.header("Sec-Fetch-Dest", "empty")
         }
         if (requestHeaders.entries.none { it.key.equals("Accept-Language", ignoreCase = true) }) {
-            requestBuilder.header("Accept-Language", "en-US,en;q=0.9")
+            requestBuilder.header("Accept-Language", getAcceptLanguage())
         }
 
         requestBuilder.method(method, null)
@@ -174,6 +176,15 @@ object CookieUtils {
         return cookies
     }
 
+    fun sanitizeUrlOrText(data: String?): String {
+        if (data.isNullOrBlank()) return ""
+        return data
+            .replace("\n", "")
+            .replace("\r", "")
+            .replace(Regex("[\\p{Cntrl}&&[^\r\n\t]]"), "")
+            .trim()
+    }
+
     fun getFinalRedirectURL(url: URL, headers: Map<String, String>): Pair<URL, Headers>? {
         val currentHeaders = headers.toMutableMap()
 
@@ -183,12 +194,16 @@ object CookieUtils {
             for (header in currentHeaders) con.setRequestProperty(header.key, header.value)
             try {
                 con.connect()
-            } catch (_: Throwable) {
-
+            } catch (e: Throwable) {
+                AppLogger.d("Connection error during redirect: ${e.message}")
+                return Pair(url, currentHeaders.toHeaders())
             }
+
             val resCode = con.responseCode
             if (resCode == HttpURLConnection.HTTP_SEE_OTHER || resCode == HttpURLConnection.HTTP_MOVED_PERM || resCode == HttpURLConnection.HTTP_MOVED_TEMP) {
-                var location = con.getHeaderField("Location")
+                var location =
+                    con.getHeaderField("Location") ?: return Pair(url, currentHeaders.toHeaders())
+                location = sanitizeUrlOrText(location)
 
                 val origin = con.getHeaderField("Access-Control-Allow-Origin")
 
@@ -200,15 +215,40 @@ object CookieUtils {
                     }
                 }
                 if (origin != null) {
-                    currentHeaders["Referer"] = origin
+                    currentHeaders["Referer"] = sanitizeUrlOrText(origin)
                 }
                 return getFinalRedirectURL(URL(location), currentHeaders)
             }
-        } catch (_: Throwable) {
-
+        } catch (e: Throwable) {
+            AppLogger.d("Redirect resolution error: ${e.message}")
         }
 
         return Pair(url, currentHeaders.toHeaders())
+    }
+
+    private fun getAcceptLanguage(): String {
+        val localeList = android.os.LocaleList.getDefault()
+        val locales = (0 until localeList.size()).map { localeList.get(it) }
+
+        val languages = mutableListOf<String>()
+        for ((index, locale) in locales.withIndex()) {
+            val tag = locale.toLanguageTag()
+            if (tag.isNotBlank() && !languages.contains(tag)) {
+                if (index == 0) {
+                    languages.add(tag)
+                } else {
+                    val q = String.format(Locale.US, "%.1f", (1.0 - index * 0.1).coerceAtLeast(0.3))
+                    languages.add("$tag;q=$q")
+                }
+            }
+        }
+
+        if (!languages.any { it.startsWith("en", ignoreCase = true) }) {
+            languages.add("en-US;q=0.8")
+            languages.add("en;q=0.7")
+        }
+
+        return languages.joinToString(",")
     }
 
     private fun readCookiesForUrlFromDb(url: String): String {
@@ -219,7 +259,7 @@ object CookieUtils {
         }
 
         val chrome = ChromeBrowser()
-        val cookies = chrome.getCookiesNetscapeForDomain(Uri.parse(url).host, cookiesDbFile)
+        val cookies = chrome.getCookiesNetscapeForDomain(url.toUri().host, cookiesDbFile)
 
         return cookies.trim()
     }

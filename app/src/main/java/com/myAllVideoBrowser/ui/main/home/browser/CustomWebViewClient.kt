@@ -236,10 +236,30 @@ val injectJsInterceptor = """
                     return '';
                 }
 
+                function isSegmentUrl(url) {
+                    if (!url) return false;
+                    var u = url.toLowerCase();
+                    return u.indexOf('.m4s') !== -1
+                        || u.indexOf('.ts') !== -1
+                        || u.indexOf('.mp4') !== -1
+                        || u.indexOf('.webm') !== -1
+                        || u.indexOf('.m4a') !== -1
+                        || u.indexOf('.aac') !== -1
+                        || u.indexOf('_chunk_') !== -1
+                        || u.indexOf('seg-') !== -1
+                        || u.indexOf('/chunk') !== -1;
+                }
+
                 function checkContentAndNotify(url, headersPayload, text) {
                     if (!url) return;
+                    if (isSegmentUrl(url)) return;
+
                     var respHeaders = headersPayload.response || {};
                     var contentType = respHeaders['content-type'] || respHeaders['Content-Type'] || '';
+                    if (contentType.indexOf('video/') !== -1 || contentType.indexOf('audio/') !== -1) {
+                        return;
+                    }
+
                     var lowerUrl = url.toLowerCase();
 
                     var isManifest = (text && (text.indexOf('#EXTM3U') !== -1 || text.indexOf('<MPD') !== -1 || text.toLowerCase().indexOf('<mpd') !== -1))

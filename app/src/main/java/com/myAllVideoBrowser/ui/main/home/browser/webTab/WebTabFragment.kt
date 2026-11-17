@@ -67,6 +67,8 @@ import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.FileNameCleaner
 import com.myAllVideoBrowser.util.VideoUtils
 import com.myAllVideoBrowser.util.get
+import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
+import com.myAllVideoBrowser.util.hls_parser.MpdPlaylistParser
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -878,13 +880,33 @@ class WebTabFragment : BaseWebTabFragment() {
             val isMpd = content.contains("<MPD", ignoreCase = true) || lowerUrl.contains(".mpd")
 
             if (isM3u8) {
-                AppLogger.d("m3u8 intercepted: $type $url")
+                val manifest = try {
+                    HlsPlaylistParser.parse(content, url)
+                } catch (e: Exception) {
+                    AppLogger.e("HLS PARSE ERROR: ${e.message}")
+                }
+                AppLogger.d("m3u8 intercepted: $type $url \n$manifest")
             }
             if (isMpd) {
-                AppLogger.d("mpd intercepted: $type $url")
+                val manifest = try {
+                    MpdPlaylistParser.parse(content, url)
+                } catch (e: Exception) {
+                    AppLogger.e("MPD PARSE ERROR: ${e.message}")
+                }
+                AppLogger.d("mpd intercepted: $type $url \n$manifest")
             }
             if (!isM3u8 && !isMpd) {
-                AppLogger.d("m3u8 or mpd intercepted: $type $url")
+                val manifest = try {
+                    HlsPlaylistParser.parse(content, url)
+                } catch (e: Exception) {
+                    AppLogger.e("UNKNOWN HLS PARSE ERROR: ${e.message}")
+                    try {
+                        MpdPlaylistParser.parse(content, url)
+                    } catch (e: Exception) {
+                        AppLogger.e("UNKNOWN MPD PARSE ERROR: ${e.message}")
+                    }
+                }
+                AppLogger.d("m3u8 or mpd intercepted: $type $url \n$manifest")
             }
         },
         onVideoReceived = { url, headersJson ->

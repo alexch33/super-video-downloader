@@ -310,6 +310,145 @@ val injectJsInterceptor = """
                     };
                 }
 
+                // ===================== hls.js =====================
+                function applyHlsHooks(HlsClass) {
+                    if (!HlsClass || HlsClass.__hlsHooked) return;
+                    HlsClass.__hlsHooked = true;
+
+                    var origLoadSource = HlsClass.prototype ? HlsClass.prototype.loadSource : null;
+                    if (origLoadSource) {
+                        HlsClass.prototype.loadSource = function(url) {
+                            console.log('HLS_LOAD_SOURCE: ' + url);
+                            if (url) {
+                                notifyAndroid(url, getHeaderPayload(null, null), '');
+                            }
+                            return origLoadSource.apply(this, arguments);
+                        };
+                    }
+
+                    if (HlsClass.DefaultConfig && HlsClass.DefaultConfig.loader) {
+                        var OrigLoader = HlsClass.DefaultConfig.loader;
+                        function HookedHlsLoader(config) {
+                            var loaderInstance = new OrigLoader(config);
+                            var origLoad = loaderInstance.load;
+                            if (origLoad) {
+                                loaderInstance.load = function(context, config, callbacks) {
+                                    var origOnSuccess = callbacks ? callbacks.onSuccess : null;
+                                    if (callbacks && origOnSuccess) {
+                                        callbacks.onSuccess = function(response, stats, context, networkDetails) {
+                                            try {
+                                                var url = (context && context.url) || (response && response.url) || '';
+                                                var data = response ? response.data : null;
+                                                var text = '';
+                                                if (typeof data === 'string') {
+                                                    text = data;
+                                                } else if (data && data instanceof ArrayBuffer) {
+                                                    text = new TextDecoder("utf-8").decode(data);
+                                                }
+                                                checkContentAndNotify(url, getHeaderPayload(null, null), text);
+                                            } catch(e) {}
+                                            return origOnSuccess.apply(this, arguments);
+                                        };
+                                    }
+                                    return origLoad.apply(this, arguments);
+                                };
+                            }
+                            return loaderInstance;
+                        }
+                        HookedHlsLoader.prototype = OrigLoader.prototype;
+                        HlsClass.DefaultConfig.loader = HookedHlsLoader;
+                    }
+                }
+
+                if (win.Hls) {
+                    applyHlsHooks(win.Hls);
+                } else {
+                    var _hlsVal = win.Hls;
+                    try {
+                        Object.defineProperty(win, 'Hls', {
+                            get: function() { return _hlsVal; },
+                            set: function(val) {
+                                _hlsVal = val;
+                                if (val) applyHlsHooks(val);
+                            },
+                            configurable: true,
+                            enumerable: true
+                        });
+                    } catch(e) {}
+                }
+
+                // ===================== Shaka Player =====================
+                function applyShakaHooks(shakaObj) {
+                    if (!shakaObj || shakaObj.__shakaHooked) return;
+                    shakaObj.__shakaHooked = true;
+
+                    if (shakaObj.Player && shakaObj.Player.prototype) {
+                        var origShakaLoad = shakaObj.Player.prototype.load;
+                        if (origShakaLoad) {
+                            shakaObj.Player.prototype.load = function(assetUri) {
+                                console.log('SHAKA_LOAD_MANIFEST: ' + assetUri);
+                                if (assetUri) {
+                                    notifyAndroid(assetUri, getHeaderPayload(null, null), '');
+                                }
+                                return origShakaLoad.apply(this, arguments);
+                            };
+                        }
+                    }
+                }
+
+                if (win.shaka) {
+                    applyShakaHooks(win.shaka);
+                } else {
+                    var _shakaVal = win.shaka;
+                    try {
+                        Object.defineProperty(win, 'shaka', {
+                            get: function() { return _shakaVal; },
+                            set: function(val) {
+                                _shakaVal = val;
+                                if (val) applyShakaHooks(val);
+                            },
+                            configurable: true,
+                            enumerable: true
+                        });
+                    } catch(e) {}
+                }
+
+                // ===================== Dash.js =====================
+                function applyDashHooks(dashObj) {
+                    if (!dashObj || dashObj.__dashHooked) return;
+                    dashObj.__dashHooked = true;
+
+                    if (dashObj.MediaPlayer && dashObj.MediaPlayer.prototype) {
+                        var origAttachSource = dashObj.MediaPlayer.prototype.attachSource;
+                        if (origAttachSource) {
+                            dashObj.MediaPlayer.prototype.attachSource = function(url) {
+                                console.log('DASH_LOAD_MANIFEST: ' + url);
+                                if (url) {
+                                    notifyAndroid(url, getHeaderPayload(null, null), '');
+                                }
+                                return origAttachSource.apply(this, arguments);
+                            };
+                        }
+                    }
+                }
+
+                if (win.dashjs) {
+                    applyDashHooks(win.dashjs);
+                } else {
+                    var _dashVal = win.dashjs;
+                    try {
+                        Object.defineProperty(win, 'dashjs', {
+                            get: function() { return _dashVal; },
+                            set: function(val) {
+                                _dashVal = val;
+                                if (val) applyDashHooks(val);
+                            },
+                            configurable: true,
+                            enumerable: true
+                        });
+                    } catch(e) {}
+                }
+
                 console.log('Manifest and POST interceptor installed on window');
             } catch(e) {}
         }

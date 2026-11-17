@@ -53,7 +53,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.HistoryProvider
 import com.myAllVideoBrowser.ui.main.home.browser.PageTabProvider
 import com.myAllVideoBrowser.ui.main.home.browser.TAB_INDEX_KEY
 import com.myAllVideoBrowser.ui.main.home.browser.TabManagerProvider
-import com.myAllVideoBrowser.ui.main.home.browser.WebPostBridge
+import com.myAllVideoBrowser.ui.main.home.browser.JsWebBridge
 import com.myAllVideoBrowser.ui.main.home.browser.WorkerEventProvider
 import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
@@ -65,6 +65,7 @@ import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.FileNameCleaner
+import com.myAllVideoBrowser.util.VideoUtils
 import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import kotlinx.coroutines.Dispatchers
@@ -492,8 +493,8 @@ class WebTabFragment : BaseWebTabFragment() {
         }
 
         currentWebView.addJavascriptInterface(
-            shouldInterceptPostRequests,
-            WebPostBridge.BRIDGE_NAME
+            jsWebBridge,
+            JsWebBridge.BRIDGE_NAME
         )
 
         fragmentWebTabBinding.webviewContainer.addView(
@@ -851,10 +852,10 @@ class WebTabFragment : BaseWebTabFragment() {
         }
     }
 
-    private val shouldInterceptPostRequests = WebPostBridge(
+    private val jsWebBridge = JsWebBridge(
         onIntercept = { url, body ->
             if (CustomWebViewClient.isBotChallengeOrCaptcha(url)) {
-                return@WebPostBridge false
+                return@JsWebBridge false
             }
 
             val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
@@ -869,21 +870,28 @@ class WebTabFragment : BaseWebTabFragment() {
             }
             isAd
         },
-        onManifestReceived = { url, headers, content ->
+        onManifestReceived = { url, headersJson, content ->
+            val headersMap = VideoUtils.parseRequestHeadersToMap(headersJson)
+            val type = VideoUtils.parseInterceptorType(headersJson)
             val lowerUrl = url.lowercase()
             val isM3u8 = content.contains("#EXTM3U") || lowerUrl.contains(".m3u8")
             val isMpd = content.contains("<MPD", ignoreCase = true) || lowerUrl.contains(".mpd")
-            val headersJson = JSONObject(headers)
 
             if (isM3u8) {
-                AppLogger.d("m3u8 intercepted: ${headersJson["type"]} $url")
+                AppLogger.d("m3u8 intercepted: $type $url")
             }
             if (isMpd) {
-                AppLogger.d("mpd intercepted: ${headersJson["type"]} $url")
+                AppLogger.d("mpd intercepted: $type $url")
             }
             if (!isM3u8 && !isMpd) {
-                AppLogger.d("m3u8 or mpd intercepted: ${headersJson["type"]} $url")
+                AppLogger.d("m3u8 or mpd intercepted: $type $url")
             }
+        },
+        onVideoReceived = { url, headersJson ->
+            val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
+            val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
+            val type = VideoUtils.parseInterceptorType(headersJson)
+            AppLogger.d("Video intercepted ($type): $url \n$requestHeaders\n$responseHeaders")
         }
     )
 }

@@ -2,11 +2,17 @@ package com.myAllVideoBrowser.ui.main.home.browser
 
 import android.webkit.JavascriptInterface
 
-class WebPostBridge(
+class JsWebBridge(
     private val onIntercept: (url: String, body: String) -> Boolean,
-    private val onManifestReceived: ((url: String, headersJson: String, content: String) -> Unit)? = null
+    private val onManifestReceived: ((url: String, headersJson: String, content: String) -> Unit)? = null,
+    private val onVideoReceived: ((url: String, headersJson: String) -> Unit)? = null
 ) {
-    constructor(onIntercept: (url: String, body: String) -> Boolean) : this(onIntercept, null)
+    constructor(onIntercept: (url: String, body: String) -> Boolean) : this(onIntercept, null, null)
+    constructor(
+        onIntercept: (url: String, body: String) -> Boolean,
+        onManifestReceived: ((url: String, headersJson: String, content: String) -> Unit)?
+    ) : this(onIntercept, onManifestReceived, null)
+
     companion object {
         const val BRIDGE_NAME = "AndroidBridge"
     }
@@ -22,5 +28,10 @@ class WebPostBridge(
     @JavascriptInterface
     fun onManifest(url: String, headersJson: String, content: String) {
         onManifestReceived?.invoke(url, headersJson, content)
+    }
+
+    @JavascriptInterface
+    fun onVideoDetected(url: String, headersJson: String) {
+        onVideoReceived?.invoke(url, headersJson)
     }
 }

@@ -169,6 +169,61 @@ val injectJsInterceptor = """
                     } catch (e) {}
                 }
 
+                function notifyAndroidVideo(url, headersObj) {
+                    try {
+                        var bridge = win.AndroidBridge || window.AndroidBridge;
+                        if (bridge && bridge.onVideoDetected) {
+                            bridge.onVideoDetected(
+                                url,
+                                JSON.stringify(headersObj || {})
+                            );
+                        }
+                    } catch (e) {}
+                }
+
+                function isVideoUrlOrType(url, contentType) {
+                    if (!url) return false;
+                    var u = url.toLowerCase();
+
+                    var isSegment = u.indexOf('.ts') !== -1
+                        || u.indexOf('.m4s') !== -1
+                        || u.indexOf('.aac') !== -1
+                        || u.indexOf('seg-') !== -1;
+
+                    if (isSegment) return false;
+
+                    var cleanUrl = u.split('?')[0].split('#')[0];
+                    var hasVideoExt = cleanUrl.endsWith('.mp4')
+                        || cleanUrl.endsWith('.webm')
+                        || cleanUrl.endsWith('.ogv')
+                        || cleanUrl.endsWith('.mov')
+                        || cleanUrl.endsWith('.m4v')
+                        || cleanUrl.endsWith('.mkv')
+                        || cleanUrl.endsWith('.avi');
+
+                    var hasVideoContentType = false;
+                    if (contentType) {
+                        var ct = contentType.toLowerCase();
+                        var isTransportStream = ct.indexOf('mp2t') !== -1 || ct.indexOf('vnd.dlna.mpeg-tts') !== -1;
+                        hasVideoContentType = (ct.indexOf('video/') !== -1 && !isTransportStream)
+                            || ct.indexOf('application/vnd.apple.mpegurl') !== -1
+                            || ct.indexOf('application/dash+xml') !== -1;
+                    }
+
+                    return hasVideoExt || hasVideoContentType;
+                }
+
+                function checkUrlOrHeadersAndNotify(url, headersPayload) {
+                    if (!url) return;
+                    var respHeaders = headersPayload.response || {};
+                    var contentType = respHeaders['content-type'] || respHeaders['Content-Type'] || '';
+
+                    if (isVideoUrlOrType(url, contentType)) {
+                        console.log('VIDEO_MATCHED: ' + url);
+                        notifyAndroidVideo(url, headersPayload);
+                    }
+                }
+
                 function getXhrResponseText(xhr) {
                     try {
                         if (!xhr.responseType || xhr.responseType === 'text') {
@@ -182,18 +237,24 @@ val injectJsInterceptor = """
                 }
 
                 function checkContentAndNotify(url, headersPayload, text) {
-                    if (!text || typeof text !== 'string') return;
-                    var trimmed = text.trim();
-                    if (!trimmed) return;
+                    if (!url) return;
+                    var respHeaders = headersPayload.response || {};
+                    var contentType = respHeaders['content-type'] || respHeaders['Content-Type'] || '';
+                    var lowerUrl = url.toLowerCase();
 
-                    var lowerText = trimmed.toLowerCase();
-                    var isM3u8 = trimmed.indexOf('#EXTM3U') !== -1;
-                    var isMpd = trimmed.indexOf('<MPD') !== -1 || lowerText.indexOf('<mpd') !== -1;
+                    var isManifest = (text && (text.indexOf('#EXTM3U') !== -1 || text.indexOf('<MPD') !== -1 || text.toLowerCase().indexOf('<mpd') !== -1))
+                        || lowerUrl.indexOf('.m3u8') !== -1
+                        || lowerUrl.indexOf('.mpd') !== -1
+                        || contentType.indexOf('application/vnd.apple.mpegurl') !== -1
+                        || contentType.indexOf('application/dash+xml') !== -1;
 
-                    if (isM3u8 || isMpd) {
-                        console.log('MANIFEST_MATCHED (' + (isM3u8 ? 'M3U8' : 'MPD') + '): ' + url);
-                        notifyAndroid(url, headersPayload, trimmed);
+                    if (isManifest) {
+                        console.log('MANIFEST_MATCHED: ' + url);
+                        notifyAndroid(url, headersPayload, text || '');
+                        return;
                     }
+
+                    checkUrlOrHeadersAndNotify(url, headersPayload);
                 }
 
                 // ===================== XMLHttpRequest =====================
@@ -229,6 +290,15 @@ val injectJsInterceptor = """
                         var self = this;
 
                         function processXhrResponse() {
+                            if (self.readyState >= 2 && !self._headersChecked) {
+                                self._headersChecked = true;
+                                try {
+                                    var finalUrl = self._url || self.responseURL || '';
+                                    var respHeaders = getXhrResponseHeaders(self);
+                                    var headerPayload = getHeaderPayload(self._headers, respHeaders, "xhr");
+                                    checkUrlOrHeadersAndNotify(finalUrl, headerPayload);
+                                } catch (e) {}
+                            }
                             if (self.readyState === 4) {
                                 try {
                                     var finalUrl = self._url || self.responseURL || '';
@@ -260,7 +330,7 @@ val injectJsInterceptor = """
                 // ===================== fetch =====================
                 if (win.fetch) {
                     var originalFetch = win.fetch;
-                    win.fetch = function(input, init) {
+                    window.fetch = function(input, init) {
                         init = init || {};
                         var url = '';
                         var reqHeaders = {};
@@ -297,13 +367,17 @@ val injectJsInterceptor = """
 
                         return originalFetch.apply(this, arguments).then(function(response) {
                             try {
-                                if (response && response.clone) {
+                                if (response) {
                                     var finalUrl = response.url || url;
                                     var respHeaders = headersToObject(response.headers);
                                     var headerPayload = getHeaderPayload(reqHeaders, respHeaders, "fetch");
-                                    response.clone().text().then(function(text) {
-                                        checkContentAndNotify(finalUrl, headerPayload, text);
-                                    }).catch(function(e){});
+                                    checkUrlOrHeadersAndNotify(finalUrl, headerPayload);
+
+                                    if (response.clone) {
+                                        response.clone().text().then(function(text) {
+                                            checkContentAndNotify(finalUrl, headerPayload, text);
+                                        }).catch(function(e){});
+                                    }
                                 }
                             } catch (e) {}
                             return response;

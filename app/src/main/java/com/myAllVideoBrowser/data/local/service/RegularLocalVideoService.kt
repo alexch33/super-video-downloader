@@ -32,6 +32,14 @@ class RegularLocalVideoService @Inject constructor() {
                 return null
             }
 
+            val lowerUrl = url.lowercase()
+            // Do not treat HLS (.m3u8) or DASH (.mpd) playlists as regular audio/video files
+            if (lowerUrl.contains(".m3u8") || lowerUrl.contains(".mpd") ||
+                contentType.contains("mpegurl", true) ||
+                contentType.contains("dash+xml", true)) {
+                return null
+            }
+
             val isAudio = contentType.contains("audio", true) ||
                     url.endsWith(".mp3", true) ||
                     url.endsWith(".m4a", true) ||
@@ -40,7 +48,6 @@ class RegularLocalVideoService @Inject constructor() {
 
             val isVideo = contentType.contains("video", true) ||
                     url.endsWith(".mp4", true) ||
-                    url.endsWith(".m3u8", true) ||
                     url.endsWith(".webm", true) ||
                     url.endsWith(".mkv", true) ||
                     url.endsWith(".mov", true)

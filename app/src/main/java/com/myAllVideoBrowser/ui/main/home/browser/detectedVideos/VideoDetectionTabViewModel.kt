@@ -314,6 +314,51 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
     }
 
+    open fun getVideoAudioInfoLocal(
+        url: String,
+        headers: Map<String, String> = emptyMap(),
+        contentType: String = "",
+        contentLength: Long = 0L,
+        hlsTitle: String? = null
+    ) {
+        val taskUrl = url.trim()
+        val job = verifyVideoLinkJobStorage[taskUrl]
+        if (job != null && !job.isDisposed || taskUrl.isEmpty()) {
+            return
+        }
+
+        addRegularLoading(url)
+
+        if (_detectedVideosList.value?.isEmpty() == true) {
+            setButtonState(DownloadButtonStateLoading())
+        }
+
+        verifyVideoLinkJobStorage[taskUrl] =
+            io.reactivex.rxjava3.core.Observable.create { emitter ->
+                val title = hlsTitle ?: webTabModel?.currentTitle?.get() ?: "no_title"
+                val origUrl = webTabModel?.tabUrlInput?.get() ?: ""
+                val info = videoRepository.getVideoAudioInfoLocal(url, headers, contentType, contentLength, title, origUrl)
+                if (info != null) {
+                    emitter.onNext(info)
+                } else {
+                    emitter.onNext(VideoInfo(id = ""))
+                }
+                emitter.onComplete()
+            }.doOnTerminate {
+                removeRegularLoading(url)
+                verifyVideoLinkJobStorage.remove(taskUrl)
+            }.observeOn(baseSchedulers.computation).subscribeOn(baseSchedulers.videoService)
+                .subscribe { info ->
+                    if (info.id.isNotEmpty()) {
+                        viewModelScope.launch(executorPusher) {
+                            pushNewVideoInfoToAll(info)
+                        }
+                    } else {
+                        setButtonState(DownloadButtonStateCanNotDownload())
+                    }
+                }
+    }
+
     open suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
         if (newInfo.formats.allFormats().isEmpty() || newInfo.id.isEmpty()) {
             return

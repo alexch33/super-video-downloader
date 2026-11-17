@@ -26,6 +26,15 @@ interface VideoRepository {
         headers: Map<String, String> = emptyMap()
     ): VideoInfo?
 
+    fun getVideoAudioInfoLocal(
+        url: String,
+        headers: Map<String, String>,
+        contentType: String,
+        contentLength: Long,
+        title: String = "no_title",
+        originalUrl: String = ""
+    ): VideoInfo?
+
     fun saveVideoInfo(videoInfo: VideoInfo)
 }
 
@@ -68,6 +77,17 @@ class VideoRepositoryImpl @Inject constructor(
         headers: Map<String, String>
     ): VideoInfo? {
         return localDataSource.getVideoInfoOffline(baseUrl, manifestBody, isM3u8, isMpd, headers)
+    }
+
+    override fun getVideoAudioInfoLocal(
+        url: String,
+        headers: Map<String, String>,
+        contentType: String,
+        contentLength: Long,
+        title: String,
+        originalUrl: String
+    ): VideoInfo? {
+        return localDataSource.getVideoAudioInfoLocal(url, headers, contentType, contentLength, title, originalUrl)
     }
 
     override fun saveVideoInfo(videoInfo: VideoInfo) {

@@ -41,6 +41,17 @@ class VideoRemoteDataSource @Inject constructor(
         return null
     }
 
+    override fun getVideoAudioInfoLocal(
+        url: String,
+        headers: Map<String, String>,
+        contentType: String,
+        contentLength: Long,
+        title: String,
+        originalUrl: String
+    ): VideoInfo? {
+        return null
+    }
+
     override fun saveVideoInfo(videoInfo: VideoInfo) {
     }
 }

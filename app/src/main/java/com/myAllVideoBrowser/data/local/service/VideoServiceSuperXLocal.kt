@@ -25,7 +25,7 @@ class VideoServiceSuperXLocal @Inject constructor() {
             "MPD"
         }
 
-        DetectionLogger.log("SUPERX OFFLINE $urlType", "START", baseUrl)
+        DetectionLogger.log("JS $urlType", "START", baseUrl)
 
         if (!(isM3u8 || isMpd)) {
             return null
@@ -39,11 +39,11 @@ class VideoServiceSuperXLocal @Inject constructor() {
         return try {
             val result = parseManifestContent(baseUrl, manifestBody, isM3u8, isMpd, headers)
             if (result != null) {
-                DetectionLogger.log("SUPERX OFFLINE $urlType", "SUCCESS", baseUrl)
+                DetectionLogger.log("JS $urlType", "SUCCESS", baseUrl)
             }
             result
         } catch (e: Throwable) {
-            DetectionLogger.log("SUPERX OFFLINE $urlType", "FAILED", baseUrl, e.message ?: "unknown")
+            DetectionLogger.log("JS $urlType", "FAILED", baseUrl, e.message ?: "unknown")
             AppLogger.d("PlaylistService Offline Error: Failed to parse manifest. ${e.message}")
             null
         }

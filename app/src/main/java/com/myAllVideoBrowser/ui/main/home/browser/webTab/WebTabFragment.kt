@@ -64,6 +64,7 @@ import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.AppUtil
+import com.myAllVideoBrowser.util.DetectionLogger
 import com.myAllVideoBrowser.util.FileNameCleaner
 import com.myAllVideoBrowser.util.VideoUtils
 import com.myAllVideoBrowser.util.get
@@ -873,8 +874,10 @@ class WebTabFragment : BaseWebTabFragment() {
         onManifestReceived = { url, headersJson, content ->
             val isExperimentalDetection =
                 mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+            val isM3u8MpdDetection =
+                mainActivity.settingsViewModel.isCheckIfEveryRequestOnM3u8.get()
 
-            if (!isExperimentalDetection) {
+            if (!isExperimentalDetection && !isM3u8MpdDetection) {
                 return@JsWebBridge
             }
             val headersMap = VideoUtils.parseRequestHeadersToMap(headersJson)
@@ -920,13 +923,22 @@ class WebTabFragment : BaseWebTabFragment() {
         onVideoReceived = { url, headersJson ->
             val isExperimentalDetection =
                 mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+            val isRegularDetection =
+                mainActivity.settingsViewModel.getIsCheckEveryRequestOnMp4Video().get()
 
-            if (!isExperimentalDetection) {
+            if (!isExperimentalDetection && !isRegularDetection) {
                 return@JsWebBridge
             }
 
-            val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
             val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
+            val contentLength = responseHeaders["content-length"]?.toLong() ?: 0L
+            val contentThreshold = mainActivity.settingsViewModel.videoDetectionTreshold.get()
+
+            if (contentLength < contentThreshold) {
+                DetectionLogger.log("REGULAR JS", "SKIP", url, "bellow threshold")
+            }
+
+            val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
             val type = VideoUtils.parseInterceptorType(headersJson)
             AppLogger.d("Video intercepted ($type): $url \n$requestHeaders\n$responseHeaders")
 
@@ -940,15 +952,17 @@ class WebTabFragment : BaseWebTabFragment() {
         onAudioReceived = { url, headersJson ->
             val isExperimentalDetection =
                 mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+            val isAudioDetectionOn = mainActivity.settingsViewModel.isCheckOnAudio.get()
 
-            if (!isExperimentalDetection) {
+            if (!isExperimentalDetection && !isAudioDetectionOn) {
                 return@JsWebBridge
             }
 
             val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
             val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
             val type = VideoUtils.parseInterceptorType(headersJson)
-            AppLogger.d("Audio intercepted ($type): $url \n$requestHeaders\n$responseHeaders")
+
+            AppLogger.d("Audio intercepted ($type): $url")
 
             videoDetectionTabViewModel.getVideoAudioInfoLocal(
                 url,

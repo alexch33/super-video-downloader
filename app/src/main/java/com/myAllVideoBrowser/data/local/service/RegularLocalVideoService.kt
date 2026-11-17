@@ -6,6 +6,7 @@ import com.myAllVideoBrowser.data.local.room.entity.VideFormatEntityList
 import com.myAllVideoBrowser.data.local.room.entity.VideoFormatEntity
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.util.ContextUtils
+import com.myAllVideoBrowser.util.DetectionLogger
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Request
 import javax.inject.Inject
@@ -36,9 +37,11 @@ class RegularLocalVideoService @Inject constructor() {
             // Do not treat HLS (.m3u8) or DASH (.mpd) playlists as regular audio/video files
             if (lowerUrl.contains(".m3u8") || lowerUrl.contains(".mpd") ||
                 contentType.contains("mpegurl", true) ||
-                contentType.contains("dash+xml", true)) {
+                contentType.contains("dash+xml", true)
+            ) {
                 return null
             }
+            DetectionLogger.log("JS REGULAR", "START", url)
 
             val isAudio = contentType.contains("audio", true) ||
                     url.endsWith(".mp3", true) ||
@@ -92,9 +95,10 @@ class RegularLocalVideoService @Inject constructor() {
                 ),
                 isRegularDownload = true
             )
-
+            DetectionLogger.log("JS REGULAR", "SUCCESS", url)
             return VideoInfoWrapper(videoInfo)
         } catch (e: Throwable) {
+            DetectionLogger.log("JS REGULAR", "FAIL", url, e.message.toString())
             e.printStackTrace()
             return null
         }

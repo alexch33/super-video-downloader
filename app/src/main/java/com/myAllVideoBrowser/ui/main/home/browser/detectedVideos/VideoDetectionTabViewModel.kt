@@ -285,7 +285,13 @@ open class VideoDetectionTabViewModel @Inject constructor(
         verifyVideoLinkJobStorage[taskUrl] =
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 val info = try {
-                    videoRepository.getVideoInfoOffline(baseUrl, manifestBody, isM3u8, isMpd, headers)
+                    videoRepository.getVideoInfoOffline(
+                        baseUrl,
+                        manifestBody,
+                        isM3u8,
+                        isMpd,
+                        headers
+                    )
                 } catch (e: Throwable) {
                     e.printStackTrace()
                     null
@@ -337,7 +343,14 @@ open class VideoDetectionTabViewModel @Inject constructor(
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 val title = hlsTitle ?: webTabModel?.currentTitle?.get() ?: "no_title"
                 val origUrl = webTabModel?.tabUrlInput?.get() ?: ""
-                val info = videoRepository.getVideoAudioInfoLocal(url, headers, contentType, contentLength, title, origUrl)
+                val info = videoRepository.getVideoAudioInfoLocal(
+                    url,
+                    headers,
+                    contentType,
+                    contentLength,
+                    title,
+                    origUrl
+                )
                 if (info != null) {
                     emitter.onNext(info)
                 } else {

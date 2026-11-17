@@ -413,7 +413,7 @@ class SharedPrefHelper @Inject constructor(
     }
 
     fun getIsUseExperimentalDetection(): Boolean {
-        return sharedPreferences.getBoolean(IS_USE_EXPERIMENTAL_DETECTION, false)
+        return sharedPreferences.getBoolean(IS_USE_EXPERIMENTAL_DETECTION, true)
     }
 
     fun setIsUseExperimentalDetection(isUse: Boolean) {

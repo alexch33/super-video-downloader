@@ -756,8 +756,9 @@ class CustomWebViewClient(
         val isCheckM3u8 = settingsModel.isCheckIfEveryRequestOnM3u8.get()
         val isCheckOnMp4 = settingsModel.getIsCheckEveryRequestOnMp4Video().get()
         val isCheckOnAudio = settingsModel.isCheckOnAudio.get()
+        val isExperimentalDetectionOn = settingsModel.isUseExperimentalDetection.get()
 
-        if (isCheckOnMp4 || isCheckM3u8 || isCheckOnAudio) {
+        if ((isCheckOnMp4 || isCheckM3u8 || isCheckOnAudio) && !isExperimentalDetectionOn) {
             val requestWithCookies = request.let { resourceRequest ->
                 try {
                     CookieUtils.webResourceRequestToOkHttpRequest(resourceRequest)

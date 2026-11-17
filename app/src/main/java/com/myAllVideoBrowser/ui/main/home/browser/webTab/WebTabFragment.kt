@@ -53,17 +53,20 @@ import com.myAllVideoBrowser.ui.main.home.browser.HistoryProvider
 import com.myAllVideoBrowser.ui.main.home.browser.PageTabProvider
 import com.myAllVideoBrowser.ui.main.home.browser.TAB_INDEX_KEY
 import com.myAllVideoBrowser.ui.main.home.browser.TabManagerProvider
-import com.myAllVideoBrowser.ui.main.home.browser.WebPostBridge
+import com.myAllVideoBrowser.ui.main.home.browser.JsWebBridge
 import com.myAllVideoBrowser.ui.main.home.browser.WorkerEventProvider
 import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.ui.main.home.browser.disableWebRtcJs
+import com.myAllVideoBrowser.ui.main.home.browser.injectJsInterceptor
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.AppUtil
+import com.myAllVideoBrowser.util.DetectionLogger
 import com.myAllVideoBrowser.util.FileNameCleaner
+import com.myAllVideoBrowser.util.VideoUtils
 import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import kotlinx.coroutines.Dispatchers
@@ -408,6 +411,11 @@ class WebTabFragment : BaseWebTabFragment() {
                 disableWebRtcJs,
                 setOf("*")
             )
+            WebViewCompat.addDocumentStartJavaScript(
+                currentWebView,
+                injectJsInterceptor,
+                setOf("*")
+            )
         }
 
         val webViewClient = CustomWebViewClient(
@@ -486,8 +494,8 @@ class WebTabFragment : BaseWebTabFragment() {
         }
 
         currentWebView.addJavascriptInterface(
-            shouldInterceptPostRequests,
-            WebPostBridge.BRIDGE_NAME
+            jsWebBridge,
+            JsWebBridge.BRIDGE_NAME
         )
 
         fragmentWebTabBinding.webviewContainer.addView(
@@ -845,21 +853,123 @@ class WebTabFragment : BaseWebTabFragment() {
         }
     }
 
-    private val shouldInterceptPostRequests = WebPostBridge { url, body ->
-        if (CustomWebViewClient.isBotChallengeOrCaptcha(url)) {
-            return@WebPostBridge false
-        }
+    private val jsWebBridge = JsWebBridge(
+        onIntercept = { url, body ->
+            if (CustomWebViewClient.isBotChallengeOrCaptcha(url)) {
+                return@JsWebBridge false
+            }
 
-        val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
-        val isAd = isAdBlockOn &&
-                adBlockEngine.isAd(
+            val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
+            val isAd = isAdBlockOn &&
+                    adBlockEngine.isAd(
+                        url,
+                        tabViewModel.tabUrlInput.get() ?: "",
+                        "xmlhttprequest"
+                    )
+            if (isAd) {
+                AppLogger.d("AdBlock (POST): Blocked $url")
+            }
+            isAd
+        },
+        onManifestReceived = { url, headersJson, content ->
+            val isExperimentalDetection =
+                mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+            val isM3u8MpdDetection =
+                mainActivity.settingsViewModel.isCheckIfEveryRequestOnM3u8.get()
+
+            if (!isExperimentalDetection && !isM3u8MpdDetection) {
+                return@JsWebBridge
+            }
+            val headersMap = VideoUtils.parseRequestHeadersToMap(headersJson)
+            val lowerUrl = url.lowercase()
+            val isM3u8 = content.contains("#EXTM3U") || lowerUrl.contains(".m3u8")
+            val isMpd = content.contains("<MPD", ignoreCase = true) || lowerUrl.contains(".mpd")
+
+            if (isM3u8) {
+                videoDetectionTabViewModel.getOfflineVideoInfo(
                     url,
-                    tabViewModel.tabUrlInput.get() ?: "",
-                    "xmlhttprequest"
+                    content,
+                    true,
+                    false,
+                    headersMap
                 )
-        if (isAd) {
-            AppLogger.d("AdBlock (POST): Blocked $url")
+            }
+            if (isMpd) {
+                videoDetectionTabViewModel.getOfflineVideoInfo(
+                    url,
+                    content,
+                    false,
+                    true,
+                    headersMap
+                )
+            }
+            if (!isM3u8 && !isMpd) {
+                videoDetectionTabViewModel.getOfflineVideoInfo(
+                    url,
+                    content,
+                    false,
+                    true,
+                    headersMap
+                )
+                videoDetectionTabViewModel.getOfflineVideoInfo(
+                    url,
+                    content,
+                    true,
+                    false,
+                    headersMap
+                )
+            }
+        },
+        onVideoReceived = { url, headersJson ->
+            val isExperimentalDetection =
+                mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+            val isRegularDetection =
+                mainActivity.settingsViewModel.getIsCheckEveryRequestOnMp4Video().get()
+
+            if (!isExperimentalDetection && !isRegularDetection) {
+                return@JsWebBridge
+            }
+
+            val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
+            val contentLength = responseHeaders["content-length"]?.toLong() ?: 0L
+            val contentThreshold = mainActivity.settingsViewModel.videoDetectionTreshold.get()
+
+            if (contentLength < contentThreshold) {
+                DetectionLogger.log("REGULAR JS", "SKIP", url, "bellow threshold")
+            }
+
+            val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
+            val type = VideoUtils.parseInterceptorType(headersJson)
+            AppLogger.d("Video intercepted ($type): $url \n$requestHeaders\n$responseHeaders")
+
+            videoDetectionTabViewModel.getVideoAudioInfoLocal(
+                url,
+                requestHeaders,
+                responseHeaders["content-type"] ?: "",
+                responseHeaders["content-length"]?.toLong() ?: 0L
+            )
+        },
+        onAudioReceived = { url, headersJson ->
+            val isExperimentalDetection =
+                mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+            val isAudioDetectionOn = mainActivity.settingsViewModel.isCheckOnAudio.get()
+
+            if (!isExperimentalDetection && !isAudioDetectionOn) {
+                return@JsWebBridge
+            }
+
+            val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
+            val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
+            val type = VideoUtils.parseInterceptorType(headersJson)
+
+            AppLogger.d("Audio intercepted ($type): $url")
+
+            videoDetectionTabViewModel.getVideoAudioInfoLocal(
+                url,
+                requestHeaders,
+                responseHeaders["content-type"] ?: "",
+                responseHeaders["content-length"]?.toLong() ?: 0L
+            )
         }
-        isAd
-    }
+    )
 }

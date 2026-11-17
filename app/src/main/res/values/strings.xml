@@ -214,6 +214,8 @@
     <string name="setting_explanation_check_every_audio">Monitors network requests to detect audio streams and sound files on web pages.</string>
     <string name="setting_explanation_force_stream_detection">Forces detection of media streams with unknown or missing content length headers (commonly used by live streams).</string>
     <string name="setting_explanation_use_legacy_m3u8_detection">Uses the youtube-dlp engine to extract M3U8 and MPD streaming video links from web pages. (Otherwise SuperX detector will be used)</string>
+    <string name="use_experimental_detection">Use experimental detection</string>
+    <string name="setting_explanation_use_experimental_detection">Enables experimental detection features for advanced video stream discovery and processing.</string>
     <string name="setting_explanation_adblock_settings">Opens settings to manage ad-blocking filter lists and custom blocking rules.</string>
     <string name="setting_explanation_ads_treshold">Ignores detected media files smaller than this size threshold to prevent detecting video advertisements as downloadable content.</string>
     <string name="setting_explanation_download_subtitles">Automatically fetches and saves available subtitle tracks when downloading videos using youtube-dlp.</string>

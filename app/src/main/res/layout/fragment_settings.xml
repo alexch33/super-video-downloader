@@ -701,6 +701,44 @@
                             android:layout_height="wrap_content"
                             app:dividerInsetStart="16dp" />
 
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:minHeight="64dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp">
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/is_use_experimental_detection"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:checked="@{viewModel.isUseExperimentalDetection}"
+                                android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsUseExperimentalDetection(isChecked)}"
+                                android:text="@string/use_experimental_detection"
+                                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                            <ImageView
+                                android:id="@+id/btn_help_use_experimental_detection"
+                                android:layout_width="36dp"
+                                android:layout_height="36dp"
+                                android:layout_marginStart="8dp"
+                                android:padding="6dp"
+                                android:src="@drawable/help_24px"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/help"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="?attr/colorOnSurfaceVariant" />
+                        </LinearLayout>
+
+                        <com.google.android.material.divider.MaterialDivider
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:dividerInsetStart="16dp" />
+
                         <androidx.constraintlayout.widget.ConstraintLayout
                             android:id="@+id/layout_adblock_settings"
                             android:layout_width="match_parent"

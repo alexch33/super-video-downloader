@@ -95,6 +95,9 @@ class SettingsViewModel @Inject constructor(
     private val _isUseLegacyM3u8Detection = MutableLiveData(false)
     val isUseLegacyM3u8Detection: LiveData<Boolean> = _isUseLegacyM3u8Detection
 
+    private val _isUseExperimentalDetection = MutableLiveData(false)
+    val isUseExperimentalDetection: LiveData<Boolean> = _isUseExperimentalDetection
+
     private val _isAdBlockOn = MutableLiveData(true)
     val isAdBlockOn: LiveData<Boolean> = _isAdBlockOn
 
@@ -120,6 +123,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val simDownloadsCount = sharedPrefHelper.getMaxSimultaneousDownloads()
             val useLegacy = sharedPrefHelper.getIsUseYoutubedlpM3u8Detection()
+            val useExperimental = sharedPrefHelper.getIsUseExperimentalDetection()
             val alwaysRemux = sharedPrefHelper.getIsProcessDownloadFfmpeg()
             val remuxOnlyLive = sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg()
             val forceStreamDownload = sharedPrefHelper.getIsForceStreamDownload()
@@ -155,6 +159,7 @@ class SettingsViewModel @Inject constructor(
             withContext(Dispatchers.Main) {
                 _queueSize.value = simDownloadsCount
                 _isUseLegacyM3u8Detection.value = useLegacy
+                _isUseExperimentalDetection.value = useExperimental
                 _isAlwaysRemuxRegularDownloads.value = alwaysRemux
                 _isRemuxOnlyLiveRegularDownloads.value = remuxOnlyLive
                 _isForceStreamDownloading.value = forceStreamDownload
@@ -198,6 +203,13 @@ class SettingsViewModel @Inject constructor(
         _isUseLegacyM3u8Detection.postValue(isTurnedOn)
         viewModelScope.launch(Dispatchers.IO) {
             sharedPrefHelper.setIsUseLegacyM3u8Detection(isTurnedOn)
+        }
+    }
+
+    fun setIsUseExperimentalDetection(isTurnedOn: Boolean) {
+        _isUseExperimentalDetection.postValue(isTurnedOn)
+        viewModelScope.launch(Dispatchers.IO) {
+            sharedPrefHelper.setIsUseExperimentalDetection(isTurnedOn)
         }
     }
 

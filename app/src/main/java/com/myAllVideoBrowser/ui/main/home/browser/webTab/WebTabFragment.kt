@@ -59,6 +59,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.ui.main.home.browser.disableWebRtcJs
+import com.myAllVideoBrowser.ui.main.home.browser.injectJsInterceptor
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
 import com.myAllVideoBrowser.util.AppLogger
@@ -406,6 +407,11 @@ class WebTabFragment : BaseWebTabFragment() {
             WebViewCompat.addDocumentStartJavaScript(
                 currentWebView,
                 disableWebRtcJs,
+                setOf("*")
+            )
+            WebViewCompat.addDocumentStartJavaScript(
+                currentWebView,
+                injectJsInterceptor,
                 setOf("*")
             )
         }
@@ -845,21 +851,38 @@ class WebTabFragment : BaseWebTabFragment() {
         }
     }
 
-    private val shouldInterceptPostRequests = WebPostBridge { url, body ->
-        if (CustomWebViewClient.isBotChallengeOrCaptcha(url)) {
-            return@WebPostBridge false
-        }
+    private val shouldInterceptPostRequests = WebPostBridge(
+        onIntercept = { url, body ->
+            if (CustomWebViewClient.isBotChallengeOrCaptcha(url)) {
+                return@WebPostBridge false
+            }
 
-        val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
-        val isAd = isAdBlockOn &&
-                adBlockEngine.isAd(
-                    url,
-                    tabViewModel.tabUrlInput.get() ?: "",
-                    "xmlhttprequest"
-                )
-        if (isAd) {
-            AppLogger.d("AdBlock (POST): Blocked $url")
+            val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
+            val isAd = isAdBlockOn &&
+                    adBlockEngine.isAd(
+                        url,
+                        tabViewModel.tabUrlInput.get() ?: "",
+                        "xmlhttprequest"
+                    )
+            if (isAd) {
+                AppLogger.d("AdBlock (POST): Blocked $url")
+            }
+            isAd
+        },
+        onManifestReceived = { url, headers, content ->
+            val lowerUrl = url.lowercase()
+            val isM3u8 = content.contains("#EXTM3U") || lowerUrl.contains(".m3u8")
+            val isMpd = content.contains("<MPD", ignoreCase = true) || lowerUrl.contains(".mpd")
+
+            if (isM3u8) {
+                AppLogger.d("m3u8 intercepted: $url")
+            }
+            if (isMpd) {
+                AppLogger.d("mpd intercepted: $url")
+            }
+            if (!isM3u8 && !isMpd) {
+                AppLogger.d("m3u8 or mpd intercepted: $url")
+            }
         }
-        isAd
-    }
+    )
 }

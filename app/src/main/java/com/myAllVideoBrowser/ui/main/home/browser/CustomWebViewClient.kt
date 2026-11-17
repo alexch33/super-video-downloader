@@ -62,29 +62,261 @@ val disableWebRtcJs = """
 """.trimIndent()
 
 val injectJsInterceptor = """
-        (function() {
-            const oldSend = XMLHttpRequest.prototype.send;
-            XMLHttpRequest.prototype.send = function(body) {
-                if (window.AndroidBridge && window.AndroidBridge.shouldInterceptPost(this._url, body || "")) {
-                    this.abort(); // Kill the XHR
-                    return;
-                }
-                oldSend.apply(this, arguments);
-            };
+    (function() {
+        function hookContext(win) {
+            try {
+                if (!win || win.__manifestInterceptorInstalled) return;
+                win.__manifestInterceptorInstalled = true;
 
-            const oldFetch = window.fetch;
-            window.fetch = async function(input, init) {
-                const url = typeof input === 'string' ? input : input.url;
-                const method = init?.method?.toUpperCase() || 'GET';
-                if (method === 'POST' && window.AndroidBridge) {
-                    if (window.AndroidBridge.shouldInterceptPost(url, init.body || "")) {
-                        return new Response('', { status: 200 }); // Return empty
+                function headersToObject(headers) {
+                    var obj = {};
+                    if (!headers) return obj;
+
+                    if (typeof headers.forEach === 'function') {
+                        headers.forEach(function(value, key) {
+                            obj[key] = value;
+                        });
+                        return obj;
+                    }
+
+                    if (typeof headers === 'object') {
+                        for (var k in headers) {
+                            if (headers.hasOwnProperty(k)) {
+                                obj[k] = headers[k];
+                            }
+                        }
+                    }
+                    return obj;
+                }
+
+                function getXhrResponseHeaders(xhr) {
+                    var obj = {};
+                    try {
+                        var raw = xhr.getAllResponseHeaders();
+                        if (raw) {
+                            var lines = raw.trim().split(/[\r\n]+/);
+                            for (var i = 0; i < lines.length; i++) {
+                                var line = lines[i];
+                                var parts = line.split(':');
+                                var key = parts.shift().trim();
+                                var value = parts.join(':').trim();
+                                if (key) {
+                                    obj[key] = value;
+                                }
+                            }
+                        }
+                    } catch(e) {}
+                    return obj;
+                }
+
+                function getHeaderPayload(customReqHeaders, respHeaders) {
+                    var req = {};
+                    var resp = {};
+
+                    try {
+                        if (win.location && win.location.href && win.location.href !== 'about:blank') {
+                            req["Referer"] = win.location.href;
+                        } else if (document && document.referrer) {
+                            req["Referer"] = document.referrer;
+                        }
+
+                        if (win.navigator && win.navigator.userAgent) {
+                            req["User-Agent"] = win.navigator.userAgent;
+                        }
+
+                        if (win.location && win.location.origin && win.location.origin !== 'null') {
+                            req["Origin"] = win.location.origin;
+                        }
+
+                        if (document && document.cookie) {
+                            req["Cookie"] = document.cookie;
+                        }
+                    } catch(e) {}
+
+                    if (customReqHeaders) {
+                        for (var k in customReqHeaders) {
+                            if (customReqHeaders.hasOwnProperty(k)) {
+                                req[k] = customReqHeaders[k];
+                            }
+                        }
+                    }
+
+                    if (respHeaders) {
+                        for (var rk in respHeaders) {
+                            if (respHeaders.hasOwnProperty(rk)) {
+                                resp[rk] = respHeaders[rk];
+                            }
+                        }
+                    }
+
+                    return {
+                        request: req,
+                        response: resp
+                    };
+                }
+
+                function notifyAndroid(url, headersObj, body) {
+                    try {
+                        var bridge = win.AndroidBridge || window.AndroidBridge;
+                        if (bridge && bridge.onManifest) {
+                            bridge.onManifest(
+                                url,
+                                JSON.stringify(headersObj || {}),
+                                body || ''
+                            );
+                        }
+                    } catch (e) {}
+                }
+
+                function getXhrResponseText(xhr) {
+                    try {
+                        if (!xhr.responseType || xhr.responseType === 'text') {
+                            return xhr.responseText || '';
+                        }
+                        if (xhr.responseType === 'arraybuffer' && xhr.response) {
+                            return new TextDecoder("utf-8").decode(xhr.response);
+                        }
+                    } catch (e) {}
+                    return '';
+                }
+
+                function checkContentAndNotify(url, headersPayload, text) {
+                    if (!text || typeof text !== 'string') return;
+                    var trimmed = text.trim();
+                    if (!trimmed) return;
+
+                    var lowerText = trimmed.toLowerCase();
+                    var isM3u8 = trimmed.indexOf('#EXTM3U') !== -1;
+                    var isMpd = trimmed.indexOf('<MPD') !== -1 || lowerText.indexOf('<mpd') !== -1;
+
+                    if (isM3u8 || isMpd) {
+                        console.log('MANIFEST_MATCHED (' + (isM3u8 ? 'M3U8' : 'MPD') + '): ' + url);
+                        notifyAndroid(url, headersPayload, trimmed);
                     }
                 }
-                return oldFetch.apply(this, arguments);
-            };
-        })();
-    """.trimIndent()
+
+                // ===================== XMLHttpRequest =====================
+                if (win.XMLHttpRequest) {
+                    var oldOpen = win.XMLHttpRequest.prototype.open;
+                    win.XMLHttpRequest.prototype.open = function(method, url) {
+                        this._url = url ? url.toString() : '';
+                        this._method = (method || 'GET').toUpperCase();
+                        this._headers = {};
+                        return oldOpen.apply(this, arguments);
+                    };
+
+                    var oldSetRequestHeader = win.XMLHttpRequest.prototype.setRequestHeader;
+                    win.XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
+                        if (!this._headers) this._headers = {};
+                        this._headers[name] = value;
+                        return oldSetRequestHeader.apply(this, arguments);
+                    };
+
+                    var oldSend = win.XMLHttpRequest.prototype.send;
+                    win.XMLHttpRequest.prototype.send = function(body) {
+                        var url = this._url || '';
+                        var method = this._method || 'GET';
+
+                        var bridge = win.AndroidBridge || window.AndroidBridge;
+                        if (method === 'POST' && bridge && bridge.shouldInterceptPost) {
+                            if (bridge.shouldInterceptPost(url, body || "")) {
+                                this.abort();
+                                return;
+                            }
+                        }
+
+                        var self = this;
+
+                        function processXhrResponse() {
+                            if (self.readyState === 4) {
+                                try {
+                                    var finalUrl = self._url || self.responseURL || '';
+                                    var text = getXhrResponseText(self);
+                                    var respHeaders = getXhrResponseHeaders(self);
+                                    var headerPayload = getHeaderPayload(self._headers, respHeaders);
+                                    checkContentAndNotify(finalUrl, headerPayload, text);
+                                } catch (e) {
+                                    console.log('XHR_ERROR: ' + e);
+                                }
+                            }
+                        }
+
+                        self.addEventListener('readystatechange', processXhrResponse);
+                        self.addEventListener('load', processXhrResponse);
+
+                        var originalOnReadyStateChange = self.onreadystatechange;
+                        if (originalOnReadyStateChange) {
+                            self.onreadystatechange = function() {
+                                processXhrResponse();
+                                return originalOnReadyStateChange.apply(this, arguments);
+                            };
+                        }
+
+                        return oldSend.apply(this, arguments);
+                    };
+                }
+
+                // ===================== fetch =====================
+                if (win.fetch) {
+                    var originalFetch = win.fetch;
+                    win.fetch = function(input, init) {
+                        init = init || {};
+                        var url = '';
+                        var reqHeaders = {};
+
+                        if (typeof input === 'string') {
+                            url = input;
+                        } else if (input && typeof input === 'object') {
+                            if (input.url) {
+                                url = input.url;
+                            } else if (typeof input.toString === 'function') {
+                                url = input.toString();
+                            }
+                            if (input.headers) {
+                                reqHeaders = headersToObject(input.headers);
+                            }
+                        } else if (input) {
+                            url = String(input);
+                        }
+
+                        if (init.headers) {
+                            var extra = headersToObject(init.headers);
+                            for (var k in extra) {
+                                reqHeaders[k] = extra[k];
+                            }
+                        }
+
+                        var method = (init.method || (typeof input === 'object' && input.method) || 'GET').toUpperCase();
+                        var bridge = win.AndroidBridge || window.AndroidBridge;
+                        if (method === 'POST' && bridge && bridge.shouldInterceptPost) {
+                            if (bridge.shouldInterceptPost(url, init.body || "")) {
+                                return Promise.resolve(new win.Response('', { status: 200 }));
+                            }
+                        }
+
+                        return originalFetch.apply(this, arguments).then(function(response) {
+                            try {
+                                if (response && response.clone) {
+                                    var finalUrl = response.url || url;
+                                    var respHeaders = headersToObject(response.headers);
+                                    var headerPayload = getHeaderPayload(reqHeaders, respHeaders);
+                                    response.clone().text().then(function(text) {
+                                        checkContentAndNotify(finalUrl, headerPayload, text);
+                                    }).catch(function(e){});
+                                }
+                            } catch (e) {}
+                            return response;
+                        });
+                    };
+                }
+
+                console.log('Manifest and POST interceptor installed on window');
+            } catch(e) {}
+        }
+
+        hookContext(window);
+    })();
+""".trimIndent()
 
 enum class ContentType {
     M3U8,

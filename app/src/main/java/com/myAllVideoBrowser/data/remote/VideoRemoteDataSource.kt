@@ -31,6 +31,16 @@ class VideoRemoteDataSource @Inject constructor(
         return videoService.getVideoInfo(url, isM3u8OrMpd, isM3u8OrMpd, isAudioCheck)?.videoInfo
     }
 
+    override fun getVideoInfoOffline(
+        baseUrl: String,
+        manifestBody: String,
+        isM3u8: Boolean,
+        isMpd: Boolean,
+        headers: Map<String, String>
+    ): VideoInfo? {
+        return null
+    }
+
     override fun saveVideoInfo(videoInfo: VideoInfo) {
     }
 }

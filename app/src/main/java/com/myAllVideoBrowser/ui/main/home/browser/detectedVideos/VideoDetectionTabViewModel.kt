@@ -262,6 +262,58 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
     }
 
+    open fun getOfflineVideoInfo(
+        baseUrl: String,
+        manifestBody: String,
+        isM3u8: Boolean = false,
+        isMpd: Boolean = false,
+        headers: Map<String, String> = emptyMap(),
+        hlsTitle: String? = null
+    ) {
+        val taskUrl = baseUrl.trim()
+        val job = verifyVideoLinkJobStorage[taskUrl]
+        if (job != null && !job.isDisposed || taskUrl.isEmpty()) {
+            return
+        }
+
+        addM3u8Loading(baseUrl)
+
+        if (_detectedVideosList.value?.isEmpty() == true) {
+            setButtonState(DownloadButtonStateLoading())
+        }
+
+        verifyVideoLinkJobStorage[taskUrl] =
+            io.reactivex.rxjava3.core.Observable.create { emitter ->
+                val info = try {
+                    videoRepository.getVideoInfoOffline(baseUrl, manifestBody, isM3u8, isMpd, headers)
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    null
+                }
+                if (info != null) {
+                    emitter.onNext(info)
+                } else {
+                    emitter.onNext(VideoInfo(id = ""))
+                }
+                emitter.onComplete()
+            }.doOnTerminate {
+                removeM3u8Loading(baseUrl)
+                verifyVideoLinkJobStorage.remove(taskUrl)
+            }.observeOn(baseSchedulers.computation).subscribeOn(baseSchedulers.videoService)
+                .subscribe { info ->
+                    if (info.id.isNotEmpty()) {
+                        if (info.isM3u8 && !hlsTitle.isNullOrEmpty()) {
+                            info.title = hlsTitle
+                        }
+                        viewModelScope.launch(executorPusher) {
+                            pushNewVideoInfoToAll(info)
+                        }
+                    } else {
+                        setButtonState(DownloadButtonStateCanNotDownload())
+                    }
+                }
+    }
+
     open suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
         if (newInfo.formats.allFormats().isEmpty() || newInfo.id.isEmpty()) {
             return

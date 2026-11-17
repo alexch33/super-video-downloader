@@ -874,39 +874,43 @@ class WebTabFragment : BaseWebTabFragment() {
         },
         onManifestReceived = { url, headersJson, content ->
             val headersMap = VideoUtils.parseRequestHeadersToMap(headersJson)
-            val type = VideoUtils.parseInterceptorType(headersJson)
             val lowerUrl = url.lowercase()
             val isM3u8 = content.contains("#EXTM3U") || lowerUrl.contains(".m3u8")
             val isMpd = content.contains("<MPD", ignoreCase = true) || lowerUrl.contains(".mpd")
 
             if (isM3u8) {
-                val manifest = try {
-                    HlsPlaylistParser.parse(content, url)
-                } catch (e: Exception) {
-                    AppLogger.e("HLS PARSE ERROR: ${e.message}")
-                }
-                AppLogger.d("m3u8 intercepted: $type $url \n$manifest")
+                videoDetectionTabViewModel.getOfflineVideoInfo(
+                    url,
+                    content,
+                    true,
+                    false,
+                    headersMap
+                )
             }
             if (isMpd) {
-                val manifest = try {
-                    MpdPlaylistParser.parse(content, url)
-                } catch (e: Exception) {
-                    AppLogger.e("MPD PARSE ERROR: ${e.message}")
-                }
-                AppLogger.d("mpd intercepted: $type $url \n$manifest")
+                videoDetectionTabViewModel.getOfflineVideoInfo(
+                    url,
+                    content,
+                    false,
+                    true,
+                    headersMap
+                )
             }
             if (!isM3u8 && !isMpd) {
-                val manifest = try {
-                    HlsPlaylistParser.parse(content, url)
-                } catch (e: Exception) {
-                    AppLogger.e("UNKNOWN HLS PARSE ERROR: ${e.message}")
-                    try {
-                        MpdPlaylistParser.parse(content, url)
-                    } catch (e: Exception) {
-                        AppLogger.e("UNKNOWN MPD PARSE ERROR: ${e.message}")
-                    }
-                }
-                AppLogger.d("m3u8 or mpd intercepted: $type $url \n$manifest")
+                videoDetectionTabViewModel.getOfflineVideoInfo(
+                    url,
+                    content,
+                    false,
+                    true,
+                    headersMap
+                )
+                videoDetectionTabViewModel.getOfflineVideoInfo(
+                    url,
+                    content,
+                    true,
+                    false,
+                    headersMap
+                )
             }
         },
         onVideoReceived = { url, headersJson ->

@@ -49,6 +49,7 @@ class SharedPrefHelper @Inject constructor(
         private const val SELECTED_DNS_PROVIDER = "SELECTED_DNS_PROVIDER"
         private const val CUSTOM_DNS_URL = "CUSTOM_DNS_URL"
         private const val IS_USE_LEGACY_M3U8_DETECTION = "IS_USE_LEGACY_M3U8_DETECTION"
+        private const val IS_USE_EXPERIMENTAL_DETECTION = "IS_USE_EXPERIMENTAL_DETECTION"
 
         private const val IS_ASK_REDIRECTION = "IS_ASK_REDIRECTION"
         private const val MAX_SIMULTANEOUS_DOWNLOADS = "MAX_SIMULTANEOUS_DOWNLOADS"
@@ -408,6 +409,16 @@ class SharedPrefHelper @Inject constructor(
     fun setIsUseLegacyM3u8Detection(isUse: Boolean) {
         sharedPreferences.edit {
             putBoolean(IS_USE_LEGACY_M3U8_DETECTION, isUse)
+        }
+    }
+
+    fun getIsUseExperimentalDetection(): Boolean {
+        return sharedPreferences.getBoolean(IS_USE_EXPERIMENTAL_DETECTION, false)
+    }
+
+    fun setIsUseExperimentalDetection(isUse: Boolean) {
+        sharedPreferences.edit {
+            putBoolean(IS_USE_EXPERIMENTAL_DETECTION, isUse)
         }
     }
 

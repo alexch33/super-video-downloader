@@ -67,8 +67,6 @@ import com.myAllVideoBrowser.util.AppUtil
 import com.myAllVideoBrowser.util.FileNameCleaner
 import com.myAllVideoBrowser.util.VideoUtils
 import com.myAllVideoBrowser.util.get
-import com.myAllVideoBrowser.util.hls_parser.HlsPlaylistParser
-import com.myAllVideoBrowser.util.hls_parser.MpdPlaylistParser
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -873,6 +871,12 @@ class WebTabFragment : BaseWebTabFragment() {
             isAd
         },
         onManifestReceived = { url, headersJson, content ->
+            val isExperimentalDetection =
+                mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+
+            if (!isExperimentalDetection) {
+                return@JsWebBridge
+            }
             val headersMap = VideoUtils.parseRequestHeadersToMap(headersJson)
             val lowerUrl = url.lowercase()
             val isM3u8 = content.contains("#EXTM3U") || lowerUrl.contains(".m3u8")
@@ -914,6 +918,13 @@ class WebTabFragment : BaseWebTabFragment() {
             }
         },
         onVideoReceived = { url, headersJson ->
+            val isExperimentalDetection =
+                mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+
+            if (!isExperimentalDetection) {
+                return@JsWebBridge
+            }
+
             val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
             val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
             val type = VideoUtils.parseInterceptorType(headersJson)
@@ -927,6 +938,13 @@ class WebTabFragment : BaseWebTabFragment() {
             )
         },
         onAudioReceived = { url, headersJson ->
+            val isExperimentalDetection =
+                mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+
+            if (!isExperimentalDetection) {
+                return@JsWebBridge
+            }
+
             val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
             val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
             val type = VideoUtils.parseInterceptorType(headersJson)

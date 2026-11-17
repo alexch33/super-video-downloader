@@ -389,6 +389,12 @@ class SettingsFragment : BaseFragment() {
                 R.string.setting_explanation_use_legacy_m3u8_detection
             )
         }
+        dataBinding.btnHelpUseExperimentalDetection.setOnClickListener {
+            showExplanationDialog(
+                R.string.use_experimental_detection,
+                R.string.setting_explanation_use_experimental_detection
+            )
+        }
         dataBinding.btnHelpAdblockSettings.setOnClickListener {
             showExplanationDialog(
                 R.string.adblock_lists_title,

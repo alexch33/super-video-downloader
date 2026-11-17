@@ -109,7 +109,7 @@ val injectJsInterceptor = """
                     return obj;
                 }
 
-                function getHeaderPayload(customReqHeaders, respHeaders) {
+                function getHeaderPayload(customReqHeaders, respHeaders, interceptorType) {
                     var req = {};
                     var resp = {};
 
@@ -150,6 +150,7 @@ val injectJsInterceptor = """
                     }
 
                     return {
+                        type: interceptorType || "unknown",
                         request: req,
                         response: resp
                     };
@@ -233,7 +234,7 @@ val injectJsInterceptor = """
                                     var finalUrl = self._url || self.responseURL || '';
                                     var text = getXhrResponseText(self);
                                     var respHeaders = getXhrResponseHeaders(self);
-                                    var headerPayload = getHeaderPayload(self._headers, respHeaders);
+                                    var headerPayload = getHeaderPayload(self._headers, respHeaders, "xhr");
                                     checkContentAndNotify(finalUrl, headerPayload, text);
                                 } catch (e) {
                                     console.log('XHR_ERROR: ' + e);
@@ -299,7 +300,7 @@ val injectJsInterceptor = """
                                 if (response && response.clone) {
                                     var finalUrl = response.url || url;
                                     var respHeaders = headersToObject(response.headers);
-                                    var headerPayload = getHeaderPayload(reqHeaders, respHeaders);
+                                    var headerPayload = getHeaderPayload(reqHeaders, respHeaders, "fetch");
                                     response.clone().text().then(function(text) {
                                         checkContentAndNotify(finalUrl, headerPayload, text);
                                     }).catch(function(e){});
@@ -320,7 +321,7 @@ val injectJsInterceptor = """
                         HlsClass.prototype.loadSource = function(url) {
                             console.log('HLS_LOAD_SOURCE: ' + url);
                             if (url) {
-                                notifyAndroid(url, getHeaderPayload(null, null), '');
+                                notifyAndroid(url, getHeaderPayload(null, null, "hls.js"), '');
                             }
                             return origLoadSource.apply(this, arguments);
                         };
@@ -345,7 +346,7 @@ val injectJsInterceptor = """
                                                 } else if (data && data instanceof ArrayBuffer) {
                                                     text = new TextDecoder("utf-8").decode(data);
                                                 }
-                                                checkContentAndNotify(url, getHeaderPayload(null, null), text);
+                                                checkContentAndNotify(url, getHeaderPayload(null, null, "hls.js"), text);
                                             } catch(e) {}
                                             return origOnSuccess.apply(this, arguments);
                                         };
@@ -388,7 +389,7 @@ val injectJsInterceptor = """
                             shakaObj.Player.prototype.load = function(assetUri) {
                                 console.log('SHAKA_LOAD_MANIFEST: ' + assetUri);
                                 if (assetUri) {
-                                    notifyAndroid(assetUri, getHeaderPayload(null, null), '');
+                                    notifyAndroid(assetUri, getHeaderPayload(null, null, "shaka"), '');
                                 }
                                 return origShakaLoad.apply(this, arguments);
                             };
@@ -424,7 +425,7 @@ val injectJsInterceptor = """
                             dashObj.MediaPlayer.prototype.attachSource = function(url) {
                                 console.log('DASH_LOAD_MANIFEST: ' + url);
                                 if (url) {
-                                    notifyAndroid(url, getHeaderPayload(null, null), '');
+                                    notifyAndroid(url, getHeaderPayload(null, null, "dash.js"), '');
                                 }
                                 return origAttachSource.apply(this, arguments);
                             };

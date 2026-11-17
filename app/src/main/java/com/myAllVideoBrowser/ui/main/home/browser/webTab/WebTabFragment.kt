@@ -873,15 +873,16 @@ class WebTabFragment : BaseWebTabFragment() {
             val lowerUrl = url.lowercase()
             val isM3u8 = content.contains("#EXTM3U") || lowerUrl.contains(".m3u8")
             val isMpd = content.contains("<MPD", ignoreCase = true) || lowerUrl.contains(".mpd")
+            val headersJson = JSONObject(headers)
 
             if (isM3u8) {
-                AppLogger.d("m3u8 intercepted: $url")
+                AppLogger.d("m3u8 intercepted: ${headersJson["type"]} $url")
             }
             if (isMpd) {
-                AppLogger.d("mpd intercepted: $url")
+                AppLogger.d("mpd intercepted: ${headersJson["type"]} $url")
             }
             if (!isM3u8 && !isMpd) {
-                AppLogger.d("m3u8 or mpd intercepted: $url")
+                AppLogger.d("m3u8 or mpd intercepted: ${headersJson["type"]} $url")
             }
         }
     )

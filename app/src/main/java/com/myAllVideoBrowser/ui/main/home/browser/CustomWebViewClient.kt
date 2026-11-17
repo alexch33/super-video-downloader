@@ -181,9 +181,53 @@ val injectJsInterceptor = """
                     } catch (e) {}
                 }
 
+                function notifyAndroidAudio(url, headersObj) {
+                    try {
+                        var bridge = win.AndroidBridge || window.AndroidBridge;
+                        if (bridge && bridge.onAudioDetected) {
+                            bridge.onAudioDetected(
+                                url,
+                                JSON.stringify(headersObj || {})
+                            );
+                        } else if (bridge && bridge.onVideoDetected) {
+                            bridge.onVideoDetected(
+                                url,
+                                JSON.stringify(headersObj || {})
+                            );
+                        }
+                    } catch (e) {}
+                }
+
+                function isAudioUrlOrType(url, contentType) {
+                    if (!url) return false;
+                    var u = url.toLowerCase();
+                    var cleanUrl = u.split('?')[0].split('#')[0];
+                    var hasAudioExt = cleanUrl.endsWith('.mp3')
+                        || cleanUrl.endsWith('.aac')
+                        || cleanUrl.endsWith('.m4a')
+                        || cleanUrl.endsWith('.wav')
+                        || cleanUrl.endsWith('.ogg')
+                        || cleanUrl.endsWith('.flac')
+                        || cleanUrl.endsWith('.m4b')
+                        || cleanUrl.endsWith('.opus');
+
+                    var hasAudioContentType = false;
+                    if (contentType) {
+                        var ct = contentType.toLowerCase();
+                        hasAudioContentType = ct.indexOf('audio/') !== -1;
+                    }
+
+                    return hasAudioExt || hasAudioContentType;
+                }
+
                 function isVideoUrlOrType(url, contentType) {
                     if (!url) return false;
                     var u = url.toLowerCase();
+
+                    if (u.indexOf('.m3u8') !== -1 || u.indexOf('.mpd') !== -1 || u.indexOf('manifest') !== -1
+                        || (contentType && (contentType.indexOf('mpegurl') !== -1 || contentType.indexOf('dash+xml') !== -1))) {
+                        return false;
+                    }
 
                     var isSegment = u.indexOf('.ts') !== -1
                         || u.indexOf('.m4s') !== -1
@@ -221,6 +265,9 @@ val injectJsInterceptor = """
                     if (isVideoUrlOrType(url, contentType)) {
                         console.log('VIDEO_MATCHED: ' + url);
                         notifyAndroidVideo(url, headersPayload);
+                    } else if (isAudioUrlOrType(url, contentType)) {
+                        console.log('AUDIO_MATCHED: ' + url);
+                        notifyAndroidAudio(url, headersPayload);
                     }
                 }
 
@@ -241,8 +288,6 @@ val injectJsInterceptor = """
                     var u = url.toLowerCase();
                     return u.indexOf('.m4s') !== -1
                         || u.indexOf('.ts') !== -1
-                        || u.indexOf('.mp4') !== -1
-                        || u.indexOf('.webm') !== -1
                         || u.indexOf('.m4a') !== -1
                         || u.indexOf('.aac') !== -1
                         || u.indexOf('_chunk_') !== -1
@@ -256,21 +301,23 @@ val injectJsInterceptor = """
 
                     var respHeaders = headersPayload.response || {};
                     var contentType = respHeaders['content-type'] || respHeaders['Content-Type'] || '';
-                    if (contentType.indexOf('video/') !== -1 || contentType.indexOf('audio/') !== -1) {
-                        return;
-                    }
-
                     var lowerUrl = url.toLowerCase();
 
                     var isManifest = (text && (text.indexOf('#EXTM3U') !== -1 || text.indexOf('<MPD') !== -1 || text.toLowerCase().indexOf('<mpd') !== -1))
                         || lowerUrl.indexOf('.m3u8') !== -1
                         || lowerUrl.indexOf('.mpd') !== -1
+                        || lowerUrl.indexOf('manifest') !== -1
                         || contentType.indexOf('application/vnd.apple.mpegurl') !== -1
-                        || contentType.indexOf('application/dash+xml') !== -1;
+                        || contentType.indexOf('application/dash+xml') !== -1
+                        || contentType.indexOf('mpegurl') !== -1;
 
                     if (isManifest) {
                         console.log('MANIFEST_MATCHED: ' + url);
                         notifyAndroid(url, headersPayload, text || '');
+                        return;
+                    }
+
+                    if (contentType.indexOf('video/') !== -1 || contentType.indexOf('audio/') !== -1) {
                         return;
                     }
 

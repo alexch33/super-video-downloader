@@ -5,13 +5,14 @@ import android.webkit.JavascriptInterface
 class JsWebBridge(
     private val onIntercept: (url: String, body: String) -> Boolean,
     private val onManifestReceived: ((url: String, headersJson: String, content: String) -> Unit)? = null,
-    private val onVideoReceived: ((url: String, headersJson: String) -> Unit)? = null
+    private val onVideoReceived: ((url: String, headersJson: String) -> Unit)? = null,
+    private val onAudioReceived: ((url: String, headersJson: String) -> Unit)? = null
 ) {
-    constructor(onIntercept: (url: String, body: String) -> Boolean) : this(onIntercept, null, null)
+    constructor(onIntercept: (url: String, body: String) -> Boolean) : this(onIntercept, null, null, null)
     constructor(
         onIntercept: (url: String, body: String) -> Boolean,
         onManifestReceived: ((url: String, headersJson: String, content: String) -> Unit)?
-    ) : this(onIntercept, onManifestReceived, null)
+    ) : this(onIntercept, onManifestReceived, null, null)
 
     companion object {
         const val BRIDGE_NAME = "AndroidBridge"
@@ -33,5 +34,10 @@ class JsWebBridge(
     @JavascriptInterface
     fun onVideoDetected(url: String, headersJson: String) {
         onVideoReceived?.invoke(url, headersJson)
+    }
+
+    @JavascriptInterface
+    fun onAudioDetected(url: String, headersJson: String) {
+        onAudioReceived?.invoke(url, headersJson)
     }
 }

@@ -914,6 +914,12 @@ class WebTabFragment : BaseWebTabFragment() {
             val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
             val type = VideoUtils.parseInterceptorType(headersJson)
             AppLogger.d("Video intercepted ($type): $url \n$requestHeaders\n$responseHeaders")
+        },
+        onAudioReceived = { url, headersJson ->
+            val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
+            val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
+            val type = VideoUtils.parseInterceptorType(headersJson)
+            AppLogger.d("Audio intercepted ($type): $url \n$requestHeaders\n$responseHeaders")
         }
     )
 }

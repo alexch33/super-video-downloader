@@ -90,14 +90,10 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
           body: |
-            - Added new detection experimental detection system (early development stage) it feature enabled by default in this build
-              This new system working from JS and should detect things, that can be detected by old detection system.
-              But for it interrupt intercepted option will not work
-              Also for now it using superx detector and downloader (so issues about problems very appreciated)
-            
-            
-            - Fixed bug with random order of detected videos
-            - Crashes Fixes
+            - Added disabling youtube-dlp detection, if experimental system is enabled.
+            - Added moving file to private folder
+            - Fixed bugs with for experimental detection system 
+            - Minor fixes
             - Performance optimization
           draft: false
           make_latest: false

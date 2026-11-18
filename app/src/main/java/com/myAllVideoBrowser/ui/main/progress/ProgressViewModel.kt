@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.rx3.asFlow
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
@@ -36,6 +37,7 @@ class ProgressViewModel @Inject constructor(
     val progressInfos: StateFlow<List<ProgressInfo>> = _progressInfos.asStateFlow()
 
     private val singleThreadExecutor = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+    private val progressExecutor = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 
     override fun start() {
         downloadProgressStartListen()
@@ -146,10 +148,9 @@ class ProgressViewModel @Inject constructor(
 
     @VisibleForTesting
     internal fun downloadProgressStartListen() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(progressExecutor) {
             try {
                 progressRepository.getProgressInfos()
-                    .toObservable()
                     .asFlow()
                     .collect { progressInfoList ->
                         val filtered = progressInfoList

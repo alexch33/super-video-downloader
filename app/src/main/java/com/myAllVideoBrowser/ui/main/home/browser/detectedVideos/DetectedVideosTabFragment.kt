@@ -61,6 +61,7 @@ class DetectedVideosTabFragment : BaseFragment() {
         layoutMngr = WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
         binding = FragmentDetectedVideosTabBinding.inflate(inflater, container, false).apply {
+            lifecycleOwner = viewLifecycleOwner
             val url = detectedVideosTabViewModel?.webTabModel?.tabUrlInput?.get()
             title.text = if (!url.isNullOrEmpty()) {
                 getString(R.string.found_videos_from, url).split("?").firstOrNull()

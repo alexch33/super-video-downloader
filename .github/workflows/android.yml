@@ -96,6 +96,8 @@ jobs:
             - Fixed bugs with for experimental detection system 
             - Minor fixes
             - Performance optimization
+            - Added all missed translations
+            - Built in adblock list updated
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

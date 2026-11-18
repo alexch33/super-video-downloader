@@ -678,6 +678,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:checked="@{viewModel.isUseLegacyM3u8Detection}"
+                                android:enabled="@{!viewModel.isUseExperimentalDetection}"
                                 android:onCheckedChanged="@{(_, isChecked) -> viewModel.setUseLegacyM3u8Detection(isChecked)}"
                                 android:text="@string/use_legacy_m3u8_detection"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />

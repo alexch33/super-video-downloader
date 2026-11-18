@@ -122,8 +122,11 @@ class SettingsViewModel @Inject constructor(
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
             val simDownloadsCount = sharedPrefHelper.getMaxSimultaneousDownloads()
-            val useLegacy = sharedPrefHelper.getIsUseYoutubedlpM3u8Detection()
             val useExperimental = sharedPrefHelper.getIsUseExperimentalDetection()
+            val useLegacy = !useExperimental && sharedPrefHelper.getIsUseYoutubedlpM3u8Detection()
+            if (useExperimental && sharedPrefHelper.getIsUseYoutubedlpM3u8Detection()) {
+                sharedPrefHelper.setIsUseLegacyM3u8Detection(false)
+            }
             val alwaysRemux = sharedPrefHelper.getIsProcessDownloadFfmpeg()
             val remuxOnlyLive = sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg()
             val forceStreamDownload = sharedPrefHelper.getIsForceStreamDownload()
@@ -200,6 +203,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setUseLegacyM3u8Detection(isTurnedOn: Boolean) {
+        if (_isUseExperimentalDetection.value == true && isTurnedOn) {
+            return
+        }
         _isUseLegacyM3u8Detection.postValue(isTurnedOn)
         viewModelScope.launch(Dispatchers.IO) {
             sharedPrefHelper.setIsUseLegacyM3u8Detection(isTurnedOn)
@@ -208,6 +214,12 @@ class SettingsViewModel @Inject constructor(
 
     fun setIsUseExperimentalDetection(isTurnedOn: Boolean) {
         _isUseExperimentalDetection.postValue(isTurnedOn)
+        if (isTurnedOn) {
+            _isUseLegacyM3u8Detection.postValue(false)
+            viewModelScope.launch(Dispatchers.IO) {
+                sharedPrefHelper.setIsUseLegacyM3u8Detection(false)
+            }
+        }
         viewModelScope.launch(Dispatchers.IO) {
             sharedPrefHelper.setIsUseExperimentalDetection(isTurnedOn)
         }

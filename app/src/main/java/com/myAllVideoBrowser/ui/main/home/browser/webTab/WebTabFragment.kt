@@ -877,7 +877,7 @@ class WebTabFragment : BaseWebTabFragment() {
             val isM3u8MpdDetection =
                 mainActivity.settingsViewModel.isCheckIfEveryRequestOnM3u8.get()
 
-            if (!isExperimentalDetection && !isM3u8MpdDetection) {
+            if (!isExperimentalDetection || !isM3u8MpdDetection) {
                 return@JsWebBridge
             }
             val headersMap = VideoUtils.parseRequestHeadersToMap(headersJson)
@@ -926,7 +926,7 @@ class WebTabFragment : BaseWebTabFragment() {
             val isRegularDetection =
                 mainActivity.settingsViewModel.getIsCheckEveryRequestOnMp4Video().get()
 
-            if (!isExperimentalDetection && !isRegularDetection) {
+            if (!isExperimentalDetection || !isRegularDetection) {
                 return@JsWebBridge
             }
 
@@ -936,6 +936,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
             if (contentLength < contentThreshold) {
                 DetectionLogger.log("REGULAR JS", "SKIP", url, "bellow threshold")
+                return@JsWebBridge
             }
 
             val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
@@ -953,8 +954,7 @@ class WebTabFragment : BaseWebTabFragment() {
             val isExperimentalDetection =
                 mainActivity.settingsViewModel.isUseExperimentalDetection.get()
             val isAudioDetectionOn = mainActivity.settingsViewModel.isCheckOnAudio.get()
-
-            if (!isExperimentalDetection && !isAudioDetectionOn) {
+            if (!isExperimentalDetection || !isAudioDetectionOn) {
                 return@JsWebBridge
             }
 

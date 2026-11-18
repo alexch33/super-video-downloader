@@ -1,8 +1,8 @@
 [versions]
 # Android and Gradle
-conscryptAndroid = "2.8.0"
+conscryptAndroid = "2.9.0"
 gradlePlugin = "9.4.1"
-kotlin = "2.4.10"
+kotlin = "2.4.21"
 kotlinxCoroutinesRx3 = "1.11.0"
 ksp = "2.3.12"
 
@@ -61,17 +61,17 @@ rxjava3 = "3.1.12"
 rxandroid3 = "3.0.2"
 
 # Other Dependencies
-glide = "5.0.9"
+glide = "5.0.10"
 youtubedl = "0.18.1"
 ffmpegKit = "2.2.3"
 
 # version change can break build
-jsoup = "1.23.2"
+jsoup = "1.24.1"
 
 timeago = "4.3.0"
 persistentCookieJar = "1.0.1"
-kotlinxSerializationJson = "1.12.0"
-kotlinxSerializationCore = "1.12.0"
+kotlinxSerializationJson = "1.13.0"
+kotlinxSerializationCore = "1.13.0"
 
 # Media3
 media3 = "1.11.1"

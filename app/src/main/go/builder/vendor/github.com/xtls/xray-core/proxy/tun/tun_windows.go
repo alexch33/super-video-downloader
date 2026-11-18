@@ -23,6 +23,7 @@ import (
 	"github.com/xtls/xray-core/common/errors"
 	"github.com/xtls/xray-core/transport/internet"
 	"golang.org/x/sys/windows"
+	"golang.org/x/sys/windows/registry"
 	"golang.zx2c4.com/wintun"
 	"golang.zx2c4.com/wireguard/windows/tunnel/winipcfg"
 )
@@ -98,6 +99,19 @@ func open(name, desc string) (*wintun.Adapter, error) {
 	return nil, err
 }
 
+// ipv6Off tells whether DisabledComponents turns IPv6 off on the non-tunnel
+// interfaces (0x10, as 0xFF does), the TUN among them. Windows applies it at
+// boot only.
+func ipv6Off() bool {
+	key, err := registry.OpenKey(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters`, registry.QUERY_VALUE)
+	if err != nil {
+		return false
+	}
+	defer key.Close()
+	value, _, err := key.GetIntegerValue("DisabledComponents")
+	return err == nil && value&0x10 != 0
+}
+
 func (t *WindowsTun) Start() (err error) {
 	var address4, address6 bool
 	addresses := make([]netip.Prefix, 0, len(t.options.Gateway))
@@ -139,6 +153,17 @@ func (t *WindowsTun) Start() (err error) {
 		routesData = append(routesData, &r)
 	}
 
+	// With IPv6 off by DisabledComponents, setting it up may fail, clearing
+	// its DNS servers too, which is then only logged.
+	off6 := ipv6Off()
+	ignored := func(family winipcfg.AddressFamily, err error) bool {
+		if family != windows.AF_INET6 || !off6 {
+			return false
+		}
+		errors.LogErrorInner(context.Background(), err, "[tun] ignored, as DisabledComponents turns IPv6 off")
+		return true
+	}
+
 	var retryTimes int
 	var firstErr error
 startOver:
@@ -155,6 +180,9 @@ startOver:
 			err = t.luid.SetRoutesForFamily(family, routesData)
 			if err != nil {
 				firstErr = errors.New("unable to set routes").Base(err)
+				if ignored(family, firstErr) {
+					continue
+				}
 				if err == windows.ERROR_NOT_FOUND {
 					goto startOver
 				}
@@ -165,6 +193,9 @@ startOver:
 			err = t.luid.SetIPAddressesForFamily(family, addresses)
 			if err != nil {
 				firstErr = errors.New("unable to set ips").Base(err)
+				if ignored(family, firstErr) {
+					continue
+				}
 				if err == windows.ERROR_NOT_FOUND {
 					goto startOver
 				}
@@ -173,9 +204,7 @@ startOver:
 		}
 		ipif, err := t.luid.IPInterface(family)
 		if err != nil {
-			// With IPv6 disabled system-wide (DisabledComponents), the adapter has no
-			// IPv6 interface at all. Skip the family unless the config asks for it.
-			if err == windows.ERROR_NOT_FOUND && family == windows.AF_INET6 && !address6 && !route6 {
+			if ignored(family, errors.New("unable to get the interface").Base(err)) {
 				continue
 			}
 			return err
@@ -194,6 +223,9 @@ startOver:
 		err = ipif.Set()
 		if err != nil {
 			firstErr = errors.New("unable to set metric and MTU").Base(err)
+			if ignored(family, firstErr) {
+				continue
+			}
 			if err == windows.ERROR_NOT_FOUND {
 				goto startOver
 			}
@@ -202,6 +234,9 @@ startOver:
 		err = t.luid.SetDNS(family, dns, nil)
 		if err != nil {
 			firstErr = errors.New("unable to set DNS").Base(err)
+			if ignored(family, firstErr) {
+				continue
+			}
 			if err == windows.ERROR_NOT_FOUND {
 				goto startOver
 			}
@@ -247,42 +282,48 @@ startOver:
 	}
 
 	// With autoSystemWfpBlockLeak, once the system routes lead to the TUN,
-	// keep DNS ("dns", if dns is set), and an IP version no route of which
-	// leads to the TUN ("misconfigtun"), from leaving through the other
-	// interfaces. Addresses do not matter: without one of a version in
-	// gateway, Windows gives the TUN a link-local one.
-	leaks := t.options.AutoSystemWfpBlockLeak
-	blockDNS := slices.Contains(leaks, "dns") && len(dns) > 0
-	blockIPv4 := slices.Contains(leaks, "misconfigtun") && !route4
-	blockIPv6 := slices.Contains(leaks, "misconfigtun") && !route6
-	if (route4 || route6) && (blockDNS || blockIPv4 || blockIPv6) {
-		if t.wfp, err = blockLeaks(t.luid, blockDNS, blockIPv4, blockIPv6); err != nil {
-			var blocked []string
-			for _, b := range []struct {
-				on   bool
-				what string
-			}{{blockDNS, "DNS"}, {blockIPv4, "IPv4"}, {blockIPv6, "IPv6"}} {
-				if b.on {
-					blocked = append(blocked, b.what)
-				}
-			}
-			// Rather no TUN than a leaking one.
-			return errors.New("unable to block ", strings.Join(blocked, " and "), " outside the TUN (remove autoSystemWfpBlockLeak to run without)").Base(err)
+	// keep the protocols and ports given ("dns" stands for those of DNS),
+	// Windows' DNS Client service, an IP version no route of which leads to
+	// the TUN ("misconfigtun"), or everything ("all", or "allexceptlan" but
+	// for the local network), to the addresses of a CIDR or to all, from
+	// leaving through the other interfaces. The TUN's own addresses do not
+	// matter: without one of a version in gateway, Windows gives it a
+	// link-local one.
+	leaks, err := ExpandWfpBlockLeak(t.options.AutoSystemWfpBlockLeak)
+	if err != nil {
+		return err
+	}
+	// With IPv6 off by DisabledComponents, IPv6 setup failures are only logged,
+	// and IPv6 still works until the reboot that applies it. So "misconfigtun"
+	// then blocks IPv6 outside the TUN whatever the routes.
+	block := newLeakFilters(leaks, route4, route6 && !off6)
+	if route4 || route6 {
+		dnsClient := func(l leak) bool { return l.name == "windnsclient" }
+		if slices.ContainsFunc(block, dnsClient) && !dnsClientUsesAnyPort() {
+			block = slices.DeleteFunc(block, dnsClient)
+			errors.LogInfo(context.Background(), "[tun] windnsclient skipped: before Windows 11 and Server 2022, the DNS Client service only queries port 53")
 		}
-		errors.LogInfo(context.Background(), "[tun] outside the TUN, blocked DNS: ", blockDNS, ", blocked IPv4: ", blockIPv4, ", blocked IPv6: ", blockIPv6)
-		if blockDNS {
-			covered := slices.Clone(addresses)
-			for _, route := range routesData {
-				covered = append(covered, route.Destination)
-			}
-			for _, server := range dnsOutsideTUN(dns, covered) {
-				errors.LogWarning(context.Background(), "[tun] DNS server ", server, " is in neither gateway nor autoSystemRoutingTable, so queries to it cannot go through the TUN and are blocked")
-			}
-			// With updater, the dialer controllers bind Xray's own sockets
-			// to the physical interface.
-			if updater != nil {
-				t.resolver = resolveOnOwn()
-			}
+		if block.systemDNS() && len(dns) == 0 {
+			return errors.New("keeping the system's DNS inside the TUN needs dns to be set")
+		}
+	}
+	if blocked := block.String(); (route4 || route6) && blocked != "" {
+		if t.wfp, err = blockLeaks(t.luid, block); err != nil {
+			// Rather no TUN than a leaking one.
+			return errors.New("unable to block ", blocked, " outside the TUN (remove autoSystemWfpBlockLeak to run without)").Base(err)
+		}
+		errors.LogInfo(context.Background(), "[tun] blocked outside the TUN: ", blocked)
+		covered := slices.Clone(addresses)
+		for _, route := range routesData {
+			covered = append(covered, route.Destination)
+		}
+		for _, server := range dnsOutsideTUN(dns, covered, block) {
+			errors.LogWarning(context.Background(), "[tun] DNS server ", server, " is in neither gateway nor autoSystemRoutingTable, so queries to it cannot go through the TUN and are blocked")
+		}
+		// With updater, the dialer controllers bind Xray's own sockets to the
+		// physical interface.
+		if block.systemDNS() && updater != nil {
+			t.resolver = resolveOnOwn()
 		}
 	}
 	if len(dns) > 0 || route4 || route6 {

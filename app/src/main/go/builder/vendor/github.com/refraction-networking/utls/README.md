@@ -4,7 +4,7 @@
 ---
 uTLS is a fork of "crypto/tls", which provides ClientHello fingerprinting resistance, low-level access to handshake, fake session tickets and some other features. Handshake is still performed by "crypto/tls", this library merely changes ClientHello part of it and provides low-level access.  
 
-**Minimum Go Version**: Go 1.21 
+**Minimum Go Version**: Go 1.27
 
 If you have any questions, bug reports or contributions, you are welcome to publish those on GitHub. If you want to do so in private, ~~you can contact one of developers personally via sergey.frolov@colorado.edu~~.
 
@@ -251,8 +251,16 @@ will prepare ClientHello with empty uconn.Extensions so you can fill it with TLS
 4. The rest will will parrot given browser. Such parrots include, for example:
 	* `utls.HelloChrome_Auto`- parrots recommended(usually latest) Google Chrome version
 	* `utls.HelloChrome_58` - parrots Google Chrome 58
+	* `utls.HelloChrome_155` - parrots a fresh Chrome 155.0.8059.40 connection on macOS
 	* `utls.HelloFirefox_Auto` - parrots recommended(usually latest) Firefox version
 	* `utls.HelloFirefox_55` - parrots Firefox 55
+
+`HelloChrome_Auto` currently selects `HelloChrome_155`. This profile includes
+GREASE and ML-DSA signature schemes and the 28 trust anchor IDs observed in a
+[fresh Chrome capture](testdata/chrome155_clienthello.md). The IDs are a snapshot
+of that build's Chrome Root Store; component updates and browser feature settings
+can change the ClientHello. `TrustAnchorsExtension` preserves these IDs when
+fingerprinting a capture and does not change `Config.RootCAs`.
 	
 # Usage
 ## Examples

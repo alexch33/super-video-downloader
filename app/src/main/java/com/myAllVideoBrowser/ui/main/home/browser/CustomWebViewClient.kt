@@ -257,10 +257,41 @@ val injectJsInterceptor = """
                     return hasVideoExt || hasVideoContentType;
                 }
 
+                function isManifestUrlOrContent(url, contentType, text) {
+                    if (!url) return false;
+                    var lowerUrl = url.toLowerCase();
+                    var cleanUrl = lowerUrl.split('?')[0].split('#')[0];
+
+                    if (cleanUrl.endsWith('.m3u8') || cleanUrl.endsWith('.mpd') || lowerUrl.indexOf('.m3u8') !== -1 || lowerUrl.indexOf('.mpd') !== -1 || lowerUrl.indexOf('manifest') !== -1) {
+                        return true;
+                    }
+
+                    if (contentType) {
+                        var ct = contentType.toLowerCase();
+                        if (ct.indexOf('mpegurl') !== -1 || ct.indexOf('dash+xml') !== -1) {
+                            return true;
+                        }
+                    }
+
+                    if (text) {
+                        if (text.indexOf('#EXTM3U') !== -1 || text.indexOf('<MPD') !== -1 || text.toLowerCase().indexOf('<mpd') !== -1) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+
                 function checkUrlOrHeadersAndNotify(url, headersPayload) {
                     if (!url) return;
                     var respHeaders = headersPayload.response || {};
                     var contentType = respHeaders['content-type'] || respHeaders['Content-Type'] || '';
+
+                    if (isManifestUrlOrContent(url, contentType, null)) {
+                        console.log('MANIFEST_MATCHED: ' + url);
+                        notifyAndroid(url, headersPayload, '');
+                        return;
+                    }
 
                     if (isVideoUrlOrType(url, contentType)) {
                         console.log('VIDEO_MATCHED: ' + url);
@@ -286,36 +317,27 @@ val injectJsInterceptor = """
                 function isSegmentUrl(url) {
                     if (!url) return false;
                     var u = url.toLowerCase();
+                    if (u.indexOf('.m3u8') !== -1 || u.indexOf('.mpd') !== -1) return false;
+                    
                     return u.indexOf('.m4s') !== -1
                         || u.indexOf('.ts') !== -1
                         || u.indexOf('.m4a') !== -1
-                        || u.indexOf('.aac') !== -1
-                        || u.indexOf('_chunk_') !== -1
-                        || u.indexOf('seg-') !== -1
-                        || u.indexOf('/chunk') !== -1;
+                        || u.indexOf('.aac') !== -1;
                 }
 
                 function checkContentAndNotify(url, headersPayload, text) {
                     if (!url) return;
-                    if (isSegmentUrl(url)) return;
 
                     var respHeaders = headersPayload.response || {};
                     var contentType = respHeaders['content-type'] || respHeaders['Content-Type'] || '';
-                    var lowerUrl = url.toLowerCase();
 
-                    var isManifest = (text && (text.indexOf('#EXTM3U') !== -1 || text.indexOf('<MPD') !== -1 || text.toLowerCase().indexOf('<mpd') !== -1))
-                        || lowerUrl.indexOf('.m3u8') !== -1
-                        || lowerUrl.indexOf('.mpd') !== -1
-                        || lowerUrl.indexOf('manifest') !== -1
-                        || contentType.indexOf('application/vnd.apple.mpegurl') !== -1
-                        || contentType.indexOf('application/dash+xml') !== -1
-                        || contentType.indexOf('mpegurl') !== -1;
-
-                    if (isManifest) {
+                    if (isManifestUrlOrContent(url, contentType, text)) {
                         console.log('MANIFEST_MATCHED: ' + url);
                         notifyAndroid(url, headersPayload, text || '');
                         return;
                     }
+
+                    if (isSegmentUrl(url)) return;
 
                     if (contentType.indexOf('video/') !== -1 || contentType.indexOf('audio/') !== -1) {
                         return;

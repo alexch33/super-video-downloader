@@ -90,14 +90,8 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
           body: |
-            - Experimental detection system turned off by default (should be turned on via settings)
-            - Added disabling youtube-dlp detection, if experimental system is enabled.
-            - Added moving file to private folder
-            - Fixed bugs with for experimental detection system 
+            - Fixed lists rendering bug for progress videos and tabs for some devices
             - Minor fixes
-            - Performance optimization
-            - Added all missed translations
-            - Built in adblock list updated
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

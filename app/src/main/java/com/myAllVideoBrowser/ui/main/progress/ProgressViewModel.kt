@@ -35,7 +35,6 @@ class ProgressViewModel @Inject constructor(
     private val _progressInfos = MutableStateFlow<List<ProgressInfo>>(emptyList())
     val progressInfos: StateFlow<List<ProgressInfo>> = _progressInfos.asStateFlow()
 
-    private val progressExecutor = Executors.newFixedThreadPool(3).asCoroutineDispatcher()
     private val singleThreadExecutor = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 
     override fun start() {
@@ -147,21 +146,20 @@ class ProgressViewModel @Inject constructor(
 
     @VisibleForTesting
     internal fun downloadProgressStartListen() {
-        viewModelScope.launch(progressExecutor) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                progressObservable().asFlow().collect { progressInfoList ->
-                    _progressInfos.value = progressInfoList.sortedBy { it.id }
-                }
+                progressRepository.getProgressInfos()
+                    .toObservable()
+                    .asFlow()
+                    .collect { progressInfoList ->
+                        val filtered = progressInfoList
+                            .filter { info -> info.downloadStatus != VideoTaskState.SUCCESS }
+                            .sortedBy { it.id }
+                        _progressInfos.value = filtered
+                    }
             } catch (e: Throwable) {
                 e.printStackTrace()
             }
         }
-    }
-
-    private fun progressObservable(): Observable<List<ProgressInfo>> {
-        return progressRepository.getProgressInfos()
-            .throttleLast(1000, TimeUnit.MILLISECONDS)
-            .map { it.filter { info -> info.downloadStatus != VideoTaskState.SUCCESS } }
-            .toObservable()
     }
 }

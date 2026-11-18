@@ -76,7 +76,10 @@
     <string name="settings_detection">Ustawienia wykrywania</string>
     <string name="settings_downloading">Ustawienia pobierania</string>
     <string name="use_legacy_m3u8_detection">Użyj starszej detekcji m3u8/mpd (przez youtube-dlp)</string>
+    <string name="use_experimental_detection">Użyj eksperymentalnego wykrywania</string>
+    <string name="setting_explanation_use_experimental_detection">Włącza eksperymentalne funkcje wykrywania w celu zaawansowanego wyszukiwania i przetwarzania strumieni wideo.</string>
     <string name="video_move_downloads">Przenieś do folderu pobranych</string>
+    <string name="video_move_private">Przenieś do prywatnych</string>
     <string name="media_move_error">Błąd podczas przenoszenia multimediów</string>
     <string name="media_move_success">Przenoszenie multimediów powiodło się</string>
     <string name="allow">Zezwól</string>

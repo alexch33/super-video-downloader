@@ -119,8 +119,11 @@
     <string name="settings_detection">감지 설정</string>
     <string name="settings_downloading">다운로드 설정</string>
     <string name="use_legacy_m3u8_detection">레거시 m3u8/mpd 감지 방식 사용(youtube-dlp 방식)</string>
+    <string name="use_experimental_detection">실험적 감지 사용</string>
+    <string name="setting_explanation_use_experimental_detection">고급 비디오 스트림 검색 및 처리를 위한 실험적 감지 기능을 활성화합니다.</string>
     <string name="playback_channel_name">재생</string>
     <string name="video_move_downloads">다운로드 파일 이동</string>
+    <string name="video_move_private">비공개로 이동</string>
     <string name="media_move_error">미디어 이동 오류</string>
     <string name="media_move_success">미디어 이동 성공</string>
     <string name="allow">허용</string>

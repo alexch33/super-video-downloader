@@ -119,8 +119,11 @@
     <string name="settings_detection">Pengaturan Pendeteksian</string>
     <string name="settings_downloading">Pengaturan Pengunduhan</string>
     <string name="use_legacy_m3u8_detection">Gunakan deteksi m3u8/mpd versi lama (oleh youtube-dlp)</string>
+    <string name="use_experimental_detection">Gunakan deteksi eksperimental</string>
+    <string name="setting_explanation_use_experimental_detection">Mengaktifkan fitur deteksi eksperimental untuk penemuan dan pemrosesan aliran video lanjutan.</string>
     <string name="playback_channel_name">Pemutaran</string>
     <string name="video_move_downloads">Pindah ke Unduhan</string>
+    <string name="video_move_private">Pindah ke Privat</string>
     <string name="media_move_error">Kesalahan Pemindahan Media</string>
     <string name="media_move_success">Sukses memindahkan media</string>
     <string name="allow">Izinkan</string>

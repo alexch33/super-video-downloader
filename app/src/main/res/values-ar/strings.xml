@@ -124,8 +124,11 @@
     <string name="settings_detection">إعدادات الكشف</string>
     <string name="settings_downloading">إعدادات التنزيل</string>
     <string name="use_legacy_m3u8_detection">استخدم youtube-dlp للكشف عن m3u8/mpd</string>
+    <string name="use_experimental_detection">استخدام الكشف التجريبي</string>
+    <string name="setting_explanation_use_experimental_detection">يُمكّن ميزات الكشف التجريبية لاكتشاف ومعالجة دفق الفيديو المتقدمة.</string>
     <string name="playback_channel_name">التشغيل</string>
     <string name="video_move_downloads">نقل التنزيلات</string>
+    <string name="video_move_private">نقل إلى الخاصة</string>
     <string name="media_move_error">خطأ في نقل الوسائط</string>
     <string name="media_move_success">تم نقل الوسائط بنجاح</string>
     <string name="allow">السماح</string>

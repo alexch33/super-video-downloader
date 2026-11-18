@@ -122,8 +122,11 @@
     <string name="settings_detection">Paramètres de détection</string>
     <string name="settings_downloading">Paramètres de téléchargement</string>
     <string name="use_legacy_m3u8_detection">Utilisez youtube-dlp pour la détection m3u8/mpd</string>
+    <string name="use_experimental_detection">Utiliser la détection expérimentale</string>
+    <string name="setting_explanation_use_experimental_detection">Active les fonctionnalités de détection expérimentales pour la découverte et le traitement avancés des flux vidéo.</string>
     <string name="playback_channel_name">Lecture</string>
     <string name="video_move_downloads">Déplacer les téléchargements</string>
+    <string name="video_move_private">Déplacer vers le privé</string>
     <string name="media_move_error">Erreur de déplacement de média</string>
     <string name="media_move_success">Média déplacé avec succès</string>
     <string name="allow">Autoriser</string>

@@ -130,8 +130,11 @@
     <string name="settings_detection">検出設定</string>
     <string name="settings_downloading">ダウンロード設定</string>
     <string name="use_legacy_m3u8_detection">m3u8/mpd検出にyoutube-dlpを使用</string>
+    <string name="use_experimental_detection">実験的検出を使用する</string>
+    <string name="setting_explanation_use_experimental_detection">高度な動画ストリームの検出と処理のための実験的検出機能を有効にします。</string>
     <string name="playback_channel_name">再生</string>
     <string name="video_move_downloads">ダウンロードを移動</string>
+    <string name="video_move_private">プライベートに移動</string>
     <string name="media_move_error">メディア移動エラー</string>
     <string name="media_move_success">メディアの移動に成功しました</string>
     <string name="allow">許可</string>

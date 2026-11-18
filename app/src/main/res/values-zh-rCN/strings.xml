@@ -117,9 +117,12 @@
     <string name="custom_dns_saved_message">已保存自定义 DNS</string>
     <string name="settings_detection">检测设置</string>
     <string name="settings_downloading">下载设置</string>
-    <string name="use_legacy_m3u8_detection">使用 youyube-dlp 进行 m3u8/mpd 检测</string>
+    <string name="use_legacy_m3u8_detection">使用 youtube-dlp 进行 m3u8/mpd 检测</string>
+    <string name="use_experimental_detection">使用实验性检测</string>
+    <string name="setting_explanation_use_experimental_detection">启用实验性检测功能，用于高级视频流发现和处理。</string>
     <string name="playback_channel_name">播放</string>
     <string name="video_move_downloads">移动下载</string>
+    <string name="video_move_private">移动到私密</string>
     <string name="media_move_error">媒体移动错误</string>
     <string name="media_move_success">媒体移动成功</string>
     <string name="allow">允许</string>

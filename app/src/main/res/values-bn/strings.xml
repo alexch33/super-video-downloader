@@ -131,8 +131,11 @@
     <string name="settings_detection">সনাক্তকরণ সেটিংস</string>
     <string name="settings_downloading">ডাউনলোড সেটিংস</string>
     <string name="use_legacy_m3u8_detection">m3u8/mpd সনাক্তকরণের জন্য youtube-dlp ব্যবহার করুন</string>
+    <string name="use_experimental_detection">পরীক্ষামূলক সনাক্তকরণ ব্যবহার করুন</string>
+    <string name="setting_explanation_use_experimental_detection">উन्नत ভিডিও স্ট্রিম আবিষ্কার এবং প্রক্রিয়াকরণের জন্য পরীক্ষামূলক সনাক্তকরণ বৈশিষ্ট্যগুলি সক্ষম করে।</string>
     <string name="playback_channel_name">প্লেব্যাক</string>
     <string name="video_move_downloads">ডাউনলোড সরান</string>
+    <string name="video_move_private">প্রাইভেটে সরান</string>
     <string name="media_move_error">মিডিয়া সরানোর ত্রুটি</string>
     <string name="media_move_success">মিডিয়া সরানো সফল হয়েছে</string>
     <string name="allow">অনুমতি দিন</string>

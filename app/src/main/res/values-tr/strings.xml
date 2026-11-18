@@ -126,6 +126,7 @@
     <string name="use_legacy_m3u8_detection">m3u8/mpd algılaması için youtube-dlp kullan</string>
     <string name="playback_channel_name">Playback</string>
     <string name="video_move_downloads">İndirilenlere Taşı</string>
+    <string name="video_move_private">Özele Taşı</string>
     <string name="media_move_error">Medya Taşıma Hatası</string>
     <string name="media_move_success">Medya Taşıma Başarılı</string>
     <string name="allow">İzin Ver</string>
@@ -179,4 +180,31 @@
     <string name="latestVersion">Son Sürüm</string>
     <string name="supportString">BTC projesine destek</string>
     <string name="checkingForUpdatesFailed">Güncelleme kontrolü başarısız oldu.</string>
+
+    <!-- Settings Explanations -->
+    <string name="setting_explanation_ask_redirection">Web sayfalarının sizi farklı bir etki alanına yönlendirmesine izin vermeden önce bir onay iletişim kutusu görüntüler.</string>
+    <string name="setting_explanation_interrupt_intercepted">İndirilmek üzere algılandıktan sonra tarayıcının medya akışlarını doğrudan web sayfasında yüklemesini veya oynatmasını durdurur.</string>
+    <string name="setting_explanation_show_video_alert">Bir web sayfasında indirilebilir bir video algılandığında otomatik bir açılır uyarı iletişim kutusu görüntüler.</string>
+    <string name="setting_explanation_show_action_button">İndirilebilir medya bulunduğunda tarayıcı ekranında kayan bir indirme düğmesi gösterir.</string>
+    <string name="setting_explanation_find_videos_by_url">Gömülü video ve medya bağlantılarını keşfetmek için doğrudan web sayfası URL\'lerini tarar.</string>
+    <string name="setting_explanation_check_every_mp4">İndirilebilir MP4 video dosyalarını algılamak için web sayfaları tarafından gönderilen tüm ağ isteklerini izler.</string>
+    <string name="setting_explanation_check_every_m3u8">HLS (M3U8) ve DASH (MPD) video akışı oynatma listeleri için ağ isteklerini izler.</string>
+    <string name="setting_explanation_check_every_audio">Web sayfalarındaki ses akışlarını ve ses dosyalarını algılamak için ağ isteklerini izler.</string>
+    <string name="setting_explanation_force_stream_detection">Bilinmeyen veya eksik içerik uzunluğu üstbilgilerine sahip medya akışlarının algılanmasını zorlar (genellikle canlı yayınlar tarafından kullanılır).</string>
+    <string name="setting_explanation_use_legacy_m3u8_detection">Web sayfalarından M3U8 ve MPD akış video bağlantılarını çıkarmak için youtube-dlp motorunu kullanır. (Aksi takdirde SuperX dedektörü kullanılacaktır)</string>
+    <string name="use_experimental_detection">Deneysel algılamayı kullan</string>
+    <string name="setting_explanation_use_experimental_detection">Gelişmiş video akışı keşfi ve işleme için deneysel algılama özelliklerini etkinleştirir.</string>
+    <string name="setting_explanation_adblock_settings">Reklam engelleme filtre listelerini ve özel engelleme kurallarını yönetmek için ayarları açar.</string>
+    <string name="setting_explanation_ads_treshold">Video reklamların indirilebilir içerik olarak algılanmasını önlemek için bu boyut eşiğinden küçük algılanan medya dosyalarını yoksayar.</string>
+    <string name="setting_explanation_download_subtitles">youtube-dlp kullanarak video indirirken mevcut altyazı parçalarını otomatik olarak getirir ve kaydeder.</string>
+    <string name="setting_explanation_force_stream_downloading">Canlı video akışları gibi normal (MP4) videolar (M3U8/MPD olmayan) için kesintisiz akış indirmeyi etkinleştirir (bazı bozuk MP4 indirmelerini düzeltebilir).</string>
+    <string name="setting_explanation_always_remux_regular">Video başlıklarını, zaman damgalarını ve kapsayıcı biçimlerini düzeltmek için tamamlandıktan sonra indirilen normal MP4 dosyalarını FFmpeg ile işler.</string>
+    <string name="setting_explanation_remux_only_live">Uygun video arama ve süresini sağlamak için FFmpeg son işlemini yalnızca kaydedilen canlı yayın indirmelerine uygular.</string>
+    <string name="setting_explanation_regular_threads">Normal dosyalar için paralel indirme iş parçacığı sayısını ayarlar. Daha yüksek iş parçacığı sayıları hızı artırabilir ancak bazı sunucularda bozulmaya neden olabilir.</string>
+    <string name="setting_explanation_m3u8_threads">M3U8/HLS akış videolarının segment yığınlarını indirmek için kullanılan paralel iş parçacığı sayısını ayarlar.</string>
+    <string name="setting_explanation_downloads_location">İndirilen videolar için depolama klasörünü seçin: Genel İndirilenler klasörü, dahili depolama içindeki Özel Gizli klasör veya SD kart depolaması.</string>
+
+    <string name="advanced_guide">Gelişmiş kılavuz</string>
+    <string name="advanced_guide_title">Gelişmiş Algılama Kılavuzu</string>
+    <string name="advanced_guide_text">SuperX\'in 3 farklı video algılama motoru türü vardır:\n\n1. URL ile Algılama:\nWeb sayfası URL\'lerini doğrudan tarar. Video URL\'lerinin web bağlantılarına gömülü olduğu Facebook veya TikTok gibi siteler için idealdir.\n\n2. Normal Dosya Algılama:\nMP4, WebM, ses vb. doğrudan medya dosyaları için ağ isteklerini inceler.\n\n3. M3U8 / MPD Akış Algılama:\nAkış çalma listelerini (HLS / DASH) algılar. İki varyantta mevcuttur:\n • youtube-dlp motoru: Çok kararlı ve güvenilirdir, ancak biraz daha yavaştır.\n • SuperX dedektörü: Yeni, deneysel ve son derece hızlıdır (bir saniyeden az).\n\nBelirli web siteleri için nasıl optimize edilir:\nVarsayılan olarak tüm dedektörler etkinleştirilmiştir. Belirli siteler için bunları Ayarlar\'dan ince ayarlayabilirsiniz:\n • Facebook veya TikTok için (algılamanın yalnızca URL ile çalıştığı durumlarda): Normal dosya algılamayı ve M3U8/MPD algılamayı kapatabilirsiniz.\n • Akış siteleri için (algılamanın ağ isteklerini keserek çalıştığı durumlarda): URL algılamayı kapatabilirsiniz.\n • Hangi dedektörün videoları bulduğunu görmek için menüdeki Algılama Günlükleri\'ni kontrol edebilir ve daha hızlı performans için kullanılmayan dedektörleri kapatabilirsiniz!</string>
 </resources>

@@ -120,7 +120,10 @@
     <string name="custom_dns_saved_message">Свой  DNS сохранён</string>
     <string name="settings_downloading">Настройки скачивания</string>
     <string name="use_legacy_m3u8_detection">Использовать youtube-dlp для M3U8/MPD</string>
+    <string name="use_experimental_detection">Использовать экспериментальное обнаружение</string>
+    <string name="setting_explanation_use_experimental_detection">Включает экспериментальные функции обнаружения для расширенного поиска и обработки видеопотоков.</string>
     <string name="video_move_downloads">Переместить в загрузки</string>
+    <string name="video_move_private">Перенести в скрытую папку</string>
     <string name="media_move_error">Ошибка перемещения</string>
     <string name="media_move_success">Успешно перемещенно</string>
     <string name="allow">позволить</string>

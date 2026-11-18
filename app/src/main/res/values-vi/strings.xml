@@ -121,8 +121,11 @@
     <string name="settings_detection">Cài đặt phát hiện</string>
     <string name="settings_downloading">Cài đặt tải xuống</string>
     <string name="use_legacy_m3u8_detection">Sử dụng youtube-dlp để phát hiện m3u8/mpd</string>
+    <string name="use_experimental_detection">Sử dụng phát hiện thử nghiệm</string>
+    <string name="setting_explanation_use_experimental_detection">Bật các tính năng phát hiện thử nghiệm để khám phá và xử lý luồng video nâng cao.</string>
     <string name="playback_channel_name">Phát lại</string>
     <string name="video_move_downloads">Di chuyển tệp tải xuống</string>
+    <string name="video_move_private">Chuyển sang riêng tư</string>
     <string name="media_move_error">Lỗi di chuyển phương tiện</string>
     <string name="media_move_success">Di chuyển phương tiện thành công</string>
     <string name="allow">Cho phép</string>

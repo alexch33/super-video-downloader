@@ -131,8 +131,11 @@
     <string name="settings_detection">पत्ता लगाउने सेटिङ</string>
     <string name="settings_downloading">डाउनलोड सेटिङ</string>
     <string name="use_legacy_m3u8_detection">m3u8/mpd पत्ता लगाउनको लागि youtube-dlp प्रयोग गर्नुहोस्</string>
+    <string name="use_experimental_detection">प्रयोगात्मक डिटेक्शन प्रयोग गर्नुहोस्</string>
+    <string name="setting_explanation_use_experimental_detection">उन्नत भिडियो स्ट्रिम पत्ता लगाउने र प्रशोधनका लागि प्रयोगात्मक डिटेक्शन सुविधाहरू सक्षम बनाउँछ।</string>
     <string name="playback_channel_name">प्लेब्याक</string>
     <string name="video_move_downloads">डाउनलोडहरू सार्नुहोस्</string>
+    <string name="video_move_private">प्राइभेटमा सार्नुहोस्</string>
     <string name="media_move_error">मिडिया सार्ने त्रुटि</string>
     <string name="media_move_success">मिडिया सार्न सफल भयो</string>
     <string name="allow">अनुमति दिनुहोस्</string>

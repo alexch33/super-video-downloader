@@ -59,6 +59,7 @@ class ProgressFragment : BaseFragment() {
         progressAdapter = ProgressAdapter(emptyList(), progressListener)
 
         dataBinding = FragmentProgressBinding.inflate(inflater, container, false).apply {
+            this.lifecycleOwner = viewLifecycleOwner
             val managerL =
                 WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             this.mainViewModel = mainActivity.mainViewModel

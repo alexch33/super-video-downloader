@@ -134,7 +134,7 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 513
+        versionCode = 517
         versionName = "0.9.2.0"
 
         if (isSingleAbiRequested) {

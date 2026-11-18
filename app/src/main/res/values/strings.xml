@@ -132,6 +132,7 @@
     <string name="use_legacy_m3u8_detection">Use youtube-dlp for m3u8/mpd detection</string>
     <string name="playback_channel_name">Playback</string>
     <string name="video_move_downloads">Move Downloads</string>
+    <string name="video_move_private" translatable="false">Move to Private</string>
     <string name="media_move_error">Media Move Error</string>
     <string name="media_move_success">Media move success</string>
     <string name="allow">Allow</string>

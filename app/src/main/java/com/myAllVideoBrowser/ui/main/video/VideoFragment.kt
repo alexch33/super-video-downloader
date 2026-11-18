@@ -278,7 +278,9 @@ class VideoFragment : BaseFragment() {
 
         popupMenu.menuInflater.inflate(R.menu.menu_video, popupMenu.menu)
         popupMenu.setForceShowIcon(true)
-        popupMenu.menu[5].isVisible = isVideoInHiddenFolderFolder(video)
+        val isInHiddenFolder = isVideoInHiddenFolderFolder(video)
+        popupMenu.menu.findItem(R.id.item_move_to_downloads)?.isVisible = isInHiddenFolder
+        popupMenu.menu.findItem(R.id.item_move_to_private)?.isVisible = !isInHiddenFolder
         popupMenu.show()
 
         popupMenu.setOnMenuItemClickListener { arg0 ->
@@ -321,6 +323,38 @@ class VideoFragment : BaseFragment() {
                 R.id.item_move_to_downloads -> {
                     val targetDir =
                         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    val target = File(targetDir, video.name)
+
+                    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                        videoViewModel.setLoading(true)
+                        try {
+                            val isSuccess =
+                                fileUtil.moveMedia(requireContext(), video.uri, target.toUri())
+                            withContext(Dispatchers.Main) {
+                                val msg =
+                                    if (isSuccess) R.string.media_move_success else R.string.media_move_error
+                                Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: Throwable) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    R.string.media_move_error,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        } finally {
+                            videoViewModel.setLoading(false)
+                        }
+                    }
+                    true
+                }
+
+                R.id.item_move_to_private -> {
+                    val targetDir = File(requireContext().filesDir, FileUtil.FOLDER_NAME)
+                    if (!targetDir.exists()) {
+                        targetDir.mkdirs()
+                    }
                     val target = File(targetDir, video.name)
 
                     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {

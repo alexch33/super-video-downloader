@@ -342,6 +342,11 @@ class BrowserFragment : BaseFragment(), BrowserServicesProvider {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         browserViewModel.start()
+
+        browserViewModel.tabs.observe(viewLifecycleOwner) { tabs ->
+            tabs?.let { drawerAdapter.setData(it) }
+        }
+
         handlePressWebTabEvent()
         handleOpenTabEvent()
         handleCloseWebTabEventEvent()

@@ -42,7 +42,7 @@
     <string name="title_media_link">Url ile indir</string>
     <string name="clear_history">Geçmişi Sil</string>
     <string name="proxy">Proxy</string>
-    <string name="proxies">Proxies</string>
+    <string name="proxies">Proksiler</string>
     <string name="proxies_unavailable">Proxy mevcut değil</string>
     <string name="loading_image_view">görsel önizlemesi yükleniyor</string>
     <string name="video_menu_open_in_folder">Klasörde aç</string>
@@ -115,18 +115,18 @@
     <string name="secure_dns">Güvenli DNS</string>
     <string name="dns_custom">Özel</string>
     <string name="dns_custom_url_hint">DoH veya DoT URL Gir</string>
-    <string name="doh_cloudflare">Cloudflare DOH</string>
-    <string name="doh_quad9">Quad9 DOH</string>
-    <string name="doh_ad_guard">Adguard DOH</string>
+    <string name="doh_cloudflare">Cloudflare DoH</string>
+    <string name="doh_quad9">Quad9 DoH</string>
+    <string name="doh_ad_guard">Adguard DoH</string>
     <string name="custom_dns_saved_message">Özel DNS kaydedildi</string>
     <string name="proxy_service_channel_name">Arka plan proxy\'si</string>
     <string name="proxy_service_channel_description">Arka plan proxy çalışanı</string>
     <string name="settings_detection">Algılama Ayarları</string>
     <string name="settings_downloading">İndirme Ayarları</string>
     <string name="use_legacy_m3u8_detection">m3u8/mpd algılaması için youtube-dlp kullan</string>
-    <string name="playback_channel_name">Playback</string>
+    <string name="playback_channel_name">Oynatma</string>
     <string name="video_move_downloads">İndirilenlere Taşı</string>
-    <string name="video_move_private">Özele Taşı</string>
+    <string name="video_move_private">Gizli Klasöre Taşı</string>
     <string name="media_move_error">Medya Taşıma Hatası</string>
     <string name="media_move_success">Medya Taşıma Başarılı</string>
     <string name="allow">İzin Ver</string>
@@ -180,6 +180,21 @@
     <string name="latestVersion">Son Sürüm</string>
     <string name="supportString">BTC projesine destek</string>
     <string name="checkingForUpdatesFailed">Güncelleme kontrolü başarısız oldu.</string>
+
+    <string name="clear">Temizle</string>
+    <string name="logs">Algılama Günlükleri</string>
+    <string name="settings_export_history">Tarayıcı geçmişini dışarı aktar</string>
+    <string name="history_exported_success">Tarayıcı geçmişi İndirilenler klasörüne başarıyla aktarıldı</string>
+    <string name="history_exported_error">Tarayıcı geçmişi dışarı aktarılamadı</string>
+    <string name="settings_import_history">Tarayıcı geçmişini içe aktar</string>
+    <string name="history_imported_success">Tarayıcı geçmişi başarıyla içe aktarıldı</string>
+    <string name="history_imported_error">Tarayıcı geçmişi içe aktarılamadı</string>
+    <string name="settings_export_bookmarks">Yer imlerini dışarı aktar</string>
+    <string name="bookmarks_exported_success">Yer imleri İndirilenler klasörüne başarıyla aktarıldı</string>
+    <string name="bookmarks_exported_error">Yer imleri dışarı aktarılamadı</string>
+    <string name="settings_import_bookmarks">Yer imlerini içe aktar</string>
+    <string name="bookmarks_imported_success">Yer imleri başarıyla içe aktarıldı</string>
+    <string name="bookmarks_imported_error">Yer imleri içe aktarılamadı</string>
 
     <!-- Settings Explanations -->
     <string name="setting_explanation_ask_redirection">Web sayfalarının sizi farklı bir etki alanına yönlendirmesine izin vermeden önce bir onay iletişim kutusu görüntüler.</string>

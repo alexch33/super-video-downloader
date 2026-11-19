@@ -90,6 +90,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
           body: |
+            - Rewritten js experimental detection system
             - Added icon to videos in hidden folder
             - Added import media files inside app from user's selection
             - WebView prewarm on app start

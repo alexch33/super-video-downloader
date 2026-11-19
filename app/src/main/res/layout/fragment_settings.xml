@@ -375,6 +375,7 @@
                                 android:layout_weight="1"
                                 android:checked="@{viewModel.isInterruptIntreceptedResources}"
                                 android:onCheckedChanged="@{(_, isChecked) -> viewModel.setIsInterruptInterceptedResources(isChecked)}"
+                                android:enabled="@{!viewModel.isUseExperimentalDetection}"
                                 android:text="@string/is_interrupt_intrecepted_resources"
                                 android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 

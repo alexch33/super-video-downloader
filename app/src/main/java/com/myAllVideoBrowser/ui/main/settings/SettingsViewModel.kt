@@ -127,6 +127,9 @@ class SettingsViewModel @Inject constructor(
             if (useExperimental && sharedPrefHelper.getIsUseYoutubedlpM3u8Detection()) {
                 sharedPrefHelper.setIsUseLegacyM3u8Detection(false)
             }
+            if (useExperimental && sharedPrefHelper.getIsInterruptInterceptedResources()) {
+                sharedPrefHelper.setIsInterruptInterceptedResources(false)
+            }
             val alwaysRemux = sharedPrefHelper.getIsProcessDownloadFfmpeg()
             val remuxOnlyLive = sharedPrefHelper.getIsProcessOnlyLiveDownloadFfmpeg()
             val forceStreamDownload = sharedPrefHelper.getIsForceStreamDownload()
@@ -216,8 +219,10 @@ class SettingsViewModel @Inject constructor(
         _isUseExperimentalDetection.postValue(isTurnedOn)
         if (isTurnedOn) {
             _isUseLegacyM3u8Detection.postValue(false)
+            _isInterruptIntreceptedResources.postValue(false)
             viewModelScope.launch(Dispatchers.IO) {
                 sharedPrefHelper.setIsUseLegacyM3u8Detection(false)
+                sharedPrefHelper.setIsInterruptInterceptedResources(false)
             }
         }
         viewModelScope.launch(Dispatchers.IO) {

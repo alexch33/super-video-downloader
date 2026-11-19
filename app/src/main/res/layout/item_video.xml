@@ -68,6 +68,21 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.rounded" />
 
+            <ImageView
+                android:id="@+id/iv_private_badge"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_margin="4dp"
+                android:background="@drawable/rounded_corner"
+                android:backgroundTint="?attr/colorSurface"
+                android:padding="2dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/domino_mask_24px"
+                android:visibility="@{localVideo.isPrivate ? View.VISIBLE : View.GONE}"
+                app:tint="?attr/colorPrimary"
+                app:layout_constraintBottom_toBottomOf="@id/iv_thumbnail"
+                app:layout_constraintEnd_toEndOf="@id/iv_thumbnail" />
+
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tv_name"
                 style="@style/TextAppearance.Material3.TitleMedium"
@@ -89,17 +104,29 @@
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tv_size"
                 style="@style/TextAppearance.Material3.BodySmall"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="4dp"
                 android:text="@{localVideo.size}"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/iv_more"
                 app:layout_constraintStart_toEndOf="@id/iv_thumbnail"
                 app:layout_constraintTop_toBottomOf="@id/tv_name"
                 tools:text="12.5 MB" />
+
+            <ImageView
+                android:id="@+id/iv_private_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="6dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/domino_mask_24px"
+                android:visibility="@{localVideo.isPrivate ? View.VISIBLE : View.GONE}"
+                app:tint="?attr/colorPrimary"
+                app:layout_constraintBottom_toBottomOf="@id/tv_size"
+                app:layout_constraintStart_toEndOf="@id/tv_size"
+                app:layout_constraintTop_toTopOf="@id/tv_size" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/iv_more"

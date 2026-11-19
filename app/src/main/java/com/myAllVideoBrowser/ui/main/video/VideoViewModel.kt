@@ -2,6 +2,7 @@ package com.myAllVideoBrowser.ui.main.video
 
 import android.content.Context
 import android.net.Uri
+import android.os.Environment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -52,14 +53,26 @@ class VideoViewModel @Inject constructor(
 
     private fun getFilesList(): List<LocalVideo> {
         val listVideos: MutableList<LocalVideo> = mutableListOf()
+        val downloadsPath = try {
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+        } catch (e: Throwable) {
+            ""
+        }
         fileUtil.listFiles.forEach { entry ->
             val fileUri = entry.value.second
             val fileSize = fileUtil.getContentLength(ContextUtils.getApplicationContext(), fileUri)
             val readableSize = FileUtil.getFileSizeReadable(fileSize.toDouble())
+            val isPrivate = try {
+                val path = fileUri.path ?: ""
+                path.isNotEmpty() && (downloadsPath.isEmpty() || !path.startsWith(downloadsPath))
+            } catch (e: Throwable) {
+                false
+            }
             val video = LocalVideo(
                 entry.value.first,
                 fileUri,
-                entry.key
+                entry.key,
+                isPrivate = isPrivate
             )
             video.size = readableSize
             listVideos.add(video)

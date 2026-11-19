@@ -9,9 +9,10 @@ import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.ProgressRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.ContextUtils
+import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.SingleLiveEvent
 import com.myAllVideoBrowser.util.downloaders.SystemDownloadManager
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -20,18 +21,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.rx3.asFlow
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class ProgressViewModel @Inject constructor(
     private val progressRepository: ProgressRepository,
-    private val systemDownloadManager: SystemDownloadManager
+    private val systemDownloadManager: SystemDownloadManager,
+    private val sharedPrefHelper: SharedPrefHelper
 ) : BaseViewModel() {
     @VisibleForTesting
     internal val compositeDisposable: CompositeDisposable = CompositeDisposable()
+
+    val downloadSuccessEvent = SingleLiveEvent<Unit>()
+    private var lastProcessedSuccessId: Long = -1L
 
     private val _progressInfos = MutableStateFlow<List<ProgressInfo>>(emptyList())
     val progressInfos: StateFlow<List<ProgressInfo>> = _progressInfos.asStateFlow()
@@ -153,6 +156,19 @@ class ProgressViewModel @Inject constructor(
                 progressRepository.getProgressInfos()
                     .asFlow()
                     .collect { progressInfoList ->
+                        progressInfoList.find { it.downloadStatus == VideoTaskState.SUCCESS }?.let { successInfo ->
+                            if (successInfo.downloadId != lastProcessedSuccessId) {
+                                lastProcessedSuccessId = successInfo.downloadId
+                                val lastShown = sharedPrefHelper.getLastSupportDialogShownTime()
+                                val currentTime = System.currentTimeMillis()
+                                val threeDaysInMillis = 3L * 24 * 60 * 60 * 1000 // 3 days
+                                if (currentTime - lastShown >= threeDaysInMillis || lastShown == 0L) {
+                                    sharedPrefHelper.setLastSupportDialogShownTime(currentTime)
+                                    downloadSuccessEvent.call()
+                                }
+                            }
+                        }
+
                         val filtered = progressInfoList
                             .filter { info -> info.downloadStatus != VideoTaskState.SUCCESS }
                             .sortedBy { it.id }

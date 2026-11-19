@@ -149,6 +149,10 @@ class MainActivity : BaseActivity() {
         mainViewModel.start()
         progressViewModel.start()
 
+        progressViewModel.downloadSuccessEvent.observe(this) {
+            showSupportDialog()
+        }
+
         if (intent.action == Intent.ACTION_VIEW) {
             val videoUrl = intent.dataString
             if (videoUrl != null) {
@@ -299,5 +303,15 @@ class MainActivity : BaseActivity() {
                 ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             }
         }
+    }
+
+    private fun showSupportDialog() {
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.supportString)
+            .setMessage(R.string.supporting_project)
+            .setPositiveButton(R.string.ok) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 }

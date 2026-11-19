@@ -55,6 +55,7 @@ class SharedPrefHelper @Inject constructor(
         private const val MAX_SIMULTANEOUS_DOWNLOADS = "MAX_SIMULTANEOUS_DOWNLOADS"
         private const val IS_ADBLOCK_ON = "IS_ADBLOCK_ON"
         private const val IS_DOWNLOAD_SUBTITLES = "IS_DOWNLOAD_SUBTITLES"
+        private const val LAST_SUPPORT_DIALOG_SHOWN_TIME = "LAST_SUPPORT_DIALOG_SHOWN_TIME"
     }
 
     private val gson = Gson()
@@ -460,6 +461,16 @@ class SharedPrefHelper @Inject constructor(
     fun setIsDownloadSubtitles(isDownload: Boolean) {
         sharedPreferences.edit {
             putBoolean(IS_DOWNLOAD_SUBTITLES, isDownload)
+        }
+    }
+
+    fun getLastSupportDialogShownTime(): Long {
+        return sharedPreferences.getLong(LAST_SUPPORT_DIALOG_SHOWN_TIME, 0L)
+    }
+
+    fun setLastSupportDialogShownTime(time: Long) {
+        sharedPreferences.edit {
+            putLong(LAST_SUPPORT_DIALOG_SHOWN_TIME, time)
         }
     }
 

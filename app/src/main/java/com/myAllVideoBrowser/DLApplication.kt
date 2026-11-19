@@ -1,7 +1,9 @@
 package com.myAllVideoBrowser
 
 import android.os.Build
+import android.os.Looper
 import android.webkit.CookieManager
+import android.webkit.WebView
 import androidx.webkit.WebViewCompat
 import androidx.work.Configuration
 import androidx.work.ExistingWorkPolicy
@@ -84,6 +86,20 @@ open class DLApplication : DaggerApplication(), Configuration.Provider {
         super.onCreate()
 
         checkWebViewAvailability()
+
+        if (isWebViewAvailable) {
+            Looper.myQueue().addIdleHandler {
+                try {
+                    AppLogger.i("WebView prewarming...")
+                    val dummyWebView = WebView(applicationContext)
+                    dummyWebView.destroy()
+                    AppLogger.i("WebView prewarmed successfully during idle state.")
+                } catch (e: Throwable) {
+                    AppLogger.e("Failed to prewarm WebView: ${e.message}")
+                }
+                false
+            }
+        }
 
         if (ProxyManager.isProxySupported()) {
             V2Ray.init(this)

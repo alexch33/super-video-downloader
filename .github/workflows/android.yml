@@ -90,6 +90,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
           body: |
+            - WebView prewarm on app start
             - Fixed lists rendering bug for progress videos and tabs for some devices
             - Minor fixes
           draft: false

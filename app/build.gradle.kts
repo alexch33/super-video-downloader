@@ -291,6 +291,7 @@ dependencies {
     implementation(libs.concurrentFuturesKtx)
 
     // Lifecycle Components
+    implementation(libs.lifecycleExtensions)
     implementation(libs.lifecycleCommonJava8)
     implementation(libs.lifecycleLivedata)
     implementation(libs.lifecycleViewmodel)

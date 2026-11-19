@@ -119,7 +119,7 @@
     <string name="settings_downloading">下载设置</string>
     <string name="use_legacy_m3u8_detection">使用 youtube-dlp 进行 m3u8/mpd 检测</string>
     <string name="use_experimental_detection">使用实验性检测</string>
-    <string name="setting_explanation_use_experimental_detection">启用实验性检测功能，用于高级视频流发现和处理。</string>
+    <string name="setting_explanation_use_experimental_detection">启用实验性检测功能，用于高级视频流发现和处理。此模式的检测量不如常规检测模式多，但它可以检测到常规检测器遗漏的内容。如果常规检测对您的网站不起作用，您可以尝试此功能。此外，当您尝试下载内容时，此模式更难被检测到，它不会向服务器发送任何额外的视频检查请求。</string>
     <string name="playback_channel_name">播放</string>
     <string name="video_move_downloads">移动下载</string>
     <string name="video_move_private">移动到私密</string>
@@ -221,4 +221,5 @@
     <string name="advanced_guide">高级指南</string>
     <string name="advanced_guide_title">高级检测指南</string>
     <string name="advanced_guide_text">SuperX 有 3 种不同类型的视频检测引擎：\n\n1. 按 URL 检测：\n直接扫描网页网址。非常适合 Facebook 或 TikTok 等视频网址嵌入在网页链接中的网站。\n\n2. 常规文件检测：\n检查 MP4、WebM、音频等直接媒体文件的网络请求。\n\n3. M3U8 / MPD 流媒体检测：\n检测流媒体播放列表（HLS / DASH）。提供两种变体：\n • youtube-dlp 引擎：非常稳定可靠，但稍慢。\n • SuperX 检测器：全新、实验性且速度极快（不到一秒）。\n\n如何针对特定网站进行优化：\n默认情况下，所有检测器都已启用。您可以在“设置”中针对特定网站对它们进行微调：\n • 对于 Facebook 或 TikTok（仅通过 URL 检测有效）：您可以关闭常规文件检测和 M3U8/MPD 检测。\n • 对于流媒体网站（通过拦截网络请求检测有效）：您可以关闭 URL 检测。\n • 您可以检查菜单中的“检测日志”以查看哪个检测器正在查找视频，并关闭未使用的检测器以获得更快的性能！</string>
+    <string name="supporting_project">SuperX 倾注了大量心血，旨在为您带来极致的下载体验。如果您喜欢这款应用，请考虑支持它的持续开发、新功能增强和维护。您可以通过 BTC 钱包（位于“关于”部分或 GitHub README 中）来支持该项目。感谢您帮助这个项目蓬勃发展！</string>
 </resources>

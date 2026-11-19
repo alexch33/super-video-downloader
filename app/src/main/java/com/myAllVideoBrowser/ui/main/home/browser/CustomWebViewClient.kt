@@ -124,6 +124,15 @@ val injectJsInterceptor = """
                             req["User-Agent"] = win.navigator.userAgent;
                         }
 
+                        if (win.navigator) {
+                            var lang = (win.navigator.languages && win.navigator.languages.length > 0)
+                                ? win.navigator.languages.join(',')
+                                : (win.navigator.language || win.navigator.userLanguage);
+                            if (lang) {
+                                req["Accept-Language"] = lang;
+                            }
+                        }
+
                         if (win.location && win.location.origin && win.location.origin !== 'null') {
                             req["Origin"] = win.location.origin;
                         }

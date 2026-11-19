@@ -1,5 +1,7 @@
 package com.myAllVideoBrowser.ui.main.settings
 
+import android.content.Context
+import android.net.Uri
 import android.os.Environment
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.LiveData
@@ -32,6 +34,7 @@ class SettingsViewModel @Inject constructor(
     private val sharedPrefHelper: SharedPrefHelper,
     private val historyRepository: HistoryRepository,
     private val topPagesRepository: TopPagesRepository,
+    private val fileUtil: FileUtil,
 ) : BaseViewModel() {
 
     private val _isAskRedirection = MutableLiveData(false)
@@ -56,6 +59,10 @@ class SettingsViewModel @Inject constructor(
     val exportBookmarksEvent = SingleLiveEvent<Boolean?>()
     val openImportBookmarksEvent = SingleLiveEvent<Void?>()
     val importBookmarksEvent = SingleLiveEvent<Boolean?>()
+    val openImportMediaEvent = SingleLiveEvent<Void?>()
+    val importMediaEvent = SingleLiveEvent<Boolean?>()
+    private val _isImportingMedia = MutableLiveData(false)
+    val isImportingMedia: LiveData<Boolean> = _isImportingMedia
     val openVideoFolderEvent = SingleLiveEvent<Void?>()
     val openAdBlockSettingsEvent = SingleLiveEvent<Unit?>()
 
@@ -580,6 +587,19 @@ class SettingsViewModel @Inject constructor(
                 e.printStackTrace()
                 importBookmarksEvent.postValue(false)
             }
+        }
+    }
+
+    fun openImportMedia() {
+        openImportMediaEvent.call()
+    }
+
+    fun importMedia(context: Context, uri: Uri) {
+        _isImportingMedia.postValue(true)
+        viewModelScope.launch(Dispatchers.IO) {
+            val success = fileUtil.importMediaFile(context, uri)
+            _isImportingMedia.postValue(false)
+            importMediaEvent.postValue(success)
         }
     }
 }

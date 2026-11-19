@@ -135,6 +135,7 @@
     <string name="video_move_private">Move to Private</string>
     <string name="media_move_error">Media Move Error</string>
     <string name="media_move_success">Media move success</string>
+    <string name="filename_already_exists">Filename already exists</string>
     <string name="allow">Allow</string>
     <string name="block">Block</string>
     <string name="ask_redirection_title">Ask for redirection</string>
@@ -203,6 +204,10 @@
     <string name="settings_import_bookmarks">Import bookmarks</string>
     <string name="bookmarks_imported_success">Bookmarks imported successfully</string>
     <string name="bookmarks_imported_error">Failed to import bookmarks</string>
+    <string name="settings_import_media">Import video or audio file</string>
+    <string name="importing_media_file">Importing media file…</string>
+    <string name="media_imported_success">Media file imported successfully</string>
+    <string name="media_imported_error">Failed to import media file</string>
 
     <!-- Settings Explanations -->
     <string name="setting_explanation_ask_redirection">Prompts a confirmation dialog before allowing web pages to redirect you to a different domain.</string>

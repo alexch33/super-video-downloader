@@ -325,6 +325,15 @@ class VideoFragment : BaseFragment() {
                         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                     val target = File(targetDir, video.name)
 
+                    if (target.exists()) {
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.filename_already_exists,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@setOnMenuItemClickListener true
+                    }
+
                     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                         videoViewModel.setLoading(true)
                         try {
@@ -356,6 +365,15 @@ class VideoFragment : BaseFragment() {
                         targetDir.mkdirs()
                     }
                     val target = File(targetDir, video.name)
+
+                    if (target.exists()) {
+                        Toast.makeText(
+                            requireContext(),
+                            R.string.filename_already_exists,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@setOnMenuItemClickListener true
+                    }
 
                     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                         videoViewModel.setLoading(true)

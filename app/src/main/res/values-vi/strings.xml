@@ -221,4 +221,10 @@
     <string name="advanced_guide_title">Hướng dẫn phát hiện nâng cao</string>
     <string name="advanced_guide_text">SuperX có 3 loại công cụ phát hiện video khác nhau:\n\n1. Phát hiện theo URL:\nQuét trực tiếp URL trang web. Lý tưởng cho các trang như Facebook hoặc TikTok nơi URL video được nhúng trong liên kết web.\n\n2. Phát hiện tệp thông thường:\nKiểm tra các yêu cầu mạng đối với các tệp phương tiện trực tiếp như MP4, WebM, âm thanh, v.v.\n\n3. Phát hiện phát trực streaming M3U8 / MPD:\nPhát hiện danh sách phát trực streaming (HLS / DASH). Có sẵn ở hai biến thể:\n • Công cụ youtube-dlp: Rất ổn định và đáng tin cậy, nhưng chậm hơn một chút.\n • Bộ phát hiện SuperX: Mới, thử nghiệm và cực kỳ nhanh (dưới một giây).\n\nCách tối ưu hóa cho các trang web cụ thể:\nTheo mặc định, tất cả các bộ phát hiện đều được bật. Bạn có thể tinh chỉnh chúng trong Cài đặt cho các trang cụ thể:\n • Đối với Facebook hoặc TikTok (nơi phát hiện chỉ hoạt động bằng URL): Bạn có thể tắt Phát hiện tệp thông thường và phát hiện M3U8/MPD.\n • Đối với các trang web phát streaming (nơi phát hiện hoạt động bằng cách chặn yêu cầu mạng): Bạn có thể tắt Phát hiện URL.\n • Bạn có thể kiểm tra Nhật ký phát hiện trong menu để xem bộ phát hiện nào đang tìm thấy video và tắt các bộ phát hiện không sử dụng để có hiệu suất nhanh hơn!</string>
     <string name="supporting_project">SuperX được xây dựng bằng tất cả tâm huyết để mang lại cho bạn trải nghiệm tải xuống tuyệt vời nhất. Nếu bạn yêu thích ứng dụng này, vui lòng cân nhắc hỗ trợ quá trình phát triển liên tục, các tính năng mới và bảo trì của chúng tôi. Bạn có thể hỗ trợ dự án bằng ví BTC (có sẵn trong phần \"Giới thiệu\" hoặc tệp README trên GitHub). Cảm ơn bạn đã giúp dự án này ngày càng phát triển!</string>
+
+    <string name="filename_already_exists">Tên tệp đã tồn tại</string>
+    <string name="settings_import_media">Nhập tệp video hoặc âm thanh</string>
+    <string name="importing_media_file">Đang nhập tệp phương tiện…</string>
+    <string name="media_imported_success">Đã nhập tệp phương tiện thành công</string>
+    <string name="media_imported_error">Nhập tệp phương tiện thất bại</string>
 </resources>

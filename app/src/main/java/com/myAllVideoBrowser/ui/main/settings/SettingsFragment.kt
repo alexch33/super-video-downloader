@@ -112,6 +112,18 @@ class SettingsFragment : BaseFragment() {
         }
     }
 
+    private val pickMediaFileLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                context?.let { ctx ->
+                    settingsViewModel.importMedia(ctx, uri)
+                }
+            }
+        }
+    }
+
     private var lastSavedRegularThreadsCount = -1
 
     private val regularThreadsListener = Slider.OnChangeListener { _, value, fromUser ->
@@ -198,6 +210,9 @@ class SettingsFragment : BaseFragment() {
     }
 
     override fun onDestroyView() {
+        hideImportProgressDialog()
+        importProgressDialog = null
+
         settingsViewModel.stop()
 
         dataBinding.seekBarRegular.removeOnChangeListener(regularThreadsListener)
@@ -215,15 +230,13 @@ class SettingsFragment : BaseFragment() {
 
     private fun openFilePicker(
         launcher: androidx.activity.result.ActivityResultLauncher<Intent>,
-        errorResId: Int
+        errorResId: Int,
+        mimeTypes: Array<String> = arrayOf("application/json", "text/plain", "application/octet-stream", "*/*")
     ) {
         val openDocumentIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
-            putExtra(
-                Intent.EXTRA_MIME_TYPES,
-                arrayOf("application/json", "text/plain", "application/octet-stream", "*/*")
-            )
+            putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
         }
         try {
             launcher.launch(openDocumentIntent)
@@ -231,6 +244,7 @@ class SettingsFragment : BaseFragment() {
             val getContentIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "*/*"
+                putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
             }
             try {
                 launcher.launch(getContentIntent)
@@ -284,6 +298,28 @@ class SettingsFragment : BaseFragment() {
             }
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
         }
+        settingsViewModel.isImportingMedia.observe(viewLifecycleOwner) { isImporting ->
+            if (isImporting == true) {
+                showImportProgressDialog()
+            } else {
+                hideImportProgressDialog()
+            }
+        }
+        settingsViewModel.openImportMediaEvent.observe(viewLifecycleOwner) {
+            openFilePicker(
+                pickMediaFileLauncher,
+                R.string.media_imported_error,
+                arrayOf("video/*", "audio/*", "*/*")
+            )
+        }
+        settingsViewModel.importMediaEvent.observe(viewLifecycleOwner) { success ->
+            val msg = if (success == true) {
+                R.string.media_imported_success
+            } else {
+                R.string.media_imported_error
+            }
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
         settingsViewModel.openVideoFolderEvent.observe(viewLifecycleOwner) {
             intentUtil.openVideoFolder(context, fileUtil.folderDir.path)
         }
@@ -304,6 +340,40 @@ class SettingsFragment : BaseFragment() {
             val readableText = getString(R.string.ads_detection_treshold) + " $readableSize"
             dataBinding.adsTresholdText.text = readableText
         }
+    }
+
+    private var importProgressDialog: androidx.appcompat.app.AlertDialog? = null
+
+    private fun showImportProgressDialog() {
+        if (!isAdded) return
+        if (importProgressDialog == null) {
+            val padding = (16 * resources.displayMetrics.density).toInt()
+            val layout = android.widget.LinearLayout(context).apply {
+                orientation = android.widget.LinearLayout.HORIZONTAL
+                setPadding(padding * 2, padding, padding * 2, padding)
+                gravity = android.view.Gravity.CENTER_VERTICAL
+            }
+            val progressBar = com.google.android.material.progressindicator.CircularProgressIndicator(requireContext()).apply {
+                isIndeterminate = true
+            }
+            val textView = com.google.android.material.textview.MaterialTextView(requireContext()).apply {
+                text = getString(R.string.importing_media_file)
+                setPadding(padding, 0, 0, 0)
+                setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge)
+            }
+            layout.addView(progressBar)
+            layout.addView(textView)
+
+            importProgressDialog = MaterialAlertDialogBuilder(requireContext())
+                .setView(layout)
+                .setCancelable(false)
+                .create()
+        }
+        importProgressDialog?.show()
+    }
+
+    private fun hideImportProgressDialog() {
+        importProgressDialog?.dismiss()
     }
 
     private fun showDownloadWarningDialog(context: Context) {

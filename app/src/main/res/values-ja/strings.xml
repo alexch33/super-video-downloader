@@ -231,4 +231,10 @@
     <string name="advanced_guide_title">詳細検出ガイド</string>
     <string name="advanced_guide_text">SuperXには3種類の動画検出エンジンがあります:\n\n1. URLによる検出:\nウェブページのURLを直接スキャンします。FacebookやTikTokなど、動画URLがウェブリンクに埋め込まれているサイトに最適です。\n\n2. 通常ファイル検出:\nMP4、WebM、音声などの直接的なメディアファイルのネットワークリクエストを検査します。\n\n3. M3U8 / MPDストリーミング検出:\nストリーミングプレイリスト（HLS / DASH）を検出します。2つのバリエーションがあります:\n • youtube-dlpエンジン:非常に安定して信頼性が高いですが、やや低速です。\n • SuperXデテクター:新規、実験的、超高速（1秒未満）。\n\n特定のウェブサイト向けの最適化方法:\nデフォルトではすべてのデテクターが有効になっています。特定サイト向けに設定で微調整できます:\n • FacebookやTikTok（URLでのみ検出が機能する場合）: 通常ファイル検出とM3U8/MPD検出をオフにできます。\n • ストリーミングサイト（ネットワークリクエストのインターセプトで検出が機能する場合）: URL検出をオフにできます。\n • メニューの「検出ログ」でどのデテクターが動画を見つけているかを確認し、使用していないデテクターをオフにすることでパフォーマンスを向上させることができます！</string>
     <string name="supporting_project">SuperXは、最高のダウンロード体験を提供するために情熱を込めて作られています。このアプリを気に入っていただけましたら、継続的な開発、新機能の追加、メンテナンスへのサポートをご検討ください。「About」セクションまたはGitHubのREADMEにあるBTCウォレットからプロジェクトをサポートできます。プロジェクトの発展にご協力いただきありがとうございます！</string>
+
+    <string name="filename_already_exists">ファイル名は既に存在します</string>
+    <string name="settings_import_media">動画または音声ファイルをインポート</string>
+    <string name="importing_media_file">メディアファイルをインポート中…</string>
+    <string name="media_imported_success">メディアファイルのインポートに成功しました</string>
+    <string name="media_imported_error">メディアファイルのインポートに失敗しました</string>
 </resources>

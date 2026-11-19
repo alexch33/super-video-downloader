@@ -90,6 +90,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
           body: |
+            - Added import media files inside app from user's selection
             - WebView prewarm on app start
             - Fixed lists rendering bug for progress videos and tabs for some devices
             - Minor fixes

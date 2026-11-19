@@ -48,6 +48,10 @@ open class VideoDetectionTabViewModel @Inject constructor(
     private val okHttpProxyClient: OkHttpProxyClient,
 ) : BaseViewModel(), IVideoDetector {
 
+    companion object {
+        const val MAX_DETECTED_COUNT = 10
+    }
+
     // key: videoInfo.id, value: format - string
     private val _selectedFormats = MutableLiveData<Map<String, String>>(emptyMap())
     val selectedFormats: LiveData<Map<String, String>> = _selectedFormats
@@ -286,11 +290,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             io.reactivex.rxjava3.core.Observable.create { emitter ->
                 val info = try {
                     videoRepository.getVideoInfoOffline(
-                        baseUrl,
-                        manifestBody,
-                        isM3u8,
-                        isMpd,
-                        headers
+                        baseUrl, manifestBody, isM3u8, isMpd, headers
                     )
                 } catch (e: Throwable) {
                     e.printStackTrace()
@@ -344,12 +344,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 val title = hlsTitle ?: webTabModel?.currentTitle?.get() ?: "no_title"
                 val origUrl = webTabModel?.tabUrlInput?.get() ?: ""
                 val info = videoRepository.getVideoAudioInfoLocal(
-                    url,
-                    headers,
-                    contentType,
-                    contentLength,
-                    title,
-                    origUrl
+                    url, headers, contentType, contentLength, title, origUrl
                 )
                 if (info != null) {
                     emitter.onNext(info)
@@ -383,32 +378,45 @@ open class VideoDetectionTabViewModel @Inject constructor(
         var isDuplicateFound = false
 
         for (existing in detectedVideos) {
+            val type = if (newInfo.isDetectedBySuperX) {
+                "SUPERX"
+            } else if (!newInfo.isRegularDownload) {
+                "YOUTUBE-DLP"
+            } else {
+                "REGULAR"
+            }
+
             if (isVideoInfoDuplicate(existing, newInfo)) {
                 isDuplicateFound = true
                 if (newInfo.isMaster && !existing.isMaster) {
                     nextSet.remove(existing)
                     isDuplicateFound = false
-                    AppLogger.d("REPLACING single rendition with Master playlist for video: $newInfo")
-                } else {
-                    val type = if (newInfo.isDetectedBySuperX) {
-                        "SUPERX"
-                    } else if (!newInfo.isRegularDownload) {
-                        "YOUTUBE-DLP"
-                    } else {
-                        "REGULAR"
-                    }
-                    val skippedUrl = if (newInfo.downloadUrls.firstOrNull() != null) {
-                        newInfo.downloadUrls.firstOrNull()?.url.toString()
-                    } else {
-                        newInfo.originalUrl
-                    }
                     DetectionLogger.log(
-                        type,
-                        "SKIP",
-                        skippedUrl
+                        type, "REPLACE", existing.originalUrl, "WITH MASTER LIST"
                     )
-                    AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
-                    break
+                    AppLogger.d("REPLACING single rendition with Master playlist for video: $newInfo")
+                } else if (!newInfo.isMaster && !existing.isMaster) {
+                    val replaceUrl = newInfo.firstDownloadUrl ?: newInfo.originalUrl
+                    val existingTimeStamp = existing.timestamp
+                    // keep old timestamp for order
+                    newInfo.timestamp = existingTimeStamp
+                    // keep title
+                    newInfo.title = existing.title
+                    nextSet.remove(existing)
+                    isDuplicateFound = false
+                    DetectionLogger.log(type, "REFRESH", replaceUrl)
+                    AppLogger.d("REFRESH DUPLICATED VIDEO INFO: $newInfo")
+                } else if (newInfo.isMaster && existing.isMaster) {
+                    val replaceUrl = newInfo.firstDownloadUrl ?: newInfo.originalUrl
+                    val existingTimeStamp = existing.timestamp
+                    // keep old timestamp for order
+                    newInfo.timestamp = existingTimeStamp
+                    // keep title
+                    newInfo.title = existing.title
+                    nextSet.remove(existing)
+                    isDuplicateFound = false
+                    DetectionLogger.log(type, "REFRESH MASTER", replaceUrl)
+                    AppLogger.d("REFRESH DUPLICATED VIDEO INFO: $newInfo")
                 }
             }
         }
@@ -417,7 +425,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             AppLogger.d("PUSHING $newInfo to list")
             nextSet.add(newInfo)
 
-            val sortedList = nextSet.sortedBy { it.timestamp }.take(10)
+            val sortedList = nextSet.sortedBy { it.timestamp }.takeLast(MAX_DETECTED_COUNT)
             setDetectedVideoList(sortedList.toSet())
             setButtonState(DownloadButtonStateCanDownload(newInfo))
 
@@ -566,8 +574,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             }
 
             is DownloadButtonStateLoading -> {
-                val list =
-                    _detectedVideosList.value?.sortedBy { it.timestamp } ?: emptyList()
+                val list = _detectedVideosList.value?.sortedBy { it.timestamp } ?: emptyList()
                 if (list.isEmpty()) {
                     DownloadButtonStateLoading()
                 } else {

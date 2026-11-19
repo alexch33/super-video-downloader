@@ -108,6 +108,13 @@ data class VideoInfo(
         return this
     }
 
+    val firstDownloadUrl: String?
+        get() {
+            return firstUrlToString.ifEmpty {
+                formats.formats.firstOrNull()?.url
+            }
+        }
+
     val firstUrlToString: String
         get() {
             if (downloadUrls.isNotEmpty()) {

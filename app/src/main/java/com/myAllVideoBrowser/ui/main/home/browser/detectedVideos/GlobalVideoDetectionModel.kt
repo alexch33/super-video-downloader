@@ -33,8 +33,6 @@ class GlobalVideoDetectionModel @Inject constructor(
     @Volatile
     private var lastVerifiedM3u8PointUrl = Pair("", "")
 
-    private var pushJob: Job? = null
-
     override fun start() {
         super.start()
     }
@@ -49,7 +47,6 @@ class GlobalVideoDetectionModel @Inject constructor(
             lastVerifiedLink = ""
             lastVerifiedM3u8PointUrl = Pair("", "")
         }
-        pushJob?.cancel()
     }
 
     override fun hasCheckLoadingsRegular(): LiveData<Boolean> {
@@ -191,47 +188,6 @@ class GlobalVideoDetectionModel @Inject constructor(
         }.subscribe()
 
         return disposable
-    }
-
-    override suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
-        if (newInfo.formats.allFormats().isEmpty() || newInfo.id.isEmpty()) {
-            return
-        }
-
-        val detectedVideos = detectedVideosList.value ?: emptySet()
-        val nextSet = detectedVideos.toMutableSet()
-
-        var isDuplicateFound = false
-
-        for (existing in detectedVideos) {
-            if (isVideoInfoDuplicate(existing, newInfo)) {
-                isDuplicateFound = true
-                if (newInfo.isMaster && !existing.isMaster) {
-                    nextSet.remove(existing)
-                    isDuplicateFound = false
-                    AppLogger.d("REPLACING single rendition with Master playlist for video: $newInfo")
-                } else {
-                    AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
-                    break
-                }
-            }
-        }
-
-        if (!isDuplicateFound) {
-            AppLogger.d("PUSHING $newInfo to list")
-            nextSet.add(newInfo)
-
-            val sortedList = nextSet.sortedBy { it.timestamp }.take(10)
-            setDetectedVideoList(sortedList.toSet())
-
-            // Cancel previous pending UI update to avoid flickering
-            pushJob?.cancel()
-            pushJob = viewModelScope.launch(Dispatchers.Main) {
-                setButtonState(DownloadButtonStateLoading())
-                delay(400.milliseconds)
-                setButtonState(DownloadButtonStateCanDownload(newInfo))
-            }
-        }
     }
 
     override fun onStartPage(url: String, userAgentString: String) {

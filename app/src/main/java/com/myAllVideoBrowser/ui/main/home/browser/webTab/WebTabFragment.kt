@@ -12,7 +12,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.EditText
@@ -20,13 +19,13 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.core.app.ShareCompat
-import androidx.databinding.Observable
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.bumptech.glide.Glide
@@ -54,17 +53,22 @@ import com.myAllVideoBrowser.ui.main.home.browser.HistoryProvider
 import com.myAllVideoBrowser.ui.main.home.browser.PageTabProvider
 import com.myAllVideoBrowser.ui.main.home.browser.TAB_INDEX_KEY
 import com.myAllVideoBrowser.ui.main.home.browser.TabManagerProvider
-import com.myAllVideoBrowser.ui.main.home.browser.WebPostBridge
+import com.myAllVideoBrowser.ui.main.home.browser.JsWebBridge
 import com.myAllVideoBrowser.ui.main.home.browser.WorkerEventProvider
 import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.ui.main.home.browser.disableWebRtcJs
+import com.myAllVideoBrowser.ui.main.home.browser.injectJsDetector
+import com.myAllVideoBrowser.ui.main.home.browser.injectJsInterceptor
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
 import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.AppUtil
+import com.myAllVideoBrowser.util.DetectionLogger
 import com.myAllVideoBrowser.util.FileNameCleaner
+import com.myAllVideoBrowser.util.VideoUtils
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.CustomProxyController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -72,6 +76,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 class WebTabFragment : BaseWebTabFragment() {
 
@@ -141,7 +146,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
         tabViewModel.openPageEvent = tabManagerProvider.getOpenTabEvent()
         tabViewModel.closePageEvent = tabManagerProvider.getCloseTabEvent()
-        tabViewModel.thisTabIndex.set(thisTabIndex)
+        tabViewModel.setThisTabIndex(thisTabIndex)
 
         webTab = pageTabProvider.getPageTab(thisTabIndex)
         videoDetectionTabViewModel.initialUrl = webTab.getUrl()
@@ -153,6 +158,7 @@ class WebTabFragment : BaseWebTabFragment() {
         recreateWebView(savedInstanceState)
 
         dataBinding = FragmentWebTabBinding.inflate(inflater, container, false).apply {
+            this.lifecycleOwner = viewLifecycleOwner
             buildWebTabMenu(this.browserMenuButton, false)
 
             viewModel = tabViewModel
@@ -167,7 +173,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     this.etSearch.clearFocus()
                     viewModel?.viewModelScope?.launch {
-                        delay(400)
+                        delay(400.milliseconds)
                         tabViewModel.loadPage((this@apply.etSearch as EditText).text.toString())
                     }
                     false
@@ -192,7 +198,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
         addChangeRouteCallBack()
 
-        tabViewModel.userAgent.set(
+        tabViewModel.setUserAgent(
             webTab.getWebView()?.settings?.userAgentString
                 ?: BrowserFragment.MOBILE_USER_AGENT
         )
@@ -288,8 +294,6 @@ class WebTabFragment : BaseWebTabFragment() {
         tabViewModel.stop()
         webTab.setWebView(null)
         videoDetectionTabViewModel.stop()
-        tabManagerProvider.getTabsListChangeEvent()
-            .removeOnPropertyChangedCallback(tabsListChangeListener)
     }
 
     private fun handleOpenDetectedVideos() {
@@ -398,14 +402,28 @@ class WebTabFragment : BaseWebTabFragment() {
         }
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint("SetJavaScriptEnabled", "WrongConstant")
     private fun configureWebView(fragmentWebTabBinding: FragmentWebTabBinding) {
         val currentWebView = this.webTab.getWebView() ?: return
-
+        val isUseExperimentalDetection =
+            mainActivity.settingsViewModel.isUseExperimentalDetection.get()
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             WebViewCompat.addDocumentStartJavaScript(
                 currentWebView,
                 disableWebRtcJs,
+                setOf("*")
+            )
+            if (isUseExperimentalDetection) {
+                WebViewCompat.addDocumentStartJavaScript(
+                    currentWebView,
+                    injectJsDetector,
+                    setOf("*")
+                )
+            }
+
+            WebViewCompat.addDocumentStartJavaScript(
+                currentWebView,
+                injectJsInterceptor,
                 setOf("*")
             )
         }
@@ -437,7 +455,14 @@ class WebTabFragment : BaseWebTabFragment() {
 
         val webSettings = currentWebView.settings
 
-        currentWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.COOKIE_INTERCEPT)) {
+            WebSettingsCompat.setCookiesIncludedInShouldInterceptRequest(
+                webSettings,
+                true
+            )
+        }
+
+        currentWebView.setLayerType(View.LAYER_TYPE_NONE, null)
         currentWebView.isScrollbarFadingEnabled = true
 
         webSettings.apply {
@@ -479,8 +504,8 @@ class WebTabFragment : BaseWebTabFragment() {
         }
 
         currentWebView.addJavascriptInterface(
-            shouldInterceptPostRequests,
-            WebPostBridge.BRIDGE_NAME
+            jsWebBridge,
+            JsWebBridge.BRIDGE_NAME
         )
 
         fragmentWebTabBinding.webviewContainer.addView(
@@ -523,10 +548,10 @@ class WebTabFragment : BaseWebTabFragment() {
                         dataBinding.etSearch.selectAll()
 
                     }
-                    tabViewModel.isTabInputFocused.set(true)
+                    tabViewModel.setIsTabInputFocused(true)
                     appUtil.showSoftKeyboard(dataBinding.etSearch)
                 } else {
-                    tabViewModel.isTabInputFocused.set(false)
+                    tabViewModel.setIsTabInputFocused(false)
                     appUtil.hideSoftKeyboard(
                         dataBinding.etSearch
                     )
@@ -550,20 +575,14 @@ class WebTabFragment : BaseWebTabFragment() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     videoDetectionTabViewModel.pushNewVideoInfoToAll(state.info)
                 }
-                val loadings = videoDetectionTabViewModel.m3u8LoadingList.get()
-                loadings?.remove("m3u8")
-                videoDetectionTabViewModel.m3u8LoadingList.set(loadings?.toMutableSet())
+                videoDetectionTabViewModel.removeM3u8Loading("m3u8")
             }
             if (state is DownloadButtonStateLoading) {
-                val loadings = videoDetectionTabViewModel.m3u8LoadingList.get()
-                loadings?.add("m3u8")
-                videoDetectionTabViewModel.m3u8LoadingList.set(loadings?.toMutableSet())
+                videoDetectionTabViewModel.addM3u8Loading("m3u8")
                 videoDetectionTabViewModel.setButtonState(DownloadButtonStateLoading())
             }
             if (state is DownloadButtonStateCanNotDownload) {
-                val loadings = videoDetectionTabViewModel.m3u8LoadingList.get()
-                loadings?.remove("m3u8")
-                videoDetectionTabViewModel.m3u8LoadingList.set(loadings?.toMutableSet())
+                videoDetectionTabViewModel.removeM3u8Loading("m3u8")
                 videoDetectionTabViewModel.setButtonState(DownloadButtonStateCanNotDownload())
             }
         }
@@ -582,18 +601,13 @@ class WebTabFragment : BaseWebTabFragment() {
 
     private fun handleIndexChangeEvent() {
         tabManagerProvider.getTabsListChangeEvent()
-            .addOnPropertyChangedCallback(tabsListChangeListener)
-    }
-
-    private val tabsListChangeListener = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            val tabs = tabManagerProvider.getTabsListChangeEvent().get()
-            val webTab = tabs?.find { it.id == webTab.id }
-            val index = tabs?.indexOf(webTab)
-            if (index != null && index in tabs.indices) {
-                tabViewModel.thisTabIndex.set(index)
+            .observe(viewLifecycleOwner) { tabs ->
+                val webTab = tabs?.find { it.id == webTab.id }
+                val index = tabs?.indexOf(webTab)
+                if (index != null && index in tabs.indices) {
+                    tabViewModel.setThisTabIndex(index)
+                }
             }
-        }
     }
 
     private fun onWebViewPause() {
@@ -677,7 +691,7 @@ class WebTabFragment : BaseWebTabFragment() {
                 videoDetectionTabViewModel.cancelAllCheckJobs()
             }
         }
-        
+
         override fun onShowLogsClicked() {
             navigateToDetectionLogs()
         }
@@ -696,7 +710,7 @@ class WebTabFragment : BaseWebTabFragment() {
 
     private fun showAlertVideoFound() {
         if (!tabViewModel.isDownloadDialogShown.get()) {
-            tabViewModel.isDownloadDialogShown.set(true)
+            tabViewModel.setIsDownloadDialogShown(true)
             val client = getWebViewClientCompat(webTab.getWebView())
 
             client?.videoAlert =
@@ -708,14 +722,14 @@ class WebTabFragment : BaseWebTabFragment() {
                 R.string.view
             ) { dialog, _ ->
                 navigateToDownloads()
-                tabViewModel.isDownloadDialogShown.set(false)
+                tabViewModel.setIsDownloadDialogShown(false)
                 dialog.dismiss()
             }?.setNeutralButton(R.string.dontshow) { dialog, _ ->
                 mainActivity.settingsViewModel.setShowVideoAlertOff()
-                tabViewModel.isDownloadDialogShown.set(false)
+                tabViewModel.setIsDownloadDialogShown(false)
                 dialog.dismiss()
             }?.setNegativeButton(R.string.all_text_cancel) { dialog, _ ->
-                tabViewModel.isDownloadDialogShown.set(false)
+                tabViewModel.setIsDownloadDialogShown(false)
                 dialog.dismiss()
             }?.show()
         }
@@ -744,13 +758,7 @@ class WebTabFragment : BaseWebTabFragment() {
     }
 
     private fun addChangeRouteCallBack() {
-        mainActivity.mainViewModel.currentItem.removeOnPropertyChangedCallback(changeRouteCallBack)
-        mainActivity.mainViewModel.currentItem.addOnPropertyChangedCallback(changeRouteCallBack)
-    }
-
-    private val changeRouteCallBack = object : Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            val indexRoute = mainActivity.mainViewModel.currentItem.get()
+        mainActivity.mainViewModel.currentItem.observe(viewLifecycleOwner) { indexRoute ->
             val currentTabIndexSelected = currentTabIndexProvider.getCurrentTabIndex().get()
             val isCurrentTabSelected =
                 currentTabIndexSelected == requireArguments().getInt(TAB_INDEX_KEY)
@@ -837,7 +845,7 @@ class WebTabFragment : BaseWebTabFragment() {
             val formats =
                 videoDetectionTabViewModel.selectedFormats.get()?.toMutableMap() ?: mutableMapOf()
             formats[videoInfo.id] = format
-            videoDetectionTabViewModel.selectedFormats.set(formats)
+            videoDetectionTabViewModel.setSelectedFormats(formats)
         }
 
         override fun onFormatUrlShare(videoInfo: VideoInfo, format: String): Boolean {
@@ -855,21 +863,123 @@ class WebTabFragment : BaseWebTabFragment() {
         }
     }
 
-    private val shouldInterceptPostRequests = WebPostBridge { url, body ->
-        if (CustomWebViewClient.isBotChallengeOrCaptcha(url)) {
-            return@WebPostBridge false
-        }
+    private val jsWebBridge = JsWebBridge(
+        onIntercept = { url, body ->
+            if (CustomWebViewClient.isBotChallengeOrCaptcha(url)) {
+                return@JsWebBridge false
+            }
 
-        val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
-        val isAd = isAdBlockOn &&
-                adBlockEngine.isAd(
+            val isAdBlockOn = mainActivity.settingsViewModel.isAdBlockOn.get()
+            val isAd = isAdBlockOn &&
+                    adBlockEngine.isAd(
+                        url,
+                        tabViewModel.tabUrlInput.get() ?: "",
+                        "xmlhttprequest"
+                    )
+            if (isAd) {
+                AppLogger.d("AdBlock (POST): Blocked $url")
+            }
+            isAd
+        },
+        onManifestReceived = { url, headersJson, content ->
+            val isExperimentalDetection =
+                mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+            val isM3u8MpdDetection =
+                mainActivity.settingsViewModel.isCheckIfEveryRequestOnM3u8.get()
+
+            if (!isExperimentalDetection || !isM3u8MpdDetection) {
+                return@JsWebBridge
+            }
+            val headersMap = VideoUtils.parseRequestHeadersToMap(headersJson)
+            val lowerUrl = url.lowercase()
+            val isM3u8 = content.contains("#EXTM3U") || lowerUrl.contains(".m3u8")
+            val isMpd = content.contains("<MPD", ignoreCase = true) || lowerUrl.contains(".mpd")
+
+            if (isM3u8) {
+                videoDetectionTabViewModel.getOfflineVideoInfo(
                     url,
-                    tabViewModel.getTabTextInput().get() ?: "",
-                    "xmlhttprequest"
+                    content,
+                    true,
+                    false,
+                    headersMap
                 )
-        if (isAd) {
-            AppLogger.d("AdBlock (POST): Blocked $url")
+            }
+            if (isMpd) {
+                videoDetectionTabViewModel.getOfflineVideoInfo(
+                    url,
+                    content,
+                    false,
+                    true,
+                    headersMap
+                )
+            }
+            if (!isM3u8 && !isMpd) {
+                videoDetectionTabViewModel.getOfflineVideoInfo(
+                    url,
+                    content,
+                    false,
+                    true,
+                    headersMap
+                )
+                videoDetectionTabViewModel.getOfflineVideoInfo(
+                    url,
+                    content,
+                    true,
+                    false,
+                    headersMap
+                )
+            }
+        },
+        onVideoReceived = { url, headersJson ->
+            val isExperimentalDetection =
+                mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+            val isRegularDetection =
+                mainActivity.settingsViewModel.getIsCheckEveryRequestOnMp4Video().get()
+
+            if (!isExperimentalDetection || !isRegularDetection) {
+                return@JsWebBridge
+            }
+
+            val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
+            val contentLength = responseHeaders["content-length"]?.toLong() ?: 0L
+            val contentThreshold = mainActivity.settingsViewModel.videoDetectionTreshold.get()
+
+            if (contentLength < contentThreshold) {
+                DetectionLogger.log("REGULAR JS", "SKIP", url, "bellow threshold")
+                return@JsWebBridge
+            }
+
+            val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
+            val type = VideoUtils.parseInterceptorType(headersJson)
+            AppLogger.d("Video intercepted ($type): $url \n$requestHeaders\n$responseHeaders")
+
+            videoDetectionTabViewModel.getVideoAudioInfoLocal(
+                url,
+                requestHeaders,
+                responseHeaders["content-type"] ?: "",
+                responseHeaders["content-length"]?.toLong() ?: 0L
+            )
+        },
+        onAudioReceived = { url, headersJson ->
+            val isExperimentalDetection =
+                mainActivity.settingsViewModel.isUseExperimentalDetection.get()
+            val isAudioDetectionOn = mainActivity.settingsViewModel.isCheckOnAudio.get()
+            if (!isExperimentalDetection || !isAudioDetectionOn) {
+                return@JsWebBridge
+            }
+
+            val requestHeaders = VideoUtils.parseRequestHeadersToMap(headersJson)
+            val responseHeaders = VideoUtils.parseResponseHeadersToMap(headersJson)
+            val type = VideoUtils.parseInterceptorType(headersJson)
+
+            AppLogger.d("Audio intercepted ($type): $url")
+
+            videoDetectionTabViewModel.getVideoAudioInfoLocal(
+                url,
+                requestHeaders,
+                responseHeaders["content-type"] ?: "",
+                responseHeaders["content-length"]?.toLong() ?: 0L
+            )
         }
-        isAd
-    }
+    )
 }

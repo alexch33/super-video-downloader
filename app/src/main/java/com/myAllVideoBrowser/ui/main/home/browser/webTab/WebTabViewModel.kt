@@ -1,24 +1,25 @@
 package com.myAllVideoBrowser.ui.main.home.browser.webTab
 
 import android.webkit.WebView
-import androidx.databinding.Observable
-import androidx.databinding.ObservableBoolean
-import androidx.databinding.ObservableField
-import androidx.databinding.ObservableInt
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
 import com.myAllVideoBrowser.data.repository.HistoryRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
+import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.SingleLiveEvent
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.subjects.PublishSubject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -26,20 +27,35 @@ class WebTabViewModel @Inject constructor(
     private val historyRepository: HistoryRepository,
     private val baseSchedulers: BaseSchedulers,
 ) : BaseViewModel() {
-    val isTabInputFocused = ObservableBoolean(false)
+    private val _isTabInputFocused = MutableLiveData(false)
+    val isTabInputFocused: LiveData<Boolean> = _isTabInputFocused
     val changeTabFocusEvent = SingleLiveEvent<Boolean>()
-    val thisTabIndex = ObservableInt(-1)
-    val isDownloadDialogShown = ObservableBoolean(false)
-    lateinit var tabPublishSubject: PublishSubject<String>
-    var listTabSuggestions: ObservableField<MutableList<HistoryItem>> = ObservableField(
-        mutableListOf()
-    )
-    val isShowProgress = ObservableBoolean(true)
-    val progress = ObservableInt(0)
-    val progressIcon = ObservableInt(R.drawable.ic_refresh_24dp)
 
-    val currentTitle = ObservableField("")
-    var userAgent = ObservableField("")
+    private val _thisTabIndex = MutableLiveData(-1)
+    val thisTabIndex: LiveData<Int> = _thisTabIndex
+
+    private val _isDownloadDialogShown = MutableLiveData(false)
+    val isDownloadDialogShown: LiveData<Boolean> = _isDownloadDialogShown
+
+    lateinit var tabPublishSubject: PublishSubject<String>
+
+    private val _listTabSuggestions = MutableLiveData(listOf<HistoryItem>())
+    var listTabSuggestions: LiveData<List<HistoryItem>> = _listTabSuggestions
+
+    private val _isShowProgress = MutableStateFlow(true)
+    val isShowProgress: StateFlow<Boolean> = _isShowProgress
+
+    private val _progress = MutableLiveData(0)
+    val progress: LiveData<Int> = _progress
+
+    private val _progressIcon = MutableLiveData(R.drawable.ic_refresh_24dp)
+    val progressIcon: LiveData<Int> = _progressIcon
+
+    private val _currentTitle = MutableLiveData("")
+    val currentTitle: LiveData<String> = _currentTitle
+
+    private val _userAgent = MutableLiveData("")
+    val userAgent: LiveData<String> = _userAgent
 
     // This events from BrowserFragment
     lateinit var openPageEvent: SingleLiveEvent<WebTab>
@@ -47,46 +63,67 @@ class WebTabViewModel @Inject constructor(
 
     val loadPageEvent = SingleLiveEvent<WebTab>()
 
-    private val tabUrl = ObservableField("")
+    private val _tabUrl = MutableLiveData("")
+    val tabUrlInput: LiveData<String> = _tabUrl
+
     private var tabSuggestionJob: Job? = null
 
-    private val showProgressCallBack = object :
-        Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            when (isShowProgress.get()) {
-                true -> progressIcon.set(R.drawable.close_24px)
-                false -> progressIcon.set(R.drawable.ic_refresh_24dp)
-            }
-        }
+    fun setUserAgent(userAgent: String) {
+        _userAgent.value = userAgent
+    }
+
+    fun setIsShowProgress(isShow: Boolean) {
+        _isShowProgress.value = isShow
+    }
+
+    fun setIsDownloadDialogShown(isShown: Boolean) {
+        _isDownloadDialogShown.value = isShown
+    }
+
+    fun setIsTabInputFocused(isFocus: Boolean) {
+        _isTabInputFocused.value = isFocus
+    }
+
+    fun setThisTabIndex(index: Int) {
+        _thisTabIndex.value = index
+    }
+
+    fun setProgress(newProgress: Int) {
+        _progress.value = newProgress
     }
 
     override fun start() {
         tabPublishSubject = PublishSubject.create()
-
-        isShowProgress.addOnPropertyChangedCallback(showProgressCallBack)
+        viewModelScope.launch {
+            isShowProgress.collect { isShow ->
+                when (isShow) {
+                    true -> setProgressIcon(R.drawable.close_24px)
+                    false -> setProgressIcon(R.drawable.ic_refresh_24dp)
+                }
+            }
+        }
     }
 
     override fun stop() {
-        isShowProgress.removeOnPropertyChangedCallback(showProgressCallBack)
     }
 
     fun finishPage(url: String) {
         setTabTextInput(url, true)
-        isShowProgress.set(false)
+        setIsShowProgress(false)
     }
 
     fun onStartPage(url: String, title: String?) {
         setTabTextInput(url)
-        isShowProgress.set(true)
-        currentTitle.set(title)
-        tabUrl.set(url)
+        setIsShowProgress(true)
+        setCurrentTitle(title ?: "no title")
+        setTabUrl(url)
     }
 
     fun onUpdateVisitedHistory(url: String, title: String?, userAgent: String?) {
         if (url.startsWith("http")) {
             setTabTextInput(url)
-            isShowProgress.set(true)
-            tabUrl.set(url)
+            setIsShowProgress(true)
+            setTabUrl(url)
         }
     }
 
@@ -96,13 +133,11 @@ class WebTabViewModel @Inject constructor(
         }
         tabSuggestionJob = viewModelScope.launch(Dispatchers.IO) {
             try {
-                withContext(this.coroutineContext) {
-                    val list = fetchListTabSuggestions().blockingFirst().reversed()
-                    if (list.size > 50) {
-                        listTabSuggestions.set(list.subList(0, 50).toMutableList())
-                    } else {
-                        listTabSuggestions.set(list.toMutableList())
-                    }
+                val list = fetchListTabSuggestions().blockingFirst().reversed()
+                if (list.size > 50) {
+                    _listTabSuggestions.postValue(list.subList(0, 50))
+                } else {
+                    _listTabSuggestions.postValue(list)
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()
@@ -115,7 +150,7 @@ class WebTabViewModel @Inject constructor(
             tabPublishSubject.debounce(300, TimeUnit.MILLISECONDS)
                 .toFlowable(BackpressureStrategy.LATEST), historyRepository.getAllHistory().take(1)
         ) { input, suggestions ->
-            tabUrl.set(input)
+            setTabUrl(input)
 
             val listSuggestions = suggestions.filter { historyItem ->
                 historyItem.url.contains(
@@ -128,7 +163,7 @@ class WebTabViewModel @Inject constructor(
     }
 
     fun changeTabFocus(isFocus: Boolean) {
-        this.isTabInputFocused.set(isFocus)
+        this._isTabInputFocused.value = isFocus
         changeTabFocusEvent.value = isFocus
     }
 
@@ -156,12 +191,8 @@ class WebTabViewModel @Inject constructor(
         }
 
         if (!isTabInputFocused.get() || isForce) {
-            tabUrl.set(input)
+            setTabUrl(input)
         }
-    }
-
-    fun getTabTextInput(): ObservableField<String> {
-        return tabUrl
     }
 
     fun closeTab(webTab: WebTab) {
@@ -170,30 +201,38 @@ class WebTabViewModel @Inject constructor(
 
     fun onPageReload(urlLoader: WebView?) {
         changeTabFocus(false)
-        isShowProgress.set(true)
+        setIsShowProgress(true)
 
         urlLoader?.reload()
     }
 
     fun onPageStop(urlLoader: WebView?) {
         changeTabFocus(false)
-        isShowProgress.set(false)
+        setIsShowProgress(false)
         urlLoader?.stopLoading()
     }
 
     fun onGoBack(webView: WebView) {
         changeTabFocus(false)
-        isShowProgress.set(true)
+        setIsShowProgress(true)
         webView.goBack()
     }
 
     fun onGoForward(webView: WebView) {
         changeTabFocus(false)
-        isShowProgress.set(true)
+        setIsShowProgress(true)
         webView.goForward()
     }
 
-    fun setProgress(newProgress: Int) {
-        progress.set(newProgress)
+    private fun setProgressIcon(icon: Int) {
+        _progressIcon.value = icon
+    }
+
+    private fun setTabUrl(url: String) {
+        _tabUrl.postValue(CookieUtils.sanitizeUrlOrText(url))
+    }
+
+    private fun setCurrentTitle(title: String) {
+        _currentTitle.value = CookieUtils.sanitizeUrlOrText(title)
     }
 }

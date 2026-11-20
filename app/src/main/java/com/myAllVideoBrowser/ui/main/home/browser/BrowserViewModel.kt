@@ -1,6 +1,6 @@
 package com.myAllVideoBrowser.ui.main.home.browser
 
-import androidx.databinding.*
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
@@ -9,7 +9,6 @@ import com.myAllVideoBrowser.util.SingleLiveEvent
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import javax.inject.Inject
 
-//@OpenForTesting
 class BrowserViewModel @Inject constructor() : BaseViewModel() {
 
     companion object {
@@ -28,15 +27,43 @@ class BrowserViewModel @Inject constructor() : BaseViewModel() {
 
     val updateWebTabEvent = SingleLiveEvent<WebTab>()
 
-    val workerM3u8MpdEvent = MutableLiveData<DownloadButtonState>()
+    private val _workerM3u8MpdEvent = MutableLiveData<DownloadButtonState>()
+    val workerM3u8MpdEvent: LiveData<DownloadButtonState> = _workerM3u8MpdEvent
 
-    val workerMP4Event = MutableLiveData<DownloadButtonState>()
+    private val _workerMP4Event = MutableLiveData<DownloadButtonState>()
+    val workerMP4Event: LiveData<DownloadButtonState> = _workerMP4Event
 
-    val progress = ObservableInt(0)
+    private val _tabs = MutableLiveData(listOf(WebTab.HOME_TAB))
+    val tabs: LiveData<List<WebTab>> = _tabs
 
-    val tabs = ObservableField(listOf(WebTab.HOME_TAB))
+    private val _currentTab = MutableLiveData(HOME_TAB_INDEX)
+    val currentTab: LiveData<Int> = _currentTab
 
-    val currentTab = ObservableInt(HOME_TAB_INDEX)
+    fun setM3U8Event(state: DownloadButtonState?) {
+        if (state == null) {
+            return
+        }
+        _workerM3u8MpdEvent.postValue(state)
+    }
+
+    fun setMP4Event(state: DownloadButtonState?) {
+        if (state == null) {
+            return
+        }
+        _workerMP4Event.postValue(state)
+    }
+
+    fun setTabs(tabsList: List<WebTab>) {
+        if (_tabs.value != tabsList) {
+            _tabs.value = tabsList
+        }
+    }
+
+    fun setCurrentTab(index: Int) {
+        if (_currentTab.value != index) {
+            _currentTab.value = index
+        }
+    }
 
     override fun start() {
         instance = this

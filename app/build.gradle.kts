@@ -134,8 +134,8 @@ android {
         applicationId = "com.myAllVideoBrowser"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 509
-        versionName = "0.9.1.4"
+        versionCode = 524
+        versionName = "0.9.2.1"
 
         if (isSingleAbiRequested) {
             splits {
@@ -291,7 +291,6 @@ dependencies {
     implementation(libs.concurrentFuturesKtx)
 
     // Lifecycle Components
-    implementation(libs.lifecycleExtensions)
     implementation(libs.lifecycleCommonJava8)
     implementation(libs.lifecycleLivedata)
     implementation(libs.lifecycleViewmodel)

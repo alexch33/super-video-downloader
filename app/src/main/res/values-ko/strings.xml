@@ -119,8 +119,11 @@
     <string name="settings_detection">감지 설정</string>
     <string name="settings_downloading">다운로드 설정</string>
     <string name="use_legacy_m3u8_detection">레거시 m3u8/mpd 감지 방식 사용(youtube-dlp 방식)</string>
+    <string name="use_experimental_detection">실험적 감지 사용</string>
+    <string name="setting_explanation_use_experimental_detection">고급 비디오 스트림 검색 및 처리를 위한 실험적 감지 기능을 활성화합니다. 이 모드는 일반 감지 모드만큼 많이 감지하지는 못하지만 일반 감지기가 놓치는 항목을 감지할 수 있습니다. 웹사이트에서 일반 감지가 작동하지 않으면 이를 시도해 볼 수 있습니다. 또한 이 모드는 무언가를 다운로드하려고 할 때 감지하기 더 어렵고, 비디오 확인을 위해 서버에 추가 요청을 보내지 않습니다.</string>
     <string name="playback_channel_name">재생</string>
     <string name="video_move_downloads">다운로드 파일 이동</string>
+    <string name="video_move_private">비공개로 이동</string>
     <string name="media_move_error">미디어 이동 오류</string>
     <string name="media_move_success">미디어 이동 성공</string>
     <string name="allow">허용</string>
@@ -218,4 +221,12 @@
     <string name="advanced_guide">고급 가이드</string>
     <string name="advanced_guide_title">고급 감지 가이드</string>
     <string name="advanced_guide_text">SuperX에는 3가지 종류의 비디오 감지 엔진이 있습니다:\n\n1. URL별 감지:\n웹페이지 URL을 직접 스캔합니다. 비디오 URL이 웹 링크에 포함된 Facebook이나 TikTok 같은 사이트에 이상적입니다.\n\n2. 일반 파일 감지:\nMP4, WebM, 오디오 등 직접적인 미디어 파일에 대한 네트워크 요청을 검사합니다.\n\n3. M3U8 / MPD 스트리밍 감지:\n스트리밍 재생목록(HLS / DASH)을 감지합니다. 두 가지 변형이 제공됩니다:\n • youtube-dlp 엔진: 매우 안정적이고 신뢰할 수 있지만 약간 느립니다.\n • SuperX 감지기: 새롭고 실험적이며 극도로 빠릅니다(1초 미만).\n\n특정 웹사이트에 맞게 최적화하는 방법:\n기본적으로 모든 감지기가 활성화되어 있습니다. 설정에서 특정 사이트에 맞게 미세 조정할 수 있습니다:\n • Facebook 또는 TikTok의 경우(URL로만 감지가 작동함): 일반 파일 감지 및 M3U8/MPD 감지를 끌 수 있습니다.\n • 스트리밍 사이트의 경우(네트워크 요청을 가로채서 감지가 작동함): URL 감지를 끌 수 있습니다.\n • 메뉴의 \'감지 로그\'를 확인하여 어떤 감지기가 비디오를 찾고 있는지 확인하고, 사용하지 않는 감지기를 꺼서 더 빠른 성능을 얻을 수 있습니다!</string>
+    <string name="supporting_project">SuperX는 최고의 다운로드 경험을 제공하기 위해 열정으로 만들어졌습니다. 이 앱이 마음에 드신다면 지속적인 개발, 새로운 기능 개선, 유지보수를 지원해 주세요. \'정보\' 섹션 또는 GitHub README에서 BTC 지갑을 사용하여 프로젝트를 지원할 수 있습니다. 프로젝트가 계속 성장할 수 있도록 도와주셔서 감사합니다!</string>
+
+    <string name="filename_already_exists">파일 이름이 이미 존재합니다</string>
+    <string name="settings_import_media">동영상 또는 오디오 파일 가져오기</string>
+    <string name="importing_media_file">미디어 파일 가져오는 중…</string>
+    <string name="media_imported_success">미디어 파일을 성공적으로 가져왔습니다</string>
+    <string name="media_imported_error">미디어 파일을 가져오지 못했습니다</string>
+    <string name="reopen_browser_tab_notice">적용하려면 브라우저 탭을 다시 열어야 합니다</string>
 </resources>

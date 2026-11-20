@@ -2,7 +2,6 @@ package com.myAllVideoBrowser.ui.main.progress
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import androidx.databinding.ObservableField
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.VideoMetadataManager
 import com.myAllVideoBrowser.data.local.room.entity.ProgressInfo
@@ -10,29 +9,38 @@ import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.ProgressRepository
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
 import com.myAllVideoBrowser.util.ContextUtils
+import com.myAllVideoBrowser.util.SharedPrefHelper
+import com.myAllVideoBrowser.util.SingleLiveEvent
 import com.myAllVideoBrowser.util.downloaders.SystemDownloadManager
 import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTaskState
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx3.asFlow
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class ProgressViewModel @Inject constructor(
     private val progressRepository: ProgressRepository,
-    private val systemDownloadManager: SystemDownloadManager
+    private val systemDownloadManager: SystemDownloadManager,
+    private val sharedPrefHelper: SharedPrefHelper
 ) : BaseViewModel() {
     @VisibleForTesting
     internal val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
-    var progressInfos: ObservableField<List<ProgressInfo>> = ObservableField(emptyList())
-    private val progressExecutor = Executors.newFixedThreadPool(3).asCoroutineDispatcher()
+    val downloadSuccessEvent = SingleLiveEvent<Unit>()
+    private var lastProcessedSuccessId: Long = -1L
+
+    private val _progressInfos = MutableStateFlow<List<ProgressInfo>>(emptyList())
+    val progressInfos: StateFlow<List<ProgressInfo>> = _progressInfos.asStateFlow()
+
     private val singleThreadExecutor = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+    private val progressExecutor = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 
     override fun start() {
         downloadProgressStartListen()
@@ -44,7 +52,7 @@ class ProgressViewModel @Inject constructor(
 
     fun stopAndSaveDownload(id: Long) {
         viewModelScope.launch(singleThreadExecutor) {
-            val inf = progressInfos.get()?.find { it.downloadId == id }
+            val inf = _progressInfos.value.find { it.downloadId == id }
             inf?.let { info ->
                 val videoInfo = VideoMetadataManager.getVideoInfo(info.id)
                 videoInfo?.let { video ->
@@ -59,7 +67,7 @@ class ProgressViewModel @Inject constructor(
 
     fun cancelDownload(id: Long, removeFile: Boolean) {
         viewModelScope.launch(singleThreadExecutor) {
-            val inf = progressInfos.get()?.find { it.downloadId == id }
+            val inf = _progressInfos.value.find { it.downloadId == id }
             inf?.let { progressInfo ->
                 val videoInfo = VideoMetadataManager.getVideoInfo(progressInfo.id)
 
@@ -70,15 +78,15 @@ class ProgressViewModel @Inject constructor(
                     systemDownloadManager.cancelDownload(ctx, vInfo, removeFile)
                 }
 
-                val newList = progressInfos.get()?.filter { it.id != progressInfo.id }
-                progressInfos.set(newList?.sortedBy { it.id })
+                val newList = _progressInfos.value.filter { it.id != progressInfo.id }
+                _progressInfos.value = newList.sortedBy { it.id }
             }
         }
     }
 
     fun pauseDownload(id: Long) {
         viewModelScope.launch(singleThreadExecutor) {
-            val inf = progressInfos.get()?.find { it.downloadId == id }
+            val inf = _progressInfos.value.find { it.downloadId == id }
             inf?.let { info ->
                 val videoInfo = VideoMetadataManager.getVideoInfo(info.id)
                 videoInfo?.let { video ->
@@ -93,7 +101,7 @@ class ProgressViewModel @Inject constructor(
 
     fun resumeDownload(id: Long) {
         viewModelScope.launch(singleThreadExecutor) {
-            val inf = progressInfos.get()?.find { it.downloadId == id }
+            val inf = _progressInfos.value.find { it.downloadId == id }
             inf?.let { info ->
                 val videoInfo = VideoMetadataManager.getVideoInfo(info.id)
                 videoInfo?.let { video ->
@@ -145,19 +153,30 @@ class ProgressViewModel @Inject constructor(
     internal fun downloadProgressStartListen() {
         viewModelScope.launch(progressExecutor) {
             try {
-                progressObservable().asFlow().collect { progressInfoList ->
-                    progressInfos.set(progressInfoList.sortedBy { it.id })
-                }
+                progressRepository.getProgressInfos()
+                    .asFlow()
+                    .collect { progressInfoList ->
+                        progressInfoList.find { it.downloadStatus == VideoTaskState.SUCCESS }?.let { successInfo ->
+                            if (successInfo.downloadId != lastProcessedSuccessId) {
+                                lastProcessedSuccessId = successInfo.downloadId
+                                val lastShown = sharedPrefHelper.getLastSupportDialogShownTime()
+                                val currentTime = System.currentTimeMillis()
+                                val threeDaysInMillis = 3L * 24 * 60 * 60 * 1000 // 3 days
+                                if (currentTime - lastShown >= threeDaysInMillis || lastShown == 0L) {
+                                    sharedPrefHelper.setLastSupportDialogShownTime(currentTime)
+                                    downloadSuccessEvent.call()
+                                }
+                            }
+                        }
+
+                        val filtered = progressInfoList
+                            .filter { info -> info.downloadStatus != VideoTaskState.SUCCESS }
+                            .sortedBy { it.id }
+                        _progressInfos.value = filtered
+                    }
             } catch (e: Throwable) {
                 e.printStackTrace()
             }
         }
-    }
-
-    private fun progressObservable(): Observable<List<ProgressInfo>> {
-        return progressRepository.getProgressInfos()
-            .throttleLast(1000, TimeUnit.MILLISECONDS)
-            .map { it.filter { info -> info.downloadStatus != VideoTaskState.SUCCESS } }
-            .toObservable()
     }
 }

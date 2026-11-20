@@ -74,7 +74,12 @@ data class VideoInfo(
     @ColumnInfo(name = "isAudioOnlyExtract", defaultValue = "0")
     @SerializedName("isAudioOnlyExtract")
     @Expose
-    var isAudioOnlyExtract: Boolean = false
+    var isAudioOnlyExtract: Boolean = false,
+
+    @ColumnInfo(name = "timestamp", defaultValue = "0")
+    @SerializedName("timestamp")
+    @Expose
+    var timestamp: Long = System.currentTimeMillis()
 ) {
 
     /**
@@ -102,6 +107,13 @@ data class VideoInfo(
         if (originalUrl == null) originalUrl = ""
         return this
     }
+
+    val firstDownloadUrl: String?
+        get() {
+            return firstUrlToString.ifEmpty {
+                formats.formats.firstOrNull()?.url
+            }
+        }
 
     val firstUrlToString: String
         get() {
@@ -145,6 +157,7 @@ data class VideoInfo(
         if (formats != other.formats) return false
         if (isRegularDownload != other.isRegularDownload) return false
         if (isAudioOnlyExtract != other.isAudioOnlyExtract) return false
+        if (timestamp != other.timestamp) return false
 
         return true
     }
@@ -160,6 +173,7 @@ data class VideoInfo(
         result = 31 * result + formats.hashCode()
         result = 31 * result + isRegularDownload.hashCode()
         result = 31 * result + isAudioOnlyExtract.hashCode()
+        result = 31 * result + timestamp.hashCode()
         return result
     }
 }

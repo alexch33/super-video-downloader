@@ -1,5 +1,6 @@
 package com.myAllVideoBrowser.ui.main.progress
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
@@ -7,8 +8,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
-import androidx.databinding.Observable
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
@@ -22,6 +24,8 @@ import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.home.MainViewModel
 import com.myAllVideoBrowser.ui.main.settings.SettingsViewModel
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.get
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ProgressFragment : BaseFragment() {
@@ -46,18 +50,6 @@ class ProgressFragment : BaseFragment() {
 
     private lateinit var progressAdapter: ProgressAdapter
 
-    private val queueSizeCallback = object :
-        Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(
-            sender: Observable?,
-            propertyId: Int
-        ) {
-            val currentSize = settingsViewModel.queueSize.get()
-            this@ProgressFragment.dataBinding.simsCountSlider.value =
-                currentSize.coerceIn(1, Runtime.getRuntime().availableProcessors()).toFloat()
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -67,6 +59,7 @@ class ProgressFragment : BaseFragment() {
         progressAdapter = ProgressAdapter(emptyList(), progressListener)
 
         dataBinding = FragmentProgressBinding.inflate(inflater, container, false).apply {
+            this.lifecycleOwner = viewLifecycleOwner
             val managerL =
                 WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
             this.mainViewModel = mainActivity.mainViewModel
@@ -77,25 +70,41 @@ class ProgressFragment : BaseFragment() {
 
             val coreCount = Runtime.getRuntime().availableProcessors()
             this.simsCountSlider.valueTo = coreCount.toFloat()
-            this.simsCountSlider.value = settingsViewModel?.queueSize?.get()?.toFloat() ?: 1f
+            val initialSize = settingsViewModel?.queueSize?.get() ?: 1
+            this.simsCountSlider.value = initialSize.toFloat()
             this.simsCountSlider.addOnChangeListener(simsThreadsListener)
             val simsText =
-                getString(R.string.queue_downloads_size) + " ${settingsViewModel?.queueSize?.get()}"
+                getString(R.string.queue_downloads_size) + " $initialSize"
             this.simDownloadsCount.text = simsText
         }
 
         return dataBinding.root
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         handleDownloadVideoEvent()
-        this.settingsViewModel.queueSize.addOnPropertyChangedCallback(queueSizeCallback)
+
+        settingsViewModel.queueSize.observe(viewLifecycleOwner) { currentSize ->
+            val size = currentSize ?: 1
+            dataBinding.simsCountSlider.value = size.coerceIn(1, Runtime.getRuntime().availableProcessors()).toFloat()
+            dataBinding.simDownloadsCount.text = "${getString(R.string.queue_downloads_size)} $size"
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+                progressViewModel.progressInfos.collect { lists ->
+                    progressAdapter.setData(lists)
+                    dataBinding.layoutEmpty.visibility =
+                        if (lists.isEmpty()) View.VISIBLE else View.GONE
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
         this.dataBinding.simsCountSlider.removeOnChangeListener(simsThreadsListener)
-        this.settingsViewModel.queueSize.removeOnPropertyChangedCallback(queueSizeCallback)
         super.onDestroy()
     }
 
@@ -109,7 +118,7 @@ class ProgressFragment : BaseFragment() {
     private fun handleDownloadVideoEvent() {
         mainViewModel.downloadVideoEvent.observe(viewLifecycleOwner) { videoInfo ->
             val currentOriginal = videoInfo.originalUrl
-            mainViewModel.currentOriginal.set(currentOriginal)
+            mainViewModel.setCurrentOriginal(currentOriginal)
             progressViewModel.downloadVideo(this.context, videoInfo)
         }
     }
@@ -122,7 +131,7 @@ class ProgressFragment : BaseFragment() {
 
     private fun showPopupMenu(view: View, downloadId: Long) {
         val menuCandidate =
-            progressViewModel.progressInfos.get()?.find { it.downloadId == downloadId }
+            progressViewModel.progressInfos.value.find { it.downloadId == downloadId }
 
         val popupMenu = PopupMenu(view.context, view)
         popupMenu.menuInflater.inflate(R.menu.menu_progress, popupMenu.menu)

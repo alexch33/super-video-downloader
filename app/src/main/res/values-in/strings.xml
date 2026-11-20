@@ -119,8 +119,11 @@
     <string name="settings_detection">Pengaturan Pendeteksian</string>
     <string name="settings_downloading">Pengaturan Pengunduhan</string>
     <string name="use_legacy_m3u8_detection">Gunakan deteksi m3u8/mpd versi lama (oleh youtube-dlp)</string>
+    <string name="use_experimental_detection">Gunakan deteksi eksperimental</string>
+    <string name="setting_explanation_use_experimental_detection">Mengaktifkan fitur deteksi eksperimental untuk penemuan dan pemrosesan aliran video lanjutan. Mode ini tidak mendeteksi sebanyak mode deteksi biasa, tetapi mode ini dapat mendeteksi hal-hal yang terlewat oleh detektor biasa. Jika deteksi biasa tidak berfungsi untuk situs web Anda, Anda dapat mencoba ini. Selain itu, mode ini lebih sulit dideteksi saat Anda mencoba mengunduh sesuatu, karena mode ini tidak mengirimkan permintaan tambahan apa pun ke server untuk pemeriksaan video.</string>
     <string name="playback_channel_name">Pemutaran</string>
     <string name="video_move_downloads">Pindah ke Unduhan</string>
+    <string name="video_move_private">Pindah ke Privat</string>
     <string name="media_move_error">Kesalahan Pemindahan Media</string>
     <string name="media_move_success">Sukses memindahkan media</string>
     <string name="allow">Izinkan</string>
@@ -218,4 +221,12 @@
     <string name="advanced_guide">Panduan lanjutan</string>
     <string name="advanced_guide_title">Panduan Deteksi Lanjutan</string>
     <string name="advanced_guide_text">SuperX memiliki 3 jenis mesin deteksi video yang berbeda:\n\n1. Deteksi berdasarkan URL:\nMemindai URL halaman web secara langsung. Ideal untuk situs seperti Facebook atau TikTok di mana URL video disematkan di tautan web.\n\n2. Deteksi Berkas Reguler:\nMemeriksa permintaan jaringan untuk berkas media langsung seperti MP4, WebM, audio, dll.\n\n3. Deteksi Streaming M3U8 / MPD:\nMendeteksi daftar putar streaming (HLS / DASH). Tersedia dalam dua varian:\n • Mesin youtube-dlp: Sangat stabil dan dapat diandalkan, tetapi sedikit lebih lambat.\n • Detektor SuperX: Baru, eksperimental, dan sangat cepat (kurang dari satu detik).\n\nCara mengoptimalkan untuk situs web tertentu:\nSecara default, semua detektor diaktifkan. Anda dapat menyempurnakannya di Pengaturan untuk situs tertentu:\n • Untuk Facebook atau TikTok (di mana deteksi hanya bekerja dengan URL): Anda dapat menonaktifkan Deteksi berkas reguler dan deteksi M3U8/MPD.\n • Untuk situs streaming (di mana deteksi bekerja dengan mencegat permintaan jaringan): Anda dapat menonaktifkan deteksi URL.\n • Anda dapat memeriksa Log Deteksi di menu untuk melihat detektor mana yang menemukan video, dan menonaktifkan detektor yang tidak digunakan untuk kinerja yang lebih cepat!</string>
+    <string name="supporting_project">SuperX dibuat dengan penuh semangat untuk memberi Anda pengalaman mengunduh terbaik. Jika Anda menyukai aplikasi ini, pertimbangkan untuk mendukung pengembangan berkelanjutan, peningkatan fitur baru, dan pemeliharaannya. Anda dapat mendukung proyek menggunakan dompet BTC (tersedia di bagian \"Tentang\" atau README di GitHub). Terima kasih telah membantu menjaga proyek ini tetap berkembang!</string>
+
+    <string name="filename_already_exists">Nama file sudah ada</string>
+    <string name="settings_import_media">Impor berkas video atau audio</string>
+    <string name="importing_media_file">Mengimpor berkas media…</string>
+    <string name="media_imported_success">Berkas media berhasil diimpor</string>
+    <string name="media_imported_error">Gagal mengimpor berkas media</string>
+    <string name="reopen_browser_tab_notice">Perlu membuka ulang tab browser untuk menerapkan</string>
 </resources>

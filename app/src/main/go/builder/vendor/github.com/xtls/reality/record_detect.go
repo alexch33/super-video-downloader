@@ -42,6 +42,9 @@ func DetectPostHandshakeRecordsLens(config *Config) {
 							return
 						}
 					}
+					// Bound the probe: a target that accepts TCP but never answers would otherwise leave the
+					// key at false forever, and Server() keeps authenticated connections waiting on it.
+					target.SetDeadline(time.Now().Add(10 * time.Second))
 					detectConn := &PostHandshakeRecordDetectConn{
 						Conn: target,
 						Key:  key,
@@ -58,8 +61,9 @@ func DetectPostHandshakeRecordsLens(config *Config) {
 						nextProtos = nil
 					}
 					uConn := utls.UClient(detectConn, &utls.Config{
-						ServerName: sni, // needs new loopvar behaviour
-						NextProtos: nextProtos,
+						ServerName:         sni,       // needs new loopvar behaviour
+						InsecureSkipVerify: sni == "", // uTLS refuses an empty ServerName otherwise
+						NextProtos:         nextProtos,
 					}, fingerprint)
 					if err = uConn.Handshake(); err != nil {
 						return
@@ -88,13 +92,15 @@ func DetectPostHandshakeRecordsLens(config *Config) {
 					if alpn == 0 {
 						nextProtos = nil
 					}
+					target.SetDeadline(time.Now().Add(10 * time.Second))
 					conn := &CCSDetectConn{
 						Conn: target,
 						Key:  key,
 					}
 					uConn := utls.UClient(conn, &utls.Config{
-						ServerName: sni, // needs new loopvar behaviour
-						NextProtos: nextProtos,
+						ServerName:         sni,       // needs new loopvar behaviour
+						InsecureSkipVerify: sni == "", // uTLS refuses an empty ServerName otherwise
+						NextProtos:         nextProtos,
 					}, fingerprint)
 					if err = uConn.Handshake(); err != nil {
 						return

@@ -1,8 +1,8 @@
 [versions]
 # Android and Gradle
-conscryptAndroid = "2.8.0"
+conscryptAndroid = "2.9.0"
 gradlePlugin = "9.4.1"
-kotlin = "2.4.10"
+kotlin = "2.4.21"
 kotlinxCoroutinesRx3 = "1.11.0"
 ksp = "2.3.12"
 
@@ -32,8 +32,6 @@ fragmentKtx = "1.9.1"
 concurrentFutures = "1.3.0"
 
 # AndroidX Lifecycle
-lifecycleExtensions = "2.2.0"
-lifecycleCompiler = "2.11.0"
 lifecycleCommonJava8 = "2.11.0"
 lifecycleLivedata = "2.11.0"
 lifecycleViewmodel = "2.11.0"
@@ -61,17 +59,17 @@ rxjava3 = "3.1.12"
 rxandroid3 = "3.0.2"
 
 # Other Dependencies
-glide = "5.0.9"
+glide = "5.0.10"
 youtubedl = "0.18.1"
 ffmpegKit = "2.2.3"
 
 # version change can break build
-jsoup = "1.23.2"
+jsoup = "1.24.1"
 
 timeago = "4.3.0"
 persistentCookieJar = "1.0.1"
-kotlinxSerializationJson = "1.12.0"
-kotlinxSerializationCore = "1.12.0"
+kotlinxSerializationJson = "1.13.0"
+kotlinxSerializationCore = "1.13.0"
 
 # Media3
 media3 = "1.11.1"
@@ -139,8 +137,6 @@ fragmentKtx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragme
 concurrentFuturesKtx = { module = "androidx.concurrent:concurrent-futures-ktx", version.ref = "concurrentFutures" }
 
 # AndroidX Lifecycle
-lifecycleExtensions = { module = "androidx.lifecycle:lifecycle-extensions", version.ref = "lifecycleExtensions" }
-lifecycleCompiler = { module = "androidx.lifecycle:lifecycle-compiler", version.ref = "lifecycleCompiler" }
 lifecycleCommonJava8 = { module = "androidx.lifecycle:lifecycle-common-java8", version.ref = "lifecycleCommonJava8" }
 lifecycleLivedata = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycleLivedata" }
 lifecycleViewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodel" }
@@ -224,7 +220,7 @@ okhttp = ["okHttpRuntime", "okHttpLogging"]
 retrofit = ["retrofitRuntime", "retrofitGson", "retrofitRxjava3"]
 rxjava3 = ["rxjava3", "rxandroid3"]
 media3 = ["media3Exoplayer", "media3ExoplayerDash", "media3ExoplayerHls", "media3ExoplayerRtsp", "media3Ui", "media3Extractor", "media3Database", "media3Decoder", "media3Datasource", "media3Common", "media3DatasourceOkhttp"]
-lifecycle = ["lifecycleExtensions", "lifecycleCommonJava8", "lifecycleLivedata", "lifecycleViewmodel"]
+lifecycle = ["lifecycleCommonJava8", "lifecycleLivedata", "lifecycleViewmodel"]
 testing = ["junit", "mockitoCore", "mockitoAndroid", "mockitoKotlin", "espressoCore", "espressoIntents"]
 
 [plugins]

@@ -2,14 +2,12 @@ package com.myAllVideoBrowser.ui.main.video
 
 import android.content.Context
 import android.net.Uri
-import androidx.core.net.toFile
-import androidx.databinding.ObservableBoolean
-import androidx.databinding.ObservableField
+import android.os.Environment
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-//import com.allVideoDownloaderXmaster.OpenForTesting
 import com.myAllVideoBrowser.data.local.model.LocalVideo
 import com.myAllVideoBrowser.ui.main.base.BaseViewModel
-import com.myAllVideoBrowser.util.AppLogger
 import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.FileUtil
 import com.myAllVideoBrowser.util.SingleLiveEvent
@@ -19,8 +17,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
-//@OpenForTesting
 class VideoViewModel @Inject constructor(
     private val fileUtil: FileUtil,
 ) : BaseViewModel() {
@@ -30,8 +28,11 @@ class VideoViewModel @Inject constructor(
         const val FILE_INVALID_ERROR_CODE = 2
     }
 
-    var localVideos: ObservableField<MutableList<LocalVideo>> = ObservableField(mutableListOf())
-    var isLoading: ObservableBoolean = ObservableBoolean(false)
+    private val _localVideos = MutableLiveData<List<LocalVideo>>(emptyList())
+    val localVideos: LiveData<List<LocalVideo>> = _localVideos
+
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean> = _isLoading
 
     val renameErrorEvent = SingleLiveEvent<Int>()
     val shareEvent = SingleLiveEvent<Uri>()
@@ -39,28 +40,39 @@ class VideoViewModel @Inject constructor(
     override fun start() {
         viewModelScope.launch(Dispatchers.IO) {
             while (true) {
-                delay(1000)
-                val newList = getFilesList().toMutableList()
-                newList.sortBy { it.uri }
-                localVideos.set(newList)
+                delay(1000.milliseconds)
+                val newList = getFilesList()
+                val sorted = newList.sortedBy { it.uri }
+                _localVideos.postValue(sorted)
             }
         }
     }
-
 
     override fun stop() {
     }
 
     private fun getFilesList(): List<LocalVideo> {
         val listVideos: MutableList<LocalVideo> = mutableListOf()
+        val downloadsPath = try {
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+        } catch (e: Throwable) {
+            ""
+        }
         fileUtil.listFiles.forEach { entry ->
             val fileUri = entry.value.second
             val fileSize = fileUtil.getContentLength(ContextUtils.getApplicationContext(), fileUri)
             val readableSize = FileUtil.getFileSizeReadable(fileSize.toDouble())
+            val isPrivate = try {
+                val path = fileUri.path ?: ""
+                path.isNotEmpty() && (downloadsPath.isEmpty() || !path.startsWith(downloadsPath))
+            } catch (e: Throwable) {
+                false
+            }
             val video = LocalVideo(
                 entry.value.first,
                 fileUri,
-                entry.key
+                entry.key,
+                isPrivate = isPrivate
             )
             video.size = readableSize
             listVideos.add(video)
@@ -70,12 +82,14 @@ class VideoViewModel @Inject constructor(
     }
 
     fun deleteVideo(context: Context, video: LocalVideo) {
-        localVideos.get()?.find { it.uri.path == video.uri.path }?.let {
-            fileUtil.deleteMedia(context, video.uri)
+        viewModelScope.launch(Dispatchers.IO) {
+            _localVideos.value?.find { it.uri.path == video.uri.path }?.let {
+                fileUtil.deleteMedia(context, video.uri)
 
-            val list = localVideos.get()?.toMutableList()
-            list?.remove(it)
-            localVideos.set(list ?: mutableListOf())
+                val list = _localVideos.value?.toMutableList()
+                list?.remove(it)
+                _localVideos.postValue(list ?: mutableListOf())
+            }
         }
     }
 
@@ -88,24 +102,33 @@ class VideoViewModel @Inject constructor(
                 if (isFileWithNameNotExists) {
                     val newMediaNameUri = fileUtil.renameMedia(context, uri, newName)
                     if (newMediaNameUri != null) {
-                        localVideos.get()?.find { it.uri.toString() == uri.toString() }?.let {
+                        _localVideos.value?.find { it.uri.toString() == uri.toString() }?.let {
                             it.uri = newMediaNameUri.second
                             it.name = newMediaNameUri.first
 
-                            localVideos.get().let { list ->
-                                list?.set(list.indexOf(it), it)
+                            _localVideos.value?.let { list ->
+                                val mutableList = list.toMutableList()
+                                val index = mutableList.indexOf(it)
+                                if (index != -1) {
+                                    mutableList[index] = it
+                                    _localVideos.postValue(mutableList)
+                                }
                             }
                         }
                         return
                     }
                 }
 
-                renameErrorEvent.value = FILE_EXIST_ERROR_CODE
+                renameErrorEvent.postValue(FILE_EXIST_ERROR_CODE)
                 return
             }
         }
 
-        renameErrorEvent.value = FILE_INVALID_ERROR_CODE
+        renameErrorEvent.postValue(FILE_INVALID_ERROR_CODE)
+    }
+
+    fun setLoading(loading: Boolean) {
+        _isLoading.postValue(loading)
     }
 
     fun findVideoByName(downloadFilename: String?): Observable<LocalVideo> {

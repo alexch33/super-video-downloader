@@ -691,6 +691,70 @@ class FileUtil @Inject constructor() {
             AppLogger.e("Error triggering media scan ${e.message}")
         }
     }
+
+    fun importMediaFile(context: Context, sourceUri: Uri): Boolean {
+        return try {
+            val contentResolver = context.contentResolver
+            var fileName = ""
+            try {
+                contentResolver.query(sourceUri, null, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (nameIndex != -1) {
+                            val name = cursor.getString(nameIndex)
+                            if (!name.isNullOrBlank()) {
+                                fileName = name
+                            }
+                        }
+                    }
+                }
+            } catch (e: Throwable) {
+                AppLogger.e("Failed to query DISPLAY_NAME for import: ${e.message}")
+            }
+
+            if (fileName.isBlank()) {
+                val lastSegment = sourceUri.lastPathSegment
+                if (!lastSegment.isNullOrBlank()) {
+                    fileName = File(lastSegment).name
+                }
+            }
+
+            if (fileName.isBlank()) {
+                fileName = "imported_media_${System.currentTimeMillis()}.mp4"
+            }
+
+            val destDir = if (IS_EXTERNAL_STORAGE_USE && IS_APP_DATA_DIR_USE) {
+                File(context.getExternalFilesDir(null), FOLDER_NAME)
+            } else {
+                File(context.filesDir.absolutePath, FOLDER_NAME)
+            }
+            if (!destDir.exists()) {
+                destDir.mkdirs()
+            }
+
+            var destFile = File(destDir, fileName)
+            var count = 1
+            val baseName = destFile.nameWithoutExtension
+            val extension = destFile.extension
+            while (destFile.exists()) {
+                val newName = if (extension.isNotEmpty()) "$baseName($count).$extension" else "$baseName($count)"
+                destFile = File(destDir, newName)
+                count++
+            }
+
+            contentResolver.openInputStream(sourceUri)?.use { inputStream ->
+                destFile.outputStream().use { outputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+            scanFile(context, destFile)
+            true
+        } catch (e: Throwable) {
+            AppLogger.e("Failed to import media file: ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
 }
 
 object FileNameCleaner {

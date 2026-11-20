@@ -1,12 +1,11 @@
 package com.myAllVideoBrowser.ui.main.home.browser.detectedVideos
 
-import androidx.databinding.ObservableBoolean
-import androidx.databinding.ObservableInt
+import androidx.lifecycle.LiveData
 import io.reactivex.rxjava3.disposables.Disposable
 import okhttp3.Request
 
 interface IVideoDetector {
-    fun onStartPage(url: String, userAgentString: String)
+    suspend fun onStartPage(url: String, userAgentString: String)
 
     fun showVideoInfo()
 
@@ -17,7 +16,7 @@ interface IVideoDetector {
         isMpd: Boolean = false
     )
 
-    fun getDownloadBtnIcon(): ObservableInt
+    fun getDownloadBtnIcon(): LiveData<Int>
 
     fun checkRegularVideoOrAudio(
         request: Request?,
@@ -27,7 +26,7 @@ interface IVideoDetector {
 
     fun cancelAllCheckJobs()
 
-    fun hasCheckLoadingsRegular(): ObservableBoolean
+    fun hasCheckLoadingsRegular(): LiveData<Boolean>
 
-    fun hasCheckLoadingsM3u8(): ObservableBoolean
+    fun hasCheckLoadingsM3u8(): LiveData<Boolean>
 }

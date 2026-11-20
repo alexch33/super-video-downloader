@@ -1,11 +1,9 @@
 package com.myAllVideoBrowser.ui.main.home.browser.detectedVideos
 
 import android.webkit.CookieManager
-import androidx.databinding.Observable
-import androidx.databinding.Observable.OnPropertyChangedCallback
-import androidx.databinding.ObservableBoolean
-import androidx.databinding.ObservableField
-import androidx.databinding.ObservableInt
+import androidx.core.net.toUri
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.model.VideoInfoWrapper
@@ -26,138 +24,118 @@ import com.myAllVideoBrowser.util.ContextUtils
 import com.myAllVideoBrowser.util.CookieUtils
 import com.myAllVideoBrowser.util.DetectionLogger
 import com.myAllVideoBrowser.util.SingleLiveEvent
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Request
 import java.net.HttpCookie
 import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import javax.inject.Inject
-import androidx.core.net.toUri
-import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 
 open class VideoDetectionTabViewModel @Inject constructor(
     private val videoRepository: VideoRepository,
     private val baseSchedulers: BaseSchedulers,
     private val okHttpProxyClient: OkHttpProxyClient,
 ) : BaseViewModel(), IVideoDetector {
+
+    companion object {
+        private const val MAX_DETECTED_COUNT = 10
+        private val REFRESH_BUTTON_STATE_DELAY = 30.milliseconds
+    }
+
     // key: videoInfo.id, value: format - string
-    val selectedFormats = ObservableField<Map<String, String>>()
+    private val _selectedFormats = MutableLiveData<Map<String, String>>(emptyMap())
+    val selectedFormats: LiveData<Map<String, String>> = _selectedFormats
 
     // key: videoInfo.id, value: title - string
-    val formatsTitles = ObservableField<Map<String, String>>()
+    private val _formatsTitles = MutableLiveData<Map<String, String>>(emptyMap())
+    val formatsTitles: LiveData<Map<String, String>> = _formatsTitles
 
-    val selectedFormatUrl = ObservableField<String>()
+    private val _selectedFormatUrl = MutableLiveData("")
+    val selectedFormatUrl: LiveData<String> = _selectedFormatUrl
 
     var initialUrl: String = ""
 
-    @Volatile
-    var m3u8LoadingList = ObservableField<MutableSet<String>>(ConcurrentHashMap.newKeySet())
+    private val _m3u8LoadingList = MutableLiveData<Set<String>>(emptySet())
 
-    @Volatile
-    var regularLoadingList = ObservableField<MutableSet<String>>(ConcurrentHashMap.newKeySet())
+    private val _regularLoadingList = MutableLiveData<Set<String>>(emptySet())
 
     val showDetectedVideosEvent = SingleLiveEvent<Void?>()
 
     val videoPushedEvent = SingleLiveEvent<Void?>()
 
-    @Volatile
-    var downloadButtonState =
-        ObservableField<DownloadButtonState>(DownloadButtonStateCanNotDownload())
+    private val _downloadButtonState =
+        MutableLiveData<DownloadButtonState>(DownloadButtonStateCanNotDownload())
+    val downloadButtonState: LiveData<DownloadButtonState> = _downloadButtonState
 
     val executorReload = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     val executorPusher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     var webTabModel: WebTabViewModel? = null
     lateinit var settingsModel: SettingsViewModel
-    val detectedVideosList = ObservableField<MutableSet<VideoInfo>>(ConcurrentHashMap.newKeySet())
+
+    private val _detectedVideosList = MutableLiveData(emptySet<VideoInfo>())
+    val detectedVideosList: LiveData<Set<VideoInfo>> = _detectedVideosList
 
     val filterRegex =
         Regex("^(.*\\.(apk|html|xml|ico|css|js|png|gif|json|jpg|jpeg|svg|woff|woff2|m3u8|mpd|ts|php|ttf|otf|eot|cur|webp|bmp|tif|tiff|psd|ai|eps|pdf|doc|docx|xls|xlsx|ppt|pptx|csv|md|rtf|vtt|srt|swf|jar|log|txt|m4s))?$")
-    val downloadButtonIcon = ObservableInt(R.drawable.invisible_24px)
+
+    private val _downloadButtonIcon = MutableLiveData(R.drawable.invisible_24px)
+    val downloadButtonIcon: LiveData<Int> = _downloadButtonIcon
 
     @Volatile
     var verifyVideoLinkJobStorage = ConcurrentHashMap<String, Disposable>()
 
-    private val hasCheckLoadingsM3u8 = ObservableBoolean(false)
-    private val hasCheckLoadingsRegular = ObservableBoolean(false)
+    private val _hasCheckLoadingsM3u8 = MutableLiveData(false)
+    val hasCheckLoadingsM3u8: LiveData<Boolean> = _hasCheckLoadingsM3u8
+
+    private val _hasCheckLoadingsRegular = MutableLiveData(false)
+    val hasCheckLoadingsRegular: LiveData<Boolean> = _hasCheckLoadingsRegular
 
     private val executorRegular = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     @Volatile
     private var lastUrl = ""
 
-    private val regularLoadingListCallback = object : OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            val notEmpty = regularLoadingList.get()?.isNotEmpty() == true
-            hasCheckLoadingsRegular.set(notEmpty)
-            if (notEmpty) {
-                setButtonState(DownloadButtonStateCanNotDownload())
-            }
-        }
-    }
-
-    private val m3u8LoadingListCallback = object : OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            val notEmpty = m3u8LoadingList.get()?.isNotEmpty() == true
-            hasCheckLoadingsM3u8.set(notEmpty)
-            if (notEmpty) {
-                setButtonState(DownloadButtonStateCanNotDownload())
-            }
-        }
-    }
-
-    private val downloadButtonStateCallback = object : OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            when (downloadButtonState.get()) {
-                is DownloadButtonStateCanNotDownload -> downloadButtonIcon.set(R.drawable.refresh_24px)
-                is DownloadButtonStateCanDownload -> downloadButtonIcon.set(R.drawable.ic_download_24dp)
-                is DownloadButtonStateLoading -> {
-                    downloadButtonIcon.set(R.drawable.invisible_24px)
-                }
-
-                null -> {
-                    downloadButtonIcon.set(R.drawable.refresh_24px)
-                }
-            }
-        }
+    fun setDetectedVideoList(list: Set<VideoInfo>) {
+        _detectedVideosList.postValue(list)
     }
 
     override fun start() {
         AppLogger.d("START")
-        regularLoadingList.addOnPropertyChangedCallback(regularLoadingListCallback)
-        m3u8LoadingList.addOnPropertyChangedCallback(m3u8LoadingListCallback)
-        downloadButtonState.addOnPropertyChangedCallback(downloadButtonStateCallback)
-
-        downloadButtonStateCallback.onPropertyChanged(null, 0)
+        updateButtonIcon(_downloadButtonState.value)
     }
 
     override fun stop() {
         AppLogger.d("STOP")
-        regularLoadingList.removeOnPropertyChangedCallback(regularLoadingListCallback)
-        m3u8LoadingList.removeOnPropertyChangedCallback(m3u8LoadingListCallback)
-        downloadButtonState.removeOnPropertyChangedCallback(downloadButtonStateCallback)
         cancelAllCheckJobs()
     }
 
-    override fun onStartPage(url: String, userAgentString: String) {
+    override suspend fun onStartPage(url: String, userAgentString: String) {
         if (url == lastUrl) {
             AppLogger.d("onStartPage: URL is the same. Not clearing list.")
             return
         }
         lastUrl = url
-        downloadButtonState.set(DownloadButtonStateCanNotDownload())
+        setButtonState(DownloadButtonStateCanNotDownload())
 
         if (url != initialUrl) {
             AppLogger.d("onStartPage: URL is not initial url. Clearing list.")
-            detectedVideosList.set(ConcurrentHashMap.newKeySet())
+            setDetectedVideoList(emptySet())
             cancelAllCheckJobs()
+
+            delay(REFRESH_BUTTON_STATE_DELAY)
+            setButtonState(DownloadButtonStateCanNotDownload())
         } else {
             AppLogger.d("onStartPage: URL is initial url. Skipped clearing list.")
         }
@@ -171,12 +149,14 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
-    fun onReloadPage(url: String, userAgentString: String) {
+    suspend fun onReloadPage(url: String, userAgentString: String) {
         lastUrl = url
-        downloadButtonState.set(DownloadButtonStateCanNotDownload())
 
-        detectedVideosList.set(ConcurrentHashMap.newKeySet())
+        setDetectedVideoList(emptySet())
         cancelAllCheckJobs()
+
+        delay(REFRESH_BUTTON_STATE_DELAY)
+        setButtonState(DownloadButtonStateCanNotDownload())
 
         val req = getRequestWithHeadersForUrl(
             url, url, userAgentString
@@ -187,20 +167,20 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
-    override fun hasCheckLoadingsRegular(): ObservableBoolean {
+    override fun hasCheckLoadingsRegular(): LiveData<Boolean> {
         return hasCheckLoadingsRegular
     }
 
-    override fun hasCheckLoadingsM3u8(): ObservableBoolean {
+    override fun hasCheckLoadingsM3u8(): LiveData<Boolean> {
         return hasCheckLoadingsM3u8
     }
 
     override fun showVideoInfo() {
         AppLogger.d("SHOW")
-        val state = downloadButtonState.get()
+        val state = _downloadButtonState.value
 
         if (state is DownloadButtonStateCanNotDownload) {
-            webTabModel?.getTabTextInput()?.get()?.let {
+            webTabModel?.tabUrlInput.get()?.let {
                 if (it.startsWith("http")) {
                     viewModelScope.launch(executorRegular) {
                         onReloadPage(
@@ -212,7 +192,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
             }
         }
 
-        if (detectedVideosList.get()?.isNotEmpty() == true) {
+        if (_detectedVideosList.value?.isNotEmpty() == true) {
             showDetectedVideosEvent.call()
         }
     }
@@ -224,10 +204,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         if (isM3u8 || isMpd) {
             startVerifyProcess(resourceRequest, isM3u8, isMpd, hlsTitle)
         } else {
-            if (urlToVerify.contains(
-                    ".txt"
-                )
-            ) {
+            if (urlToVerify.contains(".txt")) {
                 return
             }
             if (settingsModel.getIsFindVideoByUrl().get()) {
@@ -246,10 +223,9 @@ open class VideoDetectionTabViewModel @Inject constructor(
             return
         }
 
-        m3u8LoadingList.get()?.add(resourceRequest.url.toString())
-        m3u8LoadingList.notifyChange()
+        addM3u8Loading(resourceRequest.url.toString())
 
-        if (detectedVideosList.get()?.isEmpty() == true) {
+        if (_detectedVideosList.value?.isEmpty() == true) {
             setButtonState(DownloadButtonStateLoading())
         }
 
@@ -277,8 +253,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
                 emitter.onComplete()
             }.doOnTerminate {
-                m3u8LoadingList.get()?.remove(resourceRequest.url.toString())
-                m3u8LoadingList.notifyChange()
+                removeM3u8Loading(resourceRequest.url.toString())
                 verifyVideoLinkJobStorage.remove(taskUrl)
             }.observeOn(baseSchedulers.computation).subscribeOn(baseSchedulers.videoService)
                 .subscribe { info ->
@@ -295,44 +270,157 @@ open class VideoDetectionTabViewModel @Inject constructor(
                 }
     }
 
+    open fun getOfflineVideoInfo(
+        baseUrl: String,
+        manifestBody: String,
+        isM3u8: Boolean = false,
+        isMpd: Boolean = false,
+        headers: Map<String, String> = emptyMap(),
+        hlsTitle: String? = null
+    ) {
+        val taskUrl = baseUrl.trim()
+        val job = verifyVideoLinkJobStorage[taskUrl]
+        if (job != null && !job.isDisposed || taskUrl.isEmpty()) {
+            return
+        }
+
+        addM3u8Loading(baseUrl)
+
+        if (_detectedVideosList.value?.isEmpty() == true) {
+            setButtonState(DownloadButtonStateLoading())
+        }
+
+        verifyVideoLinkJobStorage[taskUrl] =
+            io.reactivex.rxjava3.core.Observable.create { emitter ->
+                val info = try {
+                    videoRepository.getVideoInfoOffline(
+                        baseUrl, manifestBody, isM3u8, isMpd, headers
+                    )
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    null
+                }
+                if (info != null) {
+                    emitter.onNext(info)
+                } else {
+                    emitter.onNext(VideoInfo(id = ""))
+                }
+                emitter.onComplete()
+            }.doOnTerminate {
+                removeM3u8Loading(baseUrl)
+                verifyVideoLinkJobStorage.remove(taskUrl)
+            }.observeOn(baseSchedulers.computation).subscribeOn(baseSchedulers.videoService)
+                .subscribe { info ->
+                    if (info.id.isNotEmpty()) {
+                        if (info.isM3u8 && !hlsTitle.isNullOrEmpty()) {
+                            info.title = hlsTitle
+                        }
+                        viewModelScope.launch(executorPusher) {
+                            pushNewVideoInfoToAll(info)
+                        }
+                    } else {
+                        setButtonState(DownloadButtonStateCanNotDownload())
+                    }
+                }
+    }
+
+    open fun getVideoAudioInfoLocal(
+        url: String,
+        headers: Map<String, String> = emptyMap(),
+        contentType: String = "",
+        contentLength: Long = 0L,
+        hlsTitle: String? = null
+    ) {
+        val taskUrl = url.trim()
+        val job = verifyVideoLinkJobStorage[taskUrl]
+        if (job != null && !job.isDisposed || taskUrl.isEmpty()) {
+            return
+        }
+
+        addRegularLoading(url)
+
+        if (_detectedVideosList.value?.isEmpty() == true) {
+            setButtonState(DownloadButtonStateLoading())
+        }
+
+        verifyVideoLinkJobStorage[taskUrl] =
+            io.reactivex.rxjava3.core.Observable.create { emitter ->
+                val title = hlsTitle ?: webTabModel?.currentTitle?.get() ?: "no_title"
+                val origUrl = webTabModel?.tabUrlInput?.get() ?: ""
+                val info = videoRepository.getVideoAudioInfoLocal(
+                    url, headers, contentType, contentLength, title, origUrl
+                )
+                if (info != null) {
+                    emitter.onNext(info)
+                } else {
+                    emitter.onNext(VideoInfo(id = ""))
+                }
+                emitter.onComplete()
+            }.doOnTerminate {
+                removeRegularLoading(url)
+                verifyVideoLinkJobStorage.remove(taskUrl)
+            }.observeOn(baseSchedulers.computation).subscribeOn(baseSchedulers.videoService)
+                .subscribe { info ->
+                    if (info.id.isNotEmpty()) {
+                        viewModelScope.launch(executorPusher) {
+                            pushNewVideoInfoToAll(info)
+                        }
+                    } else {
+                        setButtonState(DownloadButtonStateCanNotDownload())
+                    }
+                }
+    }
+
     open suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
         if (newInfo.formats.allFormats().isEmpty() || newInfo.id.isEmpty()) {
             return
         }
 
-        val detectedVideos = detectedVideosList.get() ?: ConcurrentHashMap.newKeySet()
-        val nextSet = ConcurrentHashMap.newKeySet<VideoInfo>()
-        nextSet.addAll(detectedVideos)
+        val detectedVideos = _detectedVideosList.value ?: emptySet()
+        val nextSet = detectedVideos.toMutableSet()
 
         var isDuplicateFound = false
 
         for (existing in detectedVideos) {
+            val type = if (newInfo.isDetectedBySuperX) {
+                "SUPERX"
+            } else if (!newInfo.isRegularDownload) {
+                "YOUTUBE-DLP"
+            } else {
+                "REGULAR"
+            }
+
             if (isVideoInfoDuplicate(existing, newInfo)) {
                 isDuplicateFound = true
                 if (newInfo.isMaster && !existing.isMaster) {
                     nextSet.remove(existing)
                     isDuplicateFound = false
-                    AppLogger.d("REPLACING single rendition with Master playlist for video: $newInfo")
-                } else {
-                    val type = if (newInfo.isDetectedBySuperX) {
-                        "SUPERX"
-                    } else if (!newInfo.isRegularDownload) {
-                        "YOUTUBE-DLP"
-                    } else {
-                        "REGULAR"
-                    }
-                    val skippedUrl = if (newInfo.downloadUrls.firstOrNull() != null) {
-                        newInfo.downloadUrls.firstOrNull()?.url.toString()
-                    } else {
-                        newInfo.originalUrl
-                    }
                     DetectionLogger.log(
-                        type,
-                        "SKIP",
-                        skippedUrl
+                        type, "REPLACE", existing.originalUrl, "WITH MASTER LIST"
                     )
-                    AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
-                    break
+                    AppLogger.d("REPLACING single rendition with Master playlist for video: $newInfo")
+                } else if (!newInfo.isMaster && !existing.isMaster) {
+                    val replaceUrl = newInfo.firstDownloadUrl ?: newInfo.originalUrl
+                    val existingTimeStamp = existing.timestamp
+                    // keep old timestamp for order
+                    newInfo.timestamp = existingTimeStamp
+                    // keep title
+                    newInfo.title = existing.title
+                    nextSet.remove(existing)
+                    isDuplicateFound = false
+                    DetectionLogger.log(type, "REFRESH", replaceUrl)
+                    AppLogger.d("REFRESH DUPLICATED VIDEO INFO: $newInfo")
+                } else if (newInfo.isMaster && existing.isMaster) {
+                    val replaceUrl = newInfo.firstDownloadUrl ?: newInfo.originalUrl
+                    val existingTimeStamp = existing.timestamp
+                    // keep old timestamp for order
+                    newInfo.timestamp = existingTimeStamp
+                    // keep title
+                    newInfo.title = existing.title
+                    nextSet.remove(existing)
+                    isDuplicateFound = false
+                    DetectionLogger.log(type, "REFRESH MASTER", replaceUrl)
+                    AppLogger.d("REFRESH DUPLICATED VIDEO INFO: $newInfo")
                 }
             }
         }
@@ -341,7 +429,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
             AppLogger.d("PUSHING $newInfo to list")
             nextSet.add(newInfo)
 
-            detectedVideosList.set(nextSet)
+            val sortedList = nextSet.sortedBy { it.timestamp }.takeLast(MAX_DETECTED_COUNT)
+            setDetectedVideoList(sortedList.toSet())
             setButtonState(DownloadButtonStateCanDownload(newInfo))
 
             viewModelScope.launch(Dispatchers.Main) {
@@ -362,7 +451,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
-    override fun getDownloadBtnIcon(): ObservableInt {
+    override fun getDownloadBtnIcon(): LiveData<Int> {
         return downloadButtonIcon
     }
 
@@ -395,13 +484,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
             if (request.url.toString().contains(".mp4")) {
                 setButtonState(DownloadButtonStateLoading())
             }
-            regularLoadingList.get()?.add(request.url.toString())
-            regularLoadingList.notifyChange()
+            addRegularLoading(request.url.toString())
             propagateCheckJob(uriString, headers, isCheckOnAudio, isCheckOnVideo)
             it.onComplete()
         }.subscribeOn(baseSchedulers.io).doOnComplete {
-            regularLoadingList.get()?.remove(request.url.toString())
-            regularLoadingList.notifyChange()
+            removeRegularLoading(request.url.toString())
         }.onErrorComplete().doOnError {
             DetectionLogger.log("REGULAR", "ERROR", uriString, it.message ?: "unknown")
             AppLogger.d("Checking ERROR... $clearedUrl")
@@ -412,10 +499,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
 
     override fun cancelAllCheckJobs() {
         try {
-            regularLoadingList.get()?.clear()
-            regularLoadingList.notifyChange()
-            m3u8LoadingList.get()?.clear()
-            m3u8LoadingList.notifyChange()
+            clearRegularLoading()
+            clearM3u8Loading()
             executorRegular.cancel()
 
             // Iterate over a snapshot of values to safely dispose
@@ -427,36 +512,94 @@ open class VideoDetectionTabViewModel @Inject constructor(
         }
     }
 
+    fun setSelectedFormats(formats: Map<String, String>) {
+        _selectedFormats.value = formats
+    }
+
+    fun setFormatsTitles(titles: Map<String, String>) {
+        _formatsTitles.value = titles
+    }
+
+    fun setSelectedFormatUrl(url: String) {
+        _selectedFormatUrl.value = url
+    }
+
+    fun addM3u8Loading(url: String) {
+        val current = (_m3u8LoadingList.value ?: emptySet()) + url
+        _m3u8LoadingList.postValue(current)
+        _hasCheckLoadingsM3u8.postValue(current.isNotEmpty())
+        if (current.isNotEmpty()) {
+            setButtonState(DownloadButtonStateCanNotDownload())
+        }
+    }
+
+    fun removeM3u8Loading(url: String) {
+        val current = (_m3u8LoadingList.value ?: emptySet()) - url
+        _m3u8LoadingList.postValue(current)
+        _hasCheckLoadingsM3u8.postValue(current.isNotEmpty())
+    }
+
+    fun clearM3u8Loading() {
+        _m3u8LoadingList.postValue(emptySet())
+        _hasCheckLoadingsM3u8.postValue(false)
+    }
+
+    fun addRegularLoading(url: String) {
+        val current = (_regularLoadingList.value ?: emptySet()) + url
+        _regularLoadingList.postValue(current)
+        _hasCheckLoadingsRegular.postValue(current.isNotEmpty())
+        if (current.isNotEmpty()) {
+            setButtonState(DownloadButtonStateCanNotDownload())
+        }
+    }
+
+    fun removeRegularLoading(url: String) {
+        val current = (_regularLoadingList.value ?: emptySet()) - url
+        _regularLoadingList.postValue(current)
+        _hasCheckLoadingsRegular.postValue(current.isNotEmpty())
+    }
+
+    fun clearRegularLoading() {
+        _regularLoadingList.postValue(emptySet())
+        _hasCheckLoadingsRegular.postValue(false)
+    }
 
     @Synchronized
     fun setButtonState(state: DownloadButtonState) {
-        when (state) {
-            is DownloadButtonStateCanDownload -> {
-                downloadButtonState.set(state)
-            }
-
+        val targetState = when (state) {
+            is DownloadButtonStateCanDownload -> state
             is DownloadButtonStateCanNotDownload -> {
-                val list = detectedVideosList.get()
+                val list = _detectedVideosList.value?.sortedBy { it.timestamp }
                 if (list.isNullOrEmpty()) {
-                    downloadButtonState.set(DownloadButtonStateCanNotDownload())
+                    DownloadButtonStateCanNotDownload()
                 } else {
-                    downloadButtonState.set(
-                        DownloadButtonStateCanDownload(
-                            list.firstOrNull()
-                        )
-                    )
+                    DownloadButtonStateCanDownload(list.firstOrNull())
                 }
             }
 
             is DownloadButtonStateLoading -> {
-                val list = detectedVideosList.get() ?: emptySet()
+                val list = _detectedVideosList.value?.sortedBy { it.timestamp } ?: emptyList()
                 if (list.isEmpty()) {
-                    downloadButtonState.set(DownloadButtonStateLoading())
+                    DownloadButtonStateLoading()
                 } else {
-                    downloadButtonState.set(DownloadButtonStateCanDownload(list.firstOrNull()))
+                    DownloadButtonStateCanDownload(list.firstOrNull())
                 }
             }
+
+            else -> state
         }
+        _downloadButtonState.postValue(targetState)
+        updateButtonIcon(targetState)
+    }
+
+    private fun updateButtonIcon(state: DownloadButtonState?) {
+        val icon = when (state) {
+            is DownloadButtonStateCanNotDownload -> R.drawable.refresh_24px
+            is DownloadButtonStateCanDownload -> R.drawable.ic_download_24dp
+            is DownloadButtonStateLoading -> R.drawable.invisible_24px
+            else -> R.drawable.refresh_24px
+        }
+        _downloadButtonIcon.postValue(icon)
     }
 
     private fun getRequestWithHeadersForUrl(
@@ -532,7 +675,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
         val threshold = settingsModel.videoDetectionTreshold.get()
 
         val finalUrlPair = runCatching {
-            CookieUtils.getFinalRedirectURL(URL(url.toUri().toString()), headersMap)
+            CookieUtils.getFinalRedirectURL(
+                URL(
+                    CookieUtils.sanitizeUrlOrText(url).toUri().toString()
+                ), headersMap
+            )
         }.getOrNull() ?: return
 
         val cookies = runCatching {
@@ -579,7 +726,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     DetectionLogger.log("REGULAR", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
-                        webTabModel?.getTabTextInput()?.get(),
+                        webTabModel?.tabUrlInput?.get(),
                         finalUrlPair.second.toMap(),
                         contentLength
                     )
@@ -587,7 +734,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     DetectionLogger.log("REGULAR AUDIO", "SUCCESS", url)
                     setMediaInfoWrapperFromUrl(
                         finalUrlPair.first,
-                        webTabModel?.getTabTextInput()?.get(),
+                        webTabModel?.tabUrlInput?.get(),
                         finalUrlPair.second.toMap(),
                         contentLength,
                         isAudio = true
@@ -610,7 +757,11 @@ open class VideoDetectionTabViewModel @Inject constructor(
         url: String, threshold: Int, isCheckOnAudio: Boolean, isCheckOnVideo: Boolean
     ) {
         val finalUrlPairEmpty = runCatching {
-            CookieUtils.getFinalRedirectURL(URL(url.toUri().toString()), emptyMap())
+            CookieUtils.getFinalRedirectURL(
+                URL(
+                    CookieUtils.sanitizeUrlOrText(url).toUri().toString()
+                ), emptyMap()
+            )
         }.getOrNull() ?: return
 
         runCatching {
@@ -627,7 +778,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         DetectionLogger.log("REGULAR", "SUCCESS", url)
                         setMediaInfoWrapperFromUrl(
                             finalUrlPairEmpty.first,
-                            webTabModel?.getTabTextInput()?.get(),
+                            webTabModel?.tabUrlInput?.get(),
                             finalUrlPairEmpty.second.toMap(),
                             contentLength
                         )
@@ -637,7 +788,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                         DetectionLogger.log("REGULAR", "SUCCESS", url)
                         setMediaInfoWrapperFromUrl(
                             finalUrlPairEmpty.first,
-                            webTabModel?.getTabTextInput()?.get(),
+                            webTabModel?.tabUrlInput?.get(),
                             finalUrlPairEmpty.second.toMap(),
                             contentLength,
                             true
@@ -679,7 +830,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
                     downloadUrls = downloadUrls,
                     title = webTabModel?.currentTitle?.get() ?: "no_title",
                     ext = if (isAudio) "mp3" else "mp4",
-                    originalUrl = webTabModel?.getTabTextInput()?.get() ?: "",
+                    originalUrl = webTabModel?.tabUrlInput?.get() ?: "",
                     // TODO format regular file link
                     formats = VideFormatEntityList(
                         mutableListOf(

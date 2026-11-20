@@ -88,12 +88,13 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: false
+          prerelease: true
           body: |
-            - Added missed translations
-            - Fixed native adblocker crash
-            - Fixed concurrent downloaders crash
+            - WebView prewarm on app start removed
+            - Fixed UI rendering bugs for old devices
+            - Bug fixes
+            - Performance optimization
           draft: false
-          make_latest: true
+          make_latest: false
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

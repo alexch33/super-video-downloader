@@ -17,6 +17,7 @@ import com.myAllVideoBrowser.ui.main.base.BaseFragment
 import com.myAllVideoBrowser.ui.main.home.MainActivity
 import com.myAllVideoBrowser.ui.main.progress.WrapContentLinearLayoutManager
 import com.myAllVideoBrowser.util.AppUtil
+import com.myAllVideoBrowser.util.get
 import javax.inject.Inject
 
 class DetectedVideosTabFragment : BaseFragment() {
@@ -60,7 +61,8 @@ class DetectedVideosTabFragment : BaseFragment() {
         layoutMngr = WrapContentLinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
 
         binding = FragmentDetectedVideosTabBinding.inflate(inflater, container, false).apply {
-            val url = detectedVideosTabViewModel?.webTabModel?.getTabTextInput()?.get()
+            lifecycleOwner = viewLifecycleOwner
+            val url = detectedVideosTabViewModel?.webTabModel?.tabUrlInput?.get()
             title.text = if (!url.isNullOrEmpty()) {
                 getString(R.string.found_videos_from, url).split("?").firstOrNull()
             } else {

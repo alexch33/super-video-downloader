@@ -1,15 +1,15 @@
 package com.myAllVideoBrowser.ui.main.home.browser.detectedVideos
 
-import androidx.databinding.Observable
-import androidx.databinding.ObservableBoolean
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.myAllVideoBrowser.R
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
 import com.myAllVideoBrowser.data.repository.VideoRepository
 import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateCanDownload
 import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateCanNotDownload
 import com.myAllVideoBrowser.ui.main.home.browser.DownloadButtonStateLoading
 import com.myAllVideoBrowser.util.AppLogger
+import com.myAllVideoBrowser.util.get
 import com.myAllVideoBrowser.util.proxy_utils.OkHttpProxyClient
 import com.myAllVideoBrowser.util.scheduler.BaseSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
@@ -18,41 +18,26 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Request
-import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 class GlobalVideoDetectionModel @Inject constructor(
     private val videoRepository: VideoRepository,
     private val baseSchedulers: BaseSchedulers,
     okHttpProxyClient: OkHttpProxyClient,
 ) : VideoDetectionTabViewModel(videoRepository, baseSchedulers, okHttpProxyClient), IVideoDetector {
-    
+
     @Volatile
     private var lastVerifiedLink: String = ""
+
     @Volatile
     private var lastVerifiedM3u8PointUrl = Pair("", "")
-    
-    private var pushJob: Job? = null
-
-    private val butonStateCallBack = object :
-        Observable.OnPropertyChangedCallback() {
-        override fun onPropertyChanged(sender: Observable?, propertyId: Int) {
-            when (downloadButtonState.get()) {
-                is DownloadButtonStateCanNotDownload -> downloadButtonIcon.set(R.drawable.refresh_24px)
-                is DownloadButtonStateCanDownload -> downloadButtonIcon.set(R.drawable.ic_download_24dp)
-                is DownloadButtonStateLoading -> {
-                    downloadButtonIcon.set(R.drawable.invisible_24px)
-                }
-            }
-        }
-    }
 
     override fun start() {
-        downloadButtonState.addOnPropertyChangedCallback(butonStateCallBack)
+        super.start()
     }
 
     override fun stop() {
-        downloadButtonState.removeOnPropertyChangedCallback(butonStateCallBack)
         super.stop()
     }
 
@@ -62,15 +47,14 @@ class GlobalVideoDetectionModel @Inject constructor(
             lastVerifiedLink = ""
             lastVerifiedM3u8PointUrl = Pair("", "")
         }
-        pushJob?.cancel()
     }
 
-    override fun hasCheckLoadingsRegular(): ObservableBoolean {
-        return ObservableBoolean(false)
+    override fun hasCheckLoadingsRegular(): LiveData<Boolean> {
+        return MutableLiveData(false)
     }
 
-    override fun hasCheckLoadingsM3u8(): ObservableBoolean {
-        return ObservableBoolean(false)
+    override fun hasCheckLoadingsM3u8(): LiveData<Boolean> {
+        return MutableLiveData(false)
     }
 
     @Synchronized
@@ -114,7 +98,7 @@ class GlobalVideoDetectionModel @Inject constructor(
 
         verifyVideoLinkJobStorage[taskUrl] =
             io.reactivex.rxjava3.core.Observable.create { emitter ->
-                downloadButtonState.set(DownloadButtonStateLoading())
+                setButtonState(DownloadButtonStateLoading())
                 val info = try {
                     if (isM3u8 || isMpd) {
                         videoRepository.getVideoInfoBySuperXDetector(
@@ -149,11 +133,12 @@ class GlobalVideoDetectionModel @Inject constructor(
                     if (info.isM3u8 && !hlsTitle.isNullOrEmpty()) {
                         info.title = hlsTitle
                     }
-                    val state = downloadButtonState.get()
-                    
-                    val shouldSkip = (state is DownloadButtonStateCanDownload && state.info?.isM3u8 == true && state.info.isMaster && isLastNotEmpty) || 
-                                     (state is DownloadButtonStateCanDownload && state.info?.isRegularDownload != true && info.isRegularDownload) || 
-                                     (state is DownloadButtonStateLoading && info.isRegularDownload)
+                    val state = downloadButtonState.value
+
+                    val shouldSkip =
+                        (state is DownloadButtonStateCanDownload && state.info?.isM3u8 == true && state.info.isMaster && isLastNotEmpty) ||
+                                (state is DownloadButtonStateCanDownload && state.info?.isRegularDownload != true && info.isRegularDownload) ||
+                                (state is DownloadButtonStateLoading && info.isRegularDownload)
 
                     if (!shouldSkip) {
                         viewModelScope.launch(executorPusher) {
@@ -161,7 +146,7 @@ class GlobalVideoDetectionModel @Inject constructor(
                         }
                     }
                 } else {
-                    downloadButtonState.set(DownloadButtonStateCanNotDownload())
+                    setButtonState(DownloadButtonStateCanNotDownload())
                 }
             }
     }
@@ -205,47 +190,7 @@ class GlobalVideoDetectionModel @Inject constructor(
         return disposable
     }
 
-    override suspend fun pushNewVideoInfoToAll(newInfo: VideoInfo) {
-        if (newInfo.formats.allFormats().isEmpty() || newInfo.id.isEmpty()) {
-            return
-        }
-
-        val detectedVideos = detectedVideosList.get() ?: ConcurrentHashMap.newKeySet()
-        val nextSet = ConcurrentHashMap.newKeySet<VideoInfo>()
-        nextSet.addAll(detectedVideos)
-
-        var isDuplicateFound = false
-
-        for (existing in detectedVideos) {
-            if (isVideoInfoDuplicate(existing, newInfo)) {
-                isDuplicateFound = true
-                if (newInfo.isMaster && !existing.isMaster) {
-                    nextSet.remove(existing)
-                    isDuplicateFound = false
-                    AppLogger.d("REPLACING single rendition with Master playlist for video: $newInfo")
-                } else {
-                    AppLogger.d("SKIP DUPLICATED VIDEO INFO: $newInfo")
-                    break
-                }
-            }
-        }
-
-        if (!isDuplicateFound) {
-            AppLogger.d("PUSHING $newInfo to list")
-            nextSet.add(newInfo)
-            detectedVideosList.set(nextSet)
-
-            // Cancel previous pending UI update to avoid flickering
-            pushJob?.cancel()
-            pushJob = viewModelScope.launch(Dispatchers.Main) {
-                downloadButtonState.set(DownloadButtonStateLoading())
-                delay(400)
-                downloadButtonState.set(DownloadButtonStateCanDownload(newInfo))
-            }
-        }
-    }
-
-    override fun onStartPage(url: String, userAgentString: String) {
+    override suspend fun onStartPage(url: String, userAgentString: String) {
 
     }
 

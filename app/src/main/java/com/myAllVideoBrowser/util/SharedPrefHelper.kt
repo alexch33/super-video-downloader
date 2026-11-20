@@ -49,11 +49,13 @@ class SharedPrefHelper @Inject constructor(
         private const val SELECTED_DNS_PROVIDER = "SELECTED_DNS_PROVIDER"
         private const val CUSTOM_DNS_URL = "CUSTOM_DNS_URL"
         private const val IS_USE_LEGACY_M3U8_DETECTION = "IS_USE_LEGACY_M3U8_DETECTION"
+        private const val IS_USE_EXPERIMENTAL_DETECTION = "IS_USE_EXPERIMENTAL_DETECTION"
 
         private const val IS_ASK_REDIRECTION = "IS_ASK_REDIRECTION"
         private const val MAX_SIMULTANEOUS_DOWNLOADS = "MAX_SIMULTANEOUS_DOWNLOADS"
         private const val IS_ADBLOCK_ON = "IS_ADBLOCK_ON"
         private const val IS_DOWNLOAD_SUBTITLES = "IS_DOWNLOAD_SUBTITLES"
+        private const val LAST_SUPPORT_DIALOG_SHOWN_TIME = "LAST_SUPPORT_DIALOG_SHOWN_TIME"
     }
 
     private val gson = Gson()
@@ -411,6 +413,16 @@ class SharedPrefHelper @Inject constructor(
         }
     }
 
+    fun getIsUseExperimentalDetection(): Boolean {
+        return sharedPreferences.getBoolean(IS_USE_EXPERIMENTAL_DETECTION, false)
+    }
+
+    fun setIsUseExperimentalDetection(isUse: Boolean) {
+        sharedPreferences.edit {
+            putBoolean(IS_USE_EXPERIMENTAL_DETECTION, isUse)
+        }
+    }
+
     fun getIsAskRedirection(): Boolean {
         return sharedPreferences.getBoolean(IS_ASK_REDIRECTION, false)
     }
@@ -449,6 +461,16 @@ class SharedPrefHelper @Inject constructor(
     fun setIsDownloadSubtitles(isDownload: Boolean) {
         sharedPreferences.edit {
             putBoolean(IS_DOWNLOAD_SUBTITLES, isDownload)
+        }
+    }
+
+    fun getLastSupportDialogShownTime(): Long {
+        return sharedPreferences.getLong(LAST_SUPPORT_DIALOG_SHOWN_TIME, 0L)
+    }
+
+    fun setLastSupportDialogShownTime(time: Long) {
+        sharedPreferences.edit {
+            putLong(LAST_SUPPORT_DIALOG_SHOWN_TIME, time)
         }
     }
 

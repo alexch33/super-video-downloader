@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/xtls/xray-core/common/dice"
@@ -18,14 +19,18 @@ import (
 	"github.com/xtls/xray-core/transport/internet"
 )
 
+// testDriveIO is a nil-by-default test hook observing every Drive request
+var testDriveIO func(method, target string, body []byte)
+
 const (
 	flatSeparator = "~"
 
-	driveBoundary    = "xdrive-boundary"
-	drivePageSize    = 1000
-	driveMaxAttempts = 8
-	driveMaxInflight = 32
-	driveInlineLimit = 12000
+	driveBoundary         = "xdrive-boundary"
+	drivePageSize         = 1000
+	driveMaxAttempts      = 8
+	driveMaxInflight      = 64
+	driveReservedInflight = 8
+	driveInlineLimit      = 12000
 	// driveTimeout ends a request that makes no progress for that long
 	driveTimeout = 60 * time.Second
 )
@@ -36,13 +41,37 @@ var (
 	driveFilesURL       = "https://www.googleapis.com/drive/v3/files"
 	driveUploadURL      = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name"
 	driveInitialBackoff = 200 * time.Millisecond
+	driveCooldown       = 2 * time.Second
+	driveSlotRead       = 3 * time.Second
+	driveSlotWrite      = 5 * time.Second
+	tokenRefreshBackoff = 30 * time.Second
+	maxTokenBackoff     = 5 * time.Minute
+	driveMaxResponse    = 32 << 20
+	driveMaxAnnounce    = 1 << 20
 )
+
+// maxBodyKey lets a caller tighten the response-body cap (announcements).
+type maxBodyKey struct{}
+
+// tokenFlight is one shared foreground token fetch; waiters read its result
+// after done closes instead of starting their own fetch.
+type tokenFlight struct {
+	done     chan struct{}
+	token    string
+	lifetime time.Duration
+	err      error
+}
+
+type laneKey struct{}
+
+type attemptKey struct{}
 
 type driveStorage struct {
 	*driveShared
 	// a session has a client and inflight of its own, see session
 	client   *http.Client
 	inflight chan struct{}
+	reserved chan struct{}
 	release  func()
 }
 
@@ -59,12 +88,23 @@ type driveShared struct {
 	uploadURL    string
 	backoff      time.Duration
 
-	tokenMu     sync.Mutex
-	token       string
-	tokenExpiry time.Time
+	tokenMu       sync.Mutex
+	token         string
+	tokenExpiry   time.Time
+	tokenLifetime time.Duration
+	refreshing    bool
+	authErr       error
+	flight        *tokenFlight
+	tokenRetryAt  time.Time
+	tokenBackoff  time.Duration
+	lastTokenErr  error
 
 	idMu sync.Mutex
 	ids  map[string]string
+
+	coolMu    sync.Mutex
+	coolUntil time.Time
+	throttle  atomic.Int64
 }
 
 func newDriveStorage(streamSettings *internet.MemoryStreamConfig, config *Config) (*driveStorage, error) {
@@ -100,6 +140,7 @@ func newDriveStorage(streamSettings *internet.MemoryStreamConfig, config *Config
 		},
 		client:   client,
 		inflight: make(chan struct{}, driveMaxInflight),
+		reserved: make(chan struct{}, driveReservedInflight),
 	}, nil
 }
 
@@ -111,6 +152,7 @@ func (s *driveStorage) session() Storage {
 		driveShared: s.driveShared,
 		client:      &http.Client{Transport: transport},
 		inflight:    make(chan struct{}, driveMaxInflight),
+		reserved:    make(chan struct{}, driveReservedInflight),
 		release:     transport.Close,
 	}
 }
@@ -123,14 +165,130 @@ func quoteDriveValue(value string) string {
 	return strings.NewReplacer(`\`, `\\`, `'`, `\'`).Replace(value)
 }
 
+type authError struct{ code string }
+
+func (e authError) Error() string {
+	return "Google rejected the OAuth credentials (" + e.code + "); create a new refresh token, see the XDRIVE setup guide"
+}
+
+func isAuthError(err error) bool {
+	_, ok := err.(authError)
+	return ok
+}
+
 func (s *driveStorage) accessToken(ctx context.Context) (string, error) {
 	s.tokenMu.Lock()
-	defer s.tokenMu.Unlock()
-
-	if s.token != "" && time.Now().Before(s.tokenExpiry) {
-		return s.token, nil
+	if s.authErr != nil {
+		err := s.authErr
+		s.tokenMu.Unlock()
+		return "", err
 	}
+	if s.token != "" && time.Now().Before(s.tokenExpiry) {
+		if s.tokenLifetime > 0 && time.Until(s.tokenExpiry) < s.tokenLifetime/5 && !s.refreshing && time.Now().After(s.tokenRetryAt) {
+			s.refreshing = true
+			go s.refreshTokenBackground()
+		}
+		token := s.token
+		s.tokenMu.Unlock()
+		return token, nil
+	}
+	if f := s.flight; f != nil {
+		s.tokenMu.Unlock()
+		select {
+		case <-f.done:
+		case <-ctx.Done():
+			return "", ctx.Err()
+		}
+		if f.err != nil {
+			return "", f.err
+		}
+		return f.token, nil
+	}
+	if time.Now().Before(s.tokenRetryAt) && s.lastTokenErr != nil {
+		err := s.lastTokenErr
+		s.tokenMu.Unlock()
+		return "", err
+	}
+	f := &tokenFlight{done: make(chan struct{})}
+	s.flight = f
+	s.tokenMu.Unlock()
 
+	// The shared fetch must outlive any single waiter's cancellation.
+	fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+	token, lifetime, err := s.fetchToken(fetchCtx)
+	cancel()
+
+	s.tokenMu.Lock()
+	s.flight = nil
+	f.token, f.lifetime, f.err = token, lifetime, err
+	if err != nil {
+		s.lastTokenErr = err
+		if isAuthError(err) {
+			s.authErr = err
+			errors.LogError(ctx, err)
+		}
+		s.noteTokenFailure()
+	} else {
+		s.storeToken(token, lifetime)
+		s.tokenBackoff = 0
+		s.tokenRetryAt = time.Time{}
+		s.lastTokenErr = nil
+	}
+	close(f.done)
+	s.tokenMu.Unlock()
+	if err != nil {
+		return "", err
+	}
+	return token, nil
+}
+
+// noteTokenFailure backs off further token fetches so a failing endpoint is
+// not hit once per API call; called with tokenMu held.
+func (s *driveStorage) noteTokenFailure() {
+	if s.tokenBackoff == 0 {
+		s.tokenBackoff = tokenRefreshBackoff
+	} else {
+		s.tokenBackoff = min(2*s.tokenBackoff, maxTokenBackoff)
+	}
+	s.tokenRetryAt = time.Now().Add(s.tokenBackoff)
+}
+
+func (s *driveStorage) storeToken(token string, lifetime time.Duration) {
+	s.token = token
+	s.tokenLifetime = lifetime
+	expiry := lifetime
+	if expiry > time.Minute {
+		expiry -= time.Minute
+	}
+	s.tokenExpiry = time.Now().Add(expiry)
+}
+
+func (s *driveStorage) refreshTokenBackground() {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	token, lifetime, err := s.fetchToken(ctx)
+
+	s.tokenMu.Lock()
+	defer s.tokenMu.Unlock()
+	s.refreshing = false
+	if err != nil {
+		if isAuthError(err) && s.authErr == nil {
+			s.authErr = err
+			errors.LogError(ctx, err)
+		}
+		s.lastTokenErr = err
+		s.noteTokenFailure()
+		return
+	}
+	if s.authErr == nil {
+		s.storeToken(token, lifetime)
+		s.tokenBackoff = 0
+		s.tokenRetryAt = time.Time{}
+		s.lastTokenErr = nil
+	}
+}
+
+func (s *driveStorage) fetchToken(ctx context.Context) (string, time.Duration, error) {
 	form := url.Values{
 		"client_id":     {s.clientID},
 		"client_secret": {s.clientSecret},
@@ -139,22 +297,31 @@ func (s *driveStorage) accessToken(ctx context.Context) (string, error) {
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.tokenURL, strings.NewReader(form.Encode()))
 	if err != nil {
-		return "", errors.New("failed to build the token request").Base(err)
+		return "", 0, errors.New("failed to build the token request").Base(err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := s.tokenClient.Do(req)
 	if err != nil {
-		return "", errors.New("failed to refresh the access token").Base(err)
+		return "", 0, errors.New("failed to refresh the access token").Base(err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return "", errors.New("failed to read the token response").Base(err)
+		return "", 0, errors.New("failed to read the token response").Base(err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("the token endpoint answered ", resp.StatusCode, ": ", string(body))
+		var rejected struct {
+			Error string `json:"error"`
+		}
+		if json.Unmarshal(body, &rejected) == nil {
+			switch rejected.Error {
+			case "invalid_grant", "invalid_client", "unauthorized_client":
+				return "", 0, authError{rejected.Error}
+			}
+		}
+		return "", 0, errors.New("the token endpoint answered ", resp.StatusCode, ": ", string(body))
 	}
 
 	var parsed struct {
@@ -162,19 +329,12 @@ func (s *driveStorage) accessToken(ctx context.Context) (string, error) {
 		ExpiresIn   int64  `json:"expires_in"`
 	}
 	if err := json.Unmarshal(body, &parsed); err != nil {
-		return "", errors.New("failed to parse the token response").Base(err)
+		return "", 0, errors.New("failed to parse the token response").Base(err)
 	}
 	if parsed.AccessToken == "" {
-		return "", errors.New("the token endpoint returned no access token")
+		return "", 0, errors.New("the token endpoint returned no access token")
 	}
-
-	lifetime := parsed.ExpiresIn
-	if lifetime > 60 {
-		lifetime -= 60
-	}
-	s.token = parsed.AccessToken
-	s.tokenExpiry = time.Now().Add(time.Duration(lifetime) * time.Second)
-	return s.token, nil
+	return parsed.AccessToken, time.Duration(parsed.ExpiresIn) * time.Second, nil
 }
 
 func jitter(backoff time.Duration) time.Duration {
@@ -231,15 +391,28 @@ func (s *driveStorage) do(ctx context.Context, method, target, contentType strin
 				backoff = driveMaxBackoff
 			}
 		}
+		if err := s.waitCool(ctx); err != nil {
+			return 0, nil, err
+		}
+		if testDriveIO != nil {
+			testDriveIO(method, target, body)
+		}
 
 		token, err := s.accessToken(ctx)
 		if err != nil {
+			if isAuthError(err) {
+				return 0, nil, err
+			}
 			lastErr = err
 			continue
 		}
 
+		pool := s.inflight
+		if ctx.Value(laneKey{}) != nil {
+			pool = s.reserved
+		}
 		select {
-		case s.inflight <- struct{}{}:
+		case pool <- struct{}{}:
 		case <-ctx.Done():
 			return 0, nil, ctx.Err()
 		}
@@ -248,8 +421,14 @@ func (s *driveStorage) do(ctx context.Context, method, target, contentType strin
 		if body != nil {
 			reader = bytes.NewReader(body)
 		}
-		req, err := http.NewRequestWithContext(ctx, method, target, reader)
+		attemptCtx, cancel := ctx, context.CancelFunc(func() {})
+		if d, ok := ctx.Value(attemptKey{}).(time.Duration); ok {
+			attemptCtx, cancel = context.WithTimeout(ctx, d)
+		}
+		req, err := http.NewRequestWithContext(attemptCtx, method, target, reader)
 		if err != nil {
+			cancel()
+			<-pool
 			return 0, nil, errors.New("failed to build a Drive request").Base(err)
 		}
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -257,9 +436,18 @@ func (s *driveStorage) do(ctx context.Context, method, target, contentType strin
 			req.Header.Set("Content-Type", contentType)
 		}
 
+		began := time.Now()
 		resp, err := s.client.Do(req)
-		<-s.inflight
+		<-pool
 		if err != nil {
+			timedOut := attemptCtx.Err() == context.DeadlineExceeded && ctx.Err() == nil
+			cancel()
+			if timedOut {
+				s.throttle.Add(1)
+				if t, ok := s.client.Transport.(*sessionTransport); ok {
+					t.stalled(began)
+				}
+			}
 			if ctx.Err() != nil {
 				return 0, nil, ctx.Err()
 			}
@@ -268,8 +456,13 @@ func (s *driveStorage) do(ctx context.Context, method, target, contentType strin
 				attempt+1, " of ", driveMaxAttempts)
 			continue
 		}
-		payload, err := io.ReadAll(resp.Body)
+		limit := int64(driveMaxResponse)
+		if v, ok := ctx.Value(maxBodyKey{}).(int64); ok && v > 0 {
+			limit = v
+		}
+		payload, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
 		resp.Body.Close()
+		cancel()
 		if err != nil {
 			if ctx.Err() != nil {
 				return 0, nil, ctx.Err()
@@ -277,22 +470,31 @@ func (s *driveStorage) do(ctx context.Context, method, target, contentType strin
 			lastErr = errors.New("failed to read the Drive response").Base(err)
 			continue
 		}
+		if int64(len(payload)) > limit {
+			return 0, nil, errors.New("Drive response exceeds the ", limit, " byte cap")
+		}
 
 		if resp.StatusCode == http.StatusUnauthorized {
-			s.invalidateToken()
+			s.invalidateToken(token)
 			lastErr = errors.New("Drive rejected the access token")
 			continue
 		}
 		if resp.StatusCode == http.StatusForbidden && rateLimited(payload) {
 			lastErr = errors.New("Drive is rate limiting: ", string(payload))
 			errors.LogWarning(ctx, "rate limited by Drive, attempt ",
-				attempt+1, " of ", driveMaxAttempts)
+				attempt+1, " of ", driveMaxAttempts, ", ", method, " ", len(body),
+				" bytes, body read ", strings.Contains(target, "alt=media"),
+				", lane ", ctx.Value(laneKey{}) != nil, ": ", string(payload[:min(len(payload), 300)]))
+			s.cool()
 			continue
 		}
 		if retryableStatus(resp.StatusCode) {
 			lastErr = errors.New("Drive answered ", resp.StatusCode, ": ", string(payload))
 			errors.LogWarning(ctx, "retrying after Drive answered ", resp.StatusCode,
 				", attempt ", attempt+1, " of ", driveMaxAttempts)
+			if resp.StatusCode == http.StatusTooManyRequests {
+				s.cool()
+			}
 			continue
 		}
 		return resp.StatusCode, payload, nil
@@ -301,9 +503,36 @@ func (s *driveStorage) do(ctx context.Context, method, target, contentType strin
 	return 0, nil, lastErr
 }
 
-func (s *driveStorage) invalidateToken() {
+func (s *driveStorage) waitCool(ctx context.Context) error {
+	s.coolMu.Lock()
+	until := s.coolUntil
+	s.coolMu.Unlock()
+	if d := time.Until(until); d > 0 {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(d):
+		}
+	}
+	return nil
+}
+
+func (s *driveStorage) cool() {
+	s.throttle.Add(1)
+	s.coolMu.Lock()
+	s.coolUntil = time.Now().Add(jitter(driveCooldown))
+	s.coolMu.Unlock()
+}
+
+func (s *driveStorage) throttled() int64 {
+	return s.throttle.Load()
+}
+
+func (s *driveStorage) invalidateToken(used string) {
 	s.tokenMu.Lock()
-	s.token = ""
+	if s.token == used {
+		s.token = ""
+	}
 	s.tokenMu.Unlock()
 }
 
@@ -542,12 +771,27 @@ func (s *driveStorage) Delete(ctx context.Context, name string) error {
 	if err != nil {
 		return err
 	}
+	sem := make(chan struct{}, 8)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var first error
 	for childName, file := range children {
-		if err := s.deleteID(ctx, childName, file.id); err != nil {
-			return err
-		}
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(name, id string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			if err := s.deleteID(ctx, name, id); err != nil {
+				mu.Lock()
+				if first == nil {
+					first = err
+				}
+				mu.Unlock()
+			}
+		}(childName, file.id)
 	}
-	return nil
+	wg.Wait()
+	return first
 }
 
 func (s *driveStorage) List(ctx context.Context, prefix string) ([]Entry, error) {
@@ -604,6 +848,9 @@ func (s *driveStorage) makeSlot(ctx context.Context, name string) (string, error
 
 // setSlot implements slotStore, a description and a body go in one request
 func (s *driveStorage) setSlot(ctx context.Context, id, description string, body []byte) error {
+	if body == nil {
+		ctx = context.WithValue(ctx, attemptKey{}, driveSlotWrite)
+	}
 	metadata, err := json.Marshal(map[string]string{"description": description})
 	if err != nil {
 		return errors.New("failed to build the slot metadata").Base(err)
@@ -631,6 +878,7 @@ func (s *driveStorage) setSlot(ctx context.Context, id, description string, body
 
 // readDescription implements slotStore
 func (s *driveStorage) readDescription(ctx context.Context, id string) (string, error) {
+	ctx = context.WithValue(ctx, attemptKey{}, driveSlotRead)
 	status, payload, err := s.do(ctx, http.MethodGet,
 		s.filesURL+"/"+url.PathEscape(id)+"?fields=description&supportsAllDrives=true", "", nil)
 	switch {

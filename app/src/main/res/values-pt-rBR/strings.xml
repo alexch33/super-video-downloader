@@ -119,8 +119,11 @@
     <string name="settings_detection">Configuração de detecção</string>
     <string name="settings_downloading">Configuração de download</string>
     <string name="use_legacy_m3u8_detection">Usar youtube-dlp para detecção de m3u8/mpd</string>
+    <string name="use_experimental_detection">Usar detecção experimental</string>
+    <string name="setting_explanation_use_experimental_detection">Ativa recursos de detecção experimental para descoberta e processamento avançados de fluxos de vídeo. Este modo não detecta tanto quanto o modo de detecção normal, mas pode detectar coisas que o detector normal perde. Se a detecção normal não estiver funcionando para o seu site, você pode tentar isto. Além disso, este modo é mais difícil de ser detectado quando você tenta baixar algo, pois ele não envia nenhuma solicitação adicional ao servidor para verificação de vídeo.</string>
     <string name="playback_channel_name">Reprodução</string>
     <string name="video_move_downloads">Mover downloads</string>
+    <string name="video_move_private">Mover para o privado</string>
     <string name="media_move_error">Erro ao mover mídia</string>
     <string name="media_move_success">Sucesso ao mover mídia</string>
     <string name="allow">Permitir</string>
@@ -130,6 +133,14 @@
     <string name="view">Visualizar</string>
     <string name="proxy_service_channel_name">Proxy em segundo plano</string>
     <string name="proxy_service_channel_description">Worker de proxy em segundo plano.</string>
+    <string name="ask_redirection_title">Pedir redirecionamento</string>
+    <string name="redirection_dialog_title">Redirecionamento</string>
+    <string name="redirection_dialog_message">Este site está redirecionando você para outro domínio. Deseja continuar?:</string>
+    <string name="yes">Sim</string>
+    <string name="no">Não</string>
+    <string name="download_preparing">preparando</string>
+    <string name="download_pending">pendente</string>
+    <string name="download_downloading">baixando…</string>
     <string name="download_paused">Pausado</string>
     <string name="download_success">Sucesso!!!</string>
     <string name="download_error">Erro</string>
@@ -210,4 +221,12 @@
     <string name="advanced_guide">Guia avançado</string>
     <string name="advanced_guide_title">Guia de detecção avançada</string>
     <string name="advanced_guide_text">O SuperX possui 3 tipos diferentes de motores de detecção de vídeo:\n\n1. Detecção por URL:\nExamina URLs de páginas da web diretamente. Ideal para sites como Facebook ou TikTok, onde URLs de vídeo estão incorporadas em links da web.\n\n2. Detecção de arquivos regulares:\nInspeciona solicitações de rede para arquivos de mídia diretos como MP4, WebM, áudio, etc.\n\n3. Detecção de streaming M3U8 / MPD:\nDetecta listas de reprodução de streaming (HLS / DASH). Disponível em duas variantes:\n • Motor youtube-dlp: Muito estável e confiável, mas um pouco mais lento.\n • Detector SuperX: Novo, experimental e extremamente rápido (menos de um segundo).\n\nComo otimizar para sites específicos:\nPor padrão, todos os detetores estão ativados. Você pode ajustá-los finamente nas Configurações para sites específicos:\n • Para Facebook ou TikTok (onde a detecção funciona apenas por URL): Você pode desativar a detecção de arquivos regulares e a detecção M3U8/MPD.\n • Para sites de streaming (onde a detecção funciona interceptando solicitações de rede): Você pode desativar a detecção de URL.\n • Você pode verificar os Logs de detecção no menu para ver qual detetor está encontrando vídeos e desativar detetores não utilizados para obter um desempenho mais rápido!</string>
+    <string name="supporting_project">O SuperX foi criado com paixão para oferecer a você a melhor experiência de download. Se você gosta deste aplicativo, considere apoiar seu desenvolvimento contínuo, novas melhorias de recursos e manutenção. Você pode apoiar o projeto usando uma carteira BTC (disponível na seção \"Sobre\" ou no README do GitHub). Obrigado por ajudar a manter este projeto prosperando!</string>
+
+    <string name="filename_already_exists">O nome do arquivo já existe</string>
+    <string name="settings_import_media">Importar arquivo de vídeo ou áudio</string>
+    <string name="importing_media_file">Importando arquivo de mídia…</string>
+    <string name="media_imported_success">Arquivo de mídia importado com sucesso</string>
+    <string name="media_imported_error">Falha ao importar arquivo de mídia</string>
+    <string name="reopen_browser_tab_notice">É preciso reabrir a aba do navegador para aplicar</string>
 </resources>

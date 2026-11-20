@@ -1,8 +1,8 @@
 package com.myAllVideoBrowser.ui.main.home
 
 import android.graphics.Bitmap
-import androidx.databinding.ObservableBoolean
-import androidx.databinding.ObservableField
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.myAllVideoBrowser.data.local.room.entity.PageInfo
 import com.myAllVideoBrowser.data.local.room.entity.VideoInfo
@@ -23,22 +23,30 @@ class MainViewModel @Inject constructor(
 
     var browserServicesProvider: BrowserServicesProvider? = null
 
-    val openedUrl = ObservableField<String?>()
+    private val _openedUrl = MutableLiveData<String?>()
+    val openedUrl: LiveData<String?> = _openedUrl
 
-    val openedText = ObservableField<String?>()
+    private val _openedText = MutableLiveData<String?>()
+    val openedText: LiveData<String?> = _openedText
 
-    val isBrowserCurrent = ObservableBoolean(false)
+    private val _isBrowserCurrent = MutableLiveData(false)
+    val isBrowserCurrent: LiveData<Boolean> = _isBrowserCurrent
 
-    val currentItem = ObservableField<Int>()
+    private val _currentItem = MutableLiveData<Int>()
+    val currentItem: LiveData<Int> = _currentItem
 
-    val isWebViewAvailable = ObservableBoolean(true)
+    private val _isWebViewAvailable = MutableLiveData(true)
+    val isWebViewAvailable: LiveData<Boolean> = _isWebViewAvailable
 
-    val offScreenPageLimit = ObservableField(4)
+    private val _offScreenPageLimit = MutableLiveData(4)
+    val offScreenPageLimit: LiveData<Int> = _offScreenPageLimit
 
     // pair - format:url
-    val selectedFormatTitle = ObservableField<Pair<String, String>?>()
+    private val _selectedFormatTitle = MutableLiveData<Pair<String, String>?>()
+    val selectedFormatTitle: LiveData<Pair<String, String>?> = _selectedFormatTitle
 
-    val currentOriginal = ObservableField<String>()
+    private val _currentOriginal = MutableLiveData<String?>()
+    val currentOriginal: LiveData<String?> = _currentOriginal
 
     val downloadVideoEvent = SingleLiveEvent<VideoInfo>()
 
@@ -46,11 +54,66 @@ class MainViewModel @Inject constructor(
 
     val openNavDrawerEvent = SingleLiveEvent<Unit?>()
 
-    var bookmarksList: ObservableField<MutableList<PageInfo>> = ObservableField(mutableListOf())
+    private val _bookmarksList = MutableLiveData<List<PageInfo>>(emptyList())
+    val bookmarksList: LiveData<List<PageInfo>> = _bookmarksList
 
     private val executorSingle = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     private val executorMoverSingle = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
+    fun setOpenedUrl(url: String?) {
+        if (_openedUrl.value != url) {
+            _openedUrl.value = url
+        }
+    }
+
+    fun setOpenedText(text: String?) {
+        if (_openedText.value != text) {
+            _openedText.value = text
+        }
+    }
+
+    fun setIsBrowserCurrent(isCurrent: Boolean) {
+        if (_isBrowserCurrent.value != isCurrent) {
+            _isBrowserCurrent.value = isCurrent
+        }
+    }
+
+    fun setCurrentItem(item: Int?) {
+        if (item != null && _currentItem.value != item) {
+            _currentItem.value = item
+        }
+    }
+
+    fun setIsWebViewAvailable(isAvailable: Boolean) {
+        if (_isWebViewAvailable.value != isAvailable) {
+            _isWebViewAvailable.value = isAvailable
+        }
+    }
+
+    fun setOffScreenPageLimit(limit: Int) {
+        if (_offScreenPageLimit.value != limit) {
+            _offScreenPageLimit.value = limit
+        }
+    }
+
+    fun setSelectedFormatTitle(title: Pair<String, String>?) {
+        if (_selectedFormatTitle.value != title) {
+            _selectedFormatTitle.value = title
+        }
+    }
+
+    fun setCurrentOriginal(original: String?) {
+        if (_currentOriginal.value != original) {
+            _currentOriginal.value = original
+        }
+    }
+
+    fun setBookmarksList(bookmarks: List<PageInfo>) {
+        if (_bookmarksList.value != bookmarks) {
+            _bookmarksList.value = bookmarks
+        }
+    }
 
     override fun start() {
         updateTopPages()
@@ -73,7 +136,7 @@ class MainViewModel @Inject constructor(
                 pageInfo.order = index
                 pageInfo
             }.toMutableList()
-            bookmarksList.set(bookmarks)
+            _bookmarksList.postValue(bookmarks)
             topPagesRepository.replaceBookmarksWith(bookmarks)
         }
     }
@@ -88,9 +151,9 @@ class MainViewModel @Inject constructor(
             }
 
             if (pages != null) {
-                bookmarksList.set(pages.toMutableList())
+                _bookmarksList.postValue(pages)
             } else {
-                bookmarksList.set(mutableListOf())
+                _bookmarksList.postValue(emptyList())
             }
         }
     }
@@ -100,13 +163,14 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(executorSingle) {
             try {
                 topPagesRepository.updateLocalStorageFavicons().collect { pageInfo ->
-                    val bookmrks = bookmarksList.get()
+                    val bookmrks = _bookmarksList.value?.toMutableList()
                     val index = bookmrks?.indexOfFirst { it.link == pageInfo.link }
                     if (index != null && index != -1) {
                         bookmrks[index] = pageInfo
-                        bookmarksList.set(bookmrks.toMutableList())
-                    } else {
-                        bookmarksList.set((bookmarksList.get()?.plus(pageInfo))?.toMutableList())
+                        _bookmarksList.postValue(bookmrks)
+                    } else if (bookmrks != null) {
+                        bookmrks.add(pageInfo)
+                        _bookmarksList.postValue(bookmrks)
                     }
                 }
             } catch (e: Throwable) {
@@ -122,7 +186,7 @@ class MainViewModel @Inject constructor(
                 value
             }
             topPagesRepository.replaceBookmarksWith(updatedBookMarks)
-            bookmarksList.set(bookmarks.toMutableList())
+            _bookmarksList.postValue(bookmarks)
         }
     }
 }

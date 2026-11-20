@@ -24,6 +24,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.BrowserListener
 import com.myAllVideoBrowser.ui.main.home.browser.TabManagerProvider
 import com.myAllVideoBrowser.ui.main.home.browser.webTab.WebTabFactory
 import com.myAllVideoBrowser.util.AppUtil
+import com.myAllVideoBrowser.util.get
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -81,6 +82,7 @@ class BrowserHomeFragment : BaseWebTabFragment() {
         suggestionAdapter = SuggestionAdapter(requireContext(), emptyList(), suggestionListener)
 
         binding = FragmentBrowserHomeBinding.inflate(inflater, container, false).apply {
+            this.lifecycleOwner = viewLifecycleOwner
             buildWebTabMenu(this.browserHomeMenuButton, true)
 
             this.viewModel = homeViewModel
@@ -120,25 +122,28 @@ class BrowserHomeFragment : BaseWebTabFragment() {
         handleFirstStartGuide()
 
         homeViewModel.start()
+        mainViewModel.bookmarksList.observe(viewLifecycleOwner) { bookmarks ->
+            topPageAdapter.setData(bookmarks ?: emptyList())
+        }
+
         val openingUrl = mainViewModel.openedUrl.get()
         val openingText = mainViewModel.openedText.get()
 
         if (openingUrl != null) {
             openNewTab(openingUrl)
-            mainViewModel.openedUrl.set(null)
+            mainViewModel.setOpenedUrl(null)
         }
 
         if (openingText != null) {
             openNewTab(openingText)
-            mainViewModel.openedText.set(null)
+            mainViewModel.setOpenedText(null)
         }
     }
 
     // Bug fix for not updating home page grid after adding new bookmark
     override fun onResume() {
         super.onResume()
-        val bookmarksList = mainViewModel.bookmarksList.get()?.toMutableList()
-        mainViewModel.bookmarksList.set(bookmarksList)
+        mainViewModel.loadBookmarks()
     }
 
     private val suggestionListener = object : SuggestionListener {
@@ -156,7 +161,7 @@ class BrowserHomeFragment : BaseWebTabFragment() {
     private val onInputHomeSearchChangeListener = object : TextWatcher {
         override fun afterTextChanged(s: Editable) {
             val input = s.toString()
-            homeViewModel.searchTextInput.set(input)
+            homeViewModel.setSearchTextInput(input)
             if (!(input.startsWith("http://") || input.startsWith("https://"))) {
                 homeViewModel.showSuggestions()
             }

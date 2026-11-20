@@ -39,4 +39,11 @@
         android:title="@string/video_move_downloads"
         app:showAsAction="ifRoom|collapseActionView" />
 
+    <item
+        android:visible="false"
+        android:id="@+id/item_move_to_private"
+        android:icon="@drawable/folder_move_24px"
+        android:title="@string/video_move_private"
+        app:showAsAction="ifRoom|collapseActionView" />
+
 </menu>

@@ -59,6 +59,7 @@ import com.myAllVideoBrowser.ui.main.home.browser.adblocker.AdBlockEngine
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.DetectedVideosTabFragment
 import com.myAllVideoBrowser.ui.main.home.browser.detectedVideos.VideoDetectionTabViewModel
 import com.myAllVideoBrowser.ui.main.home.browser.disableWebRtcJs
+import com.myAllVideoBrowser.ui.main.home.browser.injectJsDetector
 import com.myAllVideoBrowser.ui.main.home.browser.injectJsInterceptor
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerActivity
 import com.myAllVideoBrowser.ui.main.player.VideoPlayerFragment
@@ -404,13 +405,22 @@ class WebTabFragment : BaseWebTabFragment() {
     @SuppressLint("SetJavaScriptEnabled", "WrongConstant")
     private fun configureWebView(fragmentWebTabBinding: FragmentWebTabBinding) {
         val currentWebView = this.webTab.getWebView() ?: return
-
+        val isUseExperimentalDetection =
+            mainActivity.settingsViewModel.isUseExperimentalDetection.get()
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             WebViewCompat.addDocumentStartJavaScript(
                 currentWebView,
                 disableWebRtcJs,
                 setOf("*")
             )
+            if (isUseExperimentalDetection) {
+                WebViewCompat.addDocumentStartJavaScript(
+                    currentWebView,
+                    injectJsDetector,
+                    setOf("*")
+                )
+            }
+
             WebViewCompat.addDocumentStartJavaScript(
                 currentWebView,
                 injectJsInterceptor,

@@ -63,10 +63,85 @@ val disableWebRtcJs = """
 
 val injectJsInterceptor = """
     (function() {
-    function hookContext(win) {
+    function hookPostInterceptor(win) {
         try {
-            if (!win || win.__manifestInterceptorInstalled) return;
-            win.__manifestInterceptorInstalled = true;
+            if (!win || win.__postInterceptorInstalled) return;
+            win.__postInterceptorInstalled = true;
+
+            if (win.XMLHttpRequest) {
+                var oldOpen = win.XMLHttpRequest.prototype.open;
+                win.XMLHttpRequest.prototype.open = function(method, url) {
+                    this._url = url ? url.toString() : '';
+                    this._method = (method || 'GET').toUpperCase();
+                    return oldOpen.apply(this, arguments);
+                };
+
+                var oldSend = win.XMLHttpRequest.prototype.send;
+                win.XMLHttpRequest.prototype.send = function(body) {
+                    var url = this._url || '';
+                    var method = this._method || 'GET';
+
+                    var bridge = win.AndroidBridge || window.AndroidBridge;
+                    if (method === 'POST' && bridge && bridge.shouldInterceptPost) {
+                        if (bridge.shouldInterceptPost(url, body || "")) {
+                            this.abort();
+                            return;
+                        }
+                    }
+                    return oldSend.apply(this, arguments);
+                };
+            }
+
+            if (win.fetch) {
+                var originalFetch = win.fetch;
+                win.fetch = function(input, init) {
+                    init = init || {};
+                    var url = '';
+                    if (typeof input === 'string') {
+                        url = input;
+                    } else if (input && typeof input === 'object') {
+                        if (input.url) {
+                            url = input.url;
+                        } else if (typeof input.toString === 'function') {
+                            url = input.toString();
+                        }
+                    } else if (input) {
+                        url = String(input);
+                    }
+
+                    var method = (init.method || (typeof input === 'object' && input.method) || 'GET').toUpperCase();
+                    var bridge = win.AndroidBridge || window.AndroidBridge;
+                    if (method === 'POST' && bridge && bridge.shouldInterceptPost) {
+                        if (bridge.shouldInterceptPost(url, init.body || "")) {
+                            return Promise.resolve(new win.Response('', { status: 200 }));
+                        }
+                    }
+
+                    return originalFetch.apply(this, arguments);
+                };
+            }
+        } catch (e) {}
+    }
+
+    hookPostInterceptor(window);
+    try {
+        if (window.frames && window.frames.length) {
+            for (var i = 0; i < window.frames.length; i++) {
+                try {
+                    hookPostInterceptor(window.frames[i]);
+                } catch (e) {}
+            }
+        }
+    } catch (e) {}
+})();
+""".trimIndent()
+
+val injectJsDetector = """
+    (function() {
+    function hookDetector(win) {
+        try {
+            if (!win || win.__videoDetectorInstalled) return;
+            win.__videoDetectorInstalled = true;
 
             // ===================== Helpers =====================
 
@@ -115,7 +190,6 @@ val injectJsInterceptor = """
                 var req = {};
                 var resp = {};
 
-                // 1. Highest priority – headers the page actually set
                 if (customReqHeaders) {
                     for (var k in customReqHeaders) {
                         if (Object.prototype.hasOwnProperty.call(customReqHeaders, k)) {
@@ -124,7 +198,6 @@ val injectJsInterceptor = """
                     }
                 }
 
-                // Helper: set only if missing (case-insensitive)
                 function setIfMissing(name, value) {
                     if (value == null || value === '') return;
                     var lower = name.toLowerCase();
@@ -135,7 +208,6 @@ val injectJsInterceptor = """
                 }
 
                 try {
-                    // ——— Core browser headers ———
                     var referer = null;
                     if (extraContext && extraContext.referer) {
                         referer = extraContext.referer;
@@ -148,7 +220,6 @@ val injectJsInterceptor = """
 
                     setIfMissing("User-Agent", win.navigator && win.navigator.userAgent);
 
-                    // Accept-Language
                     var lang = null;
                     if (win.navigator) {
                         lang = (win.navigator.languages && win.navigator.languages.length > 0)
@@ -157,20 +228,16 @@ val injectJsInterceptor = """
                     }
                     setIfMissing("Accept-Language", lang);
 
-                    // Origin
                     if (win.location && win.location.origin && win.location.origin !== 'null') {
                         setIfMissing("Origin", win.location.origin);
                     }
 
-                    // Cookie (best-effort – HttpOnly cookies are invisible to JS)
                     if (document && document.cookie) {
                         setIfMissing("Cookie", document.cookie);
                     }
 
-                    // Common defaults
                     setIfMissing("Accept", "*/*");
 
-                    // ——— Sec-Fetch-* headers ———
                     var dest = "empty";
                     var mode = "cors";
                     var site = "same-origin";
@@ -195,7 +262,6 @@ val injectJsInterceptor = """
                         }
                     }
 
-                    // Better Sec-Fetch-Site calculation
                     try {
                         if (referer && win.location && win.location.origin) {
                             var refOrigin = null;
@@ -213,14 +279,8 @@ val injectJsInterceptor = """
                     setIfMissing("Sec-Fetch-Site", site);
                     setIfMissing("Sec-Fetch-User", user);
 
-                    // Optional Client Hints (uncomment if needed)
-                    // setIfMissing("sec-ch-ua", '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"');
-                    // setIfMissing("sec-ch-ua-mobile", "?0");
-                    // setIfMissing("sec-ch-ua-platform", '"Windows"');
-
                 } catch (e) {}
 
-                // Response headers
                 if (respHeaders) {
                     for (var rk in respHeaders) {
                         if (Object.prototype.hasOwnProperty.call(respHeaders, rk)) {
@@ -270,7 +330,6 @@ val injectJsInterceptor = """
                             JSON.stringify(headersObj || {})
                         );
                     } else if (bridge && bridge.onVideoDetected) {
-                        // fallback
                         bridge.onVideoDetected(
                             url,
                             JSON.stringify(headersObj || {})
@@ -305,13 +364,11 @@ val injectJsInterceptor = """
                 if (!url) return false;
                 var u = url.toLowerCase();
 
-                // Exclude manifests
                 if (u.indexOf('.m3u8') !== -1 || u.indexOf('.mpd') !== -1 || u.indexOf('manifest') !== -1
                     || (contentType && (contentType.indexOf('mpegurl') !== -1 || contentType.indexOf('dash+xml') !== -1))) {
                     return false;
                 }
 
-                // Exclude pure segments
                 var isSegment = u.indexOf('.ts') !== -1
                     || u.indexOf('.m4s') !== -1
                     || u.indexOf('.aac') !== -1
@@ -426,7 +483,6 @@ val injectJsInterceptor = """
 
                 if (isSegmentUrl(url)) return;
 
-                // Already handled by content-type in some cases
                 if (contentType.indexOf('video/') !== -1 || contentType.indexOf('audio/') !== -1) {
                     return;
                 }
@@ -434,12 +490,11 @@ val injectJsInterceptor = """
                 checkUrlOrHeadersAndNotify(url, headersPayload);
             }
 
-            // ===================== XMLHttpRequest =====================
+            // ===================== XMLHttpRequest Detector =====================
             if (win.XMLHttpRequest) {
                 var oldOpen = win.XMLHttpRequest.prototype.open;
                 win.XMLHttpRequest.prototype.open = function(method, url) {
                     this._url = url ? url.toString() : '';
-                    this._method = (method || 'GET').toUpperCase();
                     this._headers = {};
                     return oldOpen.apply(this, arguments);
                 };
@@ -453,17 +508,6 @@ val injectJsInterceptor = """
 
                 var oldSend = win.XMLHttpRequest.prototype.send;
                 win.XMLHttpRequest.prototype.send = function(body) {
-                    var url = this._url || '';
-                    var method = this._method || 'GET';
-
-                    var bridge = win.AndroidBridge || window.AndroidBridge;
-                    if (method === 'POST' && bridge && bridge.shouldInterceptPost) {
-                        if (bridge.shouldInterceptPost(url, body || "")) {
-                            this.abort();
-                            return;
-                        }
-                    }
-
                     var self = this;
 
                     function processXhrResponse() {
@@ -514,7 +558,7 @@ val injectJsInterceptor = """
                 };
             }
 
-            // ===================== fetch =====================
+            // ===================== fetch Detector =====================
             if (win.fetch) {
                 var originalFetch = win.fetch;
                 win.fetch = function(input, init) {
@@ -541,14 +585,6 @@ val injectJsInterceptor = """
                         var extra = headersToObject(init.headers);
                         for (var k in extra) {
                             reqHeaders[k] = extra[k];
-                        }
-                    }
-
-                    var method = (init.method || (typeof input === 'object' && input.method) || 'GET').toUpperCase();
-                    var bridge = win.AndroidBridge || window.AndroidBridge;
-                    if (method === 'POST' && bridge && bridge.shouldInterceptPost) {
-                        if (bridge.shouldInterceptPost(url, init.body || "")) {
-                            return Promise.resolve(new win.Response('', { status: 200 }));
                         }
                     }
 
@@ -732,21 +768,18 @@ val injectJsInterceptor = """
                 } catch (e) {}
             }
 
-            console.log('Manifest and POST interceptor installed on window (with Sec-Fetch support)');
+            console.log('Video detector installed on window');
         } catch (e) {
-            console.log('Interceptor install error: ' + e);
+            console.log('Detector install error: ' + e);
         }
     }
 
-    // Install on current window
-    hookContext(window);
-
-    // Also try to catch iframes (best-effort)
+    hookDetector(window);
     try {
         if (window.frames && window.frames.length) {
             for (var i = 0; i < window.frames.length; i++) {
                 try {
-                    hookContext(window.frames[i]);
+                    hookDetector(window.frames[i]);
                 } catch (e) {}
             }
         }
@@ -982,8 +1015,6 @@ class CustomWebViewClient(
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
-
-        view.evaluateJavascript(injectJsInterceptor, null)
 
         videoAlert = null
         val pageTab = pageTabProvider.getPageTab(tabViewModel.thisTabIndex.get())

@@ -49,7 +49,8 @@ open class VideoDetectionTabViewModel @Inject constructor(
 ) : BaseViewModel(), IVideoDetector {
 
     companion object {
-        const val MAX_DETECTED_COUNT = 10
+        private const val MAX_DETECTED_COUNT = 10
+        private val REFRESH_BUTTON_STATE_DELAY = 30.milliseconds
     }
 
     // key: videoInfo.id, value: format - string
@@ -120,7 +121,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         cancelAllCheckJobs()
     }
 
-    override fun onStartPage(url: String, userAgentString: String) {
+    override suspend fun onStartPage(url: String, userAgentString: String) {
         if (url == lastUrl) {
             AppLogger.d("onStartPage: URL is the same. Not clearing list.")
             return
@@ -132,6 +133,9 @@ open class VideoDetectionTabViewModel @Inject constructor(
             AppLogger.d("onStartPage: URL is not initial url. Clearing list.")
             setDetectedVideoList(emptySet())
             cancelAllCheckJobs()
+
+            delay(REFRESH_BUTTON_STATE_DELAY)
+            setButtonState(DownloadButtonStateCanNotDownload())
         } else {
             AppLogger.d("onStartPage: URL is initial url. Skipped clearing list.")
         }
@@ -151,7 +155,7 @@ open class VideoDetectionTabViewModel @Inject constructor(
         setDetectedVideoList(emptySet())
         cancelAllCheckJobs()
 
-        delay(10.milliseconds)
+        delay(REFRESH_BUTTON_STATE_DELAY)
         setButtonState(DownloadButtonStateCanNotDownload())
 
         val req = getRequestWithHeadersForUrl(

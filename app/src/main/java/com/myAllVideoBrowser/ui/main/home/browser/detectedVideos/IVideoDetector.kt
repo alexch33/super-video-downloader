@@ -5,7 +5,7 @@ import io.reactivex.rxjava3.disposables.Disposable
 import okhttp3.Request
 
 interface IVideoDetector {
-    fun onStartPage(url: String, userAgentString: String)
+    suspend fun onStartPage(url: String, userAgentString: String)
 
     fun showVideoInfo()
 

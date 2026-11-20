@@ -190,7 +190,7 @@ class GlobalVideoDetectionModel @Inject constructor(
         return disposable
     }
 
-    override fun onStartPage(url: String, userAgentString: String) {
+    override suspend fun onStartPage(url: String, userAgentString: String) {
 
     }
 

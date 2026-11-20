@@ -462,7 +462,7 @@ class WebTabFragment : BaseWebTabFragment() {
             )
         }
 
-        currentWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        currentWebView.setLayerType(View.LAYER_TYPE_NONE, null)
         currentWebView.isScrollbarFadingEnabled = true
 
         webSettings.apply {

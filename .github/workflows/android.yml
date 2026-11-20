@@ -90,12 +90,10 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           prerelease: true
           body: |
-            - Rewritten js experimental detection system
-            - Added icon to videos in hidden folder
-            - Added import media files inside app from user's selection
-            - WebView prewarm on app start
-            - Fixed lists rendering bug for progress videos and tabs for some devices
-            - Minor fixes
+            - WebView prewarm on app start removed
+            - Fixed UI rendering bugs for old devices
+            - Bug fixes
+            - Performance optimization
           draft: false
           make_latest: false
           tag_name: ${{ github.ref_name }}

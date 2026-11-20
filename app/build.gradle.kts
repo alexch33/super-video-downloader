@@ -135,7 +135,7 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 524
-        versionName = "0.9.2.1"
+        versionName = "0.9.2.2"
 
         if (isSingleAbiRequested) {
             splits {
@@ -290,8 +290,6 @@ dependencies {
     implementation(libs.fragmentKtx)
     implementation(libs.concurrentFuturesKtx)
 
-    // Lifecycle Components
-    implementation(libs.lifecycleExtensions)
     implementation(libs.lifecycleCommonJava8)
     implementation(libs.lifecycleLivedata)
     implementation(libs.lifecycleViewmodel)

@@ -228,4 +228,5 @@
     <string name="importing_media_file">미디어 파일 가져오는 중…</string>
     <string name="media_imported_success">미디어 파일을 성공적으로 가져왔습니다</string>
     <string name="media_imported_error">미디어 파일을 가져오지 못했습니다</string>
+    <string name="reopen_browser_tab_notice">적용하려면 브라우저 탭을 다시 열어야 합니다</string>
 </resources>

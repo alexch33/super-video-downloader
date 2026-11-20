@@ -238,4 +238,5 @@
     <string name="importing_media_file">মিডিয়া ফাইল ইমপোর্ট করা হচ্ছে…</string>
     <string name="media_imported_success">মিডিয়া ফাইল সফলভাবে ইমপোর্ট করা হয়েছে</string>
     <string name="media_imported_error">মিডিয়া ফাইল ইমপোর্ট করতে ব্যর্থ হয়েছে</string>
+    <string name="reopen_browser_tab_notice">প্রয়োগ করতে ব্রাউজার ট্যাব পুনরায় খুলতে হবে</string>
 </resources>

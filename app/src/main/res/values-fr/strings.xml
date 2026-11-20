@@ -230,4 +230,5 @@
     <string name="importing_media_file">Importation du fichier média…</string>
     <string name="media_imported_success">Fichier média importé avec succès</string>
     <string name="media_imported_error">Échec de l\'importation du fichier média</string>
+    <string name="reopen_browser_tab_notice">Besoin de rouvrir l\'onglet du navigateur pour appliquer</string>
 </resources>

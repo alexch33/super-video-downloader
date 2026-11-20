@@ -227,4 +227,5 @@
     <string name="importing_media_file">Đang nhập tệp phương tiện…</string>
     <string name="media_imported_success">Đã nhập tệp phương tiện thành công</string>
     <string name="media_imported_error">Nhập tệp phương tiện thất bại</string>
+    <string name="reopen_browser_tab_notice">Cần mở lại tab trình duyệt để áp dụng</string>
 </resources>

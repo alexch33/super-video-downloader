@@ -228,4 +228,5 @@
     <string name="importing_media_file">Mengimpor berkas media…</string>
     <string name="media_imported_success">Berkas media berhasil diimpor</string>
     <string name="media_imported_error">Gagal mengimpor berkas media</string>
+    <string name="reopen_browser_tab_notice">Perlu membuka ulang tab browser untuk menerapkan</string>
 </resources>

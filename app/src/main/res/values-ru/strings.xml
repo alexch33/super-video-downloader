@@ -223,4 +223,5 @@
     <string name="importing_media_file">Импорт медиафайла…</string>
     <string name="media_imported_success">Медиафайл успешно импортирован</string>
     <string name="media_imported_error">Не удалось импортировать медиафайл</string>
+    <string name="reopen_browser_tab_notice">Необходимо перезапустить вкладку браузера для применения</string>
 </resources>

@@ -229,4 +229,5 @@
     <string name="importing_media_file">Medya dosyası içe aktarılıyor…</string>
     <string name="media_imported_success">Medya dosyası başarıyla içe aktarıldı</string>
     <string name="media_imported_error">Medya dosyası içe aktarılamadı</string>
+    <string name="reopen_browser_tab_notice">Uygulamak için tarayıcı sekmesini yeniden açmanız gerekir</string>
 </resources>

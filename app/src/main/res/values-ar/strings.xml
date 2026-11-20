@@ -229,4 +229,5 @@
     <string name="importing_media_file">جاري استيراد ملف الوسائط…</string>
     <string name="media_imported_success">تم استيراد ملف الوسائط بنجاح</string>
     <string name="media_imported_error">فشل استيراد ملف الوسائط</string>
+    <string name="reopen_browser_tab_notice">يجب إعادة فتح تبويب المتصفح لتطبيق التغيير</string>
 </resources>

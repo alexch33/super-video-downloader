@@ -228,4 +228,5 @@
     <string name="importing_media_file">正在导入媒体文件…</string>
     <string name="media_imported_success">媒体文件导入成功</string>
     <string name="media_imported_error">导入媒体文件失败</string>
+    <string name="reopen_browser_tab_notice">需要重新打开浏览器标签页以生效</string>
 </resources>

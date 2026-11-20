@@ -57,6 +57,8 @@ class SettingsFragment : BaseFragment() {
     private lateinit var dataBinding: FragmentSettingsBinding
     private lateinit var settingsViewModel: SettingsViewModel
 
+    private var lastObservedExperimentalDetection: Boolean? = null
+
     private val pickHistoryFileLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -182,6 +184,7 @@ class SettingsFragment : BaseFragment() {
         setupSliderListeners()
         setupTextUpdateCallbacks()
         setupHelpButtons()
+        setupExperimentalDetectionListener()
         handleUIEvents()
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
@@ -518,6 +521,18 @@ class SettingsFragment : BaseFragment() {
                 R.string.downloads_location,
                 R.string.setting_explanation_downloads_location
             )
+        }
+    }
+
+    private fun setupExperimentalDetectionListener() {
+        settingsViewModel.isUseExperimentalDetection.observe(viewLifecycleOwner) { isChecked ->
+            if (lastObservedExperimentalDetection != null && lastObservedExperimentalDetection == false && isChecked == true) {
+                showExplanationDialog(
+                    R.string.use_experimental_detection,
+                    R.string.reopen_browser_tab_notice
+                )
+            }
+            lastObservedExperimentalDetection = isChecked
         }
     }
 }

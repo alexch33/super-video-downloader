@@ -133,6 +133,7 @@
     <string name="playback_channel_name">Playback</string>
     <string name="video_move_downloads">Move Downloads</string>
     <string name="video_move_private">Move to Private</string>
+    <string name="reopen_browser_tab_notice">Need to reopen browser tab for apply</string>
     <string name="media_move_error">Media Move Error</string>
     <string name="media_move_success">Media move success</string>
     <string name="filename_already_exists">Filename already exists</string>

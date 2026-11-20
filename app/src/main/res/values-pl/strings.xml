@@ -226,4 +226,5 @@
     <string name="importing_media_file">Importowanie pliku multimedialnego…</string>
     <string name="media_imported_success">Plik multimedialny został pomyślnie zaimportowany</string>
     <string name="media_imported_error">Nie udało się zaimportować pliku multimedialnego</string>
+    <string name="reopen_browser_tab_notice">Musisz ponownie otworzyć kartę przeglądarki, aby zastosować</string>
 </resources>

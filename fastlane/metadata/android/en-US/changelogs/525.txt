@@ -1,0 +1,14 @@
+### Added
+- Added new experimental detection system, working from Js (Can be turned on in settings)
+- Added all missed translations
+- Added icon to videos in hidden folder
+- Added moving file to private folder
+- Added importing file to private folder
+
+### Fixed
+- Built in adblock list updated
+- Fixed bug with random order of detected videos
+- Crashes fixes
+- Bug fixes
+- Performance optimization
+- Minor fixes

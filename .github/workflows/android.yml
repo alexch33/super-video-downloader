@@ -88,13 +88,22 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           token: ${{ secrets.GH_PAT }}
-          prerelease: true
+          prerelease: false
           body: |
-            - WebView prewarm on app start removed
-            - Fixed UI rendering bugs for old devices
+            ### No changes since 0.9.2.1-RC-2
+            ### Changes since 0.9.1.4
+            - Added new experimental detection system, working from Js (Can be turned on in settings)
+            - Added all missed translations
+            - Added icon to videos in hidden folder
+            - Added moving file to private folder
+            - Added importing file to private folder
+            - Built in adblock list updated
+            - Fixed bug with random order of detected videos
+            - Crashes fixes
             - Bug fixes
             - Performance optimization
+            - Minor fixes
           draft: false
-          make_latest: false
+          make_latest: true
           tag_name: ${{ github.ref_name }}
           files: apk-release/*.apk

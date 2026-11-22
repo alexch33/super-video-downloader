@@ -2,6 +2,7 @@ package com.myAllVideoBrowser.ui.main.home.browser
 
 import android.graphics.Bitmap
 import android.os.Build
+import android.view.ViewGroup
 import android.webkit.HttpAuthHandler
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceRequest
@@ -1084,20 +1085,29 @@ class CustomWebViewClient(
     override fun onRenderProcessGone(
         view: WebView?, detail: RenderProcessGoneDetail?
     ): Boolean {
-        val pageTab = pageTabProvider.getPageTab(tabViewModel.thisTabIndex.get())
+        val didCrash = Build.VERSION.SDK_INT < Build.VERSION_CODES.O || detail?.didCrash() == true
+        AppLogger.w("onRenderProcessGone called. view: $view, didCrash: $didCrash")
 
-        val webView = pageTab.getWebView()
-        if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                view == webView && detail?.didCrash() == true
-            } else {
-                view == webView
+        try {
+            val pageTab = pageTabProvider.getPageTab(tabViewModel.thisTabIndex.get())
+            val webView = pageTab.getWebView()
+            if (view == webView) {
+                pageTab.setWebView(null)
             }
-        ) {
-            webView?.destroy()
-            return true
+        } catch (e: Throwable) {
+            AppLogger.e("Error identifying webTab in onRenderProcessGone: ${e.message}")
         }
 
-        return super.onRenderProcessGone(view, detail)
+        view?.let {
+            try {
+                (it.parent as? ViewGroup)?.removeView(it)
+                it.destroy()
+            } catch (e: Throwable) {
+                AppLogger.e("Error destroying WebView on render process gone: ${e.message}")
+            }
+        }
+
+        return true
     }
 
     private suspend fun saveUrlToHistory(url: String, favicon: Any?, title: String?) {

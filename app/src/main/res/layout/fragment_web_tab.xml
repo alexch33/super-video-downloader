@@ -120,6 +120,7 @@
                             android:text="@{viewModel.tabUrlInput}"
                             android:textColor="?attr/colorOnSurface"
                             android:textColorHint="?attr/colorOnSurfaceVariant"
+                            android:popupBackground="?attr/colorSurfaceContainerHigh"
                             android:textSize="@dimen/text_small"
                             app:items="@{viewModel.listTabSuggestions}"
                             app:layout_constraintBottom_toBottomOf="parent"

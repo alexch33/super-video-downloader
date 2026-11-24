@@ -82,6 +82,7 @@
                 android:singleLine="true"
                 android:textColor="?attr/colorOnSurface"
                 android:textColorHint="?attr/colorOnSurfaceVariant"
+                android:popupBackground="?attr/colorSurfaceContainerHigh"
                 android:textSize="@dimen/text_medium"
                 android:focusable="@{viewModel.isSearchInputFocused}"
                 android:focusableInTouchMode="@{viewModel.isSearchInputFocused}"

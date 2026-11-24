@@ -28,6 +28,7 @@
         android:maxLines="2"
         android:onClick="@{() -> listener.onItemClicked(suggestion)}"
         android:padding="@dimen/padding_small"
+        android:text="@{suggestion.url}"
         android:textColor="?attr/colorOnSurface"
         android:textSize="@dimen/text_small"
         android:focusable="true"

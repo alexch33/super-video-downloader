@@ -1,7 +1,7 @@
 package com.myAllVideoBrowser.ui.component.binding
 
-import androidx.databinding.BindingAdapter
 import android.widget.AutoCompleteTextView
+import androidx.databinding.BindingAdapter
 import com.myAllVideoBrowser.data.local.model.Suggestion
 import com.myAllVideoBrowser.data.local.room.entity.HistoryItem
 import com.myAllVideoBrowser.ui.component.adapter.SuggestionAdapter
@@ -11,24 +11,15 @@ object AutoCompleteTextViewBinding {
 
     @BindingAdapter("app:items")
     @JvmStatic
-    fun AutoCompleteTextView.setSuggestions(items: List<Suggestion>?) {
-        with(adapter as SuggestionAdapter?) {
-            if (items != null) {
-                this?.setData(items)
-            } else {
-                this?.setData(emptyList())
+    fun AutoCompleteTextView.setSuggestions(items: List<*>?) {
+        when (val currAdapter = adapter) {
+            is SuggestionAdapter -> {
+                @Suppress("UNCHECKED_CAST")
+                currAdapter.setData((items as? List<Suggestion>) ?: emptyList())
             }
-        }
-    }
-
-    @BindingAdapter("app:items")
-    @JvmStatic
-    fun AutoCompleteTextView.setTabSuggestions(items: List<HistoryItem>?) {
-        with(adapter as TabSuggestionAdapter?) {
-            if (items != null) {
-                this?.setData(items)
-            } else {
-                this?.setData(emptyList())
+            is TabSuggestionAdapter -> {
+                @Suppress("UNCHECKED_CAST")
+                currAdapter.setData((items as? List<HistoryItem>) ?: emptyList())
             }
         }
     }

@@ -35,6 +35,7 @@ import com.myAllVideoBrowser.util.downloaders.generic_downloader.models.VideoTas
 import com.myAllVideoBrowser.util.downloaders.youtubedl_downloader.YoutubeDlDownloaderWorker
 import com.myAllVideoBrowser.util.fragment.FragmentFactory
 import javax.inject.Inject
+import androidx.core.view.isNotEmpty
 
 //@OpenForTesting
 class MainActivity : BaseActivity() {
@@ -258,8 +259,12 @@ class MainActivity : BaseActivity() {
             }
 
             val childrenCount = dataBinding.fragmentContainerView.childCount
-            if (childrenCount > 0) {
-                supportFragmentManager.popBackStack()
+            if (childrenCount > 0 && !supportFragmentManager.isStateSaved) {
+                dataBinding.fragmentContainerView.post {
+                    if (!isFinishing && !isDestroyed && !supportFragmentManager.isStateSaved && dataBinding.fragmentContainerView.isNotEmpty()) {
+                        supportFragmentManager.popBackStack()
+                    }
+                }
             }
             if (postion > 0) {
                 dataBinding.viewPager.isUserInputEnabled = true

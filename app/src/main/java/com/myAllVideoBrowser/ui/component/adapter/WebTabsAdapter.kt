@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.color.MaterialColors
@@ -138,9 +139,23 @@ class WebTabsAdapter(
     override fun onBindViewHolder(holder: WebTabsViewHolder, position: Int) =
         holder.bind(webTabs[position], webTabsListener, position == selectedTabIndex)
 
-    fun setData(webTabs: List<WebTab>) {
-        this.webTabs = webTabs
-        notifyDataSetChanged()
+    fun setData(newWebTabs: List<WebTab>) {
+        val oldList = this.webTabs
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int = oldList.size
+            override fun getNewListSize(): Int = newWebTabs.size
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition].id == newWebTabs[newItemPosition].id
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition] == newWebTabs[newItemPosition]
+            }
+        }
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        this.webTabs = newWebTabs
+        diffResult.dispatchUpdatesTo(this)
     }
 
     fun setSelectedTab(index: Int) {

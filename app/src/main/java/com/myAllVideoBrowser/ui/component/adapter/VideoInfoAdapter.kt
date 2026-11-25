@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.myAllVideoBrowser.R
@@ -223,7 +224,22 @@ class VideoInfoAdapter(
     override fun getItemCount(): Int = videoInfoList.size
 
     fun setData(localVideos: List<VideoInfo>) {
-        this.videoInfoList = localVideos.reversed()
-        notifyDataSetChanged()
+        val newList = localVideos.reversed()
+        val oldList = this.videoInfoList
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int = oldList.size
+            override fun getNewListSize(): Int = newList.size
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition].id == newList[newItemPosition].id
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition] == newList[newItemPosition]
+            }
+        }
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        this.videoInfoList = newList
+        diffResult.dispatchUpdatesTo(this)
     }
 }

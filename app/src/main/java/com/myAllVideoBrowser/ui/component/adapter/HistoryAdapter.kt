@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.github.marlonlom.utilities.timeago.TimeAgo
@@ -80,8 +81,22 @@ class HistoryAdapter(
     override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) =
         holder.bind(historyItems[position], historyListener)
 
-    fun setData(historyItems: List<HistoryItem>) {
-        this.historyItems = historyItems
-        notifyDataSetChanged()
+    fun setData(newHistoryItems: List<HistoryItem>) {
+        val oldList = this.historyItems
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int = oldList.size
+            override fun getNewListSize(): Int = newHistoryItems.size
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition].id == newHistoryItems[newItemPosition].id
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition] == newHistoryItems[newItemPosition]
+            }
+        }
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        this.historyItems = newHistoryItems
+        diffResult.dispatchUpdatesTo(this)
     }
 }

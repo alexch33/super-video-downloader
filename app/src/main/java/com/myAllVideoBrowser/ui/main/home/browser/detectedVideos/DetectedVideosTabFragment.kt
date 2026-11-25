@@ -78,7 +78,7 @@ class DetectedVideosTabFragment : BaseFragment() {
             ViewCompat.setOnApplyWindowInsetsListener(this.root) { v, insets ->
                 val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
                 v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
-                this.bottomBar.minimumHeight = systemBars.bottom + this.bottomBar.height
+                this.bottomBar.setPadding(0, 0, 0, systemBars.bottom)
                 insets
             }
         }

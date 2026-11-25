@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -69,9 +70,23 @@ class BookmarksAdapter(
     override fun onBindViewHolder(holder: BookmarkViewHolder, position: Int) =
         holder.bind(bookmarksItems[position], bookmarksListener)
 
-    fun setData(bookmarksItems: MutableList<PageInfo>) {
-        this.bookmarksItems = bookmarksItems
-        notifyDataSetChanged()
+    fun setData(newBookmarksItems: MutableList<PageInfo>) {
+        val oldList = this.bookmarksItems
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int = oldList.size
+            override fun getNewListSize(): Int = newBookmarksItems.size
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition].id == newBookmarksItems[newItemPosition].id
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition] == newBookmarksItems[newItemPosition]
+            }
+        }
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        this.bookmarksItems = newBookmarksItems
+        diffResult.dispatchUpdatesTo(this)
     }
 
     override fun onItemMove(fromPosition: Int, toPosition: Int) {

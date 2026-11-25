@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
@@ -121,9 +122,23 @@ class VideoAdapter(
         }
     }
 
-    fun setData(localVideos: List<LocalVideo>) {
-        this.localVideos = localVideos
-        notifyDataSetChanged()
+    fun setData(newLocalVideos: List<LocalVideo>) {
+        val oldList = this.localVideos
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int = oldList.size
+            override fun getNewListSize(): Int = newLocalVideos.size
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition].id == newLocalVideos[newItemPosition].id
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition] == newLocalVideos[newItemPosition]
+            }
+        }
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        this.localVideos = newLocalVideos
+        diffResult.dispatchUpdatesTo(this)
     }
 
     fun selectAll() {

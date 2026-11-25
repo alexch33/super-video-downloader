@@ -3,6 +3,7 @@ package com.myAllVideoBrowser.ui.component.adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.github.marlonlom.utilities.timeago.TimeAgo
 import com.github.marlonlom.utilities.timeago.TimeAgoMessages
@@ -54,8 +55,23 @@ class HistorySearchAdapter(
     override fun onBindViewHolder(holder: HistorySearchViewHolder, position: Int) =
         holder.bind(historyItems[position], historyListener)
 
-    fun setData(historyItems: List<HistoryItem>) {
-        this.historyItems = historyItems.asReversed()
-        notifyDataSetChanged()
+    fun setData(newHistoryItems: List<HistoryItem>) {
+        val reversedItems = newHistoryItems.asReversed()
+        val oldList = this.historyItems
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int = oldList.size
+            override fun getNewListSize(): Int = reversedItems.size
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition].id == reversedItems[newItemPosition].id
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition] == reversedItems[newItemPosition]
+            }
+        }
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        this.historyItems = reversedItems
+        diffResult.dispatchUpdatesTo(this)
     }
 }
